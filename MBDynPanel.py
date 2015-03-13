@@ -106,7 +106,7 @@ def update_parametrization(context):
             for line in log:
                 line = next(reader)
                 if line[0] == 'structural' and int(line[2]) == obj.mbdyn_settings.int_label:
-                    obj.parametrization = line[6]
+                    obj.mbdyn_settings.parametrization = line[6]
     except IOError:
         print("Can't find .log file", log_file)
         pass
@@ -186,7 +186,7 @@ def create_nodes_dict(file_dir, file_basename):
     # reset nodes dictionary first
     reset_nodes_dict()
     
-    # .lab file must share the same basename as the .mov file
+    # .lab file must share the same basename as the .mov file -- TODO: allow for different filenames?
     mov_file = file_dir + file_basename + '.mov'
     lab_file = file_dir + file_basename + '.lab'
     
@@ -225,9 +225,9 @@ def create_nodes_dict(file_dir, file_basename):
         context.scene.mbdyn_settings.num_nodes = kk;
                
     # Try to find string labels in .lab file
-    # Debug message
+    # Debug message -- gets printed on console (TODO: feedback the user)
     print("Reading node labels from file:", lab_file)
-    set_strings = ["set: const integer Node_", "set: integer Node_"]
+    set_strings = ["set: const integer Node_", "set: integer Node_", "set: const integer node_", "set: integer node_"]
     try: 
         with open(lab_file) as lf:
             for line in lf:
@@ -241,7 +241,8 @@ def create_nodes_dict(file_dir, file_basename):
                             if node_label_int == item.int_label:
                                 item.string_label = node_label_str
     except IOError:
-        print("Can't find labels file {}, using default node labeling...".format(lab_file))
+	# TODO: warn the user through the Blender interface that the file is not found
+        print("Can't find labels file {}, using default node labeling...".format(lab_file)) 
         pass
                     
     context.scene.mbdyn_settings.is_ready = True
@@ -295,13 +296,18 @@ class MBDynImportMotionPath(Operator, ImportHelper):
         context.window_manager.fileselect_add(self)
         return{'RUNNING_MODAL'}
 
-def set_obj_location(obj, rw):
+def set_obj_locrot(obj, rw):
+    
+    # Position
     obj.location[0] = float(rw[1])
     obj.location[1] = float(rw[2])
     obj.location[2] = float(rw[3])
-    return
-
-def set_obj_orientation(obj, rw, parametrization):
+    
+    # Orientation
+    parametrization = obj.mbdyn_settings.parametrization
+    # Debug message
+    print('Updating rotation of object', obj.name)
+    
     if parametrization == 'euler123':
         obj.rotation_euler = Euler((float(rw[4]), float(rw[5]), float(rw[6])), 'XYZ')
     elif parametrization == 'matrix':
@@ -310,11 +316,16 @@ def set_obj_orientation(obj, rw, parametrization):
     elif parametrization == 'phi':
         rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
         rotvec_norm = rotvec.normalized()
-        obj.rotation_axis_angle(Vector((rotvec.magnitude, rotvec_norm[0], rotvec_norm[1], rotvec_norm[2])))
+        print(str(rotvec.magnitude), str(rotvec_norm[0]), str(rotvec_norm[1]), str(rotvec_norm[2]))
+        obj.rotation_axis_angle = Vector((rotvec.magnitude, rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
         pass
     else:
         print("Error: not recognised rotation parametrization")
+    
+    bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+    
     return
+
 
 def set_motion_paths(context):
     # Debug message
@@ -350,13 +361,8 @@ def set_motion_paths(context):
                     # cycle MESH objects and set their location and rotation parameters
                     for obj in bpy.data.objects:
                         if obj.type == 'MESH' and obj.mbdyn_settings.is_assigned and int(rw[0]) == obj.mbdyn_settings.int_label:
-                            # set object location
-                            set_obj_location(obj, rw)
-                            # set object orientation
-                            set_obj_orientation(obj, rw, 'Euler123')
-                            # insert keyframes for object
-                            obj.keyframe_insert(data_path='location')
-                            obj.keyframe_insert(data_path='rotation_euler')
+                            # set object location and orientation and insert keyframe
+                            set_obj_locrot(obj, rw)
                         else:
                             pass
                 if mbs.load_frequency > 1:
