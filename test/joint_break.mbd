@@ -1,0 +1,101 @@
+# elastic_contact_1d.mbd
+
+#----------------------------------------------
+# [ Data Block ]
+
+begin: data;
+	problem: initial value;
+end: data;
+
+#----------------------------------------------
+# [ Problem Block ]
+
+begin: initial value;
+	initial time: 0.;
+	final time: 10.; 
+	time step: 1.e-2;
+	max iterations: 10;
+	tolerance: 1.e-6;
+end: initial value;
+
+#----------------------------------------------
+# [ Control Data Block ]
+
+begin: control data;
+	parameter nodes: 1;
+	structural nodes: 2;
+	rigid bodies: 1;
+	joints: 3;
+end: control data;
+
+#----------------------------------------------
+# [ Design Variables]
+
+set: real K = 1e4;
+set: real D = 1e2;
+
+#----------------------------------------------
+# [ Labels ] -- in external file to allow import in Blender
+
+include: "joint_break.lab";
+
+#----------------------------------------------
+# [ Nodes Block ]
+
+begin: nodes;
+
+	structural: node_ground, static, null, eye, null, null;
+	structural: node_body1, dynamic, null, eye, null, null;
+
+	parameter: param_node_Fz, element;
+
+end: nodes;
+
+#----------------------------------------------
+# [ Elements Block ]
+
+begin: elements;
+
+body: body_body1, node_body1, 1., null, eye;
+
+joint: joint_clamp, clamp, node_ground, node, node;
+
+joint: joint_def_disp, 
+	deformable displacement joint, 
+	node_ground, 
+	position, null, 
+	orientation, eye,
+	node_body1, 
+	position, null,
+	orientation, eye,
+	linear viscoelastic isotropic, 
+	K, 
+	D;
+
+joint: joint_total_imp_disp, 
+	total joint, 
+	node_ground, 
+	position, null,
+	position orientation, eye,
+	rotation orientation, eye,
+	node_body1,
+	position, null,
+	position orientation, eye,
+	rotation orientation, eye,
+	position constraint, 
+	1, 1, 1, 
+	0., 0., 1., cosine, 0.01, pi, 10., half, 0.,
+	orientation constraint, 
+	1, 1, 1, null;
+
+bind: joint_def_disp, joint, param_node_Fz, string, "Fz";
+
+driven: joint_total_imp_disp, node, param_node_Fz, parameter, index, 1, string, "Var < 2.5e4", 
+	existing: joint, joint_total_imp_disp;
+driven: joint_def_disp, node, param_node_Fz, parameter, index, 1, string, "Var < 2.5e4", 
+	existing : joint, joint_def_disp;
+
+
+end:elements;
+# vim:ft=mbd
+
