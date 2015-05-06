@@ -344,7 +344,10 @@ def set_motion_paths(context):
     # total number of frames to be animated
     num_frames = int(mbs.num_rows/mbs.num_nodes)
     scene.frame_end = int(num_frames/mbs.load_frequency)
-    
+
+    # list of animatable Blender object types
+    anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
+
     # main loop
     if  mbs.is_ready:
         with open(mov_file) as mf:
@@ -352,15 +355,14 @@ def set_motion_paths(context):
             # open the reader, skipping initial whitespaces
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
             
-            # main for loop, from start frame to last
-            
+            # main for loop, from start frame to last 
             for frame in range(scene.frame_end):
                 scene.frame_current = (frame + 1)
                 for node in range(mbs.num_nodes):
                     rw = next(reader)
                     # cycle MESH objects and set their location and rotation parameters
                     for obj in bpy.data.objects:
-                        if obj.type == 'MESH' and obj.mbdyn_settings.is_assigned and int(rw[0]) == obj.mbdyn_settings.int_label:
+                        if (obj.type in anim_types) and obj.mbdyn_settings.is_assigned and int(rw[0]) == obj.mbdyn_settings.int_label:
                             # set object location and orientation and insert keyframe
                             set_obj_locrot(obj, rw)
                         else:
