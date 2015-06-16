@@ -3,8 +3,8 @@ bl_info = {
     "author": "Andrea Zanoni - <a.zanoni.mbdyn@gmail.com>",
     "version": (1, 0),
     "blender": (2, 65, 0),
-    "location": "Properties -> Object -> MBDyn Motion Path",
-    "description": "Loads motion file from MBDyn (OpenSource MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
+    "location": "View3D -> Misc -> MBDyn Motion Path",
+    "description": "Imports simulation results of MBDyn (OpenSource MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
     "warning": "Beta stage",
     "wiki_url": "",
     "tracker_url": "",
@@ -18,6 +18,7 @@ from bpy_extras.io_utils import ImportHelper
 from mathutils import Vector, Euler
 
 import ntpath, os, csv
+from collections import namedtuple
 import pdb	# <-- Python Debugger
 
 # Nodes Dictionary: contains integer/string labels associations
@@ -297,10 +298,6 @@ def reset_nodes_dict():
 
 # Function that populates the nodes dictionary
 def create_nodes_dict(file_dir, file_basename):
-    
-    # reset nodes dictionary first
-    reset_nodes_dict()
-    
     # NOTE: .lab file must share the same basename as the .mov file 
     mov_file = file_dir + file_basename + '.mov'
     lab_file = file_dir + file_basename + '.lab'
@@ -308,6 +305,11 @@ def create_nodes_dict(file_dir, file_basename):
     # Utility rename
     context = bpy.context
     
+    # Named tuple list to temporarily hold the nodes structure
+    # found in the .mov file
+    Node = namedtuple('Node', ['int_label', 'string_label', 'found'])
+    nodes = []
+
     # Initial loop to find MBDyn's nodes - default labels
     # Debug message
     print("Reading node list from file: ", mov_file) 
@@ -319,29 +321,50 @@ def create_nodes_dict(file_dir, file_basename):
         # get first node label
         rw = next(reader)
         first_node = int(rw[0])
-        ndi = context.scene.mbdyn_settings.nodes_dictionary.add()
-        ndi.int_label = first_node
-        ndi.string_label = 'Node_1'
+        
+        nodes.append(Node(first_node, 'Node_' + str(first_node), False))
         
         # get the remaining ones
         done = False
-        kk = 1
         while not done:
             rw = next(reader)
             curr_node = int(rw[0])
             if first_node != curr_node:
-                kk = kk + 1
-                ndi = context.scene.mbdyn_settings.nodes_dictionary.add()
-                ndi.int_label = curr_node
-                ndi.string_label = 'Node_' + str(kk)
+                nodes.append(Node(curr_node, 'Node_' + str(curr_node), False))
             else:
                 done = True
-       
-        context.scene.mbdyn_settings.num_nodes = kk;
-               
+
+    # if nodes_dictionary is not empty, check for consistency
+    nodes_dict = context.scene.mbdyn_settings.nodes_dictionary
+    nn = len(nodes_dict)
+    if nn:  
+        # Debug message
+        print("create_nodes_dict(): dictionary already exists in scene.")
+        print("create_nodes_dict(): Checking .mov file consistency.")
+        if nn == len(nodes):
+            for ii in range(len(nodes)):
+                for item in nodes_dict:
+                    if item.int_label == nodes[ii].int_label:
+                        nodes[ii] = nodes[ii]._replace(found=True)
+            if all(node.found == True for node in nodes):
+                # OK - Model node list has not changed (hopefully)
+                # TODO: Inform the user
+                print("create_nodes_dict(): .mov file seems consistent with scene dictionary.")
+            else:
+                print("create_nodes_dict(): ERROR - .mov file is not consistent with scene dictionary")
+                return 'MODEL_HAS_CHANGED'
+    else:
+        for node in nodes:
+            ndi = nodes_dict.add()
+            ndi.int_label = node.int_label
+            ndi.string_label = node.string_label 
+
     # Try to find string labels in .lab file
-    print("Reading node labels from file: ", lab_file)
-    set_strings = ["set: const integer Node_", "set: integer Node_", "set: const integer node_", "set: integer node_"]
+    print("create_nodes_dict(): Reading node labels from file: ", lab_file)
+    set_strings = ["set: const integer Node_", \
+                   "set: integer Node_", \
+                   "set: const integer node_", \
+                   "set: integer node_"]
     labels = 'FILE'
     try: 
         with open(lab_file) as lf:
@@ -354,9 +377,15 @@ def create_nodes_dict(file_dir, file_basename):
                         node_label_str = line_str[len(set_string):(eq_idx - 1)].strip()
                         for item in context.scene.mbdyn_settings.nodes_dictionary:
                             if node_label_int == item.int_label:
+                                if item.string_label != node_label_str:
+                                    print("create_nodes_dictionary(): WARNING - String label of node " +\
+                                            item.int_label + " changed from '" + item.string_label + "' to " +\
+                                            node_label_str)
+                                    labels = 'FILE_UPDATED'
                                 item.string_label = node_label_str
     except IOError:
-        print("Can't find labels file {}, using default node labeling...".format(lab_file))
+        print("create_nodes_dict(): Can't find labels file {}, \
+                using default node labeling...".format(lab_file))
         labels = 'DEFAULT'
         pass
                     
@@ -515,19 +544,20 @@ def read_mbdyn_data(context, filepath):
     print("File {} has {} rows".format(filepath, str(fl)))   
     
     # Setting of global (scene) properties
-    context.scene.mbdyn_settings.is_active = True
     file_dir, file_basename = path_leaf(filepath)
     
     # Populates the nodes dictionary
-    labels = create_nodes_dict(file_dir, file_basename)
+    retval = create_nodes_dict(file_dir, file_basename)
     
-    context.scene.mbdyn_settings.file_basename = file_basename
-    context.scene.mbdyn_settings.file_path = file_dir
-    context.scene.mbdyn_settings.num_rows = fl
-    context.scene.mbdyn_settings.num_timesteps = fl/context.scene.mbdyn_settings.num_nodes
-    
-    
-    return labels
+    mbs = context.scene.mbdyn_settings
+
+    mbs.file_basename = file_basename
+    mbs.file_path = file_dir
+    mbs.num_rows = fl
+    mbs.num_nodes = len(mbs.nodes_dictionary)
+    mbs.num_timesteps = fl/mbs.num_nodes
+ 
+    return retval
         
 class MBDynImportMotionPath(Operator, ImportHelper):
     """ Helper class to set MBDyn's files path in Toolbar Panel """
@@ -543,11 +573,16 @@ class MBDynImportMotionPath(Operator, ImportHelper):
             )
         
     def execute(self, context):
-        labels = read_mbdyn_data(context, self.filepath)
-        if labels == 'DEFAULT':
+        retval = read_mbdyn_data(context, self.filepath)
+        if retval == 'MODEL_HAS_CHANGED':
+            self.report({'ERROR'}, "MBDyn .mov file is not consistent with scene settings!")
+            return {'CANCELLED'}
+        if retval == 'DEFAULT':
             self.report({'WARNING'}, "MBDyn .lab file not found: using default labels")
-        elif labels == 'FILE':
+        elif retval == 'FILE':
             self.report({'INFO'}, "MBDyn node labels read from .lab file")
+        elif retval == 'FILE_UPDATED':
+            self.report({'WARNING'}, ".lab file contains different labeling with respect to scene data")
         return {'FINISHED'}
     
     def invoke(self, context, event):
@@ -636,6 +671,22 @@ def set_motion_paths(context):
     
     return {'FINISHED'}
 
+class MBDynClearData(Operator):
+    """ Clears MBDyn elements and nodes dictionaries, essentially 'cleaning' the scene """
+    bl_idname = "mbdyn.cleardata"
+    bl_label = "Clear MBDyn Data"
+
+    def execute(self, context):
+        context.scene.mbdyn_settings.nodes_dictionary.clear()
+        context.scene.mbdyn_settings.elems_dictionary.clear()
+        self.report({'INFO'}, "Scene MBDyn data cleared.")
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynClearData)
+
 class MBDynSetMotionPaths(Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
     bl_idname = "animate.set_mbdyn_motion_path"
@@ -671,11 +722,12 @@ bpy.utils.register_class(MBDynReadLog)
 
 class MBDynImportPanel(Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
-    
-    bl_label = "MBDyn Motion Path"
+    bl_idname = "VIEW3D_TL_MBDyn_ImportPath" 
+    bl_label = "MBDyn Motion Paths"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
+    bl_category = 'Animation'
     
     def draw(self, context):
         
@@ -687,10 +739,16 @@ class MBDynImportPanel(Panel):
         # MBDyn file import
         row = layout.row()
         row.label(text="Import motion path from MBDyn")
-        col = layout.column(align=True)
+        col = layout.column(align = True)
         col.operator(MBDynImportMotionPath.bl_idname, text="Select .mov file")
         col.prop(sce.mbdyn_settings, "load_frequency")
-        
+
+        # Clear MBDyn data for scene
+        row = layout.row()
+        row.label(text="Clear MBDyn data for scene")
+        col = layout.column(align = True)
+        col.operator(MBDynClearData.bl_idname, text = "CLEAR MBDYN DATA")
+
         # Display MBDyn file basename and info
         row = layout.row()
         row.label(text="MBDyn files basename:")
@@ -727,6 +785,7 @@ class MBDynImportPanel(Panel):
 
 
 class MBDynImportElement(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_MBdyn_elements"
     bl_label = "MBdyn elements"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -864,7 +923,7 @@ class MBDynImportElemRodBez(bpy.types.Operator):
         for elem in ed:
             if elem.int_label == self.int_label:
                 if elem.is_imported:
-                    # TODO: ask for user acceptance and replace
+                    # TODO: ask for user acceptance and 
                     print("Element is already imported. Remove it manually before updating it.")
                     return{'CANCELLED'}
                 else:
@@ -1038,20 +1097,21 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
     def execute(self, context):
         axes = {'1': 'X', '2': 'Y', '3': 'Z'}
         context.object.mbdyn_settings.int_label = self.int_label
+        ret_val = ''
         for item in context.scene.mbdyn_settings.nodes_dictionary:
             if self.int_label == item.int_label:
                 item.blender_id = context.object.name
-                param = context.object.mbdyn_settings.parametrization
-                if param == 'phi':
-                    context.object.rotation_mode = 'AXIS_ANGLE'
-                elif param[0:5] == 'euler':
-                    context.object.rotation_mode = axes[param[5]] + \
-                                                    axes[param[6]] + \
-                                                    axes[param[7]]
-        # DEBUG message to console
-        print("Object " + context.object.name + \
-              " MBDyn node association updated to node " + \
-              str(context.object.mbdyn_settings.int_label))
+                ret_val = update_parametrization(context)
+            if ret_val == 'ROT_NOT_SUPPORTED':
+                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
+                            + obj.mbdyn_settings.string_label)
+            elif ret_val == 'LOG_NOT_FOUND':
+                self.report({'ERROR'}, "MBDyn .log file not found")
+            else:
+                # DEBUG message to console
+                print("Object " + context.object.name + \
+                      " MBDyn node association updated to node " + \
+                str(context.object.mbdyn_settings.int_label))
         return{'FINISHED'}
 
 def register():
@@ -1073,6 +1133,7 @@ def unregister():
     bpy.utils.unregister_class(MBDynSettingsObject)
     bpy.utils.unregister_class(MBDynSetMotionPaths)
     bpy.utils.unregister_class(MBDynReadLog)
+    bpy.utils.unregister_class(MBDynClearData)
     bpy.utils.unregister_class(MBDynImportPanel)
     bpy.utils.unregister_class(MBDynImportMotionPath)
     bpy.utils.unregister_class(MBDynOBJNodeSelect)
