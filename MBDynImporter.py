@@ -1,9 +1,9 @@
 bl_info = {
-    "name": "MBDyn Motion Paths",
-    "author": "Andrea Zanoni - <a.zanoni.mbdyn@gmail.com>",
-    "version": (1, 0),
+    "name": "MBDyn Motion Paths Importer",
+    "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
+    "version": (1, 1),
     "blender": (2, 65, 0),
-    "location": "View3D -> Misc -> MBDyn Motion Path",
+    "location": "View3D -> Animation -> MBDyn Motion Path",
     "description": "Imports simulation results of MBDyn (OpenSource MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
     "warning": "Beta stage",
     "wiki_url": "",
