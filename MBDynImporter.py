@@ -947,7 +947,7 @@ class MBDynImportPanel(Panel):
                         row = layout.row()
                         row.label(text = "MBDyn's element info:")
                         eval(elem.info_draw + "(elem, layout)")
-                        if elem.update_operator != 'none' and elem.is_imported = True:
+                        if elem.update_operator != 'none' and elem.is_imported == True:
                             row = layout.row()
                             row.operator(elem.update_operator, \
                                     text="UPDATE").elem_key = elem.name
