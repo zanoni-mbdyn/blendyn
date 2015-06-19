@@ -101,7 +101,13 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
         )
     update_operator = StringProperty(
         name = "Update operator",
-        description = "Id name of the operator that updates the element info using the current position of the blender objects representing it",
+        description = "Id name of the operator that updates the element info using \
+            the current position of the blender objects representing it",
+        default = 'none'
+        )
+    write_operator = StringProperty(
+        name = "Input write operator",
+        description = "Id name of the operator that writes the element input contribute",
         default = 'none'
         )
     info_draw = StringProperty(
@@ -372,7 +378,7 @@ def create_nodes_dict(file_dir, file_basename):
         for node in nodes:
             ndi = nodes_dict.add()
             ndi.int_label = node.int_label
-            ndi.name = "node_" + str(int_label)
+            ndi.name = "node_" + str(node.int_label)
             ndi.string_label = node.string_label 
 
     # Try to find string labels in .lab file
@@ -390,11 +396,11 @@ def create_nodes_dict(file_dir, file_basename):
                         line_str = line.rstrip()
                         eq_idx = line_str.find('=') + 1
                         node_label_int = int(line_str[eq_idx:-1].strip())
-                        node_label_str = line_str[len(set_string):(eq_idx - 1)].strip()
+                        node_label_str = line_str[(len(set_string) - 5):(eq_idx - 1)].strip()
                         for item in context.scene.mbdyn_settings.nodes_dictionary:
                             if node_label_int == item.int_label:
                                 if item.string_label != node_label_str:
-                                    print("create_nodes_dictionary(): WARNING "\
+                                    print("create_nodes_dict(): WARNING "\
                                         "- String label of node " + str(item.int_label) + \
                                         " changed from '" + item.string_label + "' to " +\
                                         node_label_str)
@@ -489,6 +495,7 @@ def parse_joint(context, jnt_type, rw):
             el.import_function = "imp_mbdyn_elem.rodbez"
             el.info_draw = "rodbez_info_draw"
             el.update_operator = "update.rodbez"
+            el.write_operator = "write.rodbez"
             el.name = el.type + "_" + str(el.int_label)
 
     joint_types  = {    "rod" : parse_rodj,
@@ -732,8 +739,10 @@ class MBDynReadLog(Operator):
 
     def execute(self, context):
         ret_val = parse_log_file(context)
-        if ret_val == { 'CANCELLED' }:
+        if ret_val == {'CANCELLED'}:
             self.report({'ERROR'}, "MBDyn .log file not found")
+        elif ret_val == {'FINISHED'}:
+            self.report({'INFO'}, "MBDyn elements imported successfully")
         return  ret_val 
 
     def invoke(self, context, event):
@@ -749,12 +758,9 @@ def elem_info_draw(elem, layout):
         kk = kk + 1
         for node in nd:
              if node.int_label == elnode.int_label:
-                col.prop(node, "int_label", \
-                    text = "Node " + str(kk) + " ID: ")
-                col.prop(node, "string_label", \
-                    text = "Node " + str(kk) + " label: ")
-                col.prop(node, "blender_object", \
-                    text = "Node " + str(kk) + " Object: ")
+                col.prop(node, "int_label", text = "Node " + str(kk) + " ID: ")
+                col.prop(node, "string_label", text = "Node " + str(kk) + " label: ")
+                col.prop(node, "blender_object", text = "Node " + str(kk) + " Object: ")
                 col.enabled = False
     
     kk = 0
@@ -763,8 +769,7 @@ def elem_info_draw(elem, layout):
         row = layout.row()
         row.label(text = "offset " + str(kk))
         col = layout.column(align = True)
-        col.prop(off, "value", text = "")
-        col.enabled = False
+        col.prop(off, "value", text = "", slider = False)
 
 # -----------------------------------------------------------
 # end of elem_info_draw(elem, layout) function
@@ -806,7 +811,60 @@ class RodBezUpdate(Operator):
 # -----------------------------------------------------------
 # end of RodBezUpdate class
 
+class RodBezWrite(Operator):
+    bl_idname = "write.rodbez"
+    bl_label = "MBDyn Rod Bezier input writer"
+    elem_key = bpy.props.StringProperty()
+
+    def execute(self, context):
+        elem = bpy.context.scene.mbdyn_settings.elems_dictionary[self.elem_key]
+        fO = elem.offsets[0].value
+        fA = elem.offsets[1].value
+        fB = elem.offsets[2].value
+        fI = elem.offsets[3].value
+
+        nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
+        n1 = nd['node_' + str(elem.nodes[0].int_label)]
+        n2 = nd['node_' + str(elem.nodes[1].int_label)]
+        
+        node_1_label = "Node_" + str(elem.nodes[0].int_label)
+        if n1.string_label != node_1_label:
+            node_1_label = n1.string_label
+        else:
+            node_1_label = str(n1.int_label)
+        
+        node_2_label = "Node_" + str(elem.nodes[1].int_label)
+        if n2.string_label != node_2_label:
+            node_2_label = n2.string_label
+        else:
+            node_2_label = str(n2.int_label)
+
+        # create new text object
+        rbtext = bpy.data.texts.new(self.elem_key)
+    
+        # write rod bezier input
+        rbtext.write("joint: " + self.elem_key + ",\n")
+        rbtext.write("\trod bezier,\n")
+        rbtext.write("\t" + node_1_label + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_1_label + ", ")
+        rbtext.write(str(fO[0]) + ", " + str(fO[1]) + ", " + str(fO[2]) + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_1_label + ", ")
+        rbtext.write(str(fA[0]) + ", " + str(fA[1]) + ", " + str(fA[2]) + ",\n")
+        rbtext.write("\t" + node_2_label + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_2_label + ", ")
+        rbtext.write(str(fB[0]) + ", " + str(fB[1]) + ", " + str(fB[2]) + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_2_label + ", ")
+        rbtext.write(str(fI[0]) + ", " + str(fI[1]) + ", " + str(fI[2]) + ",\n")
+        rbtext.write("\tfrom nodes;")
+
+        self.report({'INFO'}, "Input file contribute for element written. See " +\
+                        rbtext.name + " in text editor")
+        return {'FINISHED'}
+# -----------------------------------------------------------
+# end of RodBezWrite class
+
 bpy.utils.register_class(RodBezUpdate)
+bpy.utils.register_class(RodBezWrite)
 
 def rodbez_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
@@ -820,29 +878,23 @@ def rodbez_info_draw(elem, layout):
         if node.int_label == elem.nodes[0].int_label:
  
             # Display node 1 info
-            col.prop(node, "int_label", \
-                    text = "Node 1 ID ")
-            col.prop(node, "string_label", \
-                    text = "Node 1 label ")
-            col.prop(node, "blender_object", \
-                    text = "Node 1 Object: ")
+            col.prop(node, "int_label", text = "Node 1 ID ")
+            col.prop(node, "string_label", text = "Node 1 label ")
+            col.prop(node, "blender_object", text = "Node 1 Object: ")
             col.enabled = False
 
             # Display first offset of node 1 info
             row = layout.row()
-            row.label(text = "offset 1 in Node " \
-                    + node.string_label + " R.F.")
+            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
             col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "")
-            col.enabled = False
+            col.prop(elem.offsets[0], "value", text = "", slider = False)
 
             # Display second offset of node 1 info
             row = layout.row()
-            row.label(text = "offset 2 in Node " \
-                    + node.string_label + " R.F.")
+            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
             col = layout.column(align = True)
-            col.prop(elem.offsets[1], "value", text = "")
-            col.enabled = False
+            col.prop(elem.offsets[1], "value", text = "", slider = False)
+            # col.enabled = False
             
             layout.separator()
 
@@ -851,29 +903,22 @@ def rodbez_info_draw(elem, layout):
             # Display node 2 info
             row = layout.row()
             col = layout.column(align = True)
-            col.prop(node, "int_label", \
-                    text = "Node 2 ID ")
-            col.prop(node, "string_label", \
-                    text = "Node 2 label ")
-            col.prop(node, "blender_object", \
-                    text = "Node 2 Object: ")
+            col.prop(node, "int_label", text = "Node 2 ID ")
+            col.prop(node, "string_label", text = "Node 2 label ")
+            col.prop(node, "blender_object", text = "Node 2 Object: ")
             col.enabled = False
 
             # Display first offset of node 2 info
             row = layout.row()
-            row.label(text = "offset 1 in Node " \
-                    + node.string_label + " R.F.")
+            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
             col = layout.column(align = True)
-            col.prop(elem.offsets[2], "value", text = "")
-            col.enabled = False
+            col.prop(elem.offsets[2], "value", text = "", slider = False)
 
             # Display first offset of node 2 info
             row = layout.row()
-            row.label(text = "offset 2 in Node " \
-                    + node.string_label + " R.F.")
+            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
             col = layout.column(align = True)
-            col.prop(elem.offsets[3], "value", text = "")
-            col.enabled = False
+            col.prop(elem.offsets[3], "value", text = "", slider = False)
 
             layout.separator()
 # -----------------------------------------------------------
@@ -950,7 +995,11 @@ class MBDynImportPanel(Panel):
                         if elem.update_operator != 'none' and elem.is_imported == True:
                             row = layout.row()
                             row.operator(elem.update_operator, \
-                                    text="UPDATE").elem_key = elem.name
+                                    text = "Update element info").elem_key = elem.name
+                        if elem.write_operator != 'none' and elem.is_imported == True:
+                            row = layout.row()
+                            row.operator(elem.write_operator, \
+                                    text = "Write element input").elem_key = elem.name
         except AttributeError:
             row.label(text="No active objects")
             pass
@@ -1350,6 +1399,7 @@ def unregister():
     bpy.utils.unregister_class(MBDynReadLog)
     bpy.utils.unregister_class(MBDynClearData)  
     bpy.utils.unregister_class(RodBezUpdate)
+    bpy.utils.unregister_class(RodBezWrite)
     bpy.utils.unregister_class(MBDynImportPanel)
     bpy.utils.unregister_class(MBDynImportMotionPath)
     bpy.utils.unregister_class(MBDynOBJNodeSelect)
