@@ -785,11 +785,11 @@ class RodBezUpdate(Operator):
                 fOG = cvdata.bezier_points[0].co
                 RN1 = bpy.data.objects[node.blender_object].matrix_world.to_3x3()
                 fN1 = bpy.data.objects[node.blender_object].location
-                elem.offsets[0]['value'] = RN1.transposed()*(fN1 - fOG)
+                elem.offsets[0]['value'] = RN1.transposed()*(fOG - fN1)
     
                 # node 1 offset 2
                 fAG = cvdata.bezier_points[0].handle_right
-                elem.offsets[1]['value'] = RN1.transposed()*(fN1 - fAG) 
+                elem.offsets[1]['value'] = RN1.transposed()*(fAG - fN1) 
         
             elif node.int_label == elem.nodes[1].int_label:
     
@@ -797,11 +797,11 @@ class RodBezUpdate(Operator):
                 fBG = cvdata.bezier_points[1].handle_left
                 RN2 = bpy.data.objects[node.blender_object].matrix_world.to_3x3()
                 fN2 = bpy.data.objects[node.blender_object].location
-                elem.offsets[2]['value'] = RN2.transposed()*(fN2 - fBG)
+                elem.offsets[2]['value'] = RN2.transposed()*(fBG - fN2)
     
                 # offset 2
                 fIG = cvdata.bezier_points[1].co
-                elem.offsets[3]['value'] = RN2.transposed()*(fN2 - fIG)
+                elem.offsets[3]['value'] = RN2.transposed()*(fIG - fN2)
         return{'FINISHED'}
 # -----------------------------------------------------------
 # end of RodBezUpdate class
@@ -995,7 +995,7 @@ class MBDynImportElement(bpy.types.Panel):
             row.label(str(elem.int_label))
             row.label(elem.type)
             if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-                row.operator(elem.import_function, text = "RE-IMPORT").int_label = elem.int_label
+                row.operator(elem.import_function, text = "IMPORTED").int_label = elem.int_label
             else:
                 row.operator(elem.import_function, text = "IMPORT").int_label = elem.int_label
 
@@ -1014,38 +1014,50 @@ class MBDynImportElemRod(bpy.types.Operator):
         for elem in ed:
             if elem.int_label == self.int_label:
                 if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-                    #TODO: ask for user acceptance and replace it or upload it
-                    print("Element is already imported. Remove it manually before updating it.")
+                    self.report({'WARNING'}, "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!")
+                    print("Element is already imported. Remove it or rename it \
+                        before re-importing the element.")
                     return{'CANCELLED'}
                 else:
                     n1 = "none"
                     n2 = "none"
                     
-                    # try to find Blender objects associated with the nodes that the element connects
+                    # try to find Blender objects associated with the nodes that 
+                    # the element connects
                     for node in nd:
                         if elem.nodes[0].int_label == node.int_label:
                             n1 = node.blender_object
                         elif elem.nodes[1].int_label == node.int_label:
                             n2 = node.blender_object
                     if n1 == "none":
-                        print("MBDynImportElemRod(): Could not find a Blender object associated to Node " \
-                            + str(elem.nodes[0].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object associated to Node " + \
-                            str(elem.nodes[0].int_label) + " not found")
+                        print("MBDynImportElemRod(): Could not find a Blender object \
+                            associated to Node " + str(elem.nodes[0].int_label))
+                        self.report({'ERROR'}, "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[0].int_label) + " not found")
                         return {'CANCELLED'}
                     elif n2 == "none":
-                        print("MBDynImportElemRod(): Could not find a Blender object associated to Node " \
-                            + str(elem.nodes[1].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object associated to Node " + \
-                            str(elem.nodes[1].int_label) + " not found")
+                        print("MBDynImportElemRod(): Could not find a Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label))
+                        self.report({'ERROR'}, "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
                         return {'CANCELLED'}
 
                     # creation of line representing the rod
-                    rodcv_id = "rod_" + str(elem.int_label) + "_cvdata"
-                    # check if curve is already present.
+                    rodobj_id = "rod_" + str(elem.int_label)
+                    rodcv_id = rodobj_id + "_cvdata"
+                    
+                    # check if the object is already present
+                    # If it is, remove it. FIXME: this may be dangerous!
+                    if rodobj_id in bpy.data.objects.keys():
+                        bpy.data.objects.remove(bpy.data.objects[rodobj_id])
+                    
+                    # check if curve is already present
                     # If it is, remove it. FIXME: this may be dangerous!
                     if rodcv_id in bpy.data.curves.keys():
                         bpy.data.curves.remove(bpy.data.curves[rodcv_id])
+                    
+                    # create a new curve and its object
                     cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
                     cvdata.dimensions = '3D'
                     polydata = cvdata.splines.new('POLY')
@@ -1109,38 +1121,51 @@ class MBDynImportElemRodBez(bpy.types.Operator):
         for elem in ed:
             if elem.int_label == self.int_label:
                 if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-                    #TODO: ask for user acceptance and replace it or upload it
-                    print("Element is already imported. Remove it manually before updating it.")
+                    self.report({'WARNING'}, "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!")
+                    print("Element is already imported. Remove it or rename it \
+                        before re-importing the element.")
                     return{'CANCELLED'}
                 else:
                     elem.is_imported = False
                     n1 = "none"
                     n2 = "none"
                     
-                    # try to find Blender objects associated with the nodes that the element connects
+                    # try to find Blender objects associated with the nodes that 
+                    # the element connects
                     for node in nd:
                         if elem.nodes[0].int_label == node.int_label:
                             n1 = node.blender_object
                         elif elem.nodes[1].int_label == node.int_label:
                             n2 = node.blender_object
                     if n1 == "none":
-                        print("MBDynImportElemRodBez(): Could not find a Blender object associated to Node " + \
-                            str(elem.nodes[0].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object associated to Node " + \
-                            str(elem.nodes[0].int_label) + " not found")
+                        print("MBDynImportElemRodBez(): Could not find a Blender object \
+                        associated to Node " + str(elem.nodes[0].int_label))
+                        self.report({'ERROR'}, "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[0].int_label) + " not found")
                         return{'CANCELLED'}
                     elif n2 == "none":
-                        print("MBDynImportElemRodBez(): Could not find a Blender object associated to Node " + \
-                            str(elem.nodes[1].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object associated to Node " + \
-                            str(elem.nodes[1].int_label) + " not found")
+                        print("MBDynImportElemRodBez(): Could not find a Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label))
+                        self.report({'ERROR'}, "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
                         return{'CANCELLED'}
 
                     # creation of line representing the rod
-                    rodcv_id = "rod_bezier_" + str(elem.int_label) + "_cvdata"
-                    # check if curve is already present. If it is, remove it. FIXME: may be dangerous
+                    rodobj_id = "rod_bezier_" + str(elem.int_label)
+                    rodcv_id =  rodobj_id + "_cvdata"
+                    
+                    # check if the object is already present
+                    # If it is, remove it. FIXME: this may be dangerous!
+                    if rodobj_id in bpy.data.objects.keys():
+                        bpy.data.objects.remove(bpy.data.objects[rodobj_id])
+                    
+                    # check if curve is already present
+                    # If it is, remove it. FIXME: this may be dangerous!
                     if rodcv_id in bpy.data.curves.keys():
                         bpy.data.curves.remove(bpy.data.curves[rodcv_id])
+                    
+                    # create a new curve and its object
                     cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
                     cvdata.dimensions = '3D'
                     polydata = cvdata.splines.new('BEZIER')
