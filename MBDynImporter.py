@@ -432,17 +432,18 @@ def parse_joint(context, jnt_type, rw):
     def parse_rodj():
         # Debug message
         print("parse_rodj(): Parsing rod " + rw[1])
-        el = None
-        for elem in ed:
-            if elem.int_label == int(rw[1]) and elem.type == 'rod':
-                # Debug message
-                print("parse_rodj(): found existing entry in elements dictionary. Updating it.")
-                el = elem
-                el.nodes[0].int_label = int(rw[2])
-                el.nodes[1].int_label = int(rw[6])
-                el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-                el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        if el == None:
+        try:
+            el = ed['rod_' + str(rw[1])]
+            print("parse_rodj(): found existing entry in elements dictionary. Updating it.")
+            el.nodes[0].int_label = int(rw[2])
+            el.nodes[1].int_label = int(rw[6])
+            el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+            el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+            el.is_imported = True
+            if el.name in bpy.data.objects.keys():
+                el.blender_object = el.name
+                el.is_imported = True
+        except KeyError:
             print("parse_rodj(): didn't find entry in elements dictionary. Creating one.")
             el = ed.add()
             el.type = 'rod'
@@ -457,25 +458,26 @@ def parse_joint(context, jnt_type, rw):
             el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             el.import_function = "imp_mbdyn_elem.rod"
             el.name = el.type + "_" + str(el.int_label)
-            
+            pass
+             
     # helper function to parse rod bezier joint
     def parse_rodbezj():
         # Debug message
-        print("parse_rodbezj(): Parsing rod bezier " + rw[1])
-        el = None
-        for elem in ed:
-            if elem.int_label == int(rw[2]) and elem.type == 'rod bezier':
-                # Debug message
-                print("parse_rodbezj(): found existing entry in elements dictionary.\
+        print("parse_rodbezj(): Parsing rod bezier " + rw[2])
+        try:
+            el = ed['rod_bezier_' + rw[2]]
+            print("parse_rodbezj(): found existing entry in elements dictionary.\
                     Updating it.")
-                el = elem
-                el.nodes[0].int_label = int(rw[3])
-                el.nodes[1].int_label = int(rw[10])
-                el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-                el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-                el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-                el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
-        if el == None:
+            el.nodes[0].int_label = int(rw[3])
+            el.nodes[1].int_label = int(rw[10])
+            el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
+            el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+            el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+            el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
+            if el.name in bpy.data.objects.keys():
+                el.blender_object = el.name
+                el.is_imported = True
+        except KeyError:
             print("parse_rodbezj(): didn't find entry in elements dictionary. Creating one.")
             el = ed.add()
             el.type = 'rod bezier'
@@ -496,7 +498,8 @@ def parse_joint(context, jnt_type, rw):
             el.info_draw = "rodbez_info_draw"
             el.update_operator = "update.rodbez"
             el.write_operator = "write.rodbez"
-            el.name = el.type + "_" + str(el.int_label)
+            el.name = "rod_bezier_" + str(el.int_label)
+            pass
 
     joint_types  = {    "rod" : parse_rodj,
                         "rod bezier" : parse_rodbezj}
@@ -517,9 +520,6 @@ def parse_log_file(context):
     context = bpy.context
     mbs = context.scene.mbdyn_settings
     log_file = mbs.file_path + mbs.file_basename + '.log'
-
-    # clear elements dictionary first
-    mbs.elems_dictionary.clear()
 
     # Debug message to console
     print("parse_log_file(): Trying to read elements from file: " + log_file)
@@ -788,7 +788,7 @@ class RodBezUpdate(Operator):
     
                 # node 1 offset 1
                 fOG = cvdata.bezier_points[0].co
-                RN1 = bpy.data.objects[node.blender_object].matrix_world.to_3x3()
+                RN1 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
                 fN1 = bpy.data.objects[node.blender_object].location
                 elem.offsets[0]['value'] = RN1.transposed()*(fOG - fN1)
     
@@ -800,7 +800,7 @@ class RodBezUpdate(Operator):
     
                 # node 2 offset 1
                 fBG = cvdata.bezier_points[1].handle_left
-                RN2 = bpy.data.objects[node.blender_object].matrix_world.to_3x3()
+                RN2 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
                 fN2 = bpy.data.objects[node.blender_object].location
                 elem.offsets[2]['value'] = RN2.transposed()*(fBG - fN2)
     
@@ -847,14 +847,14 @@ class RodBezWrite(Operator):
         rbtext.write("\trod bezier,\n")
         rbtext.write("\t" + node_1_label + ",\n")
         rbtext.write("\t\tposition, reference, node, " + node_1_label + ", ")
-        rbtext.write(str(fO[0]) + ", " + str(fO[1]) + ", " + str(fO[2]) + ",\n")
+        rbtext.write(str(fO[0]) + "*msfx" + ", " + str(fO[1]) + "*msfy" + ", " + str(fO[2]) + "*msfz" + ",\n")
         rbtext.write("\t\tposition, reference, node, " + node_1_label + ", ")
-        rbtext.write(str(fA[0]) + ", " + str(fA[1]) + ", " + str(fA[2]) + ",\n")
+        rbtext.write(str(fA[0]) + "*msfx" + ", " + str(fA[1]) + "*msfy" + ", " + str(fA[2]) + "*msfz" + ",\n")
         rbtext.write("\t" + node_2_label + ",\n")
         rbtext.write("\t\tposition, reference, node, " + node_2_label + ", ")
-        rbtext.write(str(fB[0]) + ", " + str(fB[1]) + ", " + str(fB[2]) + ",\n")
+        rbtext.write(str(fB[0]) + "*msfx" + ", " + str(fB[1]) + "*msfy" + ", " + str(fB[2]) + "*msfz" + ",\n")
         rbtext.write("\t\tposition, reference, node, " + node_2_label + ", ")
-        rbtext.write(str(fI[0]) + ", " + str(fI[1]) + ", " + str(fI[2]) + ",\n")
+        rbtext.write(str(fI[0]) + "*msfx" + ", " + str(fI[1]) + "*msfy" + ", " + str(fI[2]) + "*msfz" + ",\n")
         rbtext.write("\tfrom nodes;")
 
         self.report({'INFO'}, "Input file contribute for element written. See " +\
