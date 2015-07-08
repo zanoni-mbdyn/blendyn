@@ -15,7 +15,7 @@ from bpy.types import Operator, Panel
 from bpy.props import BoolProperty, IntProperty, IntVectorProperty, FloatVectorProperty
 from bpy.props import StringProperty, BoolVectorProperty, PointerProperty, CollectionProperty
 from bpy_extras.io_utils import ImportHelper
-from mathutils import Vector, Euler
+from mathutils import Vector, Euler, Matrix
 
 import ntpath, os, csv
 from collections import namedtuple
@@ -218,7 +218,9 @@ def update_parametrization(context):
                     if line[6] == 'phi':
                         obj.rotation_mode = 'AXIS_ANGLE'
                     elif line[6][0:5] == 'euler':
-                        obj.rotation_mode = axes[line[6][5]] + axes[line[6][6]] + axes[line[6][7]] 
+                        obj.rotation_mode = axes[line[6][5]] + axes[line[6][6]] + axes[line[6][7]]
+                    elif line[6] == 'mat':
+                        obj.rotation_mode = 'QUATERNION'
                     else:
                         print("update_parametrization(): rotation parametrization not supported (yet...)!")
                         ret_val = 'ROT_NOT_SUPPORTED'
@@ -640,6 +642,12 @@ def set_obj_locrot(obj, rw):
         print(str(rotvec.magnitude), str(rotvec_norm[0]), str(rotvec_norm[1]), str(rotvec_norm[2]))
         obj.rotation_axis_angle = Vector((rotvec.magnitude, rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
         pass
+    elif parametrization == 'mat':
+        R = Matrix((( float(rw[4]), float(rw[5]), float(rw[6]), 0.0),\
+                    (float(rw[7]), float(rw[8]), float(rw[9]), 0.0),\
+                    (float(rw[10]), float(rw[11]), float(rw[12]), 0.0),\
+                    (0.0, 0.0, 0.0, 1.0)))
+        obj.rotation_quaternion = R.to_quaternion()
     else:
         print("Error: rotation parametrization not supported (yet...)")
     
@@ -846,15 +854,23 @@ class RodBezWrite(Operator):
         rbtext.write("joint: " + self.elem_key + ",\n")
         rbtext.write("\trod bezier,\n")
         rbtext.write("\t" + node_1_label + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_1_label + ", ")
-        rbtext.write(str(fO[0]) + "*msfx" + ", " + str(fO[1]) + "*msfy" + ", " + str(fO[2]) + "*msfz" + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_1_label + ", ")
-        rbtext.write(str(fA[0]) + "*msfx" + ", " + str(fA[1]) + "*msfy" + ", " + str(fA[2]) + "*msfz" + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
+        rbtext.write("\t\t\t" + str(fO[0]) + "*msfx" + ",\n")
+        rbtext.write("\t\t\t" + str(fO[1]) + "*msfy" + ",\n")
+        rbtext.write("\t\t\t" + str(fO[2]) + "*msfz" + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
+        rbtext.write("\t\t\t" + str(fA[0]) + "*msfx" + ",\n")
+        rbtext.write("\t\t\t" + str(fA[1]) + "*msfy" + ",\n")
+        rbtext.write("\t\t\t" + str(fA[2]) + "*msfz" + ",\n")
         rbtext.write("\t" + node_2_label + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_2_label + ", ")
-        rbtext.write(str(fB[0]) + "*msfx" + ", " + str(fB[1]) + "*msfy" + ", " + str(fB[2]) + "*msfz" + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_2_label + ", ")
-        rbtext.write(str(fI[0]) + "*msfx" + ", " + str(fI[1]) + "*msfy" + ", " + str(fI[2]) + "*msfz" + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
+        rbtext.write("\t\t\t" + str(fB[0]) + "*msfx" + ",\n")
+        rbtext.write("\t\t\t" + str(fB[1]) + "*msfy" + ",\n")
+        rbtext.write("\t\t\t" + str(fB[2]) + "*msfz" + ",\n")
+        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
+        rbtext.write("\t\t\t" + str(fI[0]) + "*msfx" + ",\n")
+        rbtext.write("\t\t\t" + str(fI[1]) + "*msfy" + ",\n")
+        rbtext.write("\t\t\t" + str(fI[2]) + "*msfz" + ",\n")
         rbtext.write("\tfrom nodes;")
 
         self.report({'INFO'}, "Input file contribute for element written. See " +\
