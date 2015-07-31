@@ -17,7 +17,7 @@ from bpy.props import StringProperty, BoolVectorProperty, PointerProperty, Colle
 from bpy_extras.io_utils import ImportHelper
 from mathutils import Vector, Euler, Matrix
 
-import ntpath, os, csv
+import ntpath, os, csv, math
 from collections import namedtuple
 import pdb	# <-- Python Debugger
 
@@ -218,7 +218,7 @@ def update_parametrization(context):
                     if line[6] == 'phi':
                         obj.rotation_mode = 'AXIS_ANGLE'
                     elif line[6][0:5] == 'euler':
-                        obj.rotation_mode = axes[line[6][5]] + axes[line[6][6]] + axes[line[6][7]]
+                        obj.rotation_mode = axes[line[6][7]] + axes[line[6][6]] + axes[line[6][5]]
                     elif line[6] == 'mat':
                         obj.rotation_mode = 'QUATERNION'
                     else:
@@ -349,13 +349,19 @@ def create_nodes_dict(file_dir, file_basename):
         
         # get the remaining ones
         done = False
-        while not done:
-            rw = next(reader)
-            curr_node = int(rw[0])
-            if first_node != curr_node:
-                nodes.append(Node(curr_node, 'Node_' + str(curr_node), False))
-            else:
-                done = True
+        try: 
+            while not done:
+                rw = next(reader)
+                curr_node = int(rw[0])
+                if first_node != curr_node:
+                    nodes.append(Node(curr_node, 'Node_' + str(curr_node), False))
+                else:
+                    done = True
+        except StopIteration:
+            print("create_nodes_dict(): Reached the end of .mov file before the second step.")
+            print("create_nodes_dict(): Trying to continue to allow visualization of assembly configuration.")
+            pass
+            
 
     # if nodes_dictionary is not empty, check for consistency
     nodes_dict = context.scene.mbdyn_settings.nodes_dictionary
@@ -634,8 +640,8 @@ def set_obj_locrot(obj, rw):
     print('Updating rotation of object', obj.name)
     
     if parametrization[0:5] == 'euler':
-        euler_seq = axes[parametrization[5]] + axes[parametrization[6]] + axes[parametrization[7]]
-        obj.rotation_euler = Euler((float(rw[4]), float(rw[5]), float(rw[6])), euler_seq)
+        euler_seq = axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]]
+        obj.rotation_euler = Euler((math.radians(float(rw[4])), math.radians(float(rw[5])), math.radians(float(rw[6]))), euler_seq)
     elif parametrization == 'phi':
         rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
         rotvec_norm = rotvec.normalized()
@@ -1116,12 +1122,7 @@ class MBDynImportElemRod(bpy.types.Operator):
                     # If it is, remove it. FIXME: this may be dangerous!
                     if rodobj_id in bpy.data.objects.keys():
                         bpy.data.objects.remove(bpy.data.objects[rodobj_id])
-                    
-                    # check if curve is already present
-                    # If it is, remove it. FIXME: this may be dangerous!
-                    if rodcv_id in bpy.data.curves.keys():
-                        bpy.data.curves.remove(bpy.data.curves[rodcv_id])
-                    
+                     
                     # create a new curve and its object
                     cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
                     cvdata.dimensions = '3D'
