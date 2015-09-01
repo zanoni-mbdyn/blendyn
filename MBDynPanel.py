@@ -1,11 +1,11 @@
 bl_info = {
-    "name": "MBDyn Motion Paths Importer",
-    "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
-    "version": (1, 1),
+    "name": "MBDyn Motion Paths",
+    "author": "Andrea Zanoni - <a.zanoni.mbdyn@gmail.com>",
+    "version": (0, 5),
     "blender": (2, 65, 0),
-    "location": "View3D -> Animation -> MBDyn Motion Path",
-    "description": "Imports simulation results of MBDyn (OpenSource MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
-    "warning": "Beta stage",
+    "location": "Properties -> Object -> MBDyn Motion Path",
+    "description": "Loads motion file from MBDyn (OpenSource MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
+    "warning": "Alpha stage",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Animation"}
@@ -15,10 +15,9 @@ from bpy.types import Operator, Panel
 from bpy.props import BoolProperty, IntProperty, IntVectorProperty, FloatVectorProperty
 from bpy.props import StringProperty, BoolVectorProperty, PointerProperty, CollectionProperty
 from bpy_extras.io_utils import ImportHelper
-from mathutils import Vector, Euler, Matrix
+from mathutils import Vector, Euler
 
-import ntpath, os, csv, math
-from collections import namedtuple
+import ntpath, os, csv
 import pdb	# <-- Python Debugger
 
 # Nodes Dictionary: contains integer/string labels associations
@@ -31,7 +30,7 @@ class MBDynNodesDictionary(bpy.types.PropertyGroup):
             name = "node string label",
             description = ""
             )
-    blender_object = StringProperty(
+    blender_id = StringProperty(
             name = "blender object label",
             description = "",
             default = "none"
@@ -41,8 +40,7 @@ class MBDynElemOffset(bpy.types.PropertyGroup):
     value = FloatVectorProperty(
         name = "Offset value",
 	description = "The offset vector, with respect to the node",
-        size = 3,
-        precision = 6
+        size = 3
 	)
 
 bpy.utils.register_class(MBDynElemOffset)
@@ -99,29 +97,9 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
         name = "Import operator",
         description = "Id name of the class defining the import operator for the element"
         )
-    update_operator = StringProperty(
-        name = "Update operator",
-        description = "Id name of the operator that updates the element info using \
-            the current position of the blender objects representing it",
-        default = 'none'
-        )
-    write_operator = StringProperty(
-        name = "Input write operator",
-        description = "Id name of the operator that writes the element input contribute",
-        default = 'none'
-        )
-    info_draw = StringProperty(
-        name = "Element Info Function",
-        description = "Name of the function used to display element data in the View3D panel",
-        default = "elem_info_draw"
-        )
-    blender_object = StringProperty(
-        name = "Blender Object",
-        description = "Name of the Blender Object associated with this element"
-        )
     is_imported = BoolProperty(
-        name = "Is imported flag",
-        description = "Flag set to true at the end of the import process"
+        name = "Import flag",
+        description = "Flag that is true if the element has been imported in the scene"
         )
 
 bpy.utils.register_class(MBDynNodesDictionary)
@@ -202,12 +180,9 @@ def update_parametrization(context):
     # .log file must share the same basename as the .mov file
     log_file = file_dir + file_basename + '.log'
     
-    # Try to find node's rotation parametrization in .log file.
+    # Try to find node's rotation parametrization in .log file. If not present, assume Euler123
     # Debug message
     print("Reading .log file:", log_file)
-
-    axes = {'1': 'X', '2': 'Y', '3': 'Z'}
-    ret_val = ''
     try:
         with open(log_file) as log:
             reader = csv.reader(log, delimiter=' ', skipinitialspace=True)
@@ -215,29 +190,14 @@ def update_parametrization(context):
                 line = next(reader)
                 if line[0] == 'structural' and int(line[2]) == obj.mbdyn_settings.int_label:
                     obj.mbdyn_settings.parametrization = line[6]
-                    if line[6] == 'phi':
-                        obj.rotation_mode = 'AXIS_ANGLE'
-                    elif line[6][0:5] == 'euler':
-                        obj.rotation_mode = axes[line[6][7]] + axes[line[6][6]] + axes[line[6][5]]
-                    elif line[6] == 'mat':
-                        obj.rotation_mode = 'QUATERNION'
-                    else:
-                        print("update_parametrization(): rotation parametrization not supported (yet...)!")
-                        ret_val = 'ROT_NOT_SUPPORTED'
-
     except IOError:
         print("Can't find .log file ", log_file)
-        ret_val = 'LOG_NOT_FOUND'
         pass
     except StopIteration:
         print("End of .log file")
-        ret_val = 'FINISHED'
         pass
-
-    return ret_val
+    return
     
-
-
 def update_label(self, context):
     # Function to assign MBDyn node to Blender Object
     
@@ -256,19 +216,12 @@ def update_label(self, context):
     for item in nd:
         if item.int_label == obj.mbdyn_settings.int_label:
             node_string_label = item.string_label
-            item.blender_object = obj.name
+            item.blender_id = obj.name
             obj.mbdyn_settings.is_assigned = True
     
     obj.mbdyn_settings.string_label = node_string_label
     if obj.mbdyn_settings.is_assigned:
-        ret_val = update_parametrization(context)
-
-    if ret_val == 'ROT_NOT_SUPPORTED':
-        self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-            + obj.mbdyn_settings.string_label)
-    elif ret_val == 'LOG_NOT_FOUND':
-        self.report({'ERROR'}, "MBDyn .log file not found")
-    
+        update_parametrization(context)
     return
 
 class MBDynSettingsObject(bpy.types.PropertyGroup): 
@@ -321,18 +274,17 @@ def reset_nodes_dict():
 
 # Function that populates the nodes dictionary
 def create_nodes_dict(file_dir, file_basename):
-    # NOTE: .lab file must share the same basename as the .mov file 
+    
+    # reset nodes dictionary first
+    reset_nodes_dict()
+    
+    # .lab file must share the same basename as the .mov file -- TODO: allow for different filenames?
     mov_file = file_dir + file_basename + '.mov'
     lab_file = file_dir + file_basename + '.lab'
     
     # Utility rename
     context = bpy.context
     
-    # Named tuple list to temporarily hold the nodes structure
-    # found in the .mov file
-    Node = namedtuple('Node', ['int_label', 'string_label', 'found'])
-    nodes = []
-
     # Initial loop to find MBDyn's nodes - default labels
     # Debug message
     print("Reading node list from file: ", mov_file) 
@@ -344,58 +296,30 @@ def create_nodes_dict(file_dir, file_basename):
         # get first node label
         rw = next(reader)
         first_node = int(rw[0])
-        
-        nodes.append(Node(first_node, 'Node_' + str(first_node), False))
+        ndi = context.scene.mbdyn_settings.nodes_dictionary.add()
+        ndi.int_label = first_node
+        ndi.string_label = 'Node_1'
         
         # get the remaining ones
         done = False
-        try: 
-            while not done:
-                rw = next(reader)
-                curr_node = int(rw[0])
-                if first_node != curr_node:
-                    nodes.append(Node(curr_node, 'Node_' + str(curr_node), False))
-                else:
-                    done = True
-        except StopIteration:
-            print("create_nodes_dict(): Reached the end of .mov file before the second step.")
-            print("create_nodes_dict(): Trying to continue to allow visualization of assembly configuration.")
-            pass
-            
-
-    # if nodes_dictionary is not empty, check for consistency
-    nodes_dict = context.scene.mbdyn_settings.nodes_dictionary
-    nn = len(nodes_dict)
-    if nn:  
-        # Debug message
-        print("create_nodes_dict(): dictionary already exists in scene.")
-        print("create_nodes_dict(): Checking .mov file consistency.")
-        if nn == len(nodes):
-            for ii in range(len(nodes)):
-                for item in nodes_dict:
-                    if item.int_label == nodes[ii].int_label:
-                        nodes[ii] = nodes[ii]._replace(found=True)
-            if all(node.found == True for node in nodes):
-                # OK - Model node list has not changed (hopefully)
-                # TODO: Inform the user
-                print("create_nodes_dict(): .mov file seems consistent with scene dictionary.")
+        kk = 1
+        while not done:
+            rw = next(reader)
+            curr_node = int(rw[0])
+            if first_node != curr_node:
+                kk = kk + 1
+                ndi = context.scene.mbdyn_settings.nodes_dictionary.add()
+                ndi.int_label = curr_node
+                ndi.string_label = 'Node_' + str(kk)
             else:
-                print("create_nodes_dict(): ERROR - .mov file is not consistent with scene dictionary")
-                return 'MODEL_HAS_CHANGED'
-    else:
-        for node in nodes:
-            ndi = nodes_dict.add()
-            ndi.int_label = node.int_label
-            ndi.name = "node_" + str(node.int_label)
-            ndi.string_label = node.string_label 
-
+                done = True
+       
+        context.scene.mbdyn_settings.num_nodes = kk;
+               
     # Try to find string labels in .lab file
-    print("create_nodes_dict(): Reading node labels from file: ", lab_file)
-    set_strings = ["set: const integer Node_", \
-                   "set: integer Node_", \
-                   "set: const integer node_", \
-                   "set: integer node_"]
-    labels = 'FILE'
+    # Debug message -- gets printed on console (TODO: feedback the user)
+    print("Reading node labels from file: ", lab_file)
+    set_strings = ["set: const integer Node_", "set: integer Node_", "set: const integer node_", "set: integer node_"]
     try: 
         with open(lab_file) as lf:
             for line in lf:
@@ -404,20 +328,13 @@ def create_nodes_dict(file_dir, file_basename):
                         line_str = line.rstrip()
                         eq_idx = line_str.find('=') + 1
                         node_label_int = int(line_str[eq_idx:-1].strip())
-                        node_label_str = line_str[(len(set_string) - 5):(eq_idx - 1)].strip()
+                        node_label_str = line_str[len(set_string):(eq_idx - 1)].strip()
                         for item in context.scene.mbdyn_settings.nodes_dictionary:
                             if node_label_int == item.int_label:
-                                if item.string_label != node_label_str:
-                                    print("create_nodes_dict(): WARNING "\
-                                        "- String label of node " + str(item.int_label) + \
-                                        " changed from '" + item.string_label + "' to " +\
-                                        node_label_str)
-                                    labels = 'FILE_UPDATED'
                                 item.string_label = node_label_str
     except IOError:
-        print("create_nodes_dict(): Can't find labels file {}, \
-                using default node labeling...".format(lab_file))
-        labels = 'DEFAULT'
+	# TODO: warn the user through the Blender interface that the file is not found
+        print("Can't find labels file {}, using default node labeling...".format(lab_file)) 
         pass
                     
     context.scene.mbdyn_settings.is_ready = True
@@ -426,9 +343,6 @@ def create_nodes_dict(file_dir, file_basename):
     print("Nodes dictionary:")
     for item in context.scene.mbdyn_settings.nodes_dictionary:
         print(item.int_label, '\t{}'.format(item.string_label))
-
-    return labels
-
 
 # Function that parses the single row of the .log file and stores
 # the element definition in elems_dictionary
@@ -440,18 +354,17 @@ def parse_joint(context, jnt_type, rw):
     def parse_rodj():
         # Debug message
         print("parse_rodj(): Parsing rod " + rw[1])
-        try:
-            el = ed['rod_' + str(rw[1])]
-            print("parse_rodj(): found existing entry in elements dictionary. Updating it.")
-            el.nodes[0].int_label = int(rw[2])
-            el.nodes[1].int_label = int(rw[6])
-            el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-            el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-            el.is_imported = True
-            if el.name in bpy.data.objects.keys():
-                el.blender_object = el.name
-                el.is_imported = True
-        except KeyError:
+        el = None
+        for elem in ed:
+            if elem.int_label == int(rw[1]) and elem.type == 'rod':
+                # Debug message
+                print("parse_rodj(): found existing entry in elements dictionary. Updating it.")
+                el = elem
+                el.nodes[0].int_label = int(rw[2])
+                el.nodes[1].int_label = int(rw[6])
+                el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+                el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        if el == None:
             print("parse_rodj(): didn't find entry in elements dictionary. Creating one.")
             el = ed.add()
             el.type = 'rod'
@@ -465,30 +378,22 @@ def parse_joint(context, jnt_type, rw):
             el.offsets.add()
             el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             el.import_function = "imp_mbdyn_elem.rod"
-            el.name = el.type + "_" + str(el.int_label)
-            pass
-             
+            
     # helper function to parse rod bezier joint
     def parse_rodbezj():
-        # Debug message
-        print("parse_rodbezj(): Parsing rod bezier " + rw[2])
-        try:
-            el = ed['rod_bezier_' + rw[2]]
-            print("parse_rodbezj(): found existing entry in elements dictionary.\
-                    Updating it.")
-            el.nodes[0].int_label = int(rw[3])
-            el.nodes[1].int_label = int(rw[10])
-            el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-            el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-            el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-            el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
-            if el.name in bpy.data.objects.keys():
-                el.blender_object = el.name
-                el.is_imported = True
-        except KeyError:
-            print("parse_rodbezj(): didn't find entry in elements dictionary. Creating one.")
+        el = None
+        for elem in ed:
+            if elem.int_label == int(rw[2]) and elem.type == 'rod bezier':
+                el = elem
+                el.nodes[0].int_label = int(rw[3])
+                el.nodes[1].int_label = int(rw[10])
+                el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
+                el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+                el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+                el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
+        if el == None:
             el = ed.add()
-            el.type = 'rod bezier'
+            el.type = 'rod'
             el.int_label = int(rw[2])
             el.nodes.add()
             el.nodes[0].int_label = int(rw[3])
@@ -503,14 +408,9 @@ def parse_joint(context, jnt_type, rw):
             el.offsets.add()
             el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
             el.import_function = "imp_mbdyn_elem.rodbez"
-            el.info_draw = "rodbez_info_draw"
-            el.update_operator = "update.rodbez"
-            el.write_operator = "write.rodbez"
-            el.name = "rod_bezier_" + str(el.int_label)
-            pass
-
-    joint_types  = {    "rod" : parse_rodj,
-                        "rod bezier" : parse_rodbezj}
+            
+    joint_types  = {    'rod' : parse_rodj,
+                        'rod bezier' : parse_rodbezj}
  
     try:
         joint_types[jnt_type]()
@@ -530,15 +430,13 @@ def parse_log_file(context):
     log_file = mbs.file_path + mbs.file_basename + '.log'
 
     # Debug message to console
-    print("parse_log_file(): Trying to read elements from file: " + log_file)
-    ret_val = { 'FINISHED' }
+    print("parse_log_file(): Reading elements from file: " + log_file)
     try:
         with open(log_file) as lf:
             # open the reader, skipping initial whitespaces
             reader = csv.reader(lf, delimiter=' ', skipinitialspace=True)
         
-            jnt_type = ""
-            while jnt_type[:-1] != "Symbol table":
+            for rw in lf:
                 # get the next row
                 rw = next(reader)
             
@@ -549,24 +447,20 @@ def parse_log_file(context):
                     ii = ii + 1
                     jnt_type = jnt_type + " " + rw[ii]
             
-                if ii == min(3, (len(rw) - 1)):
+                if ii == len(rw):
                     print("parse_log_file(): row does not contain an element definition. Skipping...")
                 else:
-                    print("parse_log_file(): Found " + jnt_type[:-1] + " element.")
+                    print("parse_log_file(): Found " + jnt_type + " element.")
                     parse_joint(context, jnt_type[:-1], rw)
     except IOError:
+        # TODO: Warn the user!
         print("Could not locate the file " + log_file + ".")
-        ret_val = {'CANCELLED'}
         pass
     except StopIteration:
         print("Reached the end of .log file")
-        ret_val = {'FINISHED'}
         pass
-        
-    
-    return ret_val
-
-
+    return {'FINISHED'}
+ 
 # Function to set global .mov file data
 def read_mbdyn_data(context, filepath):
     
@@ -580,20 +474,19 @@ def read_mbdyn_data(context, filepath):
     print("File {} has {} rows".format(filepath, str(fl)))   
     
     # Setting of global (scene) properties
+    context.scene.mbdyn_settings.is_active = True
     file_dir, file_basename = path_leaf(filepath)
     
     # Populates the nodes dictionary
-    retval = create_nodes_dict(file_dir, file_basename)
+    create_nodes_dict(file_dir, file_basename)    
     
-    mbs = context.scene.mbdyn_settings
-
-    mbs.file_basename = file_basename
-    mbs.file_path = file_dir
-    mbs.num_rows = fl
-    mbs.num_nodes = len(mbs.nodes_dictionary)
-    mbs.num_timesteps = fl/mbs.num_nodes
- 
-    return retval
+    context.scene.mbdyn_settings.file_basename = file_basename
+    context.scene.mbdyn_settings.file_path = file_dir
+    context.scene.mbdyn_settings.num_rows = fl
+    context.scene.mbdyn_settings.num_timesteps = fl/context.scene.mbdyn_settings.num_nodes
+    
+    
+    return {'FINISHED'}
         
 class MBDynImportMotionPath(Operator, ImportHelper):
     """ Helper class to set MBDyn's files path in Toolbar Panel """
@@ -609,26 +502,14 @@ class MBDynImportMotionPath(Operator, ImportHelper):
             )
         
     def execute(self, context):
-        retval = read_mbdyn_data(context, self.filepath)
-        if retval == 'MODEL_HAS_CHANGED':
-            self.report({'ERROR'}, "MBDyn .mov file is not consistent with scene settings!")
-            return {'CANCELLED'}
-        if retval == 'DEFAULT':
-            self.report({'WARNING'}, "MBDyn .lab file not found: using default labels")
-        elif retval == 'FILE':
-            self.report({'INFO'}, "MBDyn node labels read from .lab file")
-        elif retval == 'FILE_UPDATED':
-            self.report({'WARNING'}, ".lab file contains different labeling with respect to scene data")
-        return {'FINISHED'}
+        return read_mbdyn_data(context, self.filepath)
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return{'RUNNING_MODAL'}
 
 def set_obj_locrot(obj, rw):
-   
-    axes = {'1': 'X', '2': 'Y', '3': 'Z'}
-
+    
     # Position
     obj.location[0] = float(rw[1])
     obj.location[1] = float(rw[2])
@@ -639,23 +520,19 @@ def set_obj_locrot(obj, rw):
     # Debug message
     print('Updating rotation of object', obj.name)
     
-    if parametrization[0:5] == 'euler':
-        euler_seq = axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]]
-        obj.rotation_euler = Euler((math.radians(float(rw[4])), math.radians(float(rw[5])), math.radians(float(rw[6]))), euler_seq)
+    if parametrization == 'euler123':
+        obj.rotation_euler = Euler((float(rw[4]), float(rw[5]), float(rw[6])), 'XYZ')
+    elif parametrization == 'matrix':
+        ## WARNING: not implemented yet
+        pass
     elif parametrization == 'phi':
         rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
         rotvec_norm = rotvec.normalized()
         print(str(rotvec.magnitude), str(rotvec_norm[0]), str(rotvec_norm[1]), str(rotvec_norm[2]))
         obj.rotation_axis_angle = Vector((rotvec.magnitude, rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
         pass
-    elif parametrization == 'mat':
-        R = Matrix((( float(rw[4]), float(rw[5]), float(rw[6]), 0.0),\
-                    (float(rw[7]), float(rw[8]), float(rw[9]), 0.0),\
-                    (float(rw[10]), float(rw[11]), float(rw[12]), 0.0),\
-                    (0.0, 0.0, 0.0, 1.0)))
-        obj.rotation_quaternion = R.to_quaternion()
     else:
-        print("Error: rotation parametrization not supported (yet...)")
+        print("Error: not recognised rotation parametrization")
     
     bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
     
@@ -709,25 +586,10 @@ def set_motion_paths(context):
                         rw = next(reader)
                 
     else:
-        return{'CANCELLED'}
+        # TODO - Print message in notification bar
+        print("Error: .mov file not loaded")
     
     return {'FINISHED'}
-
-class MBDynClearData(Operator):
-    """ Clears MBDyn elements and nodes dictionaries, essentially 'cleaning' the scene """
-    bl_idname = "mbdyn.cleardata"
-    bl_label = "Clear MBDyn Data"
-
-    def execute(self, context):
-        context.scene.mbdyn_settings.nodes_dictionary.clear()
-        context.scene.mbdyn_settings.elems_dictionary.clear()
-        self.report({'INFO'}, "Scene MBDyn data cleared.")
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-
-bpy.utils.register_class(MBDynClearData)
 
 class MBDynSetMotionPaths(Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
@@ -735,11 +597,7 @@ class MBDynSetMotionPaths(Operator):
     bl_label = "MBDyn Motion Path setter"
     
     def execute(self, context):
-        ret_val = set_motion_paths(context)
-        if ret_val == 'CANCELLED':
-            self.report({'WARNING'}, "MBDyn. mov file not loaded")
-        return ret_val
-
+        return set_motion_paths(context)
     
     def invoke(self, context, event):
         return self.execute(context)
@@ -752,209 +610,20 @@ class MBDynReadLog(Operator):
     bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
-        ret_val = parse_log_file(context)
-        if ret_val == {'CANCELLED'}:
-            self.report({'ERROR'}, "MBDyn .log file not found")
-        elif ret_val == {'FINISHED'}:
-            self.report({'INFO'}, "MBDyn elements imported successfully")
-        return  ret_val 
+        return parse_log_file(context)
 
     def invoke(self, context, event):
         return self.execute(context)
 
 bpy.utils.register_class(MBDynReadLog)
 
-def elem_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
-    col = layout.column(align=True)
-    kk = 0
-    for elnode in elem.nodes:
-        kk = kk + 1
-        for node in nd:
-             if node.int_label == elnode.int_label:
-                col.prop(node, "int_label", text = "Node " + str(kk) + " ID: ")
-                col.prop(node, "string_label", text = "Node " + str(kk) + " label: ")
-                col.prop(node, "blender_object", text = "Node " + str(kk) + " Object: ")
-                col.enabled = False
-    
-    kk = 0
-    for off in elem.offsets:
-        kk = kk + 1
-        row = layout.row()
-        row.label(text = "offset " + str(kk))
-        col = layout.column(align = True)
-        col.prop(off, "value", text = "", slider = False)
-
-# -----------------------------------------------------------
-# end of elem_info_draw(elem, layout) function
-
-class RodBezUpdate(Operator):
-    bl_idname = "update.rodbez"
-    bl_label = "MBDyn Rod Bezier info updater"
-    elem_key = bpy.props.StringProperty()
-
-    def execute(self, context):
-        elem = bpy.context.scene.mbdyn_settings.elems_dictionary[self.elem_key]
-        nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
-        cvdata = bpy.data.curves[elem.blender_object + "_cvdata"].splines[0]
-        for node in nd:
-            if node.int_label == elem.nodes[0].int_label:
-    
-                # node 1 offset 1
-                fOG = cvdata.bezier_points[0].co
-                RN1 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
-                fN1 = bpy.data.objects[node.blender_object].location
-                elem.offsets[0]['value'] = RN1.transposed()*(fOG - fN1)
-    
-                # node 1 offset 2
-                fAG = cvdata.bezier_points[0].handle_right
-                elem.offsets[1]['value'] = RN1.transposed()*(fAG - fN1) 
-        
-            elif node.int_label == elem.nodes[1].int_label:
-    
-                # node 2 offset 1
-                fBG = cvdata.bezier_points[1].handle_left
-                RN2 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
-                fN2 = bpy.data.objects[node.blender_object].location
-                elem.offsets[2]['value'] = RN2.transposed()*(fBG - fN2)
-    
-                # offset 2
-                fIG = cvdata.bezier_points[1].co
-                elem.offsets[3]['value'] = RN2.transposed()*(fIG - fN2)
-        return{'FINISHED'}
-# -----------------------------------------------------------
-# end of RodBezUpdate class
-
-class RodBezWrite(Operator):
-    bl_idname = "write.rodbez"
-    bl_label = "MBDyn Rod Bezier input writer"
-    elem_key = bpy.props.StringProperty()
-
-    def execute(self, context):
-        elem = bpy.context.scene.mbdyn_settings.elems_dictionary[self.elem_key]
-        fO = elem.offsets[0].value
-        fA = elem.offsets[1].value
-        fB = elem.offsets[2].value
-        fI = elem.offsets[3].value
-
-        nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
-        n1 = nd['node_' + str(elem.nodes[0].int_label)]
-        n2 = nd['node_' + str(elem.nodes[1].int_label)]
-        
-        node_1_label = "Node_" + str(elem.nodes[0].int_label)
-        if n1.string_label != node_1_label:
-            node_1_label = n1.string_label
-        else:
-            node_1_label = str(n1.int_label)
-        
-        node_2_label = "Node_" + str(elem.nodes[1].int_label)
-        if n2.string_label != node_2_label:
-            node_2_label = n2.string_label
-        else:
-            node_2_label = str(n2.int_label)
-
-        # create new text object
-        rbtext = bpy.data.texts.new(self.elem_key)
-    
-        # write rod bezier input
-        rbtext.write("joint: " + self.elem_key + ",\n")
-        rbtext.write("\trod bezier,\n")
-        rbtext.write("\t" + node_1_label + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
-        rbtext.write("\t\t\t" + str(fO[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fO[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fO[2]) + "*msfz" + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
-        rbtext.write("\t\t\t" + str(fA[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fA[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fA[2]) + "*msfz" + ",\n")
-        rbtext.write("\t" + node_2_label + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
-        rbtext.write("\t\t\t" + str(fB[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fB[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fB[2]) + "*msfz" + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
-        rbtext.write("\t\t\t" + str(fI[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fI[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fI[2]) + "*msfz" + ",\n")
-        rbtext.write("\tfrom nodes;")
-
-        self.report({'INFO'}, "Input file contribute for element written. See " +\
-                        rbtext.name + " in text editor")
-        return {'FINISHED'}
-# -----------------------------------------------------------
-# end of RodBezWrite class
-
-bpy.utils.register_class(RodBezUpdate)
-bpy.utils.register_class(RodBezWrite)
-
-def rodbez_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
-    row = layout.row()
-    col = layout.column(align=True)
-    
-    # curve data for blender object representing the element
-    cvdata = bpy.data.curves[elem.blender_object + "_cvdata"].splines[0]
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
- 
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display first offset of node 1 info
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-
-            # Display second offset of node 1 info
-            row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[1], "value", text = "", slider = False)
-            # col.enabled = False
-            
-            layout.separator()
-
-        elif node.int_label == elem.nodes[1].int_label:
-            
-            # Display node 2 info
-            row = layout.row()
-            col = layout.column(align = True)
-            col.prop(node, "int_label", text = "Node 2 ID ")
-            col.prop(node, "string_label", text = "Node 2 label ")
-            col.prop(node, "blender_object", text = "Node 2 Object: ")
-            col.enabled = False
-
-            # Display first offset of node 2 info
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[2], "value", text = "", slider = False)
-
-            # Display first offset of node 2 info
-            row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[3], "value", text = "", slider = False)
-
-            layout.separator()
-# -----------------------------------------------------------
-# end of rodbez_info_draw(elem, layout) function
-
-
 class MBDynImportPanel(Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
-    bl_idname = "VIEW3D_TL_MBDyn_ImportPath" 
-    bl_label = "MBDyn Motion Paths"
+    
+    bl_label = "MBDyn Motion Path"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
-    bl_category = 'Animation'
     
     def draw(self, context):
         
@@ -962,24 +631,14 @@ class MBDynImportPanel(Panel):
         layout = self.layout
         obj = context.object
         sce = context.scene
-        nd = sce.mbdyn_settings.nodes_dictionary
-        ed = sce.mbdyn_settings.elems_dictionary
 
         # MBDyn file import
         row = layout.row()
         row.label(text="Import motion path from MBDyn")
-        col = layout.column(align = True)
+        col = layout.column(align=True)
         col.operator(MBDynImportMotionPath.bl_idname, text="Select .mov file")
         col.prop(sce.mbdyn_settings, "load_frequency")
-
-        # Clear MBDyn data for scene
-        row = layout.row()
-        row.label(text="Clear MBDyn data for scene")
-        col = layout.column(align = True)
-        col.operator(MBDynClearData.bl_idname, text = "CLEAR MBDYN DATA")
-
         
-
         # Display MBDyn file basename and info
         row = layout.row()
         row.label(text="MBDyn files basename:")
@@ -992,41 +651,17 @@ class MBDynImportPanel(Panel):
         
         # Display the active object 
         row = layout.row()
-        try:
-            row.label(text="Active object is: " + obj.name)
-
-            if any(item.blender_object == obj.name for item in nd):
-
-                # Display MBDyn node info
-                row = layout.row()
-                row.label(text = "MBDyn's node label:")
+        row.label(text="Active object is: " + obj.name)
         
-                # Select MBDyn node
-                col = layout.column(align=True)
-                col.prop(obj.mbdyn_settings, "string_label", text="")
-                col.prop(obj.mbdyn_settings, "int_label")
-                col.prop(obj.mbdyn_settings, "parametrization", text="")
+        row = layout.row()
+        row.label(text="MBDyn's node label:")
+        
+        col = layout.column(align=True)
+        col.prop(obj.mbdyn_settings, "string_label", text="")
+        col.prop(obj.mbdyn_settings, "int_label")
+        col.prop(obj.mbdyn_settings, "parametrization", text="")
 
-            else:
-                for elem in ed:
-                    if elem.blender_object == obj.name:
-                        # Display MBDyn elements info
-                        row = layout.row()
-                        row.label(text = "MBDyn's element info:")
-                        eval(elem.info_draw + "(elem, layout)")
-                        if elem.update_operator != 'none' and elem.is_imported == True:
-                            row = layout.row()
-                            row.operator(elem.update_operator, \
-                                    text = "Update element info").elem_key = elem.name
-                        if elem.write_operator != 'none' and elem.is_imported == True:
-                            row = layout.row()
-                            row.operator(elem.write_operator, \
-                                    text = "Write element input").elem_key = elem.name
-        except AttributeError:
-            row.label(text="No active objects")
-            pass
-
-        # Load elements
+        # Insert elements -- EXPERIMENTAL
         col = layout.column(align=True)
         col.label(text = "Load elements from .log file")
         col.operator(MBDynReadLog.bl_idname, text = "LOAD ELEMENTS")
@@ -1035,12 +670,9 @@ class MBDynImportPanel(Panel):
         col = layout.column(align=True)
         col.label(text = "Start animating")
         col.operator(MBDynSetMotionPaths.bl_idname, text = "ANIMATE")
-# -----------------------------------------------------------
-# end of MBDynImportPanel class
 
 
 class MBDynImportElement(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_MBdyn_elements"
     bl_label = "MBdyn elements"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -1061,12 +693,13 @@ class MBDynImportElement(bpy.types.Panel):
         row.label("Element type")
         row.label("")
 
+        # FIXME: rod bezier not recognised properly
         for elem in ed:
             row = layout.row()
             row.label(str(elem.int_label))
             row.label(elem.type)
-            if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-                row.operator(elem.import_function, text = "IMPORTED").int_label = elem.int_label
+            if elem.is_imported:
+                row.operator(elem.import_function, text = "RE-IMPORT").int_label = elem.int_label
             else:
                 row.operator(elem.import_function, text = "IMPORT").int_label = elem.int_label
 
@@ -1084,72 +717,45 @@ class MBDynImportElemRod(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
         for elem in ed:
             if elem.int_label == self.int_label:
-                if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-                    self.report({'WARNING'}, "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!")
-                    print("Element is already imported. Remove it or rename it \
-                        before re-importing the element.")
+                if elem.is_imported:
+                    # TODO: ask for user acceptance and replace
+                    print("Element is already imported. Remove it manually before updating it.")
                     return{'CANCELLED'}
                 else:
                     n1 = "none"
                     n2 = "none"
                     
-                    # try to find Blender objects associated with the nodes that 
-                    # the element connects
+                    # try to find Blender objects associated with the nodes that the element connects
                     for node in nd:
                         if elem.nodes[0].int_label == node.int_label:
-                            n1 = node.blender_object
+                            n1 = node.blender_id
                         elif elem.nodes[1].int_label == node.int_label:
-                            n2 = node.blender_object
+                            n2 = node.blender_id
                     if n1 == "none":
-                        print("MBDynImportElemRod(): Could not find a Blender object \
-                            associated to Node " + str(elem.nodes[0].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[0].int_label) + " not found")
-                        return {'CANCELLED'}
+                        # TODO: warn the user through the Blender interface
+                        print("MBDynImportElemRod(): Could not find a Blender object associated to Node " + str(elem.int_label))
+                        return{'CANCELLED'}
                     elif n2 == "none":
-                        print("MBDynImportElemRod(): Could not find a Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
-                        return {'CANCELLED'}
+                        print("MBDynImportElemRod(): Could not find a Blender object associated to Node " + str(elem.int_label))
+                        return{'CANCELLED'}
 
                     # creation of line representing the rod
-                    rodobj_id = "rod_" + str(elem.int_label)
-                    rodcv_id = rodobj_id + "_cvdata"
-                    
-                    # check if the object is already present
-                    # If it is, remove it. FIXME: this may be dangerous!
-                    if rodobj_id in bpy.data.objects.keys():
-                        bpy.data.objects.remove(bpy.data.objects[rodobj_id])
-                    
-                    # check if the curve is already present
-                    # If it is, remove it. FIXME: this may be dangerous!
+                    rodcv_id = "rod_" + str(elem.int_label) + "_cvdata"
+                    # check if curve is already present. If it is, remove it. FIXME: may be dangerous
                     if rodcv_id in bpy.data.curves.keys():
-                        bpy.data.curves.remove(bpy.data.curves[rodcv_id])
-
-                    # create a new curve and its object
+                        bpy.data.curves.remove(rodcv_id)
                     cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
                     cvdata.dimensions = '3D'
                     polydata = cvdata.splines.new('POLY')
                     polydata.points.add(1)
-
-                    # get offsets
                     f1 = elem.offsets[0].value
                     f2 = elem.offsets[1].value
-
-                    # assign coordinates of knots in global frame
-                    polydata.points[0].co = \
-                    bpy.data.objects[n1].matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
-                    polydata.points[1].co = \
-                    bpy.data.objects[n2].matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
-                    
+                    polydata.points[0].co = bpy.data.objects[n1].matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
+                    polydata.points[1].co = bpy.data.objects[n2].matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
                     rodOBJ = bpy.data.objects.new("rod_" + str(elem.int_label), cvdata)
                     bpy.context.scene.objects.link(rodOBJ)
-                    elem.blender_object = rodOBJ.name
-                    elem.name = rodOBJ.name
                     rodOBJ.select = True
-                    
+
                     ## hooking of the line ends to the Blender objects
                     
                     # deselect all objects (guaranteed by previous the selection of rodOBJ)
@@ -1166,7 +772,6 @@ class MBDynImportElemRod(bpy.types.Operator):
                     bpy.data.objects[n1].select = True
                     bpy.ops.object.hook_add_selob()
                     bpy.data.objects[n1].select = False
-                    bpy.data.curves[rodcv_id].splines[0].points[0].select = False
 
                     # select second end of curve and parent object for node 2, 
                     # then set the hook.
@@ -1199,52 +804,33 @@ class MBDynImportElemRodBez(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn_settings.nodes_dictionary
         for elem in ed:
             if elem.int_label == self.int_label:
-                if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-                    self.report({'WARNING'}, "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!")
-                    print("Element is already imported. Remove it or rename it \
-                        before re-importing the element.")
+                if elem.is_imported:
+                    # TODO: ask for user acceptance and replace
+                    print("Element is already imported. Remove it manually before updating it.")
                     return{'CANCELLED'}
                 else:
-                    elem.is_imported = False
                     n1 = "none"
                     n2 = "none"
                     
-                    # try to find Blender objects associated with the nodes that 
-                    # the element connects
+                    # try to find Blender objects associated with the nodes that the element connects
                     for node in nd:
                         if elem.nodes[0].int_label == node.int_label:
-                            n1 = node.blender_object
+                            n1 = node.blender_id
                         elif elem.nodes[1].int_label == node.int_label:
-                            n2 = node.blender_object
+                            n2 = node.blender_id
                     if n1 == "none":
-                        print("MBDynImportElemRodBez(): Could not find a Blender object \
-                        associated to Node " + str(elem.nodes[0].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[0].int_label) + " not found")
+                        # TODO: warn the user through the Blender interface
+                        print("MBDynImportElemRod(): Could not find a Blender object associated to Node " + str(elem.int_label))
                         return{'CANCELLED'}
                     elif n2 == "none":
-                        print("MBDynImportElemRodBez(): Could not find a Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label))
-                        self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                        print("MBDynImportElemRod(): Could not find a Blender object associated to Node " + str(elem.int_label))
                         return{'CANCELLED'}
 
                     # creation of line representing the rod
-                    rodobj_id = "rod_bezier_" + str(elem.int_label)
-                    rodcv_id =  rodobj_id + "_cvdata"
-                    
-                    # check if the object is already present
-                    # If it is, remove it. FIXME: this may be dangerous!
-                    if rodobj_id in bpy.data.objects.keys():
-                        bpy.data.objects.remove(bpy.data.objects[rodobj_id])
-                    
-                    # check if curve is already present
-                    # If it is, remove it. FIXME: this may be dangerous!
+                    rodcv_id = "rod_bezier_" + str(elem.int_label) + "_cvdata"
+                    # check if curve is already present. If it is, remove it. FIXME: may be dangerous
                     if rodcv_id in bpy.data.curves.keys():
-                        bpy.data.curves.remove(bpy.data.curves[rodcv_id])
-                    
-                    # create a new curve and its object
+                        bpy.data.curves.remove(rodcv_id)
                     cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
                     cvdata.dimensions = '3D'
                     polydata = cvdata.splines.new('BEZIER')
@@ -1278,8 +864,6 @@ class MBDynImportElemRodBez(bpy.types.Operator):
 
                     rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
                     bpy.context.scene.objects.link(rodOBJ)
-                    elem.blender_object = rodOBJ.name
-                    elem.name = rodOBJ.name
                     rodOBJ.select = True
 
                     ## hooking of the line ends to the Blender objects
@@ -1290,57 +874,25 @@ class MBDynImportElemRodBez(bpy.types.Operator):
                     # select rod, set it to active and enter edit mode
                     rodOBJ.select = True
                     bpy.context.scene.objects.active = rodOBJ
+                    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
                     # select first control point and its handles and object 1,
                     # then set the hook and deselect object of node 1
-                    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-                    
                     bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = True
-                    bpy.data.objects[n1].select = True
-                    bpy.ops.object.hook_add_selob()
-                    bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = False
-                    bpy.data.objects[n1].select = False
-
                     bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = True
-                    bpy.data.objects[n1].select = True
-                    bpy.ops.object.hook_add_selob()
-                    bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = False
-                    bpy.data.objects[n1].select = False 
-                    
                     bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = True
                     bpy.data.objects[n1].select = True
                     bpy.ops.object.hook_add_selob()
-                    bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = False
-                    bpy.data.objects[n1].select = False
-
-                    # exit edit mode and deselect all
-                    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-                    bpy.ops.object.select_all()
+                    bpt.ops.object.select_all()
 
                     # select first control point and its handles and object 2,
                     # then set the hook and deselect object of node 2
-                    
-                    rodOBJ.select = True
-                    bpy.context.scene.objects.active = rodOBJ
-                    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-                    
                     bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = True
-                    bpy.data.objects[n2].select = True
-                    bpy.ops.object.hook_add_selob()
-                    bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = False
-                    bpy.data.objects[n2].select = False
-
                     bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = True
-                    bpy.data.objects[n2].select = True
-                    bpy.ops.object.hook_add_selob()
-                    bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = False
-                    bpy.data.objects[n2].select = False 
-                    
                     bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = True
                     bpy.data.objects[n2].select = True
                     bpy.ops.object.hook_add_selob()
-                    bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = False
-                    bpy.data.objects[n2].select = False
+                    bpt.ops.object.select_all()
 
                     # exit edit mode and deselect all
                     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -1348,7 +900,6 @@ class MBDynImportElemRodBez(bpy.types.Operator):
 
                     elem.is_imported = True
                     return{'FINISHED'}
-
 
 class MBDynOBJNodeSelect(bpy.types.Panel):
     bl_label = "MBdyn nodes"
@@ -1373,10 +924,10 @@ class MBDynOBJNodeSelect(bpy.types.Panel):
             row = layout.row()
             row.label(str(nd_entry.int_label))
             row.label(nd_entry.string_label)
-            if nd_entry.blender_object == obj.name:
-                row.label(nd_entry.blender_object, icon = "OBJECT_DATA")
+            if nd_entry.blender_id == obj.name:
+                row.label(nd_entry.blender_id, icon = "OBJECT_DATA")
             else:
-                row.label(nd_entry.blender_object)
+                row.label(nd_entry.blender_id)
             row.operator("sel.mbdynnode", text="SELECT").int_label = nd_entry.int_label
         
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
@@ -1389,23 +940,12 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
         layout.alignment = 'LEFT'
 
     def execute(self, context):
-        axes = {'1': 'X', '2': 'Y', '3': 'Z'}
         context.object.mbdyn_settings.int_label = self.int_label
-        ret_val = ''
         for item in context.scene.mbdyn_settings.nodes_dictionary:
             if self.int_label == item.int_label:
-                item.blender_object = context.object.name
-                ret_val = update_parametrization(context)
-            if ret_val == 'ROT_NOT_SUPPORTED':
-                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-                            + obj.mbdyn_settings.string_label)
-            elif ret_val == 'LOG_NOT_FOUND':
-                self.report({'ERROR'}, "MBDyn .log file not found")
-            else:
-                # DEBUG message to console
-                print("Object " + context.object.name + \
-                      " MBDyn node association updated to node " + \
-                str(context.object.mbdyn_settings.int_label))
+                item.blender_id = context.object.name
+        # DEBUG message to console
+        print("Object " + context.object.name + " MBDyn node association updated to node " + str(context.object.mbdyn_settings.int_label))
         return{'FINISHED'}
 
 def register():
@@ -1427,9 +967,6 @@ def unregister():
     bpy.utils.unregister_class(MBDynSettingsObject)
     bpy.utils.unregister_class(MBDynSetMotionPaths)
     bpy.utils.unregister_class(MBDynReadLog)
-    bpy.utils.unregister_class(MBDynClearData)  
-    bpy.utils.unregister_class(RodBezUpdate)
-    bpy.utils.unregister_class(RodBezWrite)
     bpy.utils.unregister_class(MBDynImportPanel)
     bpy.utils.unregister_class(MBDynImportMotionPath)
     bpy.utils.unregister_class(MBDynOBJNodeSelect)
