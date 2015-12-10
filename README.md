@@ -1,11 +1,12 @@
 # mbdyn-blender
 Animation Addon that imports the output of free multibody analysis code MBDyn:
-see http://www.mbdyn.org/ for more details
+see http://www.mbdyn.org/ and http://www.blender.org/ for more details.
 
 # INSTALLATION
 Download the complete repository with the "Download .zip" option and install in
-Blender from File->User Preferences->Addons->Install from file..." A very simple
-example can be found in the test/ directory
+Blender from File->User Preferences->Addons->Install from file...".
+
+A very simple example can be found in the `test/` directory.
 
 # BASIC USAGE
 Once installed, the addon provides for additional panels in the Toolbar (in the
