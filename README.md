@@ -25,8 +25,12 @@ a valid simulation output: the initial structure of the model is loaded from the
 `.log` file, which is always written, even in the case the initial assembly phase
 of the simulation fails. The `.mov` file selection essentially serves to identify
 the path and the basename of the [MBDyn](http://www.mbdyn.org/) output files.
+
+- - - 
 ![mbdyn-blender panel in Animation sidebar](doc/tools_animation_panel.png
 "Addon panel in Animation sidebar")
+- - - 
+
 If the `.mov` file is located properly, some general info about its structure is
 displayed after the "Loaded .mov file" label in the panel. Please notice that
 until the `.log` file is loaded, the number of nodes and number of time steps in
@@ -47,19 +51,27 @@ The addon will, by default, assign a standard labeling to the imported
 the `.log` file. If a different labeling is desired, a labels file can be
 loaded. The labels file should contain [MBDyn](http://www.mbdyn.org/) `set`
 statements in the following (alternative) forms:
+
+- - - 
 	set: integer node_ground = 1;
 	set: integer Node_ground = 1;
 	set: integer NODE_ground = 1;
 	set: const integer node_ground = 1;
 	set: const integer Node_ground = 1;
 	set: const integer NODE_ground = 1;
+- - - 
+
 In this case, the object associated to node 1 will be called node_ground,
 (or Node_ground or NODE_ground) when it is added to the Blender scene.
 In the same way, the labeling can be assigned to joints and beams. For example
+
+- - - 
 	set: integer joint_revolute = 1;
 	set: const integer BEAM_cantilever = 5;
 	set: integer JOINT_cardano = 1700;
 	set: integer Beam_Link = 435;
+- - - 
+
 all generate valid labels. Please notice, though, that at the current state the
 addon recognises only `rod` elements. The addition of support for other elements
 is the first development priority as of now.
@@ -67,9 +79,10 @@ is the first development priority as of now.
 Once the `.log` file has been loaded, the addon populates two lists of
 [MBDyn](http://www.mbdyn.org/) objects in the Properties toolbar of Blender,
 under the Scene tab.
-![mbdyn-blender panel in the Properties->Scene
-sidebar](doc/properties_scene_panel.png "Addon panel in Properties->Scene
-sidebar)
+
+- - - 
+![mbdyn-blender panel in the Properties->Scene sidebar](doc/properties_scene_panel.png "Addon panel in Properties->Scene sidebar")
+- - - 
 
 The first list is made of the [MBDyn](http://www.mbdyn.org/) nodes found in the
 `.log` file of model. Selecting a node in the list will update the info shown at
@@ -98,9 +111,9 @@ orientation of the Blender Axes for that object. The user should put care into
 moving the axes in the correct position with respect to the mesh to reproduce
 the correct visualization. 
 
-![mbdyn-blender panel in the Properties->Object
-sidebar](doc/properties_object_panel.png "Addon panel in Properties->Object
-sidebar)
+- - - 
+![mbdyn-blender panel in the Properties->Object sidebar](doc/properties_object_panel.png "Addon panel in Properties->Object sidebar")
+- - - 
 
 ## Step 5: Animate the Blender scene
 Once all the nodes and the elements of interest are loaded in the Blender scene,
