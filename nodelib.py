@@ -109,7 +109,7 @@ def parse_node(context, rw):
         axes = {'1': 'X', '2': 'Y', '3': 'Z'}
         
         if type == 'mat':
-            R = mathutils.Matrix()
+            R = Matrix()
             R[0][0] = float(rw[7])
             R[0][1] = float(rw[8])
             R[0][2] = float(rw[9])

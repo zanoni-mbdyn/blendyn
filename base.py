@@ -27,8 +27,7 @@ import bpy
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
-from bpy.props import BoolProperty, IntProperty, IntVectorProperty, FloatVectorProperty
-from bpy.props import StringProperty, BoolVectorProperty, PointerProperty, CollectionProperty
+from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
 import ntpath, os, csv, math
