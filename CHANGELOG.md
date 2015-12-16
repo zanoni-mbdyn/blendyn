@@ -27,4 +27,17 @@ NOTE: this changelog has been added upon the release of version 1.3
 
 ### Fixed
 - Bug in setting the correct rotation parametrization for nodes;
-- Various error and warning messages appearance;
+- Various error and warning messages appearance
+
+## [1.3.1] - 2015-xx
+
+### Added
+- Selection of Blender object to be used for automatic import of nodes
+
+### Changed
+
+### Fixed
+- Bug in the import of orientation when matrix output is selected for
+  nodes;
+- Bug in re-parsing the log file after a model update;
+- Bug in the loading of an empty .mov file;

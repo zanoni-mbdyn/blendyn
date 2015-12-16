@@ -105,6 +105,7 @@ def parse_log_file(context):
         mbs.num_nodes = nn
         mbs.num_timesteps = mbs.num_rows/nn 
         mbs.is_ready = True
+        ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass 
@@ -126,6 +127,7 @@ def path_leaf(path, keep_extension = False):
 
 def file_len(filepath):
     """ Function to count the number of rows in a file """
+    kk = 0;
     with open(filepath) as f:
         for kk, ll in enumerate(f):
             pass
