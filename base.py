@@ -249,7 +249,7 @@ class MBDynSelectLabFile(Operator, ImportHelper):
     bl_label = "Select MBDyn labels file"
 
     filter_glob = StringProperty(
-            default = "*.lab",
+            default = "*.*",
             options = {'HIDDEN'},
             )
 
