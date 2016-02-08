@@ -9,7 +9,7 @@ Blender from File->User Preferences->Addons->Install from file...".
 A very simple example can be found in the `test/` directory.
 
 # BASIC USAGE
-Once installed, the addon provides for additional panels in the Toolbar (in the
+Once installed, the addon provides four additional panels in the Toolbar (in the
 Animation tab) and Properties panels (in the Scene and Object tab)  of Blender.
 
 Assuming that an [MBDyn](http://www.mbdyn.org/) simulation has been performed
@@ -51,7 +51,8 @@ The addon will, by default, assign a standard labeling to the imported
 [MBDyn](http://www.mbdyn.org/) entities, based on the integer labels found in
 the `.log` file. If a different labeling is desired, a labels file can be
 loaded. The labels file should contain [MBDyn](http://www.mbdyn.org/) `set`
-statements in the following (alternative) forms:
+statements in the following (alternative) forms where the '[Nn]ode\_' part is
+obligatory:
 
 - - - 
 	set: integer node_ground = 1;
