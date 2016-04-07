@@ -143,14 +143,14 @@ these steps:
 We're going to use a publicly available CAD model of a slider-crank-piston
 mechanical assembly as our reference. I'm using the very nice model by
 **thinkin3D** available here: [engine starter kit][3].  If you want to follow
-this tutorial exacly step-by-step you can register a free accunt at
+this tutorial exactly step-by-step you can register a free account at
 [GrabCAD][4] and download it for free. I suggest using the
 `.stp` version, but you can download the one that suits the CAD software you're
 most comfortable with. 
 
 If you open the .stp file in [FreeCAD][5], you can see
 that the CAD assembly is made of 12 parts. We want to export the parts that
-we'll like to animate in a mesh format that [Blender][6]
+we'd like to animate in a mesh format that [Blender][6]
 can import and measure some geometrical and inertial parameters of the model. 
 
 ---
@@ -163,31 +163,31 @@ To measure volumes and moments of inertia we'll make use of the macro
 Load [FCinfo][7] and click on the crankshaft part: you'll get a lot of
 information about its geometry, that you can export to a text file with the
 **Save** button. For example, you can see that the total volume of the
-crankshaft is about 99842 mm<sup>3</sup> and that its moment of inertia with
-respect to the FreeCAD *x*-axis is about 54859396 mm<sup>5</sup>. The units of
+crankshaft is about 99842&nbsp;mm<sup>3</sup> and that its moment of inertia with
+respect to the FreeCAD *x*-axis is about 54859396&nbsp;mm<sup>5</sup>. The units of
 the moment of inertia might confuse you, but remember that FreeCAD doesn't know
 anything about the material the crankshaft is made of: therefore,
 [FCinfo][7] outputs the moment of inertia divided by the density. We'll assume
 that the crankshaft is made of SAE 4340 alloy steel (typically used for
 crankshafts and rods). Its density is 7800 kg/m<sup>3</sup>. Thus we obtain a
-moment of inertia J<sub>xx</sub> of 427,9 · 10<sup>-6</sup> kg m<sup>2</sup>,
-and a mass of about 0.779 kg. The last piece of information that we need is the
-crank *lenght*, i.e.  the distance between the rotation axis of the crankshaft
+moment of inertia J<sub>xx</sub> of 427,9&nbsp;·&nbsp;10<sup>-6</sup>&nbsp;kg&nbsp;m<sup>2</sup>,
+and a mass of about 0.779&nbsp;kg. The last piece of information that we need is the
+crank *length*, i.e.  the distance between the rotation axis of the crankshaft
 and the center of the hinge that connects it to the rod. You can also perform
 this measurement in FreeCAD (or any other CAD software) and find it to be about
 19 mm.
 
 The last thing that we want to do with the crankshaft is to output its model to
 a mesh format for the import in [Blender][6]. To do so, click on the Crankshaft part,
-go to File->Export and choose Mesh format, calling the file (for example)
-crank.stl. Using the `.stl` extension will tell FreeCAD to export the file in
-the STL format, that [Blender][6] can understand.
+go to File->Export and choose Mesh format. I've chosen to call in `crank.stl`.
+Using the `.stl` extension will tell FreeCAD to export the file in
+the STL format, which [Blender][6] can understand.
 
 Repeat the process for the rod (which is composed of the `combo002`, `combo003`,
 `combo004` and `combo005` parts in the FreeCAD model), for the piston
-(`combo001`), that we'll assume is made of forged aluminium, with 2700
-kg/m<sup>3</sup> density, and for the wristpin (`combo`). You should get the
-following table of parameters: 
+(`combo001`), that we'll assume is made of forged aluminum, with
+2700&nbsp;kg/m<sup>3</sup> density, and for the wristpin (`combo`). You should
+get the following table of parameters: 
 
 Part | Mass [kg] | Length [m] | Moment of Inertia [kg m<sup>2</sup>]
 -----|-----------|------------|-------------------------------------
@@ -196,23 +196,23 @@ Rod | 0.065 | 0.076 | 34.7 · 10<sup>-6</sup>
 Piston + Wristpin | 0.078 | - (immaterial) |- (immaterial)
 
 [FCinfo][7] also reports the position of the center of mass of the part. We
-thus learn that the COM of the crank is located, quite conveniently, 
+thus learn that the center of mass (CoM) of the crank is located, quite conveniently, 
 approximately at the intersection between the rotation axis of the crankshaft
-and its symmetry plane. The COM of the rod is located along the line connecting
+and its symmetry plane. The CoM of the rod is located along the line connecting
 its two hinges centers, at a distance of circa 52 mm from the piston hinge
 center.
 
-The piston's length and moment of inertia play no role in the multibody
+The piston's length and moment of inertia play no role in this multibody
 simulation, since the piston does not rotate during its motion.
 
 (To be perfectly honest, the mass of the crankshaft is immaterial for the
 simulation results, too. You may want to apply it anyway, though, for example
-to investigate the effects of a non-perfectly balanced crankshaft, simply by
-offsetting the crank COM from the crankshaft rotation axis.... But i'm going off
-to a tangent, here.)
+to investigate the effects of a crankshaft that is not perfectly balanced. Simply
+offset the crank CoM from the crankshaft rotation axis.... But I'm going off
+on a tangent, here.)
 
-Having now exported all the parts that we need we have a collection of 4 `.stl`
-files. Mine looks like the following: 
+We have now exported all the parts that we need we have a collection of 4 `.stl`
+files. My files are the following: 
 
 - crank.stl
 - rod.stl
@@ -223,7 +223,7 @@ It's time to simulate the [MBDyn][1] model and import the simulation results in
 [Blender][6].
 
 ## Simulation and basic visualization
-You can find the complete [MBDyn][1] model at [this link](FIXME). After running
+You can find the complete [MBDyn][1] model [here][2]. After running
 the simulation and following the steps in the above sections, choosing to
 automatically import all the nodes to the [Blender][6] scene, you should end up
 with a scene similar to the one in the picture below, when viewed from the
@@ -238,19 +238,19 @@ resulting in 10000 timesteps. We want to animate the results at 25 fps, so we
 set 40 (1000/25) in the frequency parameter before importing the results with
 the "Animate scene" button.
 
-We now have a very simple animation of our model (that we could to debugg the 
+We now have a very simple animation of our model (that we could use to debug the 
 [MBDyn][1] input file, for example). We'll use this collection
 of Blender objects as the skeleton of our animated model. Our next step is now
-to import the mesh files that we have previously converted in [FreeCAD][5].
+to import the mesh files that we previously converted in [FreeCAD][5].
 
 ## Importing the CAD model meshes
 
 First of all, click on a new layer in the Blender scene: we'll keep the
-*dressed* model completely separated by the *skeleton* model that we have
+*dressed* model completely separated from the *skeleton* model that we have
 automatically imported.
 
-Now go to File->Import->Stl (`.stl`) and select the crankhaft file. Notice that
-[FreeCAD][5] uses millimiters as defaults units, while we used meters in [MBDyn][1]. 
+Now go to File->Import->Stl (`.stl`) and select the crankshaft file. Notice that
+[FreeCAD][5] uses millimeters as defaults units, while we used meters in [MBDyn][1]. 
 The mesh model that we have just imported has thus to be scaled down by a factor 
 0.001. You'll get something similar to the following picture:
 
@@ -267,7 +267,7 @@ represented by the empty arrows object called `NODE_CRANK` in my scene.
 First of all, let's place the internal Blender R.F. in a more convenient place
 for us. Hit `Tab` to enter in edit mode and you'll notice that the mesh R.F. is
 in the center of the mesh. Hit `Shift + S` and select "Cursor to Selected" to
-move the 3D cursor of Blender in the center of the mesh R.F. Exit edit mode and
+move the 3D cursor of Blender to the center of the mesh R.F. Exit edit mode and
 hit `Shift + Ctrl + Alt + C` and select "Origin to 3D Cursor". The object R.F.
 center will be moved. Now you can set the location of the crank object to be (0,
 0, 0) in the Transform panel, for convenience. 
@@ -276,13 +276,13 @@ We want the *z*-axis of the Blender R.F. to be aligned with the rotation axis of
 the crankshaft, and its *x*-axis to point away from the counterweights. Rotate
 the object by -90° about the *y*-axis and apply the rotation
 with `Shift + A`. The mesh seems also slightly rotated about the *z*-axis, so I've
-applied a forther rotation of -1.8° about *z*.
+applied a further rotation of -1.8° about *z*.
 
 Now we want to place the R.F. origin in the correct place with respect to the
 mesh. Remember that we placed the [MBDyn][1] node associated with the crank
 midway between the crank axis and the crankpin center. 
 
-The way I accomplished this is by though the followinf steps:
+The way I accomplished this is as follows:
 
 1. `Tab` into edit mode and select the faces on the outside edge of the crankshaft, as shown in the picture below
 
@@ -332,9 +332,9 @@ results. If you play the animation, you should see the crank rotating about the
 
 You can now repeat the process for the `rod` and `piston` objects. Notice that
 you can parent the `wristpin` object to the `piston` object directly, since
-there is not an [MBDyn][1] node associated with that component.
+no [MBDyn][1] node is associated to that component.
 
-Your [Blender][6] scene should look like this, now
+Your [Blender][6] scene should now look like this
 
 ---
 ![Final configuration of the Blender scene](doc/tutorials/slidercrank/sc_blend_fin.png "Final configuration of the Blender scene")
