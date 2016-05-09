@@ -28,6 +28,7 @@ from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
+from bpy_extras.io_utils import ImportHelper
 
 import ntpath, os, csv, math
 from collections import namedtuple

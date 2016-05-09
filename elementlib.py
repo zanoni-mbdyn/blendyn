@@ -40,6 +40,7 @@ from .rodjlib import *
 from .shell4lib import *
 from .sphjlib import *
 from .totjlib import *
+from .utilslib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the joint element definition in elems
@@ -150,4 +151,31 @@ def fmax(x):
     return (max, loc)
 # -----------------------------------------------------------
 # end of fmax function
+
+## Bevel object panel, for curves
+class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
+    """ Beam operators panel in data properties panel """
+    bl_label = "MBDyn props"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'data'
+
+    def draw(self, context):
+        ed = context.scene.mbdyn.elems
+        curve = context.curve
+        layout = self.layout
+        col = layout.column()
+
+        # Types of elements for which the panel is useful
+        eltypes = {'beam2', 'beam3', 'rodj'}
+
+        try:
+            if ed[context.object.name].type in eltypes:
+                col.operator(Object_OT_MBDyn_load_section.bl_idname, text="Load profile (Selig)")
+                if ed[context.object.name].type == 'beam3':
+                    col.operator(Object_OT_MBDyn_update_beam3.bl_idname, text="Update configuration")
+        except KeyError:
+            pass
+# -----------------------------------------------------------
+# end of Data_OT_MBDyn_Elems_Beams class
 
