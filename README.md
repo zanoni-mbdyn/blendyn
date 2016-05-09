@@ -18,4 +18,4 @@ a post-processor, but the goal is to make it as useful as possible also during
 the model definition phase.
 
 Please refer to the [wiki pages](https://github.com/zanoni-mbdyn/mbdyn-blender/wiki) 
-for the complete documentation of the add-on.
+for the complete documentation of the add-on and the Change Log.
