@@ -1,6 +1,6 @@
-#lr --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # MBDynImporter -- file base.py
-# Copyright (C) 2015 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -23,12 +23,12 @@
 # --------------------------------------------------------------------------
 
 # TODO: check for unnecessary stuff
-import bpy
 from mathutils import *
 from math import *
+
+import bpy
 from bpy.types import Operator, Panel
-from bpy.props import BoolProperty, IntProperty, IntVectorProperty, FloatVectorProperty
-from bpy.props import StringProperty, BoolVectorProperty, PointerProperty, CollectionProperty
+from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
 import ntpath, os, csv, math
@@ -37,15 +37,23 @@ from collections import namedtuple
 from .nodelib import *
 from .elementlib import *
 
+import pdb
+
+try: 
+    from netCDF4 import Dataset
+except ImportError:
+    print("mbdyn-blender: could not find netCDF4 module. NetCDF import "\
+        + "will be disabled.")
+
 ## Function that parses the .log file and calls parse_joints() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
 # TODO: support more joint types
 def parse_log_file(context):
 
     # utility rename
-    mbs = context.scene.mbdyn_settings
-    nd = mbs.nodes_dictionary
-    ed = mbs.elems_dictionary
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+    ed = mbs.elems
 
     is_init_nd = len(nd) == 0
     is_init_ed = len(ed) == 0
@@ -103,9 +111,20 @@ def parse_log_file(context):
     nn = len(nd)
     if nn:
         mbs.num_nodes = nn
-        mbs.num_timesteps = mbs.num_rows/nn 
+        mbs.min_node_import = nd[0].int_label
+        mbs.max_node_import = nd[0].int_label
+        for ndx in range(1, len(nd)):
+            if nd[ndx].int_label < mbs.min_node_import:
+                mbs.min_node_import = nd[ndx].int_label
+            elif nd[ndx].int_label > mbs.max_node_import:
+                mbs.max_node_import = nd[ndx].int_label
+        if mbs.use_netcdf:
+            ncfile = mbs.file_path + mbs.file_basename + ".nc"
+            nc = Dataset(ncfile, "r", format="NETCDF3")
+            mbs.num_timesteps = len(nc.variables["time"])
+        else:
+            mbs.num_timesteps = mbs.num_rows/nn 
         mbs.is_ready = True
-        ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass 
@@ -127,7 +146,6 @@ def path_leaf(path, keep_extension = False):
 
 def file_len(filepath):
     """ Function to count the number of rows in a file """
-    kk = 0;
     with open(filepath) as f:
         for kk, ll in enumerate(f):
             pass
@@ -139,39 +157,39 @@ def assign_labels(context):
     """ Function that parses the (optional) labels file and assigns \
         the string labels it can find to the respective MBDyn objects """
 
-    mbs = context.scene.mbdyn_settings
-    nd = mbs.nodes_dictionary
-    ed = mbs.elems_dictionary
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+    ed = mbs.elems
 
     labels_changed = False
-
-    labels_file = mbs.lab_file_path + mbs.lab_file_name
     
-    set_strings_node = ["set: const integer Node_", \
-                        "set: integer Node_", \
-                        "set: const integer node_", \
-                        "set: integer node_", \
-                        "set: const integer NODE_", \
-                        "set: integer NODE_"]
+    log_file = mbs.file_path + mbs.file_basename + ".log"
 
-    set_strings_joint = ["set: const integer Joint_", \
-                         "set: integer Joint_"
-                         "set: const integer joint_", \
-                         "set: integer joint_", \
-                         "set: const integer JOINT_", \
-                         "set: integer JOINT_"]
+    set_strings_node = ["  const integer Node_", \
+                        "  integer Node_", \
+                        "  const integer node_", \
+                        "  integer node_", \
+                        "  const integer NODE_", \
+                        "  integer NODE_"]
 
-    set_strings_beam = ["set: const integer Beam_", \
-                       "set: integer Beam_", \
-                       "set: const integer beam_", \
-                       "set: integer beam_", \
-                       "set: const integer BEAM_", \
-                       "set: integer BEAM_"]
+    set_strings_joint = ["  const integer Joint_", \
+                         "  integer Joint_"
+                         "  const integer joint_", \
+                         "  integer joint_", \
+                         "  const integer JOINT_", \
+                         "  integer JOINT_"]
+
+    set_strings_beam = ["  const integer Beam_", \
+                       "  integer Beam_", \
+                       "  const integer beam_", \
+                       "  integer beam_", \
+                       "  const integer BEAM_", \
+                       "  integer BEAM_"]
 
     def assign_label(line, type, set_string, dict):
         line_str = line.rstrip()
         eq_idx = line_str.find('=') + 1
-        label_int = int(line_str[eq_idx:-1].strip())
+        label_int = int(line_str[eq_idx:].strip())
         label_str = line_str[(len(set_string) - len(type) - 1):(eq_idx -1)].strip()
         for item in dict:
             if item.int_label == label_int:
@@ -182,7 +200,7 @@ def assign_labels(context):
         return False
 
     try:
-        with open(labels_file) as lf:
+        with open(log_file) as lf:
             for line in lf:
                 found = False
                 for set_string in set_strings_node:
@@ -203,8 +221,8 @@ def assign_labels(context):
                             found = True
                             break
     except IOError:
-        print("assign_labels(): can't find the specified labels file {}, \
-                sticking with default labeling...".format(labels_file))
+        print("assign_labels(): can't read from file {}, \
+                sticking with default labeling...".format(log_file))
         return {'FILE_NOT_FOUND'}
     
     if labels_changed:
@@ -219,25 +237,25 @@ def update_label(self, context):
     
     # utility renaming
     obj = context.scene.objects.active
-    nd = context.scene.mbdyn_settings.nodes_dictionary 
+    nd = context.scene.mbdyn.nodes 
  
     # Search for int label and assign corresponding string label, if found.
     # If not, signal it by assign the "not found" label
     node_string_label = "not_found"
-    obj.mbdyn_settings.is_assigned = False
+    obj.mbdyn.is_assigned = False
     for item in nd:
-        if item.int_label == obj.mbdyn_settings.int_label:
+        if item.int_label == obj.mbdyn.int_label:
             node_string_label = item.string_label
             item.blender_object = obj.name
-            obj.mbdyn_settings.is_assigned = True
+            obj.mbdyn.is_assigned = True
     
-    obj.mbdyn_settings.string_label = node_string_label
-    if obj.mbdyn_settings.is_assigned:
+    obj.mbdyn.string_label = node_string_label
+    if obj.mbdyn.is_assigned:
         ret_val = update_parametrization(obj)
 
     if ret_val == 'ROT_NOT_SUPPORTED':
         self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-            + obj.mbdyn_settings.string_label)
+            + obj.mbdyn.string_label)
     elif ret_val == 'LOG_NOT_FOUND':
         self.report({'ERROR'}, "MBDyn .log file not found")
     
@@ -245,51 +263,24 @@ def update_label(self, context):
 # -----------------------------------------------------------
 # end of update_label() function 
 
-def set_obj_locrot(obj, rw):
-   
-    axes = {'1': 'X', '2': 'Y', '3': 'Z'}
-
-    # Position
-    obj.location[0] = float(rw[1])
-    obj.location[1] = float(rw[2])
-    obj.location[2] = float(rw[3])
-    
-    # Orientation
-    parametrization = obj.mbdyn_settings.parametrization
-    
-    if parametrization[0:5] == 'euler':
-        euler_seq = axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]]
-        obj.rotation_euler = Euler((math.radians(float(rw[4])), math.radians(float(rw[5])), math.radians(float(rw[6]))), euler_seq)
-    elif parametrization == 'phi':
-        rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
-        rotvec_norm = rotvec.normalized()
-        print(str(rotvec.magnitude), str(rotvec_norm[0]), str(rotvec_norm[1]), str(rotvec_norm[2]))
-        obj.rotation_axis_angle = Vector((rotvec.magnitude, rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
-        pass
-    elif parametrization == 'mat':
-        R = Matrix((( float(rw[4]), float(rw[5]), float(rw[6]), 0.0),\
-                    (float(rw[7]), float(rw[8]), float(rw[9]), 0.0),\
-                    (float(rw[10]), float(rw[11]), float(rw[12]), 0.0),\
-                    (0.0, 0.0, 0.0, 1.0)))
-        obj.rotation_quaternion = R.to_quaternion()
-    else:
-        print("Error: rotation parametrization not supported (yet...)")
-    
-    bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
-    
-    return
-# -----------------------------------------------------------
-# end of set_obj_locrot() function 
 
 ## Function that parses the .mov file and sets the motion paths
-def set_motion_paths(context):
+def set_motion_paths_mov(context):
+
     # Debug message
-    print("Setting Motion Paths...")
-    
+    print("Setting Motion Paths using .mov output...")
+
     # utility renaming
     scene = context.scene
-    mbs = scene.mbdyn_settings
-    
+    mbs = scene.mbdyn
+    nd = mbs.nodes
+    ed = mbs.elems
+
+    wm = context.window_manager
+
+    if not(mbs.is_ready):
+        return {'CANCELLED'}
+
     # .mov filename
     mov_file = mbs.file_path + mbs.file_basename + '.mov'
     
@@ -298,42 +289,158 @@ def set_motion_paths(context):
    
     # total number of frames to be animated
     num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_end = int(num_frames/mbs.load_frequency)
+    scene.frame_end = int(num_frames/mbs.load_frequency) - 1
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
 
-    # main loop
-    if  mbs.is_ready:
+    # Cycle to establish which objects to animate
+    anim_objs = dict()
+
+    wm.progress_begin(1, scene.frame_end)
+    try:
         with open(mov_file) as mf:
-            
-            # open the reader, skipping initial whitespaces
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
-            
-            # main for loop, from start frame to last 
+            # first loop: we establish which object to animate
+            scene.frame_current = 0
+            for ndx in range(mbs.num_nodes):
+                rw = next(reader)
+                obj_name = nd['node_' + rw[0]].blender_object
+                if obj_name != 'none':
+                    anim_objs[rw[0]] = obj_name
+                    obj = bpy.data.objects[obj_name]
+                    obj.select = True
+                    set_obj_locrot_mov(obj, rw)
+
+            # main for loop, from second frame to last 
+            Nskip = 0
+            if mbs.load_frequency > 1:
+                Nskip = (mbs.load_frequency - 1)*num_nodes
+
             for frame in range(scene.frame_end):
                 scene.frame_current = (frame + 1)
-                for node in range(mbs.num_nodes):
+                for ndx in range(mbs.num_nodes):
                     rw = next(reader)
-                    # cycle animatable objects and set their location and rotation parameters
-                    for obj in bpy.data.objects:
-                        if (obj.type in anim_types) and obj.mbdyn_settings.is_assigned and int(rw[0]) == obj.mbdyn_settings.int_label:
-                            # make sure that the object is selected
-                            obj.select = True
-                            # set object location and orientation and insert keyframe
-                            set_obj_locrot(obj, rw)
-                        else:
-                            pass
-                        for elem in mbs.elems_dictionary:
-                            if elem.is_imported:
-                                elem.is_updated = False
-                if mbs.load_frequency > 1:
-                    for ii in range(1, (mbs.load_frequency - 1)*mbs.num_nodes):
-                        rw = next(reader)
-                
-    else:
-        return{'CANCELLED'}
+                    try:
+                        obj = bpy.data.objects[anim_objs[rw[0]]]
+                        obj.select = True
+                        set_obj_locrot_mov(obj, rw)
+                    except KeyError:
+                        pass
+                # skip (freq - 1)*N lines
+                for ii in range(Nskip):
+                    rw = next(reader)
+                wm.progress_update(frame)
+    except StopIteration:
+        pass
+    wm.progress_end()
+
+    # Update deformable elements
     
+
+    # Gets simulation time (FIXME: not the most clean and efficient way, for sure...)
+    if mbs.simtime:
+        mbs.simtime.clear()
+
+    out_file = mbs.file_path + mbs.file_basename + '.out'
+    try:
+        with open(out_file) as of:
+            reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
+            for ii in range(3):
+                next(reader)
+            kk = 0
+            jj = 0
+            while kk < scene.frame_end:
+                rw = next(reader)
+                if int(rw[8]):
+                    jj = jj + 1
+                    if (jj - 1) == kk*mbs.load_frequency:
+                        st = mbs.simtime.add()
+                        st.time = float(rw[2])
+                        kk = kk + 1
+    except StopIteration:
+        pass
+
     return {'FINISHED'}
 # -----------------------------------------------------------
-# end of set_motion_paths() function 
+# end of set_motion_paths_mov() function 
+
+def set_motion_paths_netcdf(context):
+
+    scene = bpy.context.scene
+    mbs = scene.mbdyn
+    nd = mbs.nodes
+    ed = mbs.elems 
+    wm = context.window_manager
+
+    ncfile = mbs.file_path + mbs.file_basename + '.nc'
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    nctime = nc.variables["time"]
+
+    freq = mbs.load_frequency
+    scene.frame_end = len(nctime)/freq - 1
+
+    anim_nodes = list()
+    for node in nd:
+        if node.blender_object != 'none':
+            anim_nodes.append(node.name)
+
+    scene.frame_current = 0
+    if mbs.simtime:
+        mbs.simtime.clear()
+
+    # set time
+    for frame in range(scene.frame_end + 1):
+        tdx = frame*freq
+        st = mbs.simtime.add()
+        st.time = nctime[tdx]
+    
+    # set objects location and rotation
+    wm.progress_begin(1, len(anim_nodes))
+
+    kk = 0
+    for ndx in anim_nodes:
+        obj = bpy.data.objects[nd[ndx].blender_object]
+        obj.select = True
+        node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
+        if obj.mbdyn.parametrization[0:5] == 'EULER':
+            for frame in range(scene.frame_end + 1):
+                scene.frame_current = frame
+                tdx = frame*freq
+                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                obj.rotation_euler = Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
+                                axes[obj.mbdyn.parametrization[7]] +\
+                                axes[obj.mbdyn.parametrization[6]] +\
+                                axes[obj.mbdyn.parametrization[5]] )
+                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+        elif obj.mbdyn.parametrization == 'PHI':
+            for frame in range(scene.frame_end + 1):
+                scene.frame_current = frame
+                tdx = frame*freq
+                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                rotvec = Vector(( nc.variables[node_var + 'Phi'][tdx, :] ))
+                rotvec_norm = rotvec.normalized()
+                obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
+                        rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
+                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+        elif obj.mbdyn.parametrization == 'MATRIX':
+            for frame in range(scene.frame_end + 1):
+                scene.frame_current = frame
+                tdx = frame*freq
+                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
+                obj.rotation_quaternion = R.to_quaternion()
+                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+        else:
+            # Should not be reached
+            print("set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+            return {'CANCELLED'}
+        obj.select = False
+        kk = kk + 1
+        wm.progress_update(kk)
+    wm.progress_end()
+
+    return {'FINISHED'}
+
+# -----------------------------------------------------------
+# end of set_motion_paths_netcdf() function 

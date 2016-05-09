@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file node.py
-# Copyright (C) 2015 Andrea Zanoni -- andrea.zanoni@polimi.it
+# MBDynImporter -- file nodelib.py
+# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -27,12 +27,15 @@ import bpy
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
-from bpy.props import BoolProperty, IntProperty, IntVectorProperty, FloatVectorProperty
-from bpy.props import StringProperty, BoolVectorProperty, PointerProperty, CollectionProperty
+from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
 import ntpath, os, csv, math
 from collections import namedtuple
+
+import pdb
+
+axes = {'1': 'X', '2': 'Y', '3': 'Z'}
 
 class RotKeyError(Exception):
     def __init__(self, value):
@@ -42,22 +45,57 @@ class RotKeyError(Exception):
 # -----------------------------------------------------------
 # end of RotKeyError class 
 
+def set_obj_locrot_mov(obj, rw):
+
+    # Position
+    obj.location[0] = float(rw[1])
+    obj.location[1] = float(rw[2])
+    obj.location[2] = float(rw[3])
+    
+    # Orientation
+    parametrization = obj.mbdyn.parametrization
+    
+    if parametrization[0:5] == 'EULER':
+        obj.rotation_euler = Euler(Vector(( math.radians(float(rw[4])),\
+                                            math.radians(float(rw[5])),\
+                                            math.radians(float(rw[6])) )),\
+                     axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]])
+    elif parametrization == 'PHI':
+        rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
+        rotvec_norm = rotvec.normalized()
+        obj.rotation_axis_angle = Vector((rotvec.magnitude, \
+                                            rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
+    elif parametrization == 'MATRIX':
+        R = Matrix((( float(rw[4]), float(rw[5]), float(rw[6]), 0.0),\
+                    (float(rw[7]), float(rw[8]), float(rw[9]), 0.0),\
+                    (float(rw[10]), float(rw[11]), float(rw[12]), 0.0),\
+                    (0.0, 0.0, 0.0, 1.0)))
+        obj.rotation_quaternion = R.to_quaternion()
+    else:
+        # Shoul not be reached
+        print("Error: unsupported rotation parametrization")
+    
+    bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+    
+    return
+# -----------------------------------------------------------
+# end of set_obj_locrot_mov() function 
+
 def update_parametrization(obj):
-    axes = {'1': 'X', '2': 'Y', '3': 'Z'}
     ret_val = ''
-    param = obj.mbdyn_settings.parametrization
-    if param == 'phi':
+    param = obj.mbdyn.parametrization
+    if param == 'PHI':
         obj.rotation_mode = 'AXIS_ANGLE'
         ret_val = 'FINISHED'
-    elif param[0:5] == 'euler':
+    elif param[0:5] == 'EULER':
         obj.rotation_mode = axes[param[7]] + axes[param[6]] + axes[param[5]]
         ret_val = 'FINISHED'
-    elif param == 'mat':
+    elif param == 'MATRIX':
         obj.rotation_mode = 'QUATERNION'
         ret_val = 'FINISHED'
     else:
-        print("update_parametrization(): rotation parametrization for node " + \
-                obj.mbdyn_settings.int_label + " not supported (yet!).")
+        # Cannot be reached
+        print("Error: unsupported rotation parametrization")
         ret_val = 'ROT_NOT_SUPPORTED'
 
     return ret_val
@@ -68,46 +106,48 @@ def update_label(self, context):
     
     # utility renaming
     obj = context.object
-    nd = context.scene.mbdyn_settings.nodes_dictionary
+    nd = context.scene.mbdyn.nodes
     
     # Debug Messages
-    print("MBDynPanel::update_label(): updating MBDyn node associated to object " + obj.name)
-    print("MBDynPanel::update_label(): selected MBDyn node = ", str(obj.mbdyn_settings.int_label))
+    try:
+        print("MBDynPanel::update_label(): updating MBDyn node associated to object " + obj.name)
+        print("MBDynPanel::update_label(): selected MBDyn node = ", str(obj.mbdyn.int_label))
+    except AttributeError:
+        pass
     
     # Search for int label and assign corresponding string label, if found.
     # If not, signal it by assign the "not found" label
     node_string_label = "not_found"
-    obj.mbdyn_settings.is_assigned = False
+    obj.mbdyn.is_assigned = False
     for item in nd:
-        if item.int_label == obj.mbdyn_settings.int_label:
+        if item.int_label == obj.mbdyn.int_label:
             node_string_label = item.string_label
             item.blender_object = obj.name
-            obj.mbdyn_settings.is_assigned = True
+            obj.mbdyn.is_assigned = True
     
-    obj.mbdyn_settings.string_label = node_string_label
-    if obj.mbdyn_settings.is_assigned:
+    obj.mbdyn.string_label = node_string_label
+    if obj.mbdyn.is_assigned:
         ret_val = update_parametrization(obj)
 
     if ret_val == 'ROT_NOT_SUPPORTED':
         self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-            + obj.mbdyn_settings.string_label) 
+            + obj.mbdyn.string_label) 
     return
 # -----------------------------------------------------------
 # end of update_label() function <-- FIXME: Duplicate? 
 
 ## Function that parses the single row of the .log file and stores
-#  the node element definition in elems_dictionary
+#  the node element definition in elems
 def parse_node(context, rw):
     objects = context.scene.objects
-    mbs = context.scene.mbdyn_settings
-    nd = mbs.nodes_dictionary
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
 
     # helper function to convert any kind of orientation definition to quaternion
     def orient_to_quat(rw):
 
         type = rw[6];
-        axes = {'1': 'X', '2': 'Y', '3': 'Z'}
-        
+
         if type == 'mat':
             R = Matrix()
             R[0][0] = float(rw[7])
@@ -119,17 +159,17 @@ def parse_node(context, rw):
             R[2][0] = float(rw[13])
             R[2][1] = float(rw[14])
             R[2][2] = float(rw[15])
-            return R.to_quaternion()
+            return R.to_quaternion(), 'MATRIX'
         elif type[0:5] == 'euler':
             angles = Euler(Vector(( radians(float(rw[7])), radians(float(rw[8])), radians(float(rw[9])) )),\
                             axes[type[7]] + axes[type[6]] + axes[type[5]])
-            return angles.to_quaternion()
+            return angles.to_quaternion(), 'EULER' + type[5:8]
         elif type == 'phi':
             vec = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             angle = vec.magnitude
             sin_angle = sin(angle)
             vec.normalize()
-            return Quaternion(( cos(angle/2), vec[0]*sin_angle, vec[1]*sin_angle, vec[2]*sin_angle ))
+            return Quaternion(( cos(angle/2), vec[0]*sin_angle, vec[1]*sin_angle, vec[2]*sin_angle )), 'PHI'
         else:
             raise RotKeyError("Error: rotation mode " + type + " not recognised")
 
@@ -139,9 +179,8 @@ def parse_node(context, rw):
         print("parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
                 + ". Updating it.")
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        node.parametrization = rw[6]
         try:
-            node.initial_rot = orient_to_quat(rw)
+            node.initial_rot, node.parametrization = orient_to_quat(rw)
         except RotKeyError:
             pass
         ret_val = True
@@ -152,13 +191,41 @@ def parse_node(context, rw):
         node.int_label = int(rw[2])
         node.name = "node_" + rw[2]
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        node.parametrization = rw[6]
         try:
-            node.initial_rot = orient_to_quat(rw)
+            node.initial_rot, node.parametrization = orient_to_quat(rw)
         except RotKeyError:
             pass
         pass
         ret_val = False
     return ret_val
 # -----------------------------------------------------------
-# end of parse_node() function <-- FIXME: Duplicate? 
+# end of parse_node() function <-- FIXME: Duplicate?
+
+## Simple function that adds to the scene the default Blender object
+#  representing an MBDyn node
+def spawn_node_obj(context, node):
+    mbs = context.scene.mbdyn
+
+    if mbs.node_object == "ARROWS":
+        bpy.ops.object.empty_add(type = 'ARROWS', location = node.initial_pos)
+        return True
+    elif mbs.node_object == "AXES":
+        bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = node.initial_pos)
+        return True
+    elif mbs.node_object == "CUBE":
+        bpy.ops.mesh.primitive_cube_add(location = node.initial_pos)
+        return True
+    elif mbs.node_object == "UVSPHERE":
+        bpy.ops.mesh.primitive_uv_sphere_add(location = node.initial_pos)
+        return True
+    elif mbs.node_object == "NSPHERE":
+        bpy.ops.surface.primitive_nurbs_surface_sphere_add(location = node.initial_pos)
+        return True
+    elif mbs.node_object == "CONE":
+        bpy.ops.mesh.primitive_cone_add(location = node.initial_pos)
+        return True
+    else:
+        return False
+# -----------------------------------------------------------
+# end of spawn_node_obj() function
+

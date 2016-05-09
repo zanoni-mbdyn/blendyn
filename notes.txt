@@ -1,0 +1,11 @@
+To 'install' netCDF4: copy the following folders into the site-package directory
+in Blenders' installation (TODO: check for linux dirs).
+ - netCDF4/
+ - netcdftime/ (?)
+ 
+To 'install' matplotlib:
+ - matplotlib/
+ - pyparsing.py
+ - cycler.py
+ - six.py
+ - dateutil/

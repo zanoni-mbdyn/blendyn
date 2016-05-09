@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # MBDynImporter -- file base.py
-# Copyright (C) 2015 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -23,64 +23,108 @@
 # --------------------------------------------------------------------------
 
 # TODO: check for unnecessary stuff
+
 import bpy
-from mathutils import *
-from math import *
+import bmesh
 from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
+from bpy.app.handlers import persistent
+
+from mathutils import *
+from math import *
 
 import ntpath, os, csv, math
 from collections import namedtuple
 
+try: 
+    from netCDF4 import Dataset
+except ImportError:
+    print("mbdyn-blender: could not find netCDF4 module. NetCDF import "\
+        + "will be disabled.")
+
+HAVE_PLOT = False
+try:
+    import pygal
+    from .plotlib import *
+    HAVE_PLOT = True
+except ImportError:
+    print("mbdyn-blender: could not find pygal module. Plotting  "\
+        + "will be disabled.")
+
 from .baselib import *
 from .elements import *
+
+import pdb
+
 
 ## Nodes Dictionary: contains integer/string labels associations
 class MBDynNodesDictionary(bpy.types.PropertyGroup):
     int_label = IntProperty(
-            name = "node int label",
-            description = "",
+            name = "node integer label",
+            description = "Node integer label",
             )
 
     string_label = StringProperty(
             name = "node string label",
-            description = "",
+            description = "Node string label",
             default = "none"
             )
 
     blender_object = StringProperty(
             name = "blender object label",
-            description = "",
+            description = "Blender object",
             default = "none"
             )
 
     initial_pos = FloatVectorProperty(
             name = "node initial position",
-            description = "",
+            description = "Initial position",
             size = 3,
             precision = 6
             )
 
     initial_rot = FloatVectorProperty(
             name = "node initial orientation",
-            description = "Quaternion holding the node initial orientation",
+            description = "Node initial orientation (quaternion)",
             size = 4,
             precision = 6
             )
 
-    parametrization = StringProperty(
-            name = "Rotation parametrization",
-            description = "Rotation parametrization of node.",
-            default = "euler123"
+    parametrization = EnumProperty(
+            items = [("EULER123", "euler123", "euler123", '', 1),\
+                     ("EULER131", "euler313", "euler313", '', 2),\
+                     ("EULER321", "euler321", "euler321", '', 3),\
+                     ("PHI", "phi", "phi", '', 4),\
+                     ("MATRIX", "mat", "mat", '', 5)],
+            name = "rotation parametrization",
+            default = "EULER123"
             )
+
 bpy.utils.register_class(MBDynNodesDictionary)
 # -----------------------------------------------------------
 # end of MBDynNodesDictionary class
 
+## Time PropertyGroup for animation
+class MBDynTime(bpy.types.PropertyGroup):
+    time = FloatProperty(
+            name = "simulation time",
+            description = "simulation time of animation frame"
+            )
+bpy.utils.register_class(MBDynTime)
+# -----------------------------------------------------------
+# end of MBDynTime class
+
+## PropertyGroup of MBDyn plottable variables
+class MBDynPlotVars(bpy.types.PropertyGroup):
+    name = StringProperty(
+            name = "plottable variable"
+            )
+bpy.utils.register_class(MBDynPlotVars)
+
 ## Set scene properties
 class MBDynSettingsScene(bpy.types.PropertyGroup):
-    # Boolean: is the .mov file loaded properly?
+    # Boolean: is the .mov (or .nc) file loaded properly?
     is_loaded = BoolProperty(
             name = "MBDyn files loaded",
             description = "True if MBDyn files are loaded correctly"
@@ -100,19 +144,6 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = "not yet loaded"
             )
 
-    # Filename of (optional) labels file
-    lab_file_name = StringProperty(
-            name = "",
-            description = "Name of (optional) MBDyn's labels file",
-            default = "not yet loaded"
-            )
-
-    lab_file_path = StringProperty(
-            name = "MBDyn .lab file path",
-            description = "Path of (optional) MBDyn's labels file",
-            default = ""
-            )
-
     # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
     num_rows = IntProperty(
             name = "MBDyn .mov file number of rows",
@@ -128,7 +159,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
-    nodes_dictionary = CollectionProperty(
+    nodes = CollectionProperty(
             name = "MBDyn nodes collection",
 	    type = MBDynNodesDictionary
             )
@@ -139,10 +170,43 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
-    # Elements dictionary -- holds the collection of the elements defined in the .log file
-    elems_dictionary = CollectionProperty(
+    # Default object representing a node, when imported automatically
+    node_object = EnumProperty(
+            items = [("ARROWS", "Arrows", "Empty - arrows", 'OUTLINER_OB_EMPTY', 1),\
+                     ("AXES", "Axes", "Empty - axes", 'EMPTY_DATA', 2),\
+                     ("CUBE", "Cube", "", 'MESH_CUBE', 3),\
+                     ("UVSPHERE", "UV Sphere", "", 'MESH_UVSPHERE', 4),\
+                     ("NSPHERE", "Nurbs Sphere", "", 'SURFACE_NSPHERE', 5),\
+                     ("CONE", "Cone", "", 'MESH_CONE', 6)],
+            name = "Import nodes as",
+            default = "ARROWS"
+            )
+
+    # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
+    mesh_import_mode = EnumProperty(
+            items = [("SEPARATED", "Separated mesh objects", "", 'UNLINKED', 1),\
+                     ("JOINED", "Joined in single mesh", "", 'LINKED', 2)],
+            name = "Mesh objects",
+            default = "SEPARATED"
+            )
+
+    # Elements dictionary -- holds the collection of the elements found in the .log file
+    elems = CollectionProperty(
             name = "MBDyn elements collection",
             type = MBDynElemsDictionary
+            )
+
+    # Simulation time
+    simtime = CollectionProperty(
+            name = "MBDyn simulation time",
+            type = MBDynTime
+            )
+
+    # Current simulation time
+    time = FloatProperty(
+            name = "time: ",
+            description = "Current MBDyn simulation time",
+            default = 0.0
             )
 
     # Elements dictionary index -- holds the index for displaying the Elements Dictionary in a 
@@ -164,22 +228,89 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             description = "MBDyn time steps count"
             )
 
-    # Boolean flag that indicates if the .mov file is loaded correctly and the nodes dictionary is ready,
-    # used to indicate that all is ready for the object's to be animated        
+    # Flag that indicates if we are to use NETCDF results format
+    use_netcdf = BoolProperty(
+            name = "Use netCDF",
+            description = "Import results in netCDF format",
+            default = False
+            )
+
+    # Flag that indicates if the .mov (or .nc) file is loaded correctly and the 
+    # nodes dictionary is ready, used to indicate that all is ready for the object's 
+    # to be animated        
     is_ready = BoolProperty(
             name = "ready to animate",
-            description = "True if .mov file and nodes dictionary loaded correctly",
+            description = "True if .mov (or .nc) file and nodes dictionary loaded correctly",
             )
+
+    # If we want to hook vertices in creating mesh from nodes
+    is_vertshook = BoolProperty(
+            name = "Hook vertices",
+            description = "Hook directly the vertices to the nodes in creating a mesh object?",
+            default = False
+            )
+
+    # Lower limit of range import for nodes
+    min_node_import = IntProperty(
+            name = "first node to import",
+            description = "Lower limit of integer labels for range import for nodes",
+            default = 0
+            )
+
+    # Higher limit of range import for nodes
+    max_node_import = IntProperty(
+            name = "last node to import",
+            description = "Higher limit of integer labels for range import for nodes",
+            default = 0
+            )
+
+    # Type filter for elements import
+    elem_type_import = EnumProperty(
+            items  = get_elems_types,
+            name = "Elements to import",
+            )
+    
+    if HAVE_PLOT:
+        plot_vars = CollectionProperty(
+                name = "MBDyn variables available for plotting",
+                type = MBDynPlotVars
+                )
+
+        plot_var_index = IntProperty(
+                name = "variable index",
+                description = "index to the current variable to be plotted",
+                default = 0
+                )
+
+        plot_comps = BoolVectorProperty(
+                name = "components",
+                description = "Components of property to plot",
+                default = [True for i in range(9)],
+                size = 9
+                )
+        plot_frequency = IntProperty(
+                name = "frequency",
+                description = "Frequency in plotting",
+                default = 1
+                )
 bpy.utils.register_class(MBDynSettingsScene)
 # -----------------------------------------------------------
 # end of MBDynSettingsScene class
 
 ## MBDynSettings for Blender Object
 class MBDynSettingsObject(bpy.types.PropertyGroup): 
-    # Boolean: has the current object being assigned an MBDyn's node?
+    """ Properties of the current Blender Object related to MBDyn """
+    # Boolean: has the current object being assigned an MBDyn's entity?
     is_assigned = BoolProperty(
-            name = "MBdyn node ok",
+            name = "MBDyn entity assigned",
             description = "True if the object has been assigned an MBDyn node",
+            )
+
+    # Type of MBDyn entity
+    type = StringProperty(
+            name = "MBDyn entity type",
+            description = "Type of MBDyn entity (node, joint, etc) associated with object",
+            default = 'none'
             )
 
     # Integer representing MBDyn's node label assigned to the object
@@ -198,17 +329,52 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             )
 
     # Rotation parametrization of node
-    parametrization = StringProperty(
-            name = "Rotation parametrization",
-            description = "Rotation parametrization of node.",
-            default = "euler123"
+    parametrization = EnumProperty(
+            items = [("EULER123", "euler123", "euler123", '', 1),\
+                     ("EULER131", "euler313", "euler313", '', 2),\
+                     ("EULER321", "euler321", "euler321", '', 3),\
+                     ("PHI", "phi", "phi", '', 4),\
+                     ("MATRIX", "mat", "mat", '', 5)],
+            name = "rotation parametrization",
+            default = "EULER123"
             )
+
+    # Specific for plotting --- #
+    if HAVE_PLOT:
+        plot_var = EnumProperty(
+                name = "Variables",
+                items = get_plot_vars,
+                description = ""
+                )
+        
+        plot_comps = BoolVectorProperty(
+                name = "components",
+                description = "Components of property to plot",
+                default = [True for i in range(9)],
+                size = 9
+                )
+        plot_frequency = IntProperty(
+                name = "frequency",
+                description = "Frequency in plotting",
+                default = 1
+                )
+    # --- #
+
 bpy.utils.register_class(MBDynSettingsObject)
 # -----------------------------------------------------------
 # end of MBDynSettingsObject class
 
-bpy.types.Scene.mbdyn_settings = PointerProperty(type=MBDynSettingsScene)
-bpy.types.Object.mbdyn_settings = PointerProperty(type=MBDynSettingsObject)
+bpy.types.Scene.mbdyn = PointerProperty(type=MBDynSettingsScene)
+bpy.types.Object.mbdyn = PointerProperty(type=MBDynSettingsObject)
+
+# Handler to update the current time of simulation
+@persistent
+def update_time(scene):
+    try:
+        scene.mbdyn.time = scene.mbdyn.simtime[scene.frame_current].time
+    except IndexError:
+        pass
+bpy.app.handlers.frame_change_pre.append(update_time)
 
 class MBDynReadLog(Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
@@ -242,44 +408,31 @@ bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
 
-class MBDynSelectLabFile(Operator, ImportHelper):
-    """ Helper class to set MBDyn's (optional) labels file path """
-
-    bl_idname = "sel.mbdyn_lab_file"
-    bl_label = "Select MBDyn labels file"
-
-    filter_glob = StringProperty(
-            default = "*.*",
-            options = {'HIDDEN'},
-            )
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn_settings
-        mbs.lab_file_path, mbs.lab_file_name = path_leaf(self.filepath, True)
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-bpy.utils.register_class(MBDynSelectLabFile)
-# -----------------------------------------------------------
-# end of MBDynSelectLabFile class
-
 class MBDynSelectMovFile(Operator, ImportHelper):
-    """ Helper class to set MBDyn's output files path and basename """
+    """ Sets MBDyn's output files path and basename """
 
     bl_idname = "sel.mbdyn_mov_file"
-    bl_label = "Select MBDyn .mov file"
+    bl_label = "Select MBDyn results file"
 
     filter_glob = StringProperty(
-            default = "*.mov",
+            default = "*.mov;*.nc",
             options = {'HIDDEN'},
             )
 
     def execute(self, context):
-        mbs = context.scene.mbdyn_settings
+        mbs = context.scene.mbdyn
         mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
-        mbs.num_rows = file_len(self.filepath)
+        if self.filepath[-2:] == 'nc':
+            try:
+                nc = Dataset(self.filepath, "r", format="NETCDF3")
+                mbs.use_netcdf = True
+                mbs.num_rows = 0
+                get_plot_vars_glob(self, context)
+            except NameError:
+                self.report({'ERROR'}, "NetCDF module not imported correctly")
+                return {'CANCELLED'}
+        else:
+            mbs.num_rows = file_len(self.filepath)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -290,9 +443,8 @@ bpy.utils.register_class(MBDynSelectMovFile)
 # end of MBDynSelectLabFile class
 
 class MBDynAssignLabels(Operator):
-    """ Helper class to assign labels to MBDyn nodes and elements \
-            provided that a properly formatted .lab file has been \
-            selected by the user """
+    """ Assigns 'recognisable' labels to MBDyn nodes and elements by 
+        parsing the .log file """
     bl_idname = "import.mdbyn_labels"
     bl_label = "Import labels of MBDyn objects"
 
@@ -322,8 +474,8 @@ class MBDynClearData(Operator):
     bl_label = "Clear MBDyn Data"
 
     def execute(self, context):
-        context.scene.mbdyn_settings.nodes_dictionary.clear()
-        context.scene.mbdyn_settings.elems_dictionary.clear()
+        context.scene.mbdyn.nodes.clear()
+        context.scene.mbdyn.elems.clear()
         self.report({'INFO'}, "Scene MBDyn data cleared.")
         return {'FINISHED'}
 
@@ -339,11 +491,13 @@ class MBDynSetMotionPaths(Operator):
     bl_label = "MBDyn Motion Path setter"
     
     def execute(self, context):
-        ret_val = set_motion_paths(context)
+        if not(context.scene.mbdyn.use_netcdf):
+            ret_val = set_motion_paths_mov(context)
+        else:
+            ret_val = set_motion_paths_netcdf(context)
         if ret_val == 'CANCELLED':
-            self.report({'WARNING'}, "MBDyn. mov file not loaded")
+            self.report({'WARNING'}, "MBDyn results file not loaded") 
         return ret_val
-
     
     def invoke(self, context, event):
         return self.execute(context)
@@ -365,24 +519,26 @@ class MBDynImportPanel(Panel):
         # utility renaming        
         layout = self.layout
         obj = context.object
-        sce = context.scene
-        nd = sce.mbdyn_settings.nodes_dictionary
-        ed = sce.mbdyn_settings.elems_dictionary
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
 
         # MBDyn .mov file selection
         row = layout.row()
         row.label(text="MBDyn simulation results")
         col = layout.column(align = True)
-        col.operator(MBDynSelectMovFile.bl_idname, text="Select .mov file")
+        col.operator(MBDynSelectMovFile.bl_idname, text="Select results file")
 
         # Display MBDyn file basename and info
         row = layout.row()
-        row.label(text="Loaded .mov file")
+        row.label(text="Loaded results file")
+            
         col = layout.column(align=True)
-        col.prop(sce.mbdyn_settings, "file_basename", text="")
-        col.prop(sce.mbdyn_settings, "num_nodes", text="# of nodes")
-        col.prop(sce.mbdyn_settings, "num_rows", text="# of rows")
-        col.prop(sce.mbdyn_settings, "num_timesteps", text="# of time steps")
+        col.prop(mbs, "file_basename", text="")
+        col.prop(mbs, "num_nodes", text="nodes total")
+        if not(mbs.use_netcdf):
+            col.prop(mbs, "num_rows", text="rows total")
+        col.prop(mbs, "num_timesteps", text="time steps")
         col.enabled = False
 
         # Import MBDyn data
@@ -391,25 +547,8 @@ class MBDynImportPanel(Panel):
         col = layout.column(align = True)
         col.operator(MBDynReadLog.bl_idname, text = "Load .log file")
         
-        # MBDyn labels file selection
-        row = layout.row()
-        row.label(text="MBDyn labels file (opt)")
-        col = layout.column(align = True)
-        col.operator(MBDynSelectLabFile.bl_idname, text="Select labels file")
-        if not(sce.mbdyn_settings.lab_file_name == 'not yet loaded'):
-            row = layout.row()
-            row.label(text="Loaded labels file")
-            col = layout.column(align = True)
-            col.prop(sce.mbdyn_settings, "lab_file_name")
-            col.enabled = False
-
         # Assign MBDyn labels to elements in dictionaries
-        row = layout.row()
-        # row.label(text="Load MBDyn labels")
-        col = layout.column(align = True)
         col.operator(MBDynAssignLabels.bl_idname, text = "Load MBDyn labels")
-        if sce.mbdyn_settings.lab_file_name == 'not yet loaded':
-            col.enabled = False
 
         # Clear MBDyn data for scene
         row = layout.row()
@@ -418,21 +557,26 @@ class MBDynImportPanel(Panel):
         col.operator(MBDynClearData.bl_idname, text = "CLEAR MBDYN DATA")
         
         # Display the active object 
-        row = layout.row()
+        col = layout.column()
+        row = col.row()
+        row.label(text="Active Object")
+        row = col.row()
+
         try:
-            row.label(text="Active object is: " + obj.name)
+            row.prop(obj, "name")
 
             if any(item.blender_object == obj.name for item in nd):
 
                 # Display MBDyn node info
-                row = layout.row()
-                row.label(text = "MBDyn's node label:")
+                row = col.row()
         
                 # Select MBDyn node
                 col = layout.column(align=True)
-                col.prop(obj.mbdyn_settings, "string_label", text="")
-                col.prop(obj.mbdyn_settings, "int_label")
-                col.prop(obj.mbdyn_settings, "parametrization", text="")
+                col.prop(obj.mbdyn, "int_label")
+                col = layout.column(align=True)
+                col.prop(obj.mbdyn, "string_label", text="")
+                col.prop(obj.mbdyn, "parametrization", text="")
+                col.enabled = False
 
             else:
                 for elem in ed:
@@ -452,18 +596,23 @@ class MBDynImportPanel(Panel):
         except AttributeError:
             row.label(text="No active objects")
             pass
+        except TypeError:
+            pass
 
         # Insert keyframes for animation
         col = layout.column(align=True)
         col.label(text = "Start animating")
         col.operator(MBDynSetMotionPaths.bl_idname, text = "Animate scene")
-        col.prop(sce.mbdyn_settings, "load_frequency")
+        col.prop(mbs, "load_frequency")
+
+        col = layout.column(align=True)
+        col.label(text = "Simulation time")
+        col.prop(mbs, "time")
 # -----------------------------------------------------------
 # end of MBDynImportPanel class
 
 class MBDynNodes_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # just to test
         custom_icon = 'OUTLINER_OB_EMPTY'
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
@@ -476,7 +625,6 @@ class MBDynNodes_UL_List(bpy.types.UIList):
 
 class MBDynElems_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # just to test
         custom_icon = 'CONSTRAINT'
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
@@ -487,36 +635,58 @@ class MBDynElems_UL_List(bpy.types.UIList):
 # -----------------------------------------------------------
 # end of MBDynElems_UL_List class
 
+class MBDynPlotVar_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.name)
+# -----------------------------------------------------------
+# end of MBDynNodes_UL_List class
+    
+
 ## Panel in scene properties toolbar that shows the MBDyn 
 #  nodes found in the .log file and links to an operator
 #  that imports all of them automatically
 class MBDynNodesScenePanel(bpy.types.Panel):
     """ List of MBDyn nodes: use import all button to add \
             them all to the scene at once """
-    bl_label = "MBDyn node list"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "scene"
+    bl_label = "MBDyn nodes"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
 
     def draw(self, context):
-        mbs = context.scene.mbdyn_settings
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
         layout = self.layout
         row = layout.row()
-        row.template_list("MBDynNodes_UL_List", "MBDyn nodes list", mbs, "nodes_dictionary",\
-                mbs, "nd_index") 
+        row.template_list('MBDynNodes_UL_List', "MBDyn nodes list", mbs, "nodes",\
+                mbs, "nd_index")
 
-        if mbs.nd_index >= 0 and len(mbs.nodes_dictionary):
-            item = mbs.nodes_dictionary[mbs.nd_index]
+        if mbs.nd_index >= 0 and len(nd):
+            item = mbs.nodes[mbs.nd_index]
+            
             col = layout.column()
-            row = layout.row()
-            row.prop(item, "int_label")
-            row = layout.row()
-            row.prop(item, "string_label")
-            row = layout.row()
-            row.prop(item, "blender_object")
+            
+            col.prop(item, "int_label")
+            col.prop(item, "string_label")
+            col.prop(item, "blender_object")
             col.enabled = False
+            
             row = layout.row()
-            row.operator("add.mbdynnode_all", text="Add all nodes to scene")
+            row.prop(mbs, "node_object")
+            
+            
+            col = layout.column()
+            col.prop(mbs, "min_node_import")
+            col.prop(mbs, "max_node_import")
+            row = layout.row()
+            row.operator(Scene_OT_MBDyn_Node_Import_All.bl_idname,\
+                    text="Add nodes to scene")
+
+            row = layout.row()
+            row.operator("add.vertsfromnodes", text="Create vertex grid from nodes")
+            
+            row = layout.row()
+            row.prop(mbs, "is_vertshook", text="Hook vertices to nodes")
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
@@ -531,21 +701,38 @@ class MBDynElemsScenePanel(bpy.types.Panel):
     bl_context = "scene"
 
     def draw(self, context):
-        mbs = context.scene.mbdyn_settings
+        mbs = context.scene.mbdyn
         layout = self.layout
         row = layout.row()
-        row.template_list("MBDynElems_UL_List", "MBDyn elements list", mbs, "elems_dictionary",\
+        row.template_list("MBDynElems_UL_List", "MBDyn elements", mbs, "elems",\
                 mbs, "ed_index") 
 
-        if mbs.ed_index >= 0 and len(mbs.elems_dictionary):
-            item = mbs.elems_dictionary[mbs.ed_index]
+        if mbs.ed_index >= 0 and len(mbs.elems):
+            item = mbs.elems[mbs.ed_index]
+            
             col = layout.column()
+
+            row = col.row()
+            row.prop(mbs, "elem_type_import")
+            row = col.row()
+            row.operator(Scene_OT_MBDyn_Import_Elements_by_Type.bl_idname, \
+                    text="Import elements by type")
+
+            if False:
+                row.prop(mbs, "mesh_import_mode")
+
             row = layout.row()
-            row.prop(item, "int_label")
+            row.separator()
+
+            col = layout.column()
+            col.prop(item, "int_label")
+            col.prop(item, "string_label")
+            col.prop(item, "blender_object")
+            col.enabled = False
+            
             row = layout.row()
-            row.prop(item, "string_label")
-            row = layout.row()
-            row.operator(item.import_function, text="Add element to the scene").int_label = item.int_label
+            row.operator(item.import_function, \
+                    text="Add element to the scene").int_label = item.int_label
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
@@ -560,8 +747,8 @@ class MBDynOBJNodeSelect(bpy.types.Panel):
 
     def draw(self, context):
         obj = context.object
-        mbs = context.scene.mbdyn_settings
-        nd = mbs.nodes_dictionary
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
         
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -577,78 +764,91 @@ class MBDynOBJNodeSelect(bpy.types.Panel):
             row.label(str(nd_entry.int_label))
             row.label(nd_entry.string_label)
             if nd_entry.blender_object == obj.name:
-                row.label(nd_entry.blender_object, icon = "OBJECT_DATA")
+                row.label(nd_entry.blender_object, icon = 'OBJECT_DATA')
                 row.operator("sel.mbdynnode", text="ASSIGN").int_label = nd_entry.int_label
             else:
                 row.label(nd_entry.blender_object)
                 row.operator("sel.mbdynnode", text="ASSIGN").int_label = nd_entry.int_label
                 if bpy.data.objects.get(nd_entry.blender_object) == None:
-                    row.operator("add.mbdynnode", text="ADD").int_label = nd_entry.int_label
+                    row.operator(Scene_OT_MBDyn_Node_import_Single.bl_idname, \
+                            text="ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
 # end of MBDynOBJNodeSelect class
 
-class MBDynNodeImportAllButton(bpy.types.Operator):
+class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
     bl_idname = "add.mbdynnode_all"
-    bl_label = "MBDyn add all nodes to scene"
+    bl_label = "Add MBDyn nodes to scene"
 
     def execute(self, context):
-        nd = context.scene.mbdyn_settings.nodes_dictionary
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
         added_nodes = 0
+
         for node in nd:
-            bpy.ops.object.empty_add(type = 'ARROWS', location = node.initial_pos)
-            obj = context.scene.objects.active
-            obj.mbdyn_settings.int_label = node.int_label
-            obj.mbdyn_settings.string_label = node.string_label
-            obj.mbdyn_settings.parametrization = node.parametrization
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = node.initial_rot
-            update_parametrization(obj)
-            if obj.mbdyn_settings.string_label != "none":
-                obj.name = node.string_label
-            else:
-                obj.name = node.name
-            node.blender_object = obj.name
-            obj.mbdyn_settings.is_assigned = True
-            print("MBDynNodeImportAllButton: added node " + str(node.int_label) + " to scene and associated with object " + obj.name)
-            added_nodes += 1
+            if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
+                if not(spawn_node_obj(context, node)):
+                    self.report({'ERROR'}, "Could not spawn the Blender object assigned to node " \
+                            + str(node.int_label))
+                    return {'CANCELLED'}
+
+                obj = context.scene.objects.active
+                obj.mbdyn.type = 'node.struct'
+                obj.mbdyn.int_label = node.int_label
+                obj.mbdyn.string_label = node.string_label
+                obj.mbdyn.parametrization = node.parametrization
+                obj.rotation_mode = 'QUATERNION'
+                obj.rotation_quaternion = node.initial_rot
+                update_parametrization(obj)
+                if obj.mbdyn.string_label != "none":
+                    obj.name = node.string_label
+                else:
+                    obj.name = node.name
+                node.blender_object = obj.name
+                obj.mbdyn.is_assigned = True
+                print("MBDynNodeImportAllButton: added node " + str(node.int_label) + " to scene and associated with object " + obj.name)
+                added_nodes += 1
         
-        if added_nodes == len(nd):
+        if added_nodes:
             self.report({'INFO'}, "All MBDyn nodes imported successfully")
             return {'FINISHED'}
         else:
-            self.report({'WARNING'}, "Some MBDyn nodes were not imported")
+            self.report({'WARNING'}, "No MBDyn nodes imported")
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of MBDynNodeImportAllButton class
+# end of Scene_OT_MBDyn_Node_Import_All class
 
-class MBDynNodeAddButton(bpy.types.Operator):
+class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
     bl_idname = "add.mbdynnode"
-    bl_label = "MBDyn add selected node to scene"
+    bl_label = "Add selected MBDyn node to scene"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
-        for node in context.scene.mbdyn_settings.nodes_dictionary:
+        for node in context.scene.mbdyn.nodes:
             if node.int_label == self.int_label:
                 node.blender_object = "none"
 
     def execute(self, context):
         added_node = False
-        for node in context.scene.mbdyn_settings.nodes_dictionary:
+        for node in context.scene.mbdyn.nodes:
             if node.int_label == self.int_label:
-                bpy.ops.object.empty_add(type = 'ARROWS', location = node.initial_pos)
+                if not(spawn_node_obj(context, node)):
+                    self.report({'ERROR'}, "Could not spawn the Blender object assigned to node " \
+                            + str(node.int_label))
+                    return {'CANCELLED'}
                 obj = context.scene.objects.active
-                obj.mbdyn_settings.int_label = node.int_label
-                obj.mbdyn_settings.string_label = node.string_label
-                obj.mbdyn_settings.parametrization = node.parametrization
+                obj.mbdyn.type = 'node.struct'
+                obj.mbdyn.int_label = node.int_label
+                obj.mbdyn.string_label = node.string_label
+                obj.mbdyn.parametrization = node.parametrization
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = node.initial_rot
                 update_parametrization(obj)
-                if obj.mbdyn_settings.string_label != "none":
+                if obj.mbdyn.string_label != "none":
                     obj.name = node.string_label
                 else:
                     obj.name = node.name
                 node.blender_object = obj.name
-                obj.mbdyn_settings.is_assigned = True
+                obj.mbdyn.is_assigned = True
                 print("MBDynNodeAddButton: added node " + str(node.int_label) + " to scene and associated with object " + obj.name)
                 added_node = True
         if added_node:
@@ -658,7 +858,23 @@ class MBDynNodeAddButton(bpy.types.Operator):
             self.report({'WARNING'}, "Cannot import MBDyn node " + node.string_label + ".") 
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of MBDynNodeAddButton class
+# end of Scene_OT_MBDyn_Node_Import_Single class
+class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elems_type"
+    bl_label = "Add all elements of selected type to scene"
+    
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+
+        for elem in ed:
+            if elem.type == mbs.elem_type_import:
+                try:
+                    eval("spawn_" + elem.type + "_element(elem, context)")
+                except NameError:
+                    self.report({'ERROR'}, "Couldn't find the element import function")
+                    return {'CANCELLED'}
+        return {'FINISHED'}
 
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
     bl_idname = "sel.mbdynnode"
@@ -671,20 +887,102 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
 
     def execute(self, context):
         axes = {'1': 'X', '2': 'Y', '3': 'Z'}
-        context.object.mbdyn_settings.int_label = self.int_label
+        context.object.mbdyn.int_label = self.int_label
+        context.object.mbdyn.type = 'node.struct'
         ret_val = ''
-        for item in context.scene.mbdyn_settings.nodes_dictionary:
+        for item in context.scene.mbdyn.nodes:
             if self.int_label == item.int_label:
                 item.blender_object = context.object.name
                 ret_val = update_parametrization(context.object)
             if ret_val == 'ROT_NOT_SUPPORTED':
                 self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-                            + obj.mbdyn_settings.string_label)
+                            + obj.mbdyn.string_label)
             else:
                 # DEBUG message to console
                 print("Object " + context.object.name + \
                       " MBDyn node association updated to node " + \
-                str(context.object.mbdyn_settings.int_label))
+                str(context.object.mbdyn.int_label))
         return{'FINISHED'}
 # -----------------------------------------------------------
 # end of MBDynOBJNodeSelectButton class
+
+class MBDynCreateVerticesFromNodesButton(bpy.types.Operator):
+    bl_idname = "add.vertsfromnodes"
+    bl_label = "Create vertices from nodes"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        me = bpy.data.meshes.new("VertsFromNodes")
+        vidx = 0
+        mbs = bpy.context.scene.mbdyn
+        nds = mbs.nodes
+
+        obj_list = bpy.context.selected_objects
+        sel_obj = []
+        for obj in obj_list:
+            for nd in nds:
+                if nd.blender_object == obj.name:
+                    me.vertices.add(1)
+                    me.vertices[vidx].co = obj.location
+                    vidx = vidx + 1
+                    obj.select = False
+                    sel_obj.append(obj.name)
+
+        if vidx:
+
+            if len(bpy.context.selected_objects):
+                # deselect all objects
+                bpy.ops.object.select_all()
+
+            vert_obj = bpy.data.objects.new("VertsFromNodes", me)
+            bpy.context.scene.objects.link(vert_obj)
+
+            vert_obj.select=True
+            bpy.context.scene.objects.active = vert_obj
+            bpy.context.scene.update()
+
+
+            if mbs.is_vertshook:
+                # We want to set an hook to all newly created vertices with
+                # the corresponding node
+                
+                # get the mesh, create individual vertex groups and deselect
+                # all vertices
+                me = vert_obj.data
+                vidx = 0
+                for v in me.vertices:
+                    vert_obj.vertex_groups.new(name = 'v' + sel_obj[vidx])
+                    verts = []
+                    verts.append(v.index)
+                    vert_obj.vertex_groups['v' + sel_obj[vidx]].add(verts, 1.0, 'ADD')
+                    v.select = False
+                    vidx = vidx + 1
+
+                # Add the modifiers in edit mode
+                bpy.ops.object.mode_set(mode='EDIT')
+                vidx = 0
+                for obj in sel_obj:
+                    bpy.ops.object.modifier_add(type='HOOK')
+                    hname = 'hm' + obj
+                    vert_obj.modifiers['Hook'].name = hname
+                    vert_obj.modifiers[hname].object = bpy.data.objects[obj]
+                    vert_obj.modifiers[hname].vertex_group = 'v' + obj
+                    vidx = vidx + 1
+                    bpy.ops.object.hook_reset(modifier=hname)
+
+                # exit edit mode
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+                # deselect all
+                bpy.ops.object.select_all()
+
+        else:
+            self.report({'WARNING'}, "No MBDyn nodes associated with selected objects.")
+            return{'CANCELLED'}
+
+        return{'FINISHED'}
+# -----------------------------------------------------------
+# end of MBDynCreateVerticesFromNodesButton class

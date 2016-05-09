@@ -1,0 +1,8 @@
+# This is the MBDyn model of the AS330 Puma described in Bousman 1996
+
+set: integer BLADE_BODY = 400;
+set: integer BLADE_NODES = 15;
+set: integer BLADE_NBEAMS = 7;
+set: const real blade_damp = 1e-2;
+
+# vim:ft=mbd
