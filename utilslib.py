@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file elementlib.py
+# MBDynImporter -- file utilslib.py
 # Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
@@ -32,6 +32,75 @@ from bpy.props import *
 import ntpath, os, csv, math
 from collections import namedtuple
 
+class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
+    """ Loads NACA airfoil profile in Selig format """
+    bl_idname = "load.mbdyn_naca_selig"
+    bl_label = "Load NACA profile in Selig format"
+
+    filter_glob = bpy.props.StringProperty(
+        default = "*.*",
+        options = {'HIDDEN'},
+        )
+
+    def execute(self, context):
+        try:
+            with open(self.filepath, 'r') as sf:     
+                reader = csv.reader(sf, delimiter=' ', skipinitialspace=True)
+                name = next(reader)
+                cvdata = bpy.data.curves.new(' '.join(name), 'CURVE')
+                cvdata.dimensions = '2D'
+
+                # if the curve already exists, Blender changes the name of the newly created one
+                name = cvdata.name
+                poly = cvdata.splines.new('POLY')
+
+                # first point
+                row = next(reader)
+                poly.points[0].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
+
+                # other points
+                for row in reader:
+                    poly.points.add(1)
+                    poly.points[-1].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
+
+                obj = bpy.data.objects.new(name, cvdata)
+                context.scene.objects.link(obj)
+            
+                kk = 0
+                layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
+                try:
+                    while len(layer_objs):
+                        kk = kk + 1
+                        layer_objs.clear()
+                        layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
+                    obj.layers[kk] = True
+                    for jj in range(len(obj.layers)):
+                        if jj != kk:
+                            obj.layers[jj] = False
+                except IndexError:
+                    self.report({'INFO'}, "Couldn't find an empty layer. Using the active layer")
+                    pass
+                
+                # context.curve.bevel_object = obj
+
+                for item in bpy.context.scene.objects:
+                    if ('beam3_' in item.name) and item.select:
+                        try:
+                            item.data.bevel_object = obj
+                        except AttributeError:
+                            pass
+
+                return {'FINISHED'}
+        except IOError:
+           self.report({'ERROR'}, {'Could not locate file'})
+           return {'CANCELLED'}
+        except StopIteration:
+            self.report({'WARNING'}, {'Reached the end of file'})
+            return {'CANCELLED'}
+# -----------------------------------------------------------
+# end of fmin function Object_OT_MBDyn_load_section class
+
+
 ## Utility functions
 def fmin(x):
     min = x[0]
@@ -54,3 +123,4 @@ def fmax(x):
     return (max, loc)
 # -----------------------------------------------------------
 # end of fmax function
+

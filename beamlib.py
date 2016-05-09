@@ -33,6 +33,7 @@ from bpy_extras.io_utils import ImportHelper
 import pdb
 
 from bpy.app.handlers import persistent
+from .utilslib import *
 
 # helper function to parse beam2
 def parse_beam2(rw, ed):
@@ -740,7 +741,7 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
 # end of Scene_OT_MBDyn_Elems_Import_Beam3 class
 
 ## Bevel object panel
-class MBDynBeamPanel(bpy.types.Panel):
+class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
     """ Beam operators panel in data properties panel """
     bl_label = "MBDyn beam props"
     bl_space_type = 'PROPERTIES'
@@ -752,13 +753,15 @@ class MBDynBeamPanel(bpy.types.Panel):
         curve = context.curve
         layout = self.layout
         col = layout.column()
-        col.operator(Object_OT_MBDyn_load_section.bl_idname, text="Load profile (Selig)")
         
         try:
-            if ed[context.object.name].type == 'beam3':
+            if ed[context.object.name].type in {'beam3', 'beam2'}:
+                col.operator(Object_OT_MBDyn_load_section.bl_idname, text="Load profile (Selig)")
                 col.operator(Object_OT_MBDyn_update_beam3.bl_idname, text="Update configuration")
         except KeyError:
             pass
+# -----------------------------------------------------------
+# end of Data_OT_MBDyn_Elems_Beams class
 
 
 class Object_OT_MBDyn_update_beam3(bpy.types.Operator):
@@ -777,68 +780,3 @@ class Object_OT_MBDyn_update_beam3(bpy.types.Operator):
             return ret_val
         pass
 
-class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
-    """ Loads NACA airfoil profile in Selig format """
-    bl_idname = "load.mbdyn_naca_selig"
-    bl_label = "Load NACA profile in Selig format"
-
-    filter_glob = bpy.props.StringProperty(
-        default = "*.*",
-        options = {'HIDDEN'},
-        )
-
-    def execute(self, context):
-        try:
-            with open(self.filepath, 'r') as sf:     
-                reader = csv.reader(sf, delimiter=' ', skipinitialspace=True)
-                name = next(reader)
-                cvdata = bpy.data.curves.new(' '.join(name), 'CURVE')
-                cvdata.dimensions = '2D'
-
-                # if the curve already exists, Blender changes the name of the newly created one
-                name = cvdata.name
-                poly = cvdata.splines.new('POLY')
-
-                # first point
-                row = next(reader)
-                poly.points[0].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
-
-                # other points
-                for row in reader:
-                    poly.points.add(1)
-                    poly.points[-1].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
-
-                obj = bpy.data.objects.new(name, cvdata)
-                context.scene.objects.link(obj)
-            
-                kk = 0
-                layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
-                try:
-                    while len(layer_objs):
-                        kk = kk + 1
-                        layer_objs.clear()
-                        layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
-                    obj.layers[kk] = True
-                    for jj in range(len(obj.layers)):
-                        if jj != kk:
-                            obj.layers[jj] = False
-                except IndexError:
-                    self.report({'INFO'}, "Couldn't find an empty layer. Using the active layer")
-                    pass
-                
-                # context.curve.bevel_object = obj
-
-                for item in bpy.context.scene.objects:
-                    if ('beam3_' in item.name) and item.select:
-                        try:
-                            item.data.bevel_object = obj
-                        except AttributeError:
-                            pass
-
-                return {'FINISHED'}
-        except IOError:
-           self.report({'ERROR'}, {'Could not locate file'})
-           return {'CANCELLED'}
-        except StopIteration:
-            self.report({'WARNING'}, {'Reached the end of file'})
-            return {'CANCELLED'}
