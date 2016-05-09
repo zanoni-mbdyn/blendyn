@@ -28,7 +28,6 @@ import csv
 
 from mathutils import *
 from math import *
-from bpy_extras.io_utils import ImportHelper
 
 import pdb
 
@@ -739,30 +738,6 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
             
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Elems_Import_Beam3 class
-
-## Bevel object panel
-class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
-    """ Beam operators panel in data properties panel """
-    bl_label = "MBDyn beam props"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-
-    def draw(self, context):
-        ed = context.scene.mbdyn.elems
-        curve = context.curve
-        layout = self.layout
-        col = layout.column()
-        
-        try:
-            if ed[context.object.name].type in {'beam3', 'beam2'}:
-                col.operator(Object_OT_MBDyn_load_section.bl_idname, text="Load profile (Selig)")
-                col.operator(Object_OT_MBDyn_update_beam3.bl_idname, text="Update configuration")
-        except KeyError:
-            pass
-# -----------------------------------------------------------
-# end of Data_OT_MBDyn_Elems_Beams class
-
 
 class Object_OT_MBDyn_update_beam3(bpy.types.Operator):
     """ Calls the update_beam3() function to update the current configuration
