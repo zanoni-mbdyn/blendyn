@@ -1,0 +1,45 @@
+# Dynamics and Aeroelasticity of Rotors 
+# MBDyn training #2
+# Introduction to rotor dynamics with MBDyn
+# author Giuseppe Quaranta <giuseppe.quaranta@polimi.it>
+# This is part of the MBDyn model of the AS330 Puma
+# vim: ft=mbd
+
+# blade root reference
+reference: CURR_ROTOR + CURR_BLADE,
+	reference, CURR_ROTOR + HUB, null,
+	reference, CURR_ROTOR + HUB,
+		3, 0.,0.,1.,
+		1, cos(curr_psi),sin(curr_psi),0.,
+	reference, CURR_ROTOR + HUB, null,
+	reference, CURR_ROTOR + HUB, null;
+
+reference: CURR_ROTOR + CURR_BLADE + BLADE_LAG,
+	reference, CURR_ROTOR + CURR_BLADE,
+		lag_hinge,0.,0.,
+	reference, CURR_ROTOR + CURR_BLADE,
+		3, 0.,0.,1.,
+		1, cos(prelag),sin(prelag),0.,
+	reference, CURR_ROTOR + CURR_BLADE, null,
+	reference, CURR_ROTOR + CURR_BLADE, null;
+
+reference: CURR_ROTOR + CURR_BLADE + BLADE_FLAP,
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_LAG,
+		flap_hinge-lag_hinge,0.,0.,
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_LAG,
+		2, 0.,1.,0.,
+		1, cos(-preflap),0.,sin(-preflap),
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_LAG, null,
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_LAG, null;
+
+reference: CURR_ROTOR + CURR_BLADE + BLADE_PITCH,
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_FLAP,
+		pitch_bearing-flap_hinge,0.,0.,
+	reference,CURR_ROTOR + CURR_BLADE + BLADE_FLAP,
+		1, 1.,0.,0.,
+		3, 0.,-sin(prepitch),cos(prepitch),
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_FLAP, null,
+	reference, CURR_ROTOR + CURR_BLADE + BLADE_FLAP, null;
+
+
+# vim: ft=mbd

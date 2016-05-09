@@ -223,10 +223,7 @@ It's time to simulate the [MBDyn][1] model and import the simulation results in
 [Blender][6].
 
 ## Simulation and basic visualization
-You can find the original [MBDyn][1] model [here][2]. To take into account the
-inertial properties that we have estimated and to facilitate the visualization
-in [Blender][6], you can use the slightly modified file `slidercrank_r.mbd`
-that you can find in the `test` directory of the repository. After running
+You can find the complete [MBDyn][1] model [here][2]. After running
 the simulation and following the steps in the above sections, choosing to
 automatically import all the nodes to the [Blender][6] scene, you should end up
 with a scene similar to the one in the picture below, when viewed from the

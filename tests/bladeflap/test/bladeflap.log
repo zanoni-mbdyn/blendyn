@@ -1,0 +1,149 @@
+output frequency: 1
+structural node: 1 0 0 0 euler123 -0 0 0
+structural node: 2 0 0 0 euler123 -0 0 0
+structural node: 10 0.22 0 0 euler123 -0 0 0
+structural node: 11 2.86 0 0 euler123 -0 0 0
+structural node: 12 5.5 0 0 euler123 -0 0 0
+clamp: 1 1 0 0 0 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 0 0 0 1
+axialrotation: 2 1 0 0 0 1 0 0 0 1 0 0 0 1 2 0 0 0 1 0 0 0 1 0 0 0 1
+revolutehinge: 10 2 0.22 0 0 1 0 -0 0 0 1 0 -1 0 10 0 0 0 1 0 -0 0 0 1 0 -1 0
+deformablehinge: 11 2 0 0 0 1 0 -0 0 0 1 0 -1 0 10 0 0 0 1 0 -0 0 0 1 0 -1 0
+body: 10 10 0.158494 0.66 0 0 0.0211325 0 0 0 0.0690398 0 0 0 0.0690398
+body: 11 11 0.433013 0 0 0 0.057735 0 0 0 0 0 0 0 0
+body: 12 12 0.158494 -0.66 0 0 0.0211325 0 0 0 0.0690398 0 0 0 0.0690398
+beam3: 1 10 0 0 0 11 0 0 0 12 0 0 0
+structural absolute force: 12 12 0 0 0
+struct node dofs: 0 6 12 24 36
+struct node eqs: 0 6 18 30 42
+struct node momentum dofs: 18 30 42
+struct node momentum eqs: 12 24 36
+struct displacement node dofs: 0 6 12 24 36
+struct displacement node eqs: 0 6 18 30 42
+struct displacement node momentum dofs: 18 30 42
+struct displacement node momentum eqs: 12 24 36
+struct node labels: 1 2 10 11 12
+struct displacement node labels: 1 2 10 11 12
+Symbol table:
+  integer BLADE1_FLAP = 10
+  integer BLADE1_MIDDLE = 11
+  integer BLADE1_TIP = 12
+  real EA = 1e+08.
+  real EJy = 20000.
+  real EJz = 4e+06.
+  const bool FALSE = 0
+  real FLAP_OFFSET = 0.22
+  real GAy = 1e+08.
+  real GAz = 1e+08.
+  real GJ = 10000.
+  integer GROUND = 1
+  integer HUB = 2
+  const integer INT_MAX = 2147483647
+  const integer INT_MIN = -2147483648
+  real Jx = 0.1
+  real Jx1 = 0.0211325
+  real Jx2 = 0.057735
+  real Jx3 = 0.0211325
+  real Jy = 0.
+  real Jy1 = 0.
+  real Jy2 = 0.
+  real Jy3 = 0.
+  real Jz = 0.
+  real Jz1 = 0.
+  real Jz2 = 0.
+  real Jz3 = 0.
+  real L_beam = 1.
+  real M = 50.
+  real OMEGA = 40.84
+  real R = 5.5
+  const integer RAND_MAX = 2147483647
+  const real REAL_MAX = 1.79769e+308
+  const real REAL_MIN = 2.22507e-308
+  real SPAN = 5.28
+  integer Step = 0
+  const bool TRUE = 1
+  real Time = 0.
+  real TimeStep = 0.
+  real Var = 0.
+  const real deg2rad = 0.0174533
+  const real e = 2.71828
+  const real ft2m = 0.3048
+  const real in2m = 0.0254
+  const real in2mm = 25.4
+  const real kg2lb = 2.20462
+  const real kg2slug = 0.0685218
+  real l1 = 0.211325
+  real l2 = 0.57735
+  real l3 = 0.211325
+  const real lb2kg = 0.453592
+  real m = 0.75
+  real m1 = 0.158494
+  real m2 = 0.433013
+  const real m2ft = 3.28084
+  const real m2in = 39.3701
+  real m3 = 0.158494
+  const real mm2in = 0.0393701
+  const real pi = 3.14159
+  const real rad2deg = 57.2958
+  const real slug2kg = 14.5939
+Environment:
+  LC_PAPER=it_IT.UTF-8
+  XDG_VTNR=2
+  XDG_SESSION_ID=1
+  HOSTNAME=localhost.localdomain
+  LC_MONETARY=it_IT.UTF-8
+  SHELL=/bin/bash
+  TERM=xterm-256color
+  XDG_MENU_PREFIX=gnome-
+  VTE_VERSION=4205
+  HISTSIZE=1000
+  GJS_DEBUG_OUTPUT=stderr
+  WINDOWID=31457286
+  LC_NUMERIC=it_IT.UTF-8
+  GJS_DEBUG_TOPICS=JS ERROR;JS LOG
+  USER=zanoni
+  LS_COLORS=rs=0:di=38;5;33:ln=38;5;51:mh=00:pi=40;38;5;11:so=38;5;13:do=38;5;5:bd=48;5;232;38;5;11:cd=48;5;232;38;5;3:or=48;5;232;38;5;9:mi=01;05;37;41:su=48;5;196;38;5;15:sg=48;5;11;38;5;16:ca=48;5;196;38;5;226:tw=48;5;10;38;5;16:ow=48;5;10;38;5;21:st=48;5;21;38;5;15:ex=38;5;40:*.tar=38;5;9:*.tgz=38;5;9:*.arc=38;5;9:*.arj=38;5;9:*.taz=38;5;9:*.lha=38;5;9:*.lz4=38;5;9:*.lzh=38;5;9:*.lzma=38;5;9:*.tlz=38;5;9:*.txz=38;5;9:*.tzo=38;5;9:*.t7z=38;5;9:*.zip=38;5;9:*.z=38;5;9:*.Z=38;5;9:*.dz=38;5;9:*.gz=38;5;9:*.lrz=38;5;9:*.lz=38;5;9:*.lzo=38;5;9:*.xz=38;5;9:*.bz2=38;5;9:*.bz=38;5;9:*.tbz=38;5;9:*.tbz2=38;5;9:*.tz=38;5;9:*.deb=38;5;9:*.rpm=38;5;9:*.jar=38;5;9:*.war=38;5;9:*.ear=38;5;9:*.sar=38;5;9:*.rar=38;5;9:*.alz=38;5;9:*.ace=38;5;9:*.zoo=38;5;9:*.cpio=38;5;9:*.7z=38;5;9:*.rz=38;5;9:*.cab=38;5;9:*.jpg=38;5;13:*.jpeg=38;5;13:*.gif=38;5;13:*.bmp=38;5;13:*.pbm=38;5;13:*.pgm=38;5;13:*.ppm=38;5;13:*.tga=38;5;13:*.xbm=38;5;13:*.xpm=38;5;13:*.tif=38;5;13:*.tiff=38;5;13:*.png=38;5;13:*.svg=38;5;13:*.svgz=38;5;13:*.mng=38;5;13:*.pcx=38;5;13:*.mov=38;5;13:*.mpg=38;5;13:*.mpeg=38;5;13:*.m2v=38;5;13:*.mkv=38;5;13:*.webm=38;5;13:*.ogm=38;5;13:*.mp4=38;5;13:*.m4v=38;5;13:*.mp4v=38;5;13:*.vob=38;5;13:*.qt=38;5;13:*.nuv=38;5;13:*.wmv=38;5;13:*.asf=38;5;13:*.rm=38;5;13:*.rmvb=38;5;13:*.flc=38;5;13:*.avi=38;5;13:*.fli=38;5;13:*.flv=38;5;13:*.gl=38;5;13:*.dl=38;5;13:*.xcf=38;5;13:*.xwd=38;5;13:*.yuv=38;5;13:*.cgm=38;5;13:*.emf=38;5;13:*.ogv=38;5;13:*.ogx=38;5;13:*.aac=38;5;45:*.au=38;5;45:*.flac=38;5;45:*.m4a=38;5;45:*.mid=38;5;45:*.midi=38;5;45:*.mka=38;5;45:*.mp3=38;5;45:*.mpc=38;5;45:*.ogg=38;5;45:*.ra=38;5;45:*.wav=38;5;45:*.oga=38;5;45:*.opus=38;5;45:*.spx=38;5;45:*.xspf=38;5;45:
+  SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
+  SESSION_MANAGER=local/unix:@/tmp/.ICE-unix/1793,unix/unix:/tmp/.ICE-unix/1793
+  USERNAME=zanoni
+  PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/opt/texbin:/usr/local/mbdyn/bin:/home/zanoni/.local/bin:/home/zanoni/bin:/opt/texbin:/usr/local/mbdyn/bin
+  MAIL=/var/spool/mail/zanoni
+  DESKTOP_SESSION=gnome
+  QT_IM_MODULE=ibus
+  XDG_SESSION_TYPE=x11
+  PWD=/home/zanoni/lavoro/mbdyn/blender/python/addon/mbdyn-blender/MBDynImporterDevel/tests/bladeflap
+  XMODIFIERS=@im=ibus
+  LANG=it_IT.UTF-8
+  MODULEPATH=/etc/scl/modulefiles:/etc/scl/modulefiles:/usr/share/Modules/modulefiles:/etc/modulefiles:/usr/share/modulefiles
+  GDM_LANG=it_IT.UTF-8
+  LOADEDMODULES=
+  LC_MEASUREMENT=it_IT.UTF-8
+  GDMSESSION=gnome
+  SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+  HISTCONTROL=ignoredups
+  HOME=/home/zanoni
+  SHLVL=2
+  XDG_SEAT=seat0
+  GNOME_DESKTOP_SESSION_ID=this-is-deprecated
+  XDG_SESSION_DESKTOP=gnome
+  LOGNAME=zanoni
+  CVS_RSH=ssh
+  DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-coCB3TCSM1,guid=a5b4ae8aa1bdc35dd87d34aa572ca2f9
+  MODULESHOME=/usr/share/Modules
+  LESSOPEN=||/usr/bin/lesspipe.sh %s
+  WINDOWPATH=2
+  XDG_RUNTIME_DIR=/run/user/1000
+  DISPLAY=:0
+  XDG_CURRENT_DESKTOP=GNOME
+  LC_TIME=it_IT.UTF-8
+  XAUTHORITY=/run/user/1000/gdm/Xauthority
+  BASH_FUNC_module()=() {  eval `/usr/bin/modulecmd bash $*`
+}
+  BASH_FUNC_scl()=() {  local CMD=$1;
+ if [ "$CMD" = "load" -o "$CMD" = "unload" ]; then
+ eval "module $@";
+ else
+ /usr/bin/scl "$@";
+ fi
+}
+  OLDPWD=/home/zanoni/lavoro/mbdyn/blender/python/addon/mbdyn-blender/MBDynImporterDevel/tests
+  _=/usr/local/mbdyn/bin/mbdyn

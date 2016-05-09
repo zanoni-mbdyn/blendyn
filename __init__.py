@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
-# MBDynImporter
-# Copyright (C) 2015 Andrea Zanoni -- andrea.zanoni@polimi.it
+# MBDynImporter - file __init__.py
+# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -24,7 +24,7 @@
 bl_info = {
     "name": "MBDyn Motion Paths Importer",
     "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
-    "version": (1, 3),
+    "version": (1, 3, 1),
     "blender": (2, 6, 0),
     "location": "View3D -> Animation -> MBDyn Motion Path",
     "description": "Imports simulation results of MBDyn (Open Source MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
