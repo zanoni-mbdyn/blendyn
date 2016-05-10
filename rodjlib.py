@@ -306,7 +306,7 @@ class MBDynImportElemRod(bpy.types.Operator):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
         try: 
-            elem = ed['rod_' + str(self.int_label)]
+            elem = ed['rodj_' + str(self.int_label)]
             retval = spawn_rodj_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
