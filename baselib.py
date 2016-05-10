@@ -250,6 +250,8 @@ def update_label(self, context):
             obj.mbdyn.is_assigned = True
     
     obj.mbdyn.string_label = node_string_label
+    ret_val = {}
+
     if obj.mbdyn.is_assigned:
         ret_val = update_parametrization(obj)
 
