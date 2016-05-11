@@ -465,6 +465,19 @@ def spawn_beam3_element(elem, context):
     polydata.points[2].co = M2
     polydata.points[3].co = P3
 
+    # set the tilt angles of the sections
+    t3 = P3 - M2
+    t3.normalize()
+
+    theta1, phi1 = n1OBJ.rotation_quaternion.to_axis_angle()
+    theta2, phi2 = n2OBJ.rotation_quaternion.to_axis_angle()
+    theta3, phi3 = n3OBJ.rotation_quaternion.to_axis_angle()
+    
+    polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
+    polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
+    polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
+    polydata.points[3].tilt = t3.to_3d()*(theta3*phi3)
+
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'elem.beam'
@@ -531,49 +544,50 @@ def spawn_beam3_element(elem, context):
  
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # P1 driver for bevel section rotation
-    drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
-    xrot_P1 = drv_tilt_P1.driver.variables.new()
-    xrot_P1.name = "xrot_P1"
-    xrot_P1.type = 'TRANSFORMS'
-    xrot_P1.targets[0].id = n1OBJ
-    xrot_P1.targets[0].data_path = 'rotation.x'
-    xrot_P1.targets[0].transform_type = 'ROT_X'
-    xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_P1.driver.expression = "xrot_P1"
-
-    # P3 driver for bevel section rotation
-    drv_tilt_P3 = beamOBJ.data.splines[0].points[3].driver_add('tilt')
-    xrot_P3 = drv_tilt_P3.driver.variables.new()
-    xrot_P3.name = "xrot_P3"
-    xrot_P3.type = 'TRANSFORMS'
-    xrot_P3.targets[0].id = n3OBJ
-    xrot_P3.targets[0].data_path = 'rotation.x'
-    xrot_P3.targets[0].transform_type = 'ROT_X'
-    xrot_P3.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_P3.driver.expression = "xrot_P3"
-
-    # M1 driver for bevel section rotation (TODO: check correctness)
-    drv_tilt_M1 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
-    xrot_P2_1 = drv_tilt_M1.driver.variables.new()
-    xrot_P2_1.name = "xrot_P2"
-    xrot_P2_1.type = 'TRANSFORMS'
-    xrot_P2_1.targets[0].id = n2OBJ
-    xrot_P2_1.targets[0].data_path = 'rotation.x'
-    xrot_P2_1.targets[0].transform_type = 'ROT_X'
-    xrot_P2_1.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_M1.driver.expression = "xrot_P2"
+    if False:   # NOT CORRECT! -- Moved to update_beam3
+        # P1 driver for bevel section rotation
+        drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
+        xrot_P1 = drv_tilt_P1.driver.variables.new()
+        xrot_P1.name = "xrot_P1"
+        xrot_P1.type = 'TRANSFORMS'
+        xrot_P1.targets[0].id = n1OBJ
+        xrot_P1.targets[0].data_path = 'rotation.x'
+        xrot_P1.targets[0].transform_type = 'ROT_X'
+        xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
+        drv_tilt_P1.driver.expression = "xrot_P1"
     
-    # M2 driver for bevel section rotation (TODO: check correctness)
-    drv_tilt_M2 = beamOBJ.data.splines[0].points[2].driver_add('tilt')
-    xrot_P2_2 = drv_tilt_M2.driver.variables.new()
-    xrot_P2_2.name = "xrot_P2"
-    xrot_P2_2.type = 'TRANSFORMS'
-    xrot_P2_2.targets[0].id = n2OBJ
-    xrot_P2_2.targets[0].data_path = 'rotation.x'
-    xrot_P2_2.targets[0].transform_type = 'ROT_X'
-    xrot_P2_2.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_M2.driver.expression = "xrot_P2"
+        # P3 driver for bevel section rotation
+        drv_tilt_P3 = beamOBJ.data.splines[0].points[3].driver_add('tilt')
+        xrot_P3 = drv_tilt_P3.driver.variables.new()
+        xrot_P3.name = "xrot_P3"
+        xrot_P3.type = 'TRANSFORMS'
+        xrot_P3.targets[0].id = n3OBJ
+        xrot_P3.targets[0].data_path = 'rotation.x'
+        xrot_P3.targets[0].transform_type = 'ROT_X'
+        xrot_P3.targets[0].transform_space = 'WORLD_SPACE'
+        drv_tilt_P3.driver.expression = "xrot_P3"
+    
+        # M1 driver for bevel section rotation (TODO: check correctness)
+        drv_tilt_M1 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
+        xrot_P2_1 = drv_tilt_M1.driver.variables.new()
+        xrot_P2_1.name = "xrot_P2"
+        xrot_P2_1.type = 'TRANSFORMS'
+        xrot_P2_1.targets[0].id = n2OBJ
+        xrot_P2_1.targets[0].data_path = 'rotation.x'
+        xrot_P2_1.targets[0].transform_type = 'ROT_X'
+        xrot_P2_1.targets[0].transform_space = 'WORLD_SPACE'
+        drv_tilt_M1.driver.expression = "xrot_P2"
+        
+        # M2 driver for bevel section rotation (TODO: check correctness)
+        drv_tilt_M2 = beamOBJ.data.splines[0].points[2].driver_add('tilt')
+        xrot_P2_2 = drv_tilt_M2.driver.variables.new()
+        xrot_P2_2.name = "xrot_P2"
+        xrot_P2_2.type = 'TRANSFORMS'
+        xrot_P2_2.targets[0].id = n2OBJ
+        xrot_P2_2.targets[0].data_path = 'rotation.x'
+        xrot_P2_2.targets[0].transform_type = 'ROT_X'
+        xrot_P2_2.targets[0].transform_space = 'WORLD_SPACE'
+        drv_tilt_M2.driver.expression = "xrot_P2"
         
     beamOBJ.select = True
     n1OBJ.select = True
@@ -633,6 +647,21 @@ def update_beam3(elem, insert_keyframe = False):
 
     cp2.location = Vector(( P2 + Vector((d[1]*t2)) )).to_3d()
     cp3.location = Vector(( P2 - Vector((d[1]*t2)) )).to_3d()
+
+    # set the tilt angles of the sections
+    t3 = P3.to_3d() - cp2.location
+    t3.normalize()
+
+    theta1, phi1 = n1.rotation_quaternion.to_axis_angle()
+    theta2, phi2 = n2.rotation_quaternion.to_axis_angle()
+    theta3, phi3 = n3.rotation_quaternion.to_axis_angle()
+    
+    cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
+    cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
+    cvdata.splines[0].points[2].tilt = t2.to_3d()*(theta2*phi2)
+    cvdata.splines[0].points[3].tilt = t3.to_3d()*(theta3*phi3)
+    
+
     if insert_keyframe:
         try:
             cp2.select = True
