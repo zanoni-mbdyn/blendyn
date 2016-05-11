@@ -243,24 +243,26 @@ def update_label(self, context):
     # If not, signal it by assign the "not found" label
     node_string_label = "not_found"
     obj.mbdyn.is_assigned = False
-    for item in nd:
-        if item.int_label == obj.mbdyn.int_label:
-            node_string_label = item.string_label
-            item.blender_object = obj.name
+    if obj.mbdyn.type == 'node.struct':
+        try:
+            key = 'node_' + str(obj.mbdyn.int_label)
+            node_string_label = nd[key].string_label
+            nd[key].blender_object = obj.name
             obj.mbdyn.is_assigned = True
-    
-    obj.mbdyn.string_label = node_string_label
-    ret_val = {}
+            obj.mbdyn.string_label = node_string_label
 
-    if obj.mbdyn.is_assigned:
-        ret_val = update_parametrization(obj)
+            ret_val = {}
+            if obj.mbdyn.is_assigned:
+                ret_val = update_parametrization(obj)
 
-    if ret_val == 'ROT_NOT_SUPPORTED':
-        self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-            + obj.mbdyn.string_label)
-    elif ret_val == 'LOG_NOT_FOUND':
-        self.report({'ERROR'}, "MBDyn .log file not found")
-    
+            if ret_val == 'ROT_NOT_SUPPORTED':
+                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
+                + obj.mbdyn.string_label)
+            elif ret_val == 'LOG_NOT_FOUND':
+                self.report({'ERROR'}, "MBDyn .log file not found")
+        except KeyError:
+            self.report({'ERROR'}, "Node not found")
+            pass
     return
 # -----------------------------------------------------------
 # end of update_label() function 

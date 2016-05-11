@@ -107,6 +107,7 @@ def elem_info_draw(elem, layout):
 
 # App handler to update the configuration of deformable elements
 # after the location of the nodes has been updated
+
 @persistent
 def update_elements(scene):
     ed = scene.mbdyn.elems
