@@ -37,6 +37,8 @@ from math import *
 import ntpath, os, csv, math
 from collections import namedtuple
 
+import pdb
+
 try: 
     from netCDF4 import Dataset
 except ImportError:
@@ -56,8 +58,7 @@ from .baselib import *
 from .elements import *
 
 import pdb
-
-
+ 
 ## Nodes Dictionary: contains integer/string labels associations
 class MBDynNodesDictionary(bpy.types.PropertyGroup):
     int_label = IntProperty(
@@ -859,6 +860,7 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Node_Import_Single class
+
 class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_type"
     bl_label = "Add all elements of selected type to scene"
@@ -866,7 +868,6 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         ed = mbs.elems
-
         for elem in ed:
             if elem.type == mbs.elem_type_import:
                 try:
@@ -875,6 +876,8 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
                     self.report({'ERROR'}, "Couldn't find the element import function")
                     return {'CANCELLED'}
         return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Import_Elements_by_Type class
 
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
     bl_idname = "sel.mbdynnode"

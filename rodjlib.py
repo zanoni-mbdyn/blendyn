@@ -30,6 +30,8 @@ from bpy.props import *
 
 from .utilslib import *
 
+import pdb
+
 # helper function to parse rod joints
 def parse_rodj(rw, ed):
     ret_val = True
@@ -497,7 +499,7 @@ bpy.utils.register_class(RodBezWrite)
 def spawn_rodj_element(elem, context):
     """ Draws a rod joint element as a line connecting two points 
         belonging to two objects """
-
+    
     nd = context.scene.mbdyn.nodes
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):

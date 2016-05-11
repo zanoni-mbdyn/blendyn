@@ -208,7 +208,7 @@ def beam3_info_draw(elem, layout):
         col = layout.column(align = True)
         col.prop(elem.offsets[0], "value", text = "", slider = False)
 
-        node = nd['node_' + str(elem.nodes[0].int_label)] 
+        node = nd['node_' + str(elem.nodes[1].int_label)] 
         # Display node 2 info
         col.prop(node, "int_label", text = "Node 2 ID ")
         col.prop(node, "string_label", text = "Node 2 label ")
@@ -222,7 +222,7 @@ def beam3_info_draw(elem, layout):
         col.prop(elem.offsets[1], "value", text = "", slider = False)
         layout.separator()
 
-        node = nd['node_' + str(elem.nodes[0].int_label)] 
+        node = nd['node_' + str(elem.nodes[2].int_label)] 
         # Display node 3 info
         col.prop(node, "int_label", text = "Node 3 ID ")
         col.prop(node, "string_label", text = "Node 3 label ")
@@ -530,8 +530,6 @@ def spawn_beam3_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
  
     bpy.ops.object.select_all(action = 'DESELECT')
-    obj2.hide = True
-    obj3.hide = True
 
     # P1 driver for bevel section rotation
     drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
@@ -586,6 +584,7 @@ def spawn_beam3_element(elem, context):
     bpy.ops.group.create(name = beamOBJ.name)
     elem.is_imported = True
 
+    bpy.ops.object.select_all(action = 'DESELECT')
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_beam3_element(elem, context) function
@@ -706,7 +705,6 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
 
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
-        nd = bpy.context.scene.mbdyn.nodes
         try: 
             elem = ed['beam3_' + str(self.int_label)]
             retval = spawn_beam3_element(elem, context)
