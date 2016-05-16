@@ -189,6 +189,8 @@ def spawn_shell4_element(elem, context):
     elem.blender_object = shellOBJ.name
     return {'FINISHED'}
 
+def spawn_shell4_elems_as_mesh(context):
+    pass
 
 # function that displays shell4 info in panel -- [ optional ]
 def shell4_info_draw(elem, layout):

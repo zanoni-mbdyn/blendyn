@@ -165,4 +165,67 @@ bpy.utils.register_class(MBDynElemsDictionary)
 
 
 
+class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
+    """ Imports all the elements selected (by type and label range) into a single
+        mesh Blender Object. Currently useful only for shell4 elements. """
+    bl_idname =  "add.mbdyn_elem_as_mesh"
+    bl_label = "Import MBDyn elements as single mesh"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        nd = mbs.nodes
+
+        verts = list()
+        faces = list()
+        nodes = list()
+        elems = list()
+
+        for elem in ed:
+            if (elem.type == mbs.elem_type_import) \
+                    and (elem.int_label >= mbs.min_elem_import) \
+                    and (elem.int_label <= mbs.max_elem_import):
+                elems.append(elem.name)
+                n1 = 'node_' + str(elem.nodes[0].int_label)
+                n2 = 'node_' + str(elem.nodes[1].int_label)
+                n3 = 'node_' + str(elem.nodes[2].int_label)
+                n4 = 'node_' + str(elem.nodes[3].int_label)
+                nodes.extend((n1, n2, n3, n4))
+
+        node_set = set(nodes)
+        for node in node_set:
+                try:
+                    verts.append(bpy.data.objects[nd[node].blender_object].location)
+                except KeyError:
+                    self.report({'ERROR'}, "Could not find Blender Objects for " + \
+                            elem.name + " import")
+        
+        node_to_vert = dict(zip((node_set), range(len(verts))))
+
+        for ekey in elems:
+            elem = ed[ekey]
+            faces.append(\
+                    (node_to_vert['node_' + str(elem.nodes[0].int_label)],\
+                    node_to_vert['node_' + str(elem.nodes[1].int_label)],\
+                    node_to_vert['node_' + str(elem.nodes[2].int_label)],\
+                    node_to_vert['node_' + str(elem.nodes[3].int_label)]),\
+                    )
+        
+        if len(verts) and len(faces):
+            objname = mbs.elem_type_import + '_' + \
+                    str(mbs.min_elem_import) + '_' + \
+                    str(mbs.max_elem_import)
+           
+            mesh = bpy.data.meshes.new(objname + '_mesh')
+            mesh.from_pydata(verts, [], faces)
+            mesh.update()
+
+            obj = bpy.data.objects.new(objname, mesh)
+            context.scene.objects.link(obj)
+            obj.select = True
+            context.scene.objects.active = obj
+            return {'FINISHED'}
+        else:
+            self.report({'WARNING'}, "No mesh data was created")
+            return {'CANCELLED'}
 

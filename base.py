@@ -185,10 +185,10 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
     # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
     mesh_import_mode = EnumProperty(
-            items = [("SEPARATED", "Separated mesh objects", "", 'UNLINKED', 1),\
-                     ("JOINED", "Joined in single mesh", "", 'LINKED', 2)],
+            items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
+                     ("SINGLE MESH", "Joined in single mesh", "", 'LINKED', 2)],
             name = "Mesh objects",
-            default = "SEPARATED"
+            default = "SEPARATED OBJECTS"
             )
 
     # Elements dictionary -- holds the collection of the elements found in the .log file
@@ -278,6 +278,20 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     elem_type_import = EnumProperty(
             items  = get_elems_types,
             name = "Elements to import",
+            )
+
+    # Lower limit of range import for elemens
+    min_elem_import = IntProperty( 
+            name = "first element to import",
+            description = "Lower limit of integer labels for range import for elements",
+            default = 0
+            )
+    
+    # Higher limit of range import for elements 
+    max_elem_import = IntProperty(
+            name = "last element to import",
+            description = "Higher limit of integer labels for range import for elements",
+            default = 0
             )
     
     if HAVE_PLOT:
@@ -732,11 +746,17 @@ class MBDynElemsScenePanel(bpy.types.Panel):
             row = col.row()
             row.prop(mbs, "elem_type_import")
             row = col.row()
-            row.operator(Scene_OT_MBDyn_Import_Elements_by_Type.bl_idname, \
-                    text="Import elements by type")
+            col.prop(mbs, "min_elem_import")
+            col.prop(mbs, "max_elem_import")
+            if mbs.elem_type_import in ['shell4']: 
+                col.prop(mbs, "mesh_import_mode")
+            if mbs.mesh_import_mode == 'SEPARATED OBJECTS':
+                row.operator(Scene_OT_MBDyn_Import_Elements_by_Type.bl_idname, \
+                        text="Import elements by type")
+            elif mbs.mesh_import_mode == 'SINGLE MESH':
+                row.operator(Scene_OT_MBDyn_Import_Elements_as_Mesh.bl_idname, \
+                        text="Import elements by type")
 
-            if False:
-                row.prop(mbs, "mesh_import_mode")
 
             row = layout.row()
             row.separator()
@@ -885,7 +905,9 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
         mbs = context.scene.mbdyn
         ed = mbs.elems
         for elem in ed:
-            if elem.type == mbs.elem_type_import:
+            if (elem.type == mbs.elem_type_import) \
+                    and (elem.int_label >= mbs.min_elem_import) \
+                    and (elem.int_label <= mbs.max_elem_import):
                 try:
                     eval("spawn_" + elem.type + "_element(elem, context)")
                 except NameError:
