@@ -23,7 +23,7 @@
 # -------------------------------------------------------------------------- 
 
 # TODO: check for unnecessary stuff
-import bpy
+import bpy, bmesh
 from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
@@ -224,6 +224,29 @@ class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
             context.scene.objects.link(obj)
             obj.select = True
             context.scene.objects.active = obj
+            
+            # set hooks
+            if False:
+                for node in node_set:
+                    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+                    mesh = bmesh.from_edit_mesh(obj.data)
+                    bpy.ops.mesh.select_all(action = 'DESELECT')
+                    mesh.verts.ensure_lookup_table()
+                    mesh.verts[node_to_vert[node]].select = True
+                    mesh.select_flush(True)
+                    bpy.data.objects[nd[node].blender_object].select = True
+                    bpy.ops.object.hook_add_selob()
+                    bpy.data.objects[nd[node].blender_object].select = False
+                    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False) 
+
+            for node in node_set:
+                vg = obj.vertex_groups.new('v-' + str(node_to_vert[node]))
+                vg.add([node_to_vert[node]], 1.0, 'ADD')
+                hook_mod = obj.modifiers.new('Hook' + vg.name, 'HOOK')
+                hook_mod.object = bpy.data.objects[nd[node].blender_object]
+                hook_mod.vertex_group = vg.name
+                hook_mod.show_in_editmode = True
+
             return {'FINISHED'}
         else:
             self.report({'WARNING'}, "No mesh data was created")
