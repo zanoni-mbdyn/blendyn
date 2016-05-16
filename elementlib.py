@@ -111,9 +111,10 @@ def elem_info_draw(elem, layout):
 @persistent
 def update_elements(scene):
     ed = scene.mbdyn.elems
-    for element in ed:
-        if element.is_imported and element.update != 'none':
-            eval(element.update + "(element, True)")
+    eu = scene.mbdyn.elems_to_update
+    for elem in eu:
+        element = ed[elem.name]
+        eval(ed[elem.name].update + "(element, True)")
 
 bpy.app.handlers.frame_change_post.append(update_elements)
 
