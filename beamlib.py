@@ -308,6 +308,7 @@ def spawn_beam2_element(elem, context):
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'elem.beam'
+    beamOBJ.mbdyn.dkey = elem.name
     beamOBJ.mbdyn.int_label = elem.int_label
     bpy.context.scene.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
@@ -481,6 +482,10 @@ def spawn_beam3_element(elem, context):
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'elem.beam'
+    beamOBJ.mbdyn.dkey = elem.name
+    ude = bpy.context.scene.mbdyn.elems_to_update.add()
+    ude.dkey = elem.name
+    ude.name = elem.name
     beamOBJ.mbdyn.int_label = elem.int_label
 
     bpy.context.scene.objects.link(beamOBJ)

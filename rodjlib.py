@@ -561,6 +561,7 @@ def spawn_rodj_element(elem, context):
         
     rodOBJ = bpy.data.objects.new(rodobj_id, cvdata)
     rodOBJ.mbdyn.type = 'elem.joint'
+    rodOBJ.mbdyn.dkey = elem.name
     rodOBJ.mbdyn.int_label= elem.int_label
     bpy.context.scene.objects.link(rodOBJ)
     elem.blender_object = rodOBJ.name
@@ -674,6 +675,7 @@ def spawn_rodbezj_element(elem):
 
         rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
         rodOBJ.mbdyn.type = 'elem.joint'
+        rodOBJ.mbdyn.dkey = elem.name
         rodOBJ.mbdyn.int_label = elem.int_label
         bpy.context.scene.objects.link(rodOBJ)
         elem.blender_object = rodOBJ.name

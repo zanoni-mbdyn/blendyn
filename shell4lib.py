@@ -118,6 +118,7 @@ def spawn_shell4_element(elem, context):
     shellOBJ = bpy.context.scene.objects.active
     shellOBJ.name = elem.name
     shellOBJ.mbdyn.type = 'elem.shell4'
+    shellOBJ.mbdyn.dkey = elem.name
     shellOBJ.mbdyn.int_label = elem.int_label
     mesh = shellOBJ.data
 

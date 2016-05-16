@@ -197,6 +197,15 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             type = MBDynElemsDictionary
             )
 
+    # Elements to be updated -- holds the keys to elements that need to update their configuration
+    #                           when the scene changes
+    elems_to_update = CollectionProperty(
+            type = MBDynElemToBeUpdated,
+            name = "Elements that require update",
+            description = "Collection of indexes of the elements that need to be updated when \
+                            the scene is changed"
+        )
+
     # Simulation time
     simtime = CollectionProperty(
             name = "MBDyn simulation time",
@@ -310,7 +319,14 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
     # Type of MBDyn entity
     type = StringProperty(
             name = "MBDyn entity type",
-            description = "Type of MBDyn entity (node, joint, etc) associated with object",
+            description = "Type of MBDyn entity associated with object",
+            default = 'none'
+            )
+
+    # Dictionary key
+    dkey = StringProperty(
+            name = "MBDyn dictionary key",
+            description = "Key of the entry of the MBDyn dictionary relative to the object",
             default = 'none'
             )
 
@@ -989,3 +1005,41 @@ class MBDynCreateVerticesFromNodesButton(bpy.types.Operator):
         return{'FINISHED'}
 # -----------------------------------------------------------
 # end of MBDynCreateVerticesFromNodesButton class
+
+class Object_OT_Delete_Override(bpy.types.Operator):
+    """ Overrides the delete function of Blender Objects to remove
+        the related elements in MBDyn dictionaries """
+    bl_idname = "object.delete"
+    bl_label = "Object Delete Operator"
+    use_global = BoolProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    @classmethod
+    def remove_from_dict(self, obj, context):
+        if obj.mbdyn.type == 'node.struct':
+            node = bpy.context.scene.mbdyn.nodes[obj.mbdyn.dkey]
+            node.blender_object = 'none'
+            node.is_imported = False
+        else:
+            elem = bpy.context.scene.mbdyn.elems[obj.mbdyn.dkey]
+            elem.blender_object = 'none'
+            elem.is_imported = False
+            for idx, ude in enumerate(bpy.context.scene.mbdyn.elems_to_update):
+                if ude.dkey == elem.name:
+                    bpy.context.scene.mbdyn.elems_to_update.remove(idx)
+                    break
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            try:
+                self.remove_from_dict(obj, context)
+            except KeyError:
+                print("remove_from_dict(): key not found")
+                pass
+            bpy.context.scene.objects.unlink(obj)
+            bpy.data.objects.remove(obj)
+            return {'FINISHED'}
+

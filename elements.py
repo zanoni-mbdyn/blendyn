@@ -68,6 +68,15 @@ bpy.utils.register_class(MBDynElemNodesColl)
 # -----------------------------------------------------------
 # end of MBDynElemNodesColl class 
 
+class MBDynElemToBeUpdated(bpy.types.PropertyGroup):
+    dkey = StringProperty(
+            name = "Key of element to be updated",
+            description = "",
+            )
+bpy.utils.register_class(MBDynElemToBeUpdated)
+# -----------------------------------------------------------
+# end of MBDynToBeUpdated class 
+
 class MBDynElemsDictionary(bpy.types.PropertyGroup):
     type = StringProperty(
         name = "Type of MBDyn element",
@@ -151,13 +160,9 @@ bpy.utils.register_class(MBDynElemsDictionary)
 # -----------------------------------------------------------
 # end of MBDynElemsDictionary class 
 
-# App handler to update the elems dictionary when an object is removed
-@persistent
-def update_ed(scene):
-    ed = scene.mbdyn.elems
-    for elem in ed:
-        if not(elem.blender_object in bpy.data.objects.keys()):
-            elem.blender_object = 'none'
-            elem.is_imported = False
+# Override delete operator to remove element from elements dictionary
+# when the related object is deleted
 
-bpy.app.handlers.scene_update_post.append(update_ed)
+
+
+
