@@ -751,10 +751,10 @@ class MBDynElemsScenePanel(bpy.types.Panel):
             if mbs.elem_type_import in ['shell4']: 
                 col.prop(mbs, "mesh_import_mode")
             if mbs.mesh_import_mode == 'SEPARATED OBJECTS':
-                row.operator(Scene_OT_MBDyn_Import_Elements_by_Type.bl_idname, \
+                col.operator(Scene_OT_MBDyn_Import_Elements_by_Type.bl_idname, \
                         text="Import elements by type")
             elif mbs.mesh_import_mode == 'SINGLE MESH':
-                row.operator(Scene_OT_MBDyn_Import_Elements_as_Mesh.bl_idname, \
+                col.operator(Scene_OT_MBDyn_Import_Elements_as_Mesh.bl_idname, \
                         text="Import elements by type")
 
 
