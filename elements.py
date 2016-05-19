@@ -225,20 +225,6 @@ class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
             obj.select = True
             context.scene.objects.active = obj
             
-            # set hooks
-            if False:
-                for node in node_set:
-                    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-                    mesh = bmesh.from_edit_mesh(obj.data)
-                    bpy.ops.mesh.select_all(action = 'DESELECT')
-                    mesh.verts.ensure_lookup_table()
-                    mesh.verts[node_to_vert[node]].select = True
-                    mesh.select_flush(True)
-                    bpy.data.objects[nd[node].blender_object].select = True
-                    bpy.ops.object.hook_add_selob()
-                    bpy.data.objects[nd[node].blender_object].select = False
-                    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False) 
-
             for node in node_set:
                 vg = obj.vertex_groups.new('v-' + str(node_to_vert[node]))
                 vg.add([node_to_vert[node]], 1.0, 'ADD')
