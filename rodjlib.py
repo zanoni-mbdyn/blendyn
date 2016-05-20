@@ -555,10 +555,15 @@ def spawn_rodj_element(elem, context):
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
 
-    # assign coordinates of knots in global frame
-    polydata.points[0].co = n1OBJ.matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
-    polydata.points[1].co = n2OBJ.matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
-        
+    # assign coordinates of knots in global frame 
+    R1 = n1OBJ.rotation_quaternion.to_matrix()
+    R2 = n2OBJ.rotation_quaternion.to_matrix()
+    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+
+    polydata.points[0].co = p1.to_4d()
+    polydata.points[1].co = p2.to_4d()
+
     rodOBJ = bpy.data.objects.new(rodobj_id, cvdata)
     rodOBJ.mbdyn.type = 'elem.joint'
     rodOBJ.mbdyn.dkey = elem.name
