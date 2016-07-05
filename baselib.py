@@ -319,7 +319,7 @@ def set_motion_paths_mov(context):
             # main for loop, from second frame to last 
             Nskip = 0
             if mbs.load_frequency > 1:
-                Nskip = (mbs.load_frequency - 1)*num_nodes
+                Nskip = (mbs.load_frequency - 1)*mbs.num_nodes
 
             for frame in range(scene.frame_end):
                 scene.frame_current = (frame + 1)
