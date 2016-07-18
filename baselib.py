@@ -63,6 +63,9 @@ def parse_log_file(context):
     # Debug message to console
     print("parse_log_file(): Trying to read nodes and elements from file: "\
             + log_file)
+
+    ret_val = {''}
+
     try:
         with open(log_file) as lf:
             # open the reader, skipping initial whitespaces
