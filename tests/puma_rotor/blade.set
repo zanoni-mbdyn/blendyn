@@ -38,7 +38,7 @@ set: const real flap_hinge   	= 0.289;	# m
 set: const real pitch_bearing 	= 0.432;	# m 
 set: const real pitch_link_x 	= 0.289;	# m
 set: const real pitch_link_y 	= 0.181;	# m
-set: const real pitch_link_length = 1.;		# m 
+set: const real pitch_link_length = 0.4;	# m 
 
 # aerodynamics
 set: const real blade_chord 	= 0.537;	# m
