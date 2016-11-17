@@ -375,7 +375,7 @@ def set_motion_paths_mov(context):
 
 def set_motion_paths_netcdf(context):
 
-    scene = bpy.context.scene
+    scene = context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
     ed = mbs.elems 
@@ -416,7 +416,8 @@ def set_motion_paths_netcdf(context):
                 scene.frame_current = frame
                 tdx = frame*freq
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
-                obj.rotation_euler = Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
+                obj.rotation_euler = \
+                        Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
                                 axes[obj.mbdyn.parametrization[7]] +\
                                 axes[obj.mbdyn.parametrization[6]] +\
                                 axes[obj.mbdyn.parametrization[5]] )

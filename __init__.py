@@ -26,7 +26,7 @@ bl_info = {
     "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
     "version": (1, 4, 0),
     "blender": (2, 6, 0),
-    "location": "View3D -> Animation -> MBDyn Motion Path",
+    "location": "View3D -> MBDyn",
     "description": "Imports simulation results of MBDyn (Open Source MultiBody Dynamic solver) output. See www.mbdyn.org for more details.",
     "warning": "Beta stage",
     "wiki_url": "https://github.com/zanoni-mbdyn/mbdyn-blender/wiki",
