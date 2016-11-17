@@ -50,7 +50,7 @@ def get_plot_vars_glob(self, context):
     mbs = context.scene.mbdyn
 
     if mbs.use_netcdf:
-        ncfile = mbs.file_path + mbs.file_basename + '.nc'
+        ncfile = mbs.file_path + mbs.file_basename + ".nc"
         nc = Dataset(ncfile, 'r', format='NETCDF3')
         N = len(nc.variables["time"])
 
@@ -66,9 +66,9 @@ def get_plot_vars(self, context):
     mbo = context.active_object.mbdyn
 
     if mbs.use_netcdf:
-        ncfile = mbs.file_path + mbs.file_basename + '.nc'
+        ncfile = mbs.file_path + mbs.file_basename + ".nc"
         nc = Dataset(ncfile, 'r', format='NETCDF3')
-        key = mbo.type + '.' + str(mbo.int_label)
+        key = mbo.type + "." + str(mbo.int_label)
 
         var_list = list()
         for var in nc.variables:
@@ -84,7 +84,7 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         and optionally save it as .svg in the 'plots' directory.
         The user can choose among all the variables of all the 
         MBDyn entitites found in the output NetCDF fila."""
-    bl_idname = 'plot.sce_mbdyn_var'
+    bl_idname = "ops.mbdyn_plot_var_scene"
     bl_label = "Plot the selected MBDyn var"
 
     var_index = bpy.props.IntProperty()
@@ -93,7 +93,7 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         # get requested netCDF variable
-        ncfile = mbs.file_path + mbs.file_basename + '.nc'
+        ncfile = mbs.file_path + mbs.file_basename + ".nc"
         nc = Dataset(ncfile, 'r', format='NETCDF3')
 
         # get its dimensions
@@ -102,7 +102,7 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         dim = len(var.shape)
         
         # get time vector
-        time = nc.variables['time']
+        time = nc.variables["time"]
         
         # set up pygal
         config = pygal.Config()
@@ -116,18 +116,18 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
             n,m = var.shape
             for mdx in range(m):
                 if mbs.plot_comps[mdx]:
-                    chart.add(varname + '.' + str(mdx + 1), \
+                    chart.add(varname + "." + str(mdx + 1), \
                             [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
         elif dim == 3:
             n,m,k = var.shape
             if mbs.plot_var[-1] == 'R':
-                dims_names = ['(1,1)', '(1,2)', '(1,3)', '(2,2)', '(2,3)', '(3,3)']
+                dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 2]
                 dims2 = [0, 1, 2, 1, 2, 2]
             else:
-                dims_names = ['(1,1)', '(1,2)', '(1,3)',\
-                              '(2,1)', '(2,2)', '(2,3)',\
-                              '(3,1)', '(3,2)', '(3,3)']
+                dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                              "(2,1)", "(2,2)", "(2,3)",\
+                              "(3,1)", "(3,2)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
                 dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
             for mdx in range(len(dims_names)):
@@ -144,22 +144,22 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
             self.report({'ERROR'}, "Please save current Blender file first")
             return {'CANCELLED'}
  
-        plot_dir = os.path.join(bpy.path.abspath('//'), 'plots')
+        plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
            os.makedirs(plot_dir)
 
-        basename = mbs.file_basename + '.' + varname
+        basename = mbs.file_basename + "." + varname
         outfname = os.path.join(plot_dir, basename)
-        if os.path.exists(outfname + '.svg'):
+        if os.path.exists(outfname + ".svg"):
             kk = 1
-            while os.path.exists(outfname + '.00' + str(kk) + '.svg'):
+            while os.path.exists(outfname + ".00" + str(kk) + ".svg"):
                 kk = kk + 1
-            basename = basename + '.00' + str(kk)
+            basename = basename + ".00" + str(kk)
 
         outfname = os.path.join(plot_dir, basename)
-        chart.render_to_file(outfname + '.svg')
-        cairosvg.svg2png(url = outfname + '.svg', write_to = outfname + '.png')
-        bpy.ops.image.open(filepath = outfname + '.png')
+        chart.render_to_file(outfname + ".svg")
+        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        bpy.ops.image.open(filepath = outfname + ".png")
 
 
         self.report({'INFO'}, "Variable " + varname + " plotted")
@@ -169,7 +169,7 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
 class Object_OT_MBDyn_plot_var(bpy.types.Operator):
     """ Plots the object's selected variable in the image editor 
         and optionally save it as .svg in the 'plots' directory """
-    bl_idname = 'plot.obj_mbdyn_var'
+    bl_idname = "ops.mbdyn_plot_var_obj"
     bl_label = "Plot the selected MBDyn var"
 
     def execute(self, context):
@@ -177,7 +177,7 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         # get requested netCDF variable
-        ncfile = mbs.file_path + mbs.file_basename + '.nc'
+        ncfile = mbs.file_path + mbs.file_basename + ".nc"
         nc = Dataset(ncfile, 'r', format='NETCDF3')
 
         # get its dimensions
@@ -185,7 +185,7 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         dim = len(var.shape)
 
         # get time vector
-        time = nc.variables['time']
+        time = nc.variables["time"]
         
         # set up pygal
         config = pygal.Config()
@@ -199,18 +199,18 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
             n,m = var.shape
             for mdx in range(m):
                 if mbo.plot_comps[mdx]:
-                    chart.add(mbo.plot_var + '.' + str(mdx + 1), \
+                    chart.add(mbo.plot_var + "." + str(mdx + 1), \
                             [(time[idx], var[idx,mdx]) for idx in range(0, n, mbo.plot_frequency)])
         elif dim == 3:
             n,m,k = var.shape
             if mbo.plot_var[-1] == 'R':
-                dims_names = ['(1,1)', '(1,2)', '(1,3)', '(2,2)', '(2,3)', '(3,3)']
+                dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 2]
                 dims2 = [0, 1, 2, 1, 2, 2]
             else:
-                dims_names = ['(1,1)', '(1,2)', '(1,3)',\
-                              '(2,1)', '(2,2)', '(2,3)',\
-                              '(3,1)', '(3,2)', '(3,3)']
+                dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                              "(2,1)", "(2,2)", "(2,3)",\
+                              "(3,1)", "(3,2)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
                 dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
             for mdx in range(len(dims_names)):
@@ -227,22 +227,22 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         if not(bpy.data.is_saved):
             self.report({'ERROR'}, "Please save current Blender file first")
             return {'CANCELLED'}
-        plot_dir = os.path.join(bpy.path.abspath('//'), 'plots')
+        plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
            os.makedirs(plot_dir)
 
-        basename = mbs.file_basename + '.' + mbo.plot_var
+        basename = mbs.file_basename + "." + mbo.plot_var
         outfname = os.path.join(plot_dir, basename)
-        if os.path.exists(outfname + '.svg'):
+        if os.path.exists(outfname + ".svg"):
             kk = 1
-            while os.path.exists(outfname + '.00' + str(kk) + '.svg'):
+            while os.path.exists(outfname + ".00" + str(kk) + ".svg"):
                 kk = kk + 1
-            basename = basename + '.00' + str(kk)
+            basename = basename + ".00" + str(kk)
 
         outfname = os.path.join(plot_dir, basename)
-        chart.render_to_file(outfname + '.svg')
-        cairosvg.svg2png(url = outfname + '.svg', write_to = outfname + '.png')
-        bpy.ops.image.open(filepath = outfname + '.png')
+        chart.render_to_file(outfname + ".svg")
+        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        bpy.ops.image.open(filepath = outfname + ".png")
 
 
         self.report({'INFO'}, "Variable " + mbo.plot_var + " plotted")
@@ -252,7 +252,7 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
 class Object_OT_MBDyn_plot_freq(bpy.types.Operator):
     """ Sets the plot frequency for the current Object equal
         to the import frequency of the MBDyn results """
-    bl_idname = 'plot.obj_set_freq'
+    bl_idname = "ops.mbdyn_set_plot_freq_obj"
     bl_label = "Sets the plot frequency for the object equal to the load frequency"
 
     def execute(self, context):
@@ -263,7 +263,7 @@ class Object_OT_MBDyn_plot_freq(bpy.types.Operator):
 class Scene_OT_MBDyn_plot_freq(bpy.types.Operator):
     """ Sets the plot frequency for the current Object equal
         to the import frequency of the MBDyn results """
-    bl_idname = 'plot.scene_set_freq'
+    bl_idname = "ops.mbdyn_set_plot_freq_scene"
     bl_label = "Sets the plot frequency for the scene equal to the load frequency"
 
     def execute(self, context):
@@ -285,48 +285,48 @@ class MBDynPlotPanelObject(bpy.types.Panel):
         row = layout.row()
 
         if mbs.use_netcdf:
-            ncfile = mbs.file_path + mbs.file_basename + '.nc'
+            ncfile = mbs.file_path + mbs.file_basename + ".nc"
             nc = Dataset(ncfile, 'r', format='NETCDF3')
-            row.prop(mbo, 'plot_var')
+            row.prop(mbo, "plot_var")
             try:
                 dim = len(nc.variables[mbo.plot_var].shape)
                 if dim == 2:     # Vec3: FIXME check if other possibilities exist
                     box = layout.box()
                     split = box.split(1./3.)
                     column = split.column()
-                    column.prop(mbo, 'plot_comps', index = 0, text = 'x')
+                    column.prop(mbo, "plot_comps", index = 0, text = "x")
                     column = split.column()
-                    column.prop(mbo, 'plot_comps', index = 1, text = 'y')
+                    column.prop(mbo, "plot_comps", index = 1, text = "y")
                     column = split.column()
-                    column.prop(mbo, 'plot_comps', index = 2, text = 'z')
+                    column.prop(mbo, "plot_comps", index = 2, text = "z")
                 elif dim == 3:
                     if mbo.plot_var[-1] == 'R':
                         box = layout.box()
                         split = box.split(1./3.)
                         column = split.column()
-                        column.row().prop(mbo, 'plot_comps', index = 0, text = "(1,1)")
+                        column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
-                        column.row().prop(mbo, 'plot_comps', index = 1, text = "(1,2)")
-                        column.row().prop(mbo, 'plot_comps', index = 3, text = "(2,2)")
+                        column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbo, "plot_comps", index = 3, text = "(2,2)")
                         column = split.column()
-                        column.row().prop(mbo, 'plot_comps', index = 2, text = "(1,3)")
-                        column.row().prop(mbo, 'plot_comps', index = 4, text = "(2,3)")
-                        column.row().prop(mbo, 'plot_comps', index = 5, text = "(3,3)")
+                        column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbo, "plot_comps", index = 4, text = "(2,3)")
+                        column.row().prop(mbo, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
                         split = box.split(1./3.)
                         column = split.column()
-                        column.row().prop(mbo, 'plot_comps', index = 0, text = "(1,1)")
-                        column.row().prop(mbo, 'plot_comps', index = 3, text = "(2,1)")
-                        column.row().prop(mbo, 'plot_comps', index = 6, text = "(3,1)")
+                        column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(mbo, "plot_comps", index = 3, text = "(2,1)")
+                        column.row().prop(mbo, "plot_comps", index = 6, text = "(3,1)")
                         column = split.column()
-                        column.row().prop(mbo, 'plot_comps', index = 1, text = "(1,2)")
-                        column.row().prop(mbo, 'plot_comps', index = 4, text = "(2,2)")
-                        column.row().prop(mbo, 'plot_comps', index = 7, text = "(3,2)")
+                        column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbo, "plot_comps", index = 4, text = "(2,2)")
+                        column.row().prop(mbo, "plot_comps", index = 7, text = "(3,2)")
                         column = split.column()
-                        column.row().prop(mbo, 'plot_comps', index = 2, text = "(1,3)")
-                        column.row().prop(mbo, 'plot_comps', index = 5, text = "(2,3)")
-                        column.row().prop(mbo, 'plot_comps', index = 8, text = "(3,3)")
+                        column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbo, "plot_comps", index = 5, text = "(2,3)")
+                        column.row().prop(mbo, "plot_comps", index = 8, text = "(3,3)")
                 row = layout.row()
                 col = layout.column()
                 col.prop(mbo, "plot_frequency")
@@ -354,50 +354,50 @@ class MBDynPlotPanelScene(bpy.types.Panel):
         row = layout.row()
 
         if mbs.use_netcdf:
-            ncfile = mbs.file_path + mbs.file_basename + '.nc'
+            ncfile = mbs.file_path + mbs.file_basename + ".nc"
             nc = Dataset(ncfile, 'r', format='NETCDF3')
             # row.prop(mbs, 'plot_var')
-            row.template_list('MBDynPlotVar_UL_List', "MBDyn variable to plot", mbs, 'plot_vars',
-                    mbs, 'plot_var_index')
+            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
+                    mbs, "plot_var_index")
             try:
                 dim = len(nc.variables[mbs.plot_vars[mbs.plot_var_index].name].shape)
                 if dim == 2:     # Vec3: FIXME check if other possibilities exist
                     box = layout.box()
                     split = box.split(1./3.)
                     column = split.column()
-                    column.prop(mbs, 'plot_comps', index = 0, text = 'x')
+                    column.prop(mbs, "plot_comps", index = 0, text = "x")
                     column = split.column()
-                    column.prop(mbs, 'plot_comps', index = 1, text = 'y')
+                    column.prop(mbs, "plot_comps", index = 1, text = "y")
                     column = split.column()
-                    column.prop(mbs, 'plot_comps', index = 2, text = 'z')
+                    column.prop(mbs, "plot_comps", index = 2, text = "z")
                 elif dim == 3:
                     if mbs.plot_var[-1] == 'R':
                         box = layout.box()
                         split = box.split(1./3.)
                         column = split.column()
-                        column.row().prop(mbs, 'plot_comps', index = 0, text = "(1,1)")
+                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
-                        column.row().prop(mbs, 'plot_comps', index = 1, text = "(1,2)")
-                        column.row().prop(mbs, 'plot_comps', index = 3, text = "(2,2)")
+                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,2)")
                         column = split.column()
-                        column.row().prop(mbs, 'plot_comps', index = 2, text = "(1,3)")
-                        column.row().prop(mbs, 'plot_comps', index = 4, text = "(2,3)")
-                        column.row().prop(mbs, 'plot_comps', index = 5, text = "(3,3)")
+                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,3)")
+                        column.row().prop(mbs, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
                         split = box.split(1./3.)
                         column = split.column()
-                        column.row().prop(mbs, 'plot_comps', index = 0, text = "(1,1)")
-                        column.row().prop(mbs, 'plot_comps', index = 3, text = "(2,1)")
-                        column.row().prop(mbs, 'plot_comps', index = 6, text = "(3,1)")
+                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,1)")
+                        column.row().prop(mbs, "plot_comps", index = 6, text = "(3,1)")
                         column = split.column()
-                        column.row().prop(mbs, 'plot_comps', index = 1, text = "(1,2)")
-                        column.row().prop(mbs, 'plot_comps', index = 4, text = "(2,2)")
-                        column.row().prop(mbs, 'plot_comps', index = 7, text = "(3,2)")
+                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,2)")
+                        column.row().prop(mbs, "plot_comps", index = 7, text = "(3,2)")
                         column = split.column()
-                        column.row().prop(mbs, 'plot_comps', index = 2, text = "(1,3)")
-                        column.row().prop(mbs, 'plot_comps', index = 5, text = "(2,3)")
-                        column.row().prop(mbs, 'plot_comps', index = 8, text = "(3,3)")
+                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbs, "plot_comps", index = 5, text = "(2,3)")
+                        column.row().prop(mbs, "plot_comps", index = 8, text = "(3,3)")
                 row = layout.row()
                 col = layout.column()
                 col.prop(mbs, "plot_frequency")

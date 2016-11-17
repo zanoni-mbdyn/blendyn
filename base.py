@@ -26,10 +26,9 @@
 
 import bpy
 import bmesh
-from bpy.types import Operator, Panel
 from bpy.props import *
-from bpy_extras.io_utils import ImportHelper
 from bpy.app.handlers import persistent
+from bpy_extras.io_utils import ImportHelper
 
 from mathutils import *
 from math import *
@@ -56,6 +55,7 @@ except ImportError:
 
 from .baselib import *
 from .elements import *
+from .eigenlib import *
 
 import pdb
  
@@ -293,6 +293,19 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             description = "Higher limit of integer labels for range import for elements",
             default = 0
             )
+    # True if output contains at least one eigensolution
+    eigensolutions = CollectionProperty(
+            name = "Eigensolutions",
+            description = "Parameters of the eigensolutions found in the MBDyn output",
+            type = MBDynEigenanalysisProps
+            )
+
+    curr_eigsol = IntProperty(
+            name = "current eigensolution",
+            description = "Index of the currently selected eigensolution",
+            default = 0,
+            update = update_curr_eigsol
+            )
     
     if HAVE_PLOT:
         plot_vars = CollectionProperty(
@@ -407,7 +420,7 @@ def update_time(scene):
         pass
 bpy.app.handlers.frame_change_pre.append(update_time)
 
-class MBDynReadLog(Operator):
+class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
     bl_idname = "animate.read_mbdyn_log_file"
     bl_label = "MBDyn .log file parsing"
@@ -439,7 +452,7 @@ bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
 
-class MBDynSelectMovFile(Operator, ImportHelper):
+class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
     """ Sets MBDyn's output files path and basename """
 
     bl_idname = "sel.mbdyn_mov_file"
@@ -458,6 +471,21 @@ class MBDynSelectMovFile(Operator, ImportHelper):
                 nc = Dataset(self.filepath, "r", format="NETCDF3")
                 mbs.use_netcdf = True
                 mbs.num_rows = 0
+                try:
+                    eig_step = nc.variables['eig.step']
+                    eig_time = nc.variables['eig.time']
+                    eig_dCoef = nc.variables['eig.dCoef']
+                    for ii in range(0, len(eig_step)):
+                        eigsol = mbs.eigensolutions.add()
+                        eigsol.step = eig_step[ii]
+                        eigsol.time = eig_time[ii]
+                        eigsol.dCoef = eig_dCoef[ii]
+                        eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
+                        eigsol.curr_eigmode = 1
+                except KeyError:
+                    print('MBDynSelectOutputFile: no eigenanalysis results found')
+                    pass
+
                 get_plot_vars_glob(self, context)
             except NameError:
                 self.report({'ERROR'}, "NetCDF module not imported correctly")
@@ -469,11 +497,11 @@ class MBDynSelectMovFile(Operator, ImportHelper):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
-bpy.utils.register_class(MBDynSelectMovFile)
+bpy.utils.register_class(MBDynSelectOutputFile)
 # -----------------------------------------------------------
 # end of MBDynSelectLabFile class
 
-class MBDynAssignLabels(Operator):
+class MBDynAssignLabels(bpy.types.Operator):
     """ Assigns 'recognisable' labels to MBDyn nodes and elements by 
         parsing the .log file """
     bl_idname = "import.mdbyn_labels"
@@ -498,7 +526,7 @@ bpy.utils.register_class(MBDynAssignLabels)
 # -----------------------------------------------------------
 # end of MBDynAssignLabels class
 
-class MBDynClearData(Operator):
+class MBDynClearData(bpy.types.Operator):
     """ Clears MBDyn elements and nodes dictionaries, essentially\
     'cleaning' the scene of all MBDyn related data"""
     bl_idname = "mbdyn.cleardata"
@@ -516,7 +544,7 @@ bpy.utils.register_class(MBDynClearData)
 # -----------------------------------------------------------
 # end of MBDynClearData class
 
-class MBDynSetMotionPaths(Operator):
+class MBDynSetMotionPaths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
     bl_idname = "animate.set_mbdyn_motion_path"
     bl_label = "MBDyn Motion Path setter"
@@ -536,14 +564,14 @@ bpy.utils.register_class(MBDynSetMotionPaths)
 # -----------------------------------------------------------
 # end of MBDynSetMotionPaths class
 
-class MBDynImportPanel(Panel):
+class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath" 
-    bl_label = "MBDyn Importer"
+    bl_label = "Load results"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
-    bl_category = 'Animation'
+    bl_category = 'MBDyn'
     
     def draw(self, context):
         
@@ -554,11 +582,11 @@ class MBDynImportPanel(Panel):
         nd = mbs.nodes
         ed = mbs.elems
 
-        # MBDyn .mov file selection
+        # MBDyn output file selection
         row = layout.row()
         row.label(text="MBDyn simulation results")
         col = layout.column(align = True)
-        col.operator(MBDynSelectMovFile.bl_idname, text="Select results file")
+        col.operator(MBDynSelectOutputFile.bl_idname, text="Select results file")
 
         # Display MBDyn file basename and info
         row = layout.row()
@@ -585,51 +613,26 @@ class MBDynImportPanel(Panel):
         row = layout.row()
         row.label(text="Erase all MBDyn data in scene")
         col = layout.column(align = True)
-        col.operator(MBDynClearData.bl_idname, text = "CLEAR MBDYN DATA")
+        col.operator(MBDynClearData.bl_idname, text = "CLEAR MBDYN DATA") 
+
+# -----------------------------------------------------------
+# end of MBDynImportPanel class
+
+class MBDynAnimatePanel(bpy.types.Panel):
+    """ Create animation of simulation results - Toolbar Panel """
+    bl_idname = "VIEW3D_TL_MBDyn_Animate" 
+    bl_label = "Create animation"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = 'objectmode'
+    bl_category = 'MBDyn'
+    
+    def draw(self, context):
         
-        # Display the active object 
-        col = layout.column()
-        row = col.row()
-        row.label(text="Active Object")
-        row = col.row()
-
-        try:
-            row.prop(obj, "name")
-
-            if any(item.blender_object == obj.name for item in nd):
-
-                # Display MBDyn node info
-                row = col.row()
+        # utility renaming        
+        layout = self.layout
+        mbs = context.scene.mbdyn
         
-                # Select MBDyn node
-                col = layout.column(align=True)
-                col.prop(obj.mbdyn, "int_label")
-                col = layout.column(align=True)
-                col.prop(obj.mbdyn, "string_label", text="")
-                col.prop(obj.mbdyn, "parametrization", text="")
-                col.enabled = False
-
-            else:
-                for elem in ed:
-                    if elem.blender_object == obj.name:
-                        # Display MBDyn elements info
-                        row = layout.row()
-                        row.label(text = "MBDyn's element info:")
-                        eval(elem.info_draw + "(elem, layout)")
-                        if elem.update_info_operator != 'none' and elem.is_imported == True:
-                            row = layout.row()
-                            row.operator(elem.update_info_operator, \
-                                    text = "Update element info").elem_key = elem.name
-                        if elem.write_operator != 'none' and elem.is_imported == True:
-                            row = layout.row()
-                            row.operator(elem.write_operator, \
-                                    text = "Write element input").elem_key = elem.name
-        except AttributeError:
-            row.label(text="No active objects")
-            pass
-        except TypeError:
-            pass
-
         # Insert keyframes for animation
         col = layout.column(align=True)
         col.label(text = "Start animating")
@@ -640,7 +643,123 @@ class MBDynImportPanel(Panel):
         col.label(text = "Simulation time")
         col.prop(mbs, "time")
 # -----------------------------------------------------------
-# end of MBDynImportPanel class
+# end of MBDynAnimatePanel class
+
+class MBDynEigenanalysisPanel(bpy.types.Panel):
+    """ Visualizes the results of an eigenanalysis - Toolbar Panel """
+    bl_idname = "VIEW3D_TL_MBDyn_Eigen" 
+    bl_label = "Eigenanalysis"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = 'objectmode'
+    bl_category = 'MBDyn'
+
+    def draw(self, context):
+        
+        # utility renaming        
+        layout = self.layout
+        mbs = context.scene.mbdyn
+        
+        # Eigenanalysis output visualization (if eigensolution is found in output)
+        if mbs.eigensolutions:
+            row = layout.row()
+            row.label(text = "Eigenanalysis")
+            row = layout.row()
+            row.prop(mbs, "curr_eigsol")
+            row = layout.row()
+            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "iNVec")
+            row.enabled = False
+            row = layout.row()
+            row.operator(Tools_OT_MBDyn_Eigen_Geometry.bl_idname, text = "Reference configuration")
+            
+            row = layout.row()
+            row.separator()
+            
+            row = layout.row()
+            row.label(text = "Selected Eigenmode")
+            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "curr_eigmode", text = "")
+            row = layout.row()
+            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_real")
+            row.enabled = False
+            row = layout.row()
+            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_freq")
+            row.enabled = False
+            
+            row.separator()
+            row = layout.row()
+            row.label(text = "Animation parameters")
+            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_scale")
+            row = layout.row()
+            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_frames")
+            row = layout.row()
+            row.operator(Tools_OT_MBDyn_Animate_Eigenmode.bl_idname, text = "Visualize mode")
+        
+# -----------------------------------------------------------
+# end of MBDynEigenanalysisPanel class
+
+class MBDynActiveObjectPanel(bpy.types.Panel):
+    """ Visualizes MBDyn data relative to the current active object - Toolbar Panel """
+    bl_idname = "VIEW3D_TL_MBDyn_ActiveObject" 
+    bl_label = "Active Object info"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = 'objectmode'
+    bl_category = 'MBDyn'
+
+    def draw(self, context):
+        
+        # utility renaming        
+        layout = self.layout
+        obj = context.object
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
+        
+        # Display the active object 
+        if bpy.context.active_object:
+            col = layout.column()
+            row = col.row()
+            row.label(text="Active Object")
+            row = col.row()
+
+            try:
+                row.prop(obj, "name")
+    
+                if any(item.blender_object == obj.name for item in nd):
+    
+                    # Display MBDyn node info
+                    row = col.row()
+            
+                    # Select MBDyn node
+                    col = layout.column(align=True)
+                    col.prop(obj.mbdyn, "int_label")
+                    col = layout.column(align=True)
+                    col.prop(obj.mbdyn, "string_label", text="")
+                    col.prop(obj.mbdyn, "parametrization", text="")
+                    col.enabled = False
+    
+                else:
+                    for elem in ed:
+                        if elem.blender_object == obj.name:
+                            # Display MBDyn elements info
+                            row = layout.row()
+                            row.label(text = "MBDyn's element info:")
+                            eval(elem.info_draw + "(elem, layout)")
+                            if elem.update_info_operator != 'none' and elem.is_imported == True:
+                                row = layout.row()
+                                row.operator(elem.update_info_operator, \
+                                        text = "Update element info").elem_key = elem.name
+                            if elem.write_operator != 'none' and elem.is_imported == True:
+                                row = layout.row()
+                                row.operator(elem.write_operator, \
+                                        text = "Write element input").elem_key = elem.name
+            except AttributeError:
+                row.label(text="No active objects")
+                pass
+            except TypeError:
+                pass
+# -----------------------------------------------------------
+# end of MBDynActiveObjectPanel class
 
 class MBDynNodes_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):

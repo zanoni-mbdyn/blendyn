@@ -93,7 +93,7 @@ def parse_beam3(rw, ed):
     
     try:
 
-        el = ed['beam3' + rw[1]]
+        el = ed['beam3_' + rw[1]]
         el.is_imported = False
         print("parse_beam3(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
@@ -476,9 +476,9 @@ def spawn_beam3_element(elem, context):
     t3 = P3 - M2
     t3.normalize()
 
-    theta1, phi1 = n1OBJ.rotation_quaternion.to_axis_angle()
-    theta2, phi2 = n2OBJ.rotation_quaternion.to_axis_angle()
-    theta3, phi3 = n3OBJ.rotation_quaternion.to_axis_angle()
+    phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
     
     polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
     polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
@@ -609,6 +609,9 @@ def spawn_beam3_element(elem, context):
     bpy.ops.group.create(name = beamOBJ.name)
     elem.is_imported = True
 
+    obj2.hide = True
+    obj3.hide = True
+
     bpy.ops.object.select_all(action = 'DESELECT')
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -663,9 +666,9 @@ def update_beam3(elem, insert_keyframe = False):
     t3 = P3.to_3d() - cp2.location
     t3.normalize()
 
-    theta1, phi1 = n1.rotation_quaternion.to_axis_angle()
-    theta2, phi2 = n2.rotation_quaternion.to_axis_angle()
-    theta3, phi3 = n3.rotation_quaternion.to_axis_angle()
+    phi1, theta1 = n1.matrix_world.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2.matrix_world.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3.matrix_world.to_quaternion().to_axis_angle()
     
     cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
     cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
