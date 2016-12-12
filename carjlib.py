@@ -29,6 +29,8 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 ## Parses cardano joint entry in the .log file
+#  Entry:
+#   cardanohinge: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset> (int)<node_2_label> (Vec3Float)<node_2_offset> (Mat3x3Float)<node_3_rot_offset>
 def parse_carj(rw, ed):
     ret_val = True
     # Debug message
