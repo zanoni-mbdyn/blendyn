@@ -28,7 +28,9 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-## Parses of spherical joint .log file entry
+## Parses spherical joint .log file entry (see section E.2.20 of input manual for details)
+#  Entry:
+#     sphericalhinge: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset> (int)<node_2_label> (Vec3Float)<node_2_offset> (Mat3x3Float)<node_2_rot_offset>
 def parse_sphj(rw, ed):
     ret_val = True
     # Debug message
