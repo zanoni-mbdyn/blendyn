@@ -29,6 +29,8 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 ## Parses total joint entry in .log file
+#  Entry:
+#    totaljoint: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset> (int)<node_2_label> (Vec3Float)<node_2_offset> (Mat3x3Float)<node_2_rot_offset>
 def parse_totj(rw, ed):
     ret_val = True
     # Debug message
@@ -77,6 +79,8 @@ class Scene_OT_MBDyn_Import_TotalJoint_Element(bpy.types.Operator):
 
 
 ## Parses total pin joint entry in the .log file
+#  Entry:
+#    totalpinjoint: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset>
 def parse_totpinj(rw, ed):
     ret_val = True
     # Debug message
