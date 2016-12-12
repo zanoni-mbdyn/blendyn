@@ -28,7 +28,9 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-# helper function to parse revolute joints
+## Parses Revolute Hinge joint entry in the .log file (see E.2.1 section in input manual for details)
+#  Entry:
+#    revolutehinge: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset> (int)<node_2_label> (Vec3Float)<node_2_offset> (Mat3x3Float)<node_2_rot_offset>
 def parse_revj(rw, ed):
     ret_val = True
     # Debug message
@@ -43,7 +45,7 @@ def parse_revj(rw, ed):
 
 ## Parses Revolute Pin joint entry in the .log file (see E.2.1 section in input manual for details)
 #  Entry:
-#    revolutepin: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset> (int)<node_2_label> (Vec3Float)<node_2_offset> (Mat3x3Float)<node_2_rot_offset>
+#    revolutepin: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset>
 def parse_revpinj(rw, ed):
     ret_val = True
     # Debug message
