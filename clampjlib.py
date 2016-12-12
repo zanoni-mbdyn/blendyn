@@ -28,7 +28,9 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-# helper function to parse clamp joints
+## Parses clamp joint entry in the .log file (see section E.2.8 of input manual for details)
+#  Entry:
+#   clamp: (int)<label> (int)<node_label> (Vec3Float)<position> (Mat3x3Float)<orientation> (Vec3Float)<nposition> (Mat3x3Float)<orientation>
 def parse_clampj(rw, ed):
     ret_val = True
     # Debug message
