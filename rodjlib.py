@@ -32,7 +32,7 @@ from .utilslib import *
 
 import pdb
 
-# helper function to parse rod joints
+## Parses rod joint entry in the .log file
 def parse_rodj(rw, ed):
     ret_val = True
     # Debug message
@@ -74,7 +74,7 @@ def parse_rodj(rw, ed):
 # -------------------------------------------------------------------------------
 # end of parse_rodj(rw, ed) function
 
-# helper function to parse rod bezier joint
+## Parses rod bezier joint entry in the .log file
 def parse_rodbezj(rw, ed):
     ret_val = True
     # Debug message
