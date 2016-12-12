@@ -28,7 +28,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-# helper function to parse shell4
+## Parses Revolute Hinge joint entry in the .log file
 def parse_shell4(rw, ed):
     ret_val = True
     # Debug message
