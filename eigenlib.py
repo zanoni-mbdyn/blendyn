@@ -57,7 +57,7 @@ def update_curr_eigmode(self, context):
         alpha_r = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.iNVec - 1, 0]
         alpha_i = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.iNVec - 1, 1]
         beta = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.iNVec - 1, 2]
-        det = (alpha_r + beta)^2 + alpha_i^2
+        det = (alpha_r + beta)**2 + alpha_i**2
         self.lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
         self.lambda_freq = (1./self.dCoef)*(alpha_i*beta)/(det*math.pi)
     else:
