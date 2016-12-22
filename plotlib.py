@@ -84,7 +84,7 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
     """ Plots the selected variable autospectrum (Sxx) in the image editor 
         and optionally save it as .svg in the 'plots' directory.
         The user can choose among all the variables of all the 
-        MBDyn entitites found in the output NetCDF fila."""
+        MBDyn entitites found in the output NetCDF file."""
     bl_idname = "ops.mbdyn_plot_var_sxx_scene"
     bl_label = "Plot the selected MBDyn var autospectrum"
 
@@ -122,9 +122,8 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
             n,m = var.shape
             nfft = int(np.power(2, np.round(np.log2(n) + .5)))
             
-            # FIXME: This is valid only if the simulation is done with
-            #        a fixed-timestep scheme!
-            # freq = np.fft.fftfreq(nfft, nc.variables["run.timestep"][1])
+            # FIXME: Check if this is still valid for a variable
+            #        timestep simulation
             freq = np.arange(nfft)*1./time[-1];
             
             for mdx in range(m):
@@ -142,6 +141,9 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
                             [(freq[idx], Gxx[idx]) for idx in range(0, int(nfft/2), mbs.plot_frequency)])
         elif dim == 3:
             n,m,k = var.shape
+            nfft = int(np.power(2, np.round(np.log2(n) + .5)))
+            freq = np.arange(nfft)*1./time[-1];
+            
             if mbs.plot_var[-1] == 'R':
                 dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 2]
@@ -154,12 +156,29 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
                 dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
             for mdx in range(len(dims_names)):
                 if mbs.plot_comps[mdx]:
-                    chart.add(varname + dims_names[mdx], \
-                            [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
-                            for idx in range(0, n, mbs.plot_frequency)])
+                    if mbs.fft_remove_mean:
+                        comp_fft = np.fft.fft(var[:, dims1[mdx], dims2[mdx]] -
+                                np.mean(var[:, dims2[mdx], dims2[mdx]]))
+                    else:
+                        comp_fft = np.fft.fft(var[:, dims1[mdx], dims2[mdx]])
+                    Sxx = np.multiply(np.conj(comp_fft), comp_fft)
+                    Gxx = np.zeros(nfft/2)
+                    Gxx[0] = Sxx[0]
+                    Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
+                    chart.add(mbs.plot_var + ".Sxx." + dims_names[mdx], \
+                            [(freq[idx], Gxx[idx]) \
+                            for idx in range(0, int(nfft/2), mbs.plot_frequency)])
         else:
-            chart.add(varname, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), mbs.plot_frequency)])
+            if mbs.fft_remove_mean:
+                var_fft = np.fft.fft(var - np.mean(var))
+            else:
+                var_fft = np.fft.fft(var)
+                Sxx = np.multiply(np.conj(var_fft), var_fft)
+                Gxx = np.zeros(nfft/2)
+                Gxx[0] = Sxx[0]
+                Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
+                chart.add(varname + ".Sxx", [(freq[idx], Gxx[idx]) \
+                        for idx in range(0, int(nfft/2), mbs.plot_frequency)])
         chart.x_title = "Frequency [Hz]"
 
         if not(bpy.data.is_saved):
@@ -214,19 +233,39 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         config.show_dots = False
         config.legend_at_bottom = True
         config.truncate_legend = -1
+        if (mbo.plot_xrange_max != 0.0):
+            if (mbo.plot_xrange_min >= 0) and (mbo.plot_xrange_max > mbo.plot_xrange_min):
+                config.xrange = (mbo.plot_xrange_min, mbo.plot_xrange_max)
+            else:
+                self.report({'ERROR'}, 'Invalid range for abscissa')
         chart = pygal.XY(config)
 
-        pdb.set_trace()
         # calculate autospectra and plot them
         if dim == 2:
             n,m = var.shape
+            nfft = int(np.power(2, np.round(np.log2(n) + .5)))
+            
+            # FIXME: Check if this is still valid for a variable
+            #        timestep simulation
+            freq = np.arange(nfft)*1./time[-1];
             for mdx in range(m):
                 if mbo.plot_comps[mdx]:
                     # normalized FFT
-                    chart.add(mbo.plot_var + "." + str(mdx + 1), \
-                            [(time[idx], var[idx,mdx]) for idx in range(0, n, mbo.plot_frequency)])
+                    if mbo.fft_remove_mean:
+                        comp_fft = np.fft.fft(var[:, mdx] - np.mean(var[:, mdx]))/nfft
+                    else:
+                        comp_fft = np.fft.fft(var[:, mdx])/nfft
+                    Sxx = np.multiply(np.conj(comp_fft), comp_fft)
+                    Gxx = np.zeros(nfft/2) 
+                    Gxx[0] = Sxx[0]
+                    Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
+                    chart.add(mbo.plot_var + ".Sxx." + str(mdx + 1), \
+                            [(freq[idx], Gxx[idx]) for idx in range(0, int(nfft/2), mbo.plot_frequency)])
         elif dim == 3:
             n,m,k = var.shape
+            nfft = int(np.power(2, np.round(np.log2(n) + .5)))
+            freq = np.arange(nfft)*1./time[-1];
+            
             if mbo.plot_var[-1] == 'R':
                 dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 2]
@@ -239,13 +278,31 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
                 dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
             for mdx in range(len(dims_names)):
                 if mbo.plot_comps[mdx]:
-                    chart.add(mbo.plot_var + dims_names[mdx], \
-                            [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
-                            for idx in range(0, n, mbo.plot_frequency)])
+                    if mbs.fft_remove_mean:
+                        comp_fft = np.fft.fft(var[:, dims1[mdx], dims2[mdx]] -
+                                np.mean(var[:, dims2[mdx], dims2[mdx]]))
+                    else:
+                        comp_fft = np.fft.fft(var[:, dims1[mdx], dims2[mdx]])
+                    Sxx = np.multiply(np.conj(comp_fft), comp_fft)
+                    Gxx = np.zeros(nfft/2)
+                    Gxx[0] = Sxx[0]
+                    Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
+                    chart.add(mbo.plot_var + ".Sxx." + dims_names[mdx], \
+                            [(freq[idx], Gxx[idx]) \
+                            for idx in range(0, int(nfft/2), mbo.plot_frequency)])
         else:
+            if mbo.fft_remove_mean:
+                var_fft = np.fft.fft(var - np.mean(var))
+            else:
+                var_fft = np.fft.fft(var)
+                Sxx = np.multiply(np.conj(var_fft), var_fft)
+                Gxx = np.zeros(nfft/2)
+                Gxx[0] = Sxx[0]
+                Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
+                chart.add(varname + ".Sxx", [(freq[idx], Gxx[idx]) \
+                        for idx in range(0, int(nfft/2), mbo.plot_frequency)])
             chart.add(mbo.plot_var, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), mbo.plot_frequency)])
-        
+                    for idx in range(0, len(time), mbo.plot_frequency)]) 
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
@@ -255,7 +312,7 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         if not os.path.exists(plot_dir):
            os.makedirs(plot_dir)
 
-        basename = mbs.file_basename + "." + mbo.plot_var
+        basename = mbs.file_basename + ".Sxx." + mbo.plot_var
         outfname = os.path.join(plot_dir, basename)
         if os.path.exists(outfname + ".svg"):
             kk = 1
@@ -527,17 +584,18 @@ class MBDynPlotPanelObject(bpy.types.Panel):
                 row = layout.row()
                 row.prop(mbo, "plot_type", text="Plot type:")
                 row = layout.row()
+                row.prop(mbo, "plot_xrange_min")
+                row = layout.row()
+                row.prop(mbo, "plot_xrange_max")
+                row = layout.row()
                 if mbo.plot_type == "TIME HISTORY":
                     row.operator(Object_OT_MBDyn_plot_var.bl_idname, text="Plot variable")
                 elif mbo.plot_type == "AUTOSPECTRUM":
-                    row.operator(Object_OT_MBDyn_plot_var_Sxx.bl_idname,
-                            text="Plot variable Autospectrum")
                     row = layout.row()
                     row.prop(mbo, "fft_remove_mean")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_min")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_max")
+                    row = layout.row()
+                    row.operator(Object_OT_MBDyn_plot_var_Sxx.bl_idname,
+                            text="Plot variable Autospectrum")
             except KeyError:
                 pass
         else:
@@ -610,18 +668,19 @@ class MBDynPlotPanelScene(bpy.types.Panel):
                 row = layout.row()
                 row.prop(mbs, "plot_type")
                 row = layout.row()
+                row.prop(mbs, "plot_xrange_min")
+                row = layout.row()
+                row.prop(mbs, "plot_xrange_max")
+                row = layout.row()
                 if mbs.plot_type == "TIME HISTORY":
                     row.operator(Scene_OT_MBDyn_plot_var.bl_idname, 
                             text="Plot variable")
                 elif mbs.plot_type == "AUTOSPECTRUM":
-                    row.operator(Scene_OT_MBDyn_plot_var_Sxx.bl_idname,
-                            text="Plot variable Autospectrum")
                     row = layout.row()
                     row.prop(mbs, "fft_remove_mean")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_min")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_max")
+                    row = layout.row()
+                    row.operator(Scene_OT_MBDyn_plot_var_Sxx.bl_idname,
+                            text="Plot variable Autospectrum")
             except IndexError:
                 pass
         else:

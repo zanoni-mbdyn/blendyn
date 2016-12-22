@@ -319,6 +319,18 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                 default = 0
                 )
 
+        plot_sxy_varX = StringProperty(
+                name = "Cross-spectrum X variable",
+                description = "variable to be used as input in cross-spectrum",
+                default = "none"
+                )
+
+        plot_sxy_varY = StringProperty(
+                name = "Cross-spectrum Y variable",
+                description = "variable to be used as output in cross-spectrum",
+                default = "none"
+                )
+
         plot_comps = BoolVectorProperty(
                 name = "components",
                 description = "Components of property to plot",
@@ -334,7 +346,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     
         plot_type = EnumProperty(
                 items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
-                        ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)],
+                        ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)], \
                 name = "plot type",
                 default = "TIME HISTORY"
                 )
