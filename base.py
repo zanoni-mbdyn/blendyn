@@ -315,7 +315,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
         plot_var_index = IntProperty(
                 name = "variable index",
-                description = "index to the current variable to be plotted",
+                description = "index of the current variable to be plotted",
                 default = 0
                 )
 
@@ -325,11 +325,38 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                 default = [True for i in range(9)],
                 size = 9
                 )
+
         plot_frequency = IntProperty(
                 name = "frequency",
                 description = "Frequency in plotting",
                 default = 1
                 )
+    
+        plot_type = EnumProperty(
+                items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
+                        ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)],
+                name = "plot type",
+                default = "TIME HISTORY"
+                )
+
+        fft_remove_mean = BoolProperty(
+                name = "Subtract mean",
+                description = "Subtract the mean value before calculating the FFT",
+                default = False
+                )
+
+        plot_xrange_min = FloatProperty(
+                name = "minimum X value",
+                description = "Minimum value for abscissa",
+                default = 0.0
+                )
+
+        plot_xrange_max = FloatProperty(
+                name = "maximum X value",
+                description = "Maximum value for abscissa",
+                default = 0.0
+                )
+
 bpy.utils.register_class(MBDynSettingsScene)
 # -----------------------------------------------------------
 # end of MBDynSettingsScene class
@@ -383,7 +410,7 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             default = "EULER123"
             )
 
-    # Specific for plotting --- #
+    # Specific for plotting 
     if HAVE_PLOT:
         plot_var = EnumProperty(
                 name = "Variables",
@@ -402,7 +429,30 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
                 description = "Frequency in plotting",
                 default = 1
                 )
-    # --- #
+
+        plot_type = EnumProperty(
+            items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
+                     ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)],
+            name = "plot type",
+            default = "TIME HISTORY"
+            )
+        
+        fft_remove_mean = BoolProperty(
+                name = "Subtract mean",
+                description = "Subtract the mean value before calculating the FFT",
+                default = False
+                )
+        plot_xrange_min = FloatProperty(
+                name = "minimum X value",
+                description = "Minimum value for abscissa",
+                default = 0.0
+                )
+
+        plot_xrange_max = FloatProperty(
+                name = "maximum X value",
+                description = "Maximum value for abscissa",
+                default = 0.0
+                ) 
 
 bpy.utils.register_class(MBDynSettingsObject)
 # -----------------------------------------------------------
