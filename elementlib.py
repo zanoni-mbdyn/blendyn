@@ -51,6 +51,8 @@ def parse_joint(context, jnt_type, rw):
     joint_types  = {    
             "beam2": parse_beam2,
             "beam3": parse_beam3,
+            "cardanohinge": parse_carj,
+            "clamp": parse_clampj,
             "deformabledisplacementjoint": parse_defdispj,
             "revolute": parse_revj,
             "revolute pin": parse_revpinj,

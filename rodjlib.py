@@ -39,7 +39,7 @@ def parse_rodj(rw, ed):
     print("parse_rodj(): Parsing rod " + rw[1])
 
     try:
-        el = ed['rod_' + str(rw[1])]
+        el = ed['rodj_' + str(rw[1])]
         print("parse_rodj(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
         el.nodes[0].int_label = int(rw[2])
@@ -95,7 +95,7 @@ def parse_rodbezj(rw, ed):
     except KeyError:
         print("parse_rodbezj(): didn't find entry in elements dictionary. Creating one.")
         el = ed.add()
-        el.type = 'rod bezier'
+        el.type = 'rod_bezier'
         el.int_label = int(rw[2])
         el.nodes.add()
         el.nodes[0].int_label = int(rw[3])

@@ -34,8 +34,85 @@ def parse_carj(rw, ed):
     # Debug message
     print("parse_carj(): Parsing Cardano hinge joint " + rw[1])
     try:
+        el = ed['cardano_hinge_' + str(rw[1])]
+        print("parse_carj(): found existing entry in elements dictionary. Updating it.")
+        el.nodes[0].int_label = int(rw[2])
+        el.nodes[1].int_label = int(rw[15])
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+        R2 = Matrix()
+        R2[0][0] = float(rw[19])
+        R2[0][1] = float(rw[20])
+        R2[0][2] = float(rw[21])
+        R2[1][0] = float(rw[22])
+        R2[1][1] = float(rw[23])
+        R2[1][2] = float(rw[24])
+        R2[2][0] = float(rw[25])
+        R2[2][1] = float(rw[26])
+        R2[2][2] = float(rw[27])
+        el.rotoffsets[1].value = R2.to_quaternion(); 
+        if el.name in bpy.data.objects.keys():
+            el.blender_object = el.name
+        el.is_imported = True
         pass
     except KeyError:
+        print("parse_carj(): didn't found en entry in elements dictionary. Creating one.")
+        el = ed.add()
+        el.type = 'cardano_hinge'
+        el.int_label = int(rw[1])
+
+        el.nodes.add()
+        el.nodes[0].int_label = int(rw[2])
+        el.nodes.add()
+        el.nodes[1].int_label = int(rw[15])
+
+        el.offsets.add()
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+
+        el.rotoffsets.add()
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion();
+
+        el.offsets.add()
+        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+
+        el.rotoffsets.add()
+        R2 = Matrix()
+        R2[0][0] = float(rw[19])
+        R2[0][1] = float(rw[20])
+        R2[0][2] = float(rw[21])
+        R2[1][0] = float(rw[22])
+        R2[1][1] = float(rw[23])
+        R2[1][2] = float(rw[24])
+        R2[2][0] = float(rw[25])
+        R2[2][1] = float(rw[26])
+        R2[2][2] = float(rw[27])
+        el.rotoffsets[1].value = R2.to_quaternion();
+
+        el.import_function = "add.mbdyn_elem_carj"
+        el.name = el.type + "_" + str(el.int_label)
+        el.is_imported = True
+        ret_val = False
         pass
     return ret_val
 # -----------------------------------------------------------
@@ -43,12 +120,14 @@ def parse_carj(rw, ed):
 
 ## Spawns a Blender object representing a cardano joint
 def spawn_cardanoj_elem(elem, context):
+    # TODO
     pass
 # -----------------------------------------------------------
 # end of spawn_cardano_elem(elem, layout) function
 
 ## Displays cardano joint infos in the tools panel
 def carj_info_draw(elem, layout):
+    # TODO
     pass
 # -----------------------------------------------------------
 # end of carj_info_draw(elem, layout) function
