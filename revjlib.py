@@ -32,10 +32,87 @@ from bpy.props import *
 def parse_revj(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_revj(): Parsing revolute joint " + rw[1])
+    print("parse_revj(): Parsing revolute hinge joint " + rw[1])
     try:
+        el = ed['revolute_hinge_' + str(rw[1])]
+        print("parse_revj(): found existing entry in elements dictionary. Updating it.")
+        el.nodes[0].int_label = int(rw[2])
+        el.nodes[1].int_label = int(rw[15])
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+        R2 = Matrix()
+        R2[0][0] = float(rw[19])
+        R2[0][1] = float(rw[20])
+        R2[0][2] = float(rw[21])
+        R2[1][0] = float(rw[22])
+        R2[1][1] = float(rw[23])
+        R2[1][2] = float(rw[24])
+        R2[2][0] = float(rw[25])
+        R2[2][1] = float(rw[26])
+        R2[2][2] = float(rw[27])
+        el.rotoffsets[1].value = R2.to_quaternion(); 
+        if el.name in bpy.data.objects.keys():
+            el.blender_object = el.name
+        el.is_imported = True
         pass
     except KeyError:
+        print("parse_revj(): didn't found en entry in elements dictionary. Creating one.")
+        el = ed.add()
+        el.type = 'revolute_hinge'
+        el.int_label = int(rw[1])
+
+        el.nodes.add()
+        el.nodes[0].int_label = int(rw[2])
+        el.nodes.add()
+        el.nodes[1].int_label = int(rw[15])
+
+        el.offsets.add()
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+
+        el.rotoffsets.add()
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion();
+
+        el.offsets.add()
+        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+
+        el.rotoffsets.add()
+        R2 = Matrix()
+        R2[0][0] = float(rw[19])
+        R2[0][1] = float(rw[20])
+        R2[0][2] = float(rw[21])
+        R2[1][0] = float(rw[22])
+        R2[1][1] = float(rw[23])
+        R2[1][2] = float(rw[24])
+        R2[2][0] = float(rw[25])
+        R2[2][1] = float(rw[26])
+        R2[2][2] = float(rw[27])
+        el.rotoffsets[1].value = R2.to_quaternion();
+
+        el.import_function = "add.mbdyn_elem_revj"
+        el.name = el.type + "_" + str(el.int_label)
+        el.is_imported = True
+        ret_val = False
         pass
     return ret_val
 # -------------------------------------------------------------------------- 
@@ -47,8 +124,54 @@ def parse_revpinj(rw, ed):
     # Debug message
     print("parse_revpinj(): Parsing revolute pin joint " + rw[1])
     try:
+        el = ed['revolute_pin_' + str(rw[1])]
+        print("parse_revpinj(): found existing entry in elements dictionary. Updating it.")
+        el.nodes[0].int_label = int(rw[2])
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        if el.name in bpy.data.objects.keys():
+            el.blender_object = el.name
+        el.is_imported = True
         pass
     except KeyError:
+        print("parse_revpinj(): didn't found en entry in elements dictionary. Creating one.")
+        el = ed.add()
+        el.type = 'revolute_pin'
+        el.int_label = int(rw[1])
+
+        el.nodes.add()
+        el.nodes[0].int_label = int(rw[2])
+
+        el.offsets.add()
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+
+        el.rotoffsets.add()
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion();
+
+        el.import_function = "add.mbdyn_elem_revpinj"
+        el.name = el.type + "_" + str(el.int_label)
+        el.is_imported = True
+        ret_val = False
         pass
     return ret_val
 # -------------------------------------------------------------------------- 
@@ -56,6 +179,7 @@ def parse_revpinj(rw, ed):
 
 # Creates the object representing a revolute joint element
 def spawn_revj_element(elem, context):
+    # TODO
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_revj_element(elem, context) function
@@ -85,6 +209,7 @@ def spawn_revj_element(elem, context):
  
 # Creates the object representing a revolute joint element
 def spawn_revpinj_element(elem, context):
+    # TODO
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_revpinj_element(elem, context) function
@@ -114,12 +239,14 @@ def spawn_revpinj_element(elem, context):
 
 # Displays revolute joint infos in the tools panel [ optional ]
 def revj_info_draw(elem, layout):
+    # TODO
     pass
 # -------------------------------------------------------------------------- 
 # end of revj_info_draf(elem, layout) function
 
 # Displays revolute joint infos in the tools panel [ optional ]
 def revpinj_info_draw(elem, layout):
+    # TODO
     pass
 # -------------------------------------------------------------------------- 
 # end of revpinj_info_draf(elem, layout) function

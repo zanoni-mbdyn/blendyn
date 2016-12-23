@@ -35,7 +35,7 @@ def parse_defdispj(rw, ed):
     print("parse_defdispj(): Parsing deformable displacement joint " + rw[1])
     try:
         el = ed['defdisp_' + str(rw[1])]
-        print("parse_rodj(): found existing entry in elements dictionary. Updating it.")
+        print("parse_defdispj(): found existing entry in elements dictionary. Updating it.")
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -62,14 +62,13 @@ def parse_defdispj(rw, ed):
         R2[2][1] = float(rw[26])
         R2[2][2] = float(rw[27])
         el.rotoffsets[1].value = R2.to_quaternion(); 
-        el.is_imported = True
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
-            el.is_imported = True 
+        el.is_imported = True 
     except KeyError:
-        print("parse_rodj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_defdispj(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
-        el.type = 'deformable displacement joint'
+        el.type = 'deformable_displacement_joint'
         el.int_label = int(rw[1])
 
         el.nodes.add()
