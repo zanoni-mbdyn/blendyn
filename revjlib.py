@@ -23,6 +23,8 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
+import os
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -179,8 +181,28 @@ def parse_revpinj(rw, ed):
 
 # Creates the object representing a revolute joint element
 def spawn_revj_element(elem, context):
-    # TODO
-    return {'FINISHED'}
+    """ Draws a revolute joint element, loading a wireframe
+        object from the addon library """
+
+    mbs = bpy.context.scene.mbdyn
+
+    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+        return {'OBJECT_EXISTS'}
+        print("spawn_revj_element(): Element is already imported. \
+                Remove the Blender object or rename it \
+                before re-importing the element.")
+        return{'CANCELLED'}
+
+    # TODO: Complete
+
+    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'mbdyb-blender-master', 'library', 'cj.blend', \
+            'Object'), filename = 'revolute')
+
+    revobj = [obj for obj in bpy.data.objects if obj.select = True]
+    revobj[0].name = elem.name
+
+    return retval
 # -----------------------------------------------------------
 # end of spawn_revj_element(elem, context) function
 

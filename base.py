@@ -125,6 +125,14 @@ bpy.utils.register_class(MBDynPlotVars)
 
 ## Set scene properties
 class MBDynSettingsScene(bpy.types.PropertyGroup):
+
+    # Base path of the module
+    addon_path = StringProperty(
+            name = "Addon path",
+            description = "Base path of addon files",
+            default = bpy.utils.user_resource('SCRIPTS', "addons")
+            )
+
     # Boolean: is the .mov (or .nc) file loaded properly?
     is_loaded = BoolProperty(
             name = "MBDyn files loaded",
