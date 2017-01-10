@@ -321,12 +321,12 @@ def parse_totpinj(rw, ed):
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating the position constraints that are active
         el.offsets.add()
-        el.offsets[2].value = Vector(( float(rw[24]), float(rw[25]), float(rw[26]) ))
+        el.offsets[1].value = Vector(( float(rw[24]), float(rw[25]), float(rw[26]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating the position constraints that are active
         el.offsets.add()
-        el.offsets[3].value = Vector(( float(rw[27]), float(rw[28]), float(rw[29]) ))
+        el.offsets[2].value = Vector(( float(rw[27]), float(rw[28]), float(rw[29]) ))
 
         el.import_function = "add.mbdyn_elem_totpinj"
         el.name = el.type + "_" + str(el.int_label)

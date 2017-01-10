@@ -125,6 +125,29 @@ def spawn_cardanoj_elem(elem, context):
 # -----------------------------------------------------------
 # end of spawn_cardano_elem(elem, layout) function
 
+# Imports a Cardano Joint in the scene
+class Scene_OT_MBDyn_Import_Cardano_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_carj"
+    bl_label = "MBDyn Cardano joint element importer"
+    int_label = bpy.props.IntProperty()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        ed = bpy.context.scene.mbdyn.elems
+        nd = bpy.context.scene.mbdyn.nodes
+    
+        try:
+            elem = ed['carj_' + str(self.int_label)]
+            return spawn_carj_element(elem, context)
+        except KeyError:
+            self.report({'ERROR'}, "Element carj_" + str(elem.int_label) + "not found")
+            return {'CANCELLED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Import_Cardano_Joint_Element class
+
 ## Displays cardano joint infos in the tools panel
 def carj_info_draw(elem, layout):
     # TODO

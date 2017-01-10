@@ -34,6 +34,7 @@ from collections import namedtuple
 
 from .beamlib import *
 from .carjlib import *
+from .clampjlib import *
 from .defdispjlib import *
 from .revjlib import *
 from .rodjlib import *
@@ -54,14 +55,14 @@ def parse_joint(context, jnt_type, rw):
             "cardanohinge": parse_carj,
             "clamp": parse_clampj,
             "deformabledisplacementjoint": parse_defdispj,
-            "revolute": parse_revj,
-            "revolute pin": parse_revpinj,
+            "revolutehinge": parse_revj,
+            "revolutepin": parse_revpinj,
             "rod": parse_rodj,
             "rod bezier": parse_rodbezj,
             "shell4" : parse_shell4,
-            "spherical hinge": parse_sphj,
-            "total joint": parse_totj,
-            "total pin joint": parse_totpinj
+            "sphericalhinge": parse_sphj,
+            "totaljoint": parse_totj,
+            "totalpinjoint": parse_totpinj
             }
  
     try:

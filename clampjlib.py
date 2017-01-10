@@ -110,7 +110,7 @@ def parse_clampj(rw, ed):
         R2[2][2] = float(rw[27])
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_carj"
+        el.import_function = "add.mbdyn_elem_clampj"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -119,7 +119,7 @@ def parse_clampj(rw, ed):
 # end of parse_clampj(rw, ed) function
 
 ## Spawns a Blender object representing a clamp joint
-def spawn_clampj_elem(elem, context)
+def spawn_clampj_elem(elem, context):
     # TODO
     pass
 # -----------------------------------------------------------
@@ -132,3 +132,25 @@ def clampj_info_draw(elem, layout):
 # -----------------------------------------------------------
 # end of clampj_info_draw(elem, layout) function
 
+# Imports a Revolute Pin Joint in the scene
+class Scene_OT_MBDyn_Import_Clamp_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_clampj"
+    bl_label = "MBDyn clamp joint element importer"
+    int_label = bpy.props.IntProperty()
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        ed = bpy.context.scene.mbdyn.elems
+        nd = bpy.context.scene.mbdyn.nodes
+
+        try:
+            elem = ed['clampj_' + str(self.int_label)]
+            return spawn_clampj_element(elem, context)
+        except KeyError:
+            self.report({'ERROR'}, "Element clampj_" + str(elem.int_label) + "not found")
+            return {'CANCELLED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Import_Clamp_Joint_Element class
