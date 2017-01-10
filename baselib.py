@@ -150,10 +150,13 @@ def path_leaf(path, keep_extension = False):
 
 def file_len(filepath):
     """ Function to count the number of rows in a file """
-    with open(filepath) as f:
-        for kk, ll in enumerate(f):
-            pass
-    return kk + 1
+    try:
+        with open(filepath) as f:
+            for kk, ll in enumerate(f):
+                pass
+        return kk + 1
+    except UnboundLocalError:
+        return 0
 # -----------------------------------------------------------
 # end of file_len() function 
 

@@ -127,7 +127,6 @@ def spawn_sphj_element(elem, context):
 
 ## Imports a Spherical Joint element in the scene
 class Scene_OT_MBDyn_Import_SphericalJoint_Element(bpy.types.Operator):
-
     bl_idname = "add.mbdyn_elem_sphj"
     bl_label = "MBDyn spherical joint element importer"
     int_label = bpy.props.IntProperty()

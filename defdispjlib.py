@@ -128,25 +128,25 @@ def spawn_defdispj_element(elem, context):
 # end of spawn_defdispj_element(elem, context) function
 
 ## Imports a Deformable Displacement Joint in the scene -- TODO
-    class Scene_OT_MBDyn_Import_DefDispJoint_Element(bpy.types.Operator):
-        bl_idname = "add.mbdyn_elem_defdispj"
-        bl_label = "MBDyn deformable displacement joint element importer"
-        int_label = bpy.props.IntProperty()
-    
-        def draw(self, context):
-            layout = self.layout
-            layout.alignment = 'LEFT'
+class Scene_OT_MBDyn_Import_DefDispJoint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_defdispj"
+    bl_label = "MBDyn deformable displacement joint element importer"
+    int_label = bpy.props.IntProperty()
 
-        def execute(self, context):
-            ed = bpy.context.scene.mbdyn.elems
-            nd = bpy.context.scene.mbdyn.nodes
-        
-            try:
-                elem = ed['defdispj_' + str(self.int_label)]
-                return spawn_defdispj_element(elem, context)
-            except KeyError:
-                self.report({'ERROR'}, "Element defdispj_" + str(elem.int_label) + "not found")
-                return {'CANCELLED'}
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        ed = bpy.context.scene.mbdyn.elems
+        nd = bpy.context.scene.mbdyn.nodes
+    
+        try:
+            elem = ed['defdispj_' + str(self.int_label)]
+            return spawn_defdispj_element(elem, context)
+        except KeyError:
+            self.report({'ERROR'}, "Element defdispj_" + str(elem.int_label) + "not found")
+            return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_DefDisp_Element class
 
