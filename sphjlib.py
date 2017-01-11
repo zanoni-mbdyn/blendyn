@@ -23,22 +23,28 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
+import os 
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-## Parses of spherical joint .log file entry
-def parse_sphj(rw, ed):
+## Parses spherical hinge joint .log file entry
+def parse_spherical_hinge(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_sphj(): Parsing spherical joint " + rw[1])
+    print("parse_spherical_hinge(): Parsing spherical joint " + rw[1])
     try:
         el = ed['spherical_hinge_' + str(rw[1])]
-        print("parse_sphj(): found existing entry in elements dictionary. Updating it.")
+
+        print("parse_spherical_hinge(): found existing entry in elements dictionary. Updating it.")
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
         R1 = Matrix()
         R1[0][0] = float(rw[6])
         R1[0][1] = float(rw[7])
@@ -50,7 +56,9 @@ def parse_sphj(rw, ed):
         R1[2][1] = float(rw[13])
         R1[2][2] = float(rw[14])
         el.rotoffsets[0].value = R1.to_quaternion(); 
+        
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+        
         R2 = Matrix()
         R2[0][0] = float(rw[19])
         R2[0][1] = float(rw[20])
@@ -67,7 +75,7 @@ def parse_sphj(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_sphj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_spherical_hinge(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'spherical_hinge'
         el.int_label = int(rw[1])
@@ -109,7 +117,67 @@ def parse_sphj(rw, ed):
         R2[2][2] = float(rw[27])
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_sphj"
+        el.import_function = "add.mbdyn_elem_spherical_hinge"
+        el.name = el.type + "_" + str(el.int_label)
+        el.is_imported = True
+        ret_val = False
+        pass
+    return ret_val
+# -------------------------------------------------------------------------- 
+# end of parse_spherical_hinge(rw, ed) function
+
+## Parses spherical pin joint .log file entry
+def parse_spherical_pin(rw, ed):
+    ret_val = True
+    # Debug message
+    print("parse_spherical_pin(): Parsing spherical pin joint " + rw[1])
+    try:
+        el = ed['spherical_pin_' + str(rw[1])]
+        print("parse_spherical_pin(): found existing entry in elements dictionary. Updating it.")
+        el.nodes[0].int_label = int(rw[2])
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        
+        if el.name in bpy.data.objects.keys():
+            el.blender_object = el.name
+        el.is_imported = True
+        pass
+    except KeyError:
+        print("parse_spherical_pin(): didn't found en entry in elements dictionary. Creating one.")
+        el = ed.add()
+        el.type = 'spherical_pin'
+        el.int_label = int(rw[1])
+
+        el.nodes.add()
+        el.nodes[0].int_label = int(rw[2])
+
+        el.offsets.add()
+        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+
+        el.rotoffsets.add()
+        R1 = Matrix()
+        R1[0][0] = float(rw[6])
+        R1[0][1] = float(rw[7])
+        R1[0][2] = float(rw[8])
+        R1[1][0] = float(rw[9])
+        R1[1][1] = float(rw[10])
+        R1[1][2] = float(rw[11])
+        R1[2][0] = float(rw[12])
+        R1[2][1] = float(rw[13])
+        R1[2][2] = float(rw[14])
+        el.rotoffsets[0].value = R1.to_quaternion();
+
+        el.import_function = "add.mbdyn_elem_spherical_pin"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -118,16 +186,171 @@ def parse_sphj(rw, ed):
 # -------------------------------------------------------------------------- 
 # end of parse_sphj(rw, ed) function
 
-## Creates the objet representing a spherical joint
-def spawn_sphj_element(elem, context):
-    # TODO
+## Creates the objet representing a Spherical Hinge joint
+def spawn_spherical_hinge_element(elem, context):
+    """ Draws a spherical hinge joint element, loading a wireframe
+        object from the addon library """
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+
+    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+        return {'OBJECT_EXISTS'}
+        print("spawn_spherical_hinge_element(): Element is already imported. \
+                Remove the Blender object or rename it \
+                before re-importing the element.")
+        return {'CANCELLED'}
+
+    try:
+        n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
+    except KeyError:
+        print("spawn_spherical_hinge_element(): Could not find a Blender \
+                object associated to Node " + \
+                str(elem.nodes[0].int_label))
+        return {'NODE1_NOTFOUND'}
+    
+    try:
+        n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
+    except KeyError:
+        print("spawn_spherical_hinge_element(): Could not find a Blender \
+                object associated to Node " + \
+                str(elem.nodes[1].int_label))
+        return {'NODE2_NOTFOUND'}
+
+    # nodes' objects
+    n1OBJ = bpy.data.objects[n1]
+    n2OBJ = bpy.data.objects[n2]
+
+    # load the wireframe revolute joint object from the library
+    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'mbdyn-blender-master', 'library', 'joints.blend', \
+            'Object'), filename = 'spherical')
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        sphjOBJ = bpy.context.selected_objects[0]
+        sphjOBJ.name = elem.name
+
+        # automatic scaling
+        s = .5*(n1OBJ.scale.magnitude*(1./sqrt(3.)) + \
+        n2OBJ.scale.magnitude*(1./sqrt(3.)))
+        sphjOBJ.scale = Vector(( s, s, s ))
+
+        # joint offsets with respect to nodes
+        f1 = elem.offsets[0].value
+        f2 = elem.offsets[1].value
+        q1 = elem.rotoffsets[0].value
+        q2 = elem.rotoffsets[1].value
+    
+        # project offsets in global frame
+        R1 = n1OBJ.rotation_quaternion.to_matrix()
+        R2 = n2OBJ.rotation_quaternion.to_matrix()
+        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+        p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    
+        # place the joint object in the position defined relative to node 1
+        sphjOBJ.location = p1
+        sphjOBJ.rotation_mode = 'QUATERNION'
+        sphjOBJ.rotation_quaternion = \
+                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+
+        # create an object representing the second RF used by the joint
+        # for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
+        RF2 = bpy.context.selected_objects[0]
+        RF2.rotation_mode = 'QUATERNION'
+        RF2.rotation_quaternion = \
+                n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+        RF2.scale = .33*sphjOBJ.scale
+        RF2.name = sphjOBJ.name + '_RF2'
+        RF2.select = True
+        bpy.context.scene.objects.active = sphjOBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        RF2.hide = True
+
+        # set parenting of wireframe obj
+        bpy.ops.object.select_all(action = 'DESELECT')
+        sphjOBJ.select = True
+        n1OBJ.select = True
+        bpy.context.scene.objects.active = n1OBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+        return {'FINISHED'}
+    else:
+        return {'LIBRARY_ERROR'}
     pass
 # -------------------------------------------------------------------------- 
-# end of spawn_sphj_element(element, context) function
+# end of spawn_spherical_hinge_element(element, context) function
+
+## Creates the objet representing a spherical joint
+def spawn_spherical_pin_element(elem, context):
+    """ Draws a spherical pin joint element, loading a wireframe
+        object from the addon library """
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+
+    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+        return {'OBJECT_EXISTS'}
+        print("spawn_spherical_pin_element(): Element is already imported. \
+                Remove the Blender object or rename it \
+                before re-importing the element.")
+        return {'CANCELLED'}
+
+    try:
+        n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
+    except KeyError:
+        print("spawn_spherical_pin_element(): Could not find a Blender \
+                object associated to Node " + \
+                str(elem.nodes[0].int_label))
+        return {'NODE1_NOTFOUND'}
+    
+
+    # node object
+    n1OBJ = bpy.data.objects[n1]
+
+    # load the wireframe joint object from the library
+    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'mbdyn-blender-master', 'library', 'joints.blend', \
+            'Object'), filename = 'spherical.pin')
+
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        sphjOBJ = bpy.context.selected_objects[0]
+        sphjOBJ.name = elem.name
+
+        # automatic scaling
+        s = .5*(n1OBJ.scale.magnitude*(1./sqrt(3.)))
+        sphjOBJ.scale = Vector(( s, s, s ))
+
+        # joint offsets with respect to nodes
+        f1 = elem.offsets[0].value
+        q1 = elem.rotoffsets[0].value
+    
+        # project offsets in global frame
+        R1 = n1OBJ.rotation_quaternion.to_matrix()
+        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    
+        # place the joint object in the position defined relative to node 1
+        sphjOBJ.location = p1
+        sphjOBJ.rotation_mode = 'QUATERNION'
+        sphjOBJ.rotation_quaternion = \
+                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+
+        # set parenting of wireframe obj
+        bpy.ops.object.select_all(action = 'DESELECT')
+        sphjOBJ.select = True
+        n1OBJ.select = True
+        bpy.context.scene.objects.active = n1OBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+        return {'FINISHED'}
+    else:
+        return {'LIBRARY_ERROR'}
+    pass
+# -------------------------------------------------------------------------- 
+# end of spawn_spherpical_pin_element(element, context) function
 
 ## Imports a Spherical Joint element in the scene
-class Scene_OT_MBDyn_Import_SphericalJoint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_sphj"
+class Scene_OT_MBDyn_Import_Spherical_Hinge_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_spherical_hinge"
     bl_label = "MBDyn spherical joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -140,18 +363,159 @@ class Scene_OT_MBDyn_Import_SphericalJoint_Element(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn.nodes
         
         try:
-            elem = ed['sphj_' + str(self.int_label)]
-            return spawn_defdispj_element(elem, context)
+            elem = ed['spherical_hinge_' + str(self.int_label)]
+            retval = spawn_spherical_hinge_element(elem, context)
+            if retval == 'OBJECT_EXISTS':
+                self.report({'WARNING'}, "Found the Object " + \
+                    elem.blender_object + \
+                    " remove or rename it to re-import the element!")
+                return {'CANCELLED'}
+            elif retval == 'NODE1_NOTFOUND':
+                self.report({'ERROR'}, \
+                    "Could not import element: Blender object \
+                    associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found")
+                return {'CANCELLED'}
+            elif retval == 'NODE2_NOTFOUND':
+                self.report({'ERROR'}, "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                return {'CANCELLED'}
+            elif retval == 'LIBRARY_ERROR':
+                self.report({'ERROR'}, "Could not import element: could not \
+                        load library object")
+                return {'CANCELLED'}
+            else:
+                return retval
         except KeyError:
-            self.report({'ERROR'}, "Element sphj_" + str(elem.int_label) + "not found")
+            self.report({'ERROR'}, "Element spherical_hinge_" + str(elem.int_label) + "not found")
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_SphericalJoint_Element class
+# end of Scene_OT_MBDyn_Import_Spherical_Hinge_Joint_Element class
+
+## Imports a Spherical Pin Joint element in the scene
+class Scene_OT_MBDyn_Import_Spherical_Pin_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_spherical_pin"
+    bl_label = "MBDyn spherical joint element importer"
+    int_label = bpy.props.IntProperty()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        ed = bpy.context.scene.mbdyn.elems
+        nd = bpy.context.scene.mbdyn.nodes
+        
+        try:
+            elem = ed['spherical_pin_' + str(self.int_label)]
+            retval = spawn_spherical_pin_element(elem, context)
+            if retval == 'OBJECT_EXISTS':
+                self.report({'WARNING'}, "Found the Object " + \
+                    elem.blender_object + \
+                    " remove or rename it to re-import the element!")
+                return {'CANCELLED'}
+            elif retval == 'NODE1_NOTFOUND':
+                self.report({'ERROR'}, \
+                    "Could not import element: Blender object \
+                    associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found")
+                return {'CANCELLED'}
+            elif retval == 'LIBRARY_ERROR':
+                self.report({'ERROR'}, "Could not import element: could not \
+                        load library object")
+                return {'CANCELLED'}
+            else:
+                return retval
+        except KeyError:
+            self.report({'ERROR'}, "Element spherical_pin_" + str(elem.int_label) + "not found")
+            return {'CANCELLED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Import_Spherical_Pin_Joint_Element class
 
 ## Displays spherical joint element infos in the tools panel
-def sphj_info_draw(elem, layout):
-    # TODO
+def spherical_hinge_info_draw(elem, layout):
+    nd = bpy.context.scene.mbdyn.nodes
+    row = layout.row()
+    col = layout.column(align=True)
+
+    for node in nd:
+        if node.int_label == elem.nodes[0].int_label:
+
+            # Display node 1 info
+            col.prop(node, "int_label", text = "Node 1 ID ")
+            col.prop(node, "string_label", text = "Node 1 label ")
+            col.prop(node, "blender_object", text = "Node 1 Object: ")
+            col.enabled = False
+
+            # Display offset from node 1
+            row = layout.row()
+            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.offsets[0], "value", text = "", slider = False)
+            
+            # Display rotation offset from node 1
+            row = layout.row()
+            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
+
+            layout.separator()
+
+        elif node.int_label == elem.nodes[1].int_label:
+            
+            # Display node 2 info
+            row = layout.row()
+            col = layout.column(align = True)
+            col.prop(node, "int_label", text = "Node 2 ID ")
+            col.prop(node, "string_label", text = "Node 2 label ")
+            col.prop(node, "blender_object", text = "Node 2 Object: ")
+            col.enabled = False
+
+            # Display offset from node 2
+            row = layout.row()
+            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.offsets[2], "value", text = "", slider = False)
+            
+            # Display rotation offset from node 2
+            row = layout.row()
+            row.label(text = "rot. offset 2 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
+
+            layout.separator()
     pass
 # -------------------------------------------------------------------------- 
-# end of sphj_info_draw(elem, layout) function
+# end of spherical_hinge_info_draw(elem, layout) function
 
+## Displays spherical joint element infos in the tools panel
+def spherical_pin_info_draw(elem, layout):
+    nd = bpy.context.scene.mbdyn.nodes
+    row = layout.row()
+    col = layout.column(align=True)
+
+    for node in nd:
+        if node.int_label == elem.nodes[0].int_label:
+
+            # Display node 1 info
+            col.prop(node, "int_label", text = "Node 1 ID ")
+            col.prop(node, "string_label", text = "Node 1 label ")
+            col.prop(node, "blender_object", text = "Node 1 Object: ")
+            col.enabled = False
+
+            # Display offset from node 1
+            row = layout.row()
+            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.offsets[0], "value", text = "", slider = False)
+            
+            # Display rotation offset from node 1
+            row = layout.row()
+            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
+
+            layout.separator()
+    pass
+# -------------------------------------------------------------------------- 
+# end of spherical_pin_info_draw(elem, layout) function

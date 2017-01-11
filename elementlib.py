@@ -52,17 +52,19 @@ def parse_joint(context, jnt_type, rw):
     joint_types  = {    
             "beam2": parse_beam2,
             "beam3": parse_beam3,
-            "cardanohinge": parse_carj,
-            "clamp": parse_clampj,
-            "deformabledisplacementjoint": parse_defdispj,
-            "revolutehinge": parse_revj,
-            "revolutepin": parse_revpinj,
-            "rod": parse_rodj,
-            "rod bezier": parse_rodbezj,
+            "cardanohinge": parse_cardano_hinge,
+            "cardanopin": parse_cardano_pin,
+            "clamp": parse_clamp,
+            "deformabledisplacementjoint": parse_deformable_displacement,
+            "revolutehinge": parse_revolute_hinge,
+            "revolutepin": parse_revolute_pin,
+            "rod": parse_rod,
+            "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
-            "sphericalhinge": parse_sphj,
-            "totaljoint": parse_totj,
-            "totalpinjoint": parse_totpinj
+            "sphericalhinge": parse_spherical_hinge,
+            "spericalpin": parse_spherical_pin,
+            "totaljoint": parse_total,
+            "totalpinjoint": parse_total_pin
             }
  
     try:

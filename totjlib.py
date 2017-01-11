@@ -23,19 +23,21 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
+import os
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
 ## Parses total joint entry in .log file
-def parse_totj(rw, ed):
+def parse_total(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_totj(): Parsing total joint " + rw[1])
+    print("parse_total(): Parsing total joint " + rw[1])
     try:
         el = ed['total_joint_' + str(rw[1])]
-        print("parse_totj(): found existing entry in elements dictionary. Updating it.")
+        print("parse_total(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[24])
@@ -99,7 +101,7 @@ def parse_totj(rw, ed):
         el.offsets[2].value = Vector(( float(rw[46]), float(rw[47]), float(rw[48]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        #       indicating the rotation constraints that are active
         el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
 
 
@@ -108,7 +110,7 @@ def parse_totj(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_totj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_total(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_joint'
         el.int_label = int(rw[1])
@@ -182,35 +184,232 @@ def parse_totj(rw, ed):
         el.offsets[2].value = Vector(( float(rw[46]), float(rw[47]), float(rw[48]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        #       indicating the rotation constraints that are active
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
 
-        el.import_function = "add.mbdyn_elem_totj"
+        el.import_function = "add.mbdyn_elem_total"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
         pass
     return ret_val
 # -----------------------------------------------------------
-# end of parse_totj(rw, ed) function
-
-## Displays total joint infos in the tools panel
-def totj_info_draw(elem, layout):
-    # TODO
-    pass
-# -----------------------------------------------------------
-# end of totj_info_draw( function
+# end of parse_total(rw, ed) function
 
 ## Creates the object representing a Total Joint element
-def spawn_totj_element(elem, context):
-    # TODO
-    pass
-# -----------------------------------------------------------
-# end of spawn_totj_element(elem, context) function
+def spawn_total_element(elem, context):
+    """ Draws a total joint element, loading a wireframe
+        object from the addon library """
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
 
-class Scene_OT_MBDyn_Import_TotalJoint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_totj"
+    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+        return {'OBJECT_EXISTS'}
+        print("spawn_total_element(): Element is already imported. \
+                Remove the Blender object or rename it \
+                before re-importing the element.")
+        return {'CANCELLED'}
+
+    try:
+        n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
+    except KeyError:
+        print("spawn_total_element(): Could not find a Blender \
+                object associated to Node " + \
+                str(elem.nodes[0].int_label))
+        return {'NODE1_NOTFOUND'}
+    
+    try:
+        n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
+    except KeyError:
+        print("spawn_total_element(): Could not find a Blender \
+                object associated to Node " + \
+                str(elem.nodes[1].int_label))
+        return {'NODE2_NOTFOUND'}
+
+    # nodes' objects
+    n1OBJ = bpy.data.objects[n1]
+    n2OBJ = bpy.data.objects[n2]
+
+    # load the wireframe total joint object from the library
+    lib_path = os.path.join(mbs.addon_path,\
+            'mbdyn-blender-master', 'library', 'joints.blend', \
+            'Object')
+    app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total')
+
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        totjOBJ = bpy.context.selected_objects[0]
+        totjOBJ.name = elem.name
+    else:
+        return {'LIBRARY_ERROR'}
+
+    pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
+    for kk in range(3):
+        if not(elem.offsets[2].value[kk]):
+            app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
+            obj = bpy.context.selected_objects[0]
+            totjOBJ.select = True
+            bpy.context.scene.objects.active = totjOBJ
+            bpy.ops.object.join()
+            if app_retval != {'FINISHED'}:
+                return {'LIBRARY_ERROR'}
+
+    rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
+    for kk in range(3):
+        if not(elem.offsets[3].value[kk]):
+            app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
+            obj = bpy.context.selected_objects[0]
+            totjOBJ.select = True
+            bpy.context.scene.objects.active = totjOBJ
+            bpy.ops.object.join()
+            if app_retval != {'FINISHED'}:
+                return {'LIBRARY_ERROR'} 
+
+    # automatic scaling
+    s = .5*(1./sqrt(3.))*(n1OBJ.scale.magnitude + \
+            n2OBJ.scale.magnitude)
+    totjOBJ.scale = Vector(( s, s, s ))
+
+    # joint offsets with respect to nodes
+    f1 = elem.offsets[0].value
+    f2 = elem.offsets[1].value
+    q1 = elem.rotoffsets[0].value
+    q2 = elem.rotoffsets[1].value
+
+    # project offsets in global frame
+    R1 = n1OBJ.rotation_quaternion.to_matrix()
+    R2 = n2OBJ.rotation_quaternion.to_matrix()
+    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+
+    # place the joint object in the position defined relative to node 1
+    totjOBJ.location = p1
+    totjOBJ.rotation_mode = 'QUATERNION'
+    totjOBJ.rotation_quaternion = \
+            n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+
+    # create an object representing the second RF used by the joint
+    # for model debugging
+    bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
+    RF2 = bpy.context.selected_objects[0]
+    RF2.rotation_mode = 'QUATERNION'
+    RF2.rotation_quaternion = \
+            n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+    RF2.scale = .33*totjOBJ.scale
+    RF2.name = totjOBJ.name + '_RF2'
+    RF2.select = True
+    bpy.context.scene.objects.active = totjOBJ
+    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    RF2.hide = True
+
+    # set parenting of wireframe obj
+    bpy.ops.object.select_all(action = 'DESELECT')
+    totjOBJ.select = True
+    n1OBJ.select = True
+    bpy.context.scene.objects.active = n1OBJ
+    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+    return {'FINISHED'}
+# -----------------------------------------------------------
+# end of spawn_total(elem, context) function
+
+## Displays total joint infos in the tools panel
+def total_info_draw(elem, layout):
+    nd = bpy.context.scene.mbdyn.nodes
+    row = layout.row()
+    col = layout.column(align=True)
+
+    for node in nd:
+        if node.int_label == elem.nodes[0].int_label:
+
+            # Display node 1 info
+            col.prop(node, "int_label", text = "Node 1 ID ")
+            col.prop(node, "string_label", text = "Node 1 label ")
+            col.prop(node, "blender_object", text = "Node 1 Object: ")
+            col.enabled = False
+
+            # Display offset from node 1
+            row = layout.row()
+            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.offsets[0], "value", text = "", slider = False)
+            
+            # Display position orientation -  node 1
+            row = layout.row()
+            row.label(text = "pos. orientation node 1" + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
+
+            # Display rotation orientation -  node 1
+            row = layout.row()
+            row.label(text = "rot. orientation node 1" + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
+
+            layout.separator()
+
+        elif node.int_label == elem.nodes[1].int_label:
+            
+            # Display node 2 info
+            col.prop(node, "int_label", text = "Node 2 ID ")
+            col.prop(node, "string_label", text = "Node 2 label ")
+            col.prop(node, "blender_object", text = "Node 2 Object: ")
+            col.enabled = False
+
+            # Display offset from node 2
+            row = layout.row()
+            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.offsets[1], "value", text = "", slider = False)
+            
+            # Display position orientation -  node 2
+            row = layout.row()
+            row.label(text = "pos. orientation node 2" + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[2], "value", text = "", slider = False)
+
+            # Display rotation orientation -  node 2
+            row = layout.row()
+            row.label(text = "rot. orientation node 2" + node.string_label + " R.F.")
+            col = layout.column(align = True)
+            col.prop(elem.rotoffsets[3], "value", text = "", slider = False)
+
+            layout.separator()
+
+            # Display total joint active components
+            box = layout.box()
+            split = box.split(1./2.)
+            
+            column = split.column()
+            column.row().label(text = "pos.X")
+            column.row().label(text = "pos.Y")
+            column.row().label(text = "pos.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[2].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+            column = split.column()
+            column.row().label(text = "rot.X")
+            column.row().label(text = "rot.Y")
+            column.row().label(text = "rot.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[3].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+# -----------------------------------------------------------
+# end of total_info_draw(elem, layout) function
+
+class Scene_OT_MBDyn_Import_Total_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_total"
     bl_label = "MBDyn total joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -224,22 +423,43 @@ class Scene_OT_MBDyn_Import_TotalJoint_Element(bpy.types.Operator):
         
         try:
             elem = ed['total_joint_' + str(self.int_label)]
-            return spawn_totj_element(elem, context)
+            retval = spawn_total_element(elem, context)
+            if retval == 'OBJECT_EXISTS':
+                self.report({'WARNING'}, "Found the Object " + \
+                    elem.blender_object + \
+                    " remove or rename it to re-import the element!")
+                return {'CANCELLED'}
+            elif retval == 'NODE1_NOTFOUND':
+                self.report({'ERROR'}, \
+                    "Could not import element: Blender object \
+                    associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found")
+                return {'CANCELLED'}
+            elif retval == 'NODE2_NOTFOUND':
+                self.report({'ERROR'}, "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                return {'CANCELLED'}
+            elif retval == 'LIBRARY_ERROR':
+                self.report({'ERROR'}, "Could not import element: could not \
+                        load library object")
+                return {'CANCELLED'}
+            else:
+                return retval
         except KeyError:
             self.report({'ERROR'}, "Element total_joint_" + str(elem.int_label) + "not found")
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_TotalJoint_Element class
+# end of Scene_OT_MBDyn_Import_Total_Joint_Element class
 
 
 ## Parses total pin joint entry in the .log file
-def parse_totpinj(rw, ed):
+def parse_total_pin(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_totpinj(): Parsing total pin joint " + rw[1])
+    print("parse_total_pin(): Parsing total pin joint " + rw[1])
     try:
         el = ed['total_pin_joint_' + str(rw[1])]
-        print("parse_totpinj(): found existing entry in elements dictionary. Updating it.")
+        print("parse_total_pin(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         
@@ -281,7 +501,7 @@ def parse_totpinj(rw, ed):
 
         pass
     except KeyError:
-        print("parse_totpinj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_total_pin(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
@@ -328,14 +548,14 @@ def parse_totpinj(rw, ed):
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[27]), float(rw[28]), float(rw[29]) ))
 
-        el.import_function = "add.mbdyn_elem_totpinj"
+        el.import_function = "add.mbdyn_elem_total_pin"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
         pass
     return ret_val
 # -----------------------------------------------------------
-# end of parse_totpinj(rw, ed) function
+# end of parse_total_pin(rw, ed) function
 
 ## Displays total pin joint infos in the tools panel
 def totpinj_info_draw(elem, layout):
@@ -351,8 +571,8 @@ def spawn_totpinj_element(elem, context):
 # -----------------------------------------------------------
 # end of spawn_totpinj_element(elem, context) function
 
-class Scene_OT_MBDyn_Import_TotalPinJoint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_totpinj"
+class Scene_OT_MBDyn_Import_Total_Pin_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_total_pin"
     bl_label = "MBDyn total joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -365,10 +585,10 @@ class Scene_OT_MBDyn_Import_TotalPinJoint_Element(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn.nodes
         
         try:
-            elem = ed['totpinj_' + str(self.int_label)]
+            elem = ed['total_pin_joint_' + str(self.int_label)]
             return spawn_totj_element(elem, context)
         except KeyError:
-            self.report({'ERROR'}, "Element totpinj_" + str(elem.int_label) + "not found")
+            self.report({'ERROR'}, "Element total_pin_joint_" + str(elem.int_label) + "not found")
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_TotalPinJoint_Element class
+# end of Scene_OT_MBDyn_Import_Total_Pin_Joint_Element class
