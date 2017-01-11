@@ -30,14 +30,14 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-# helper function to parse revolute joints
-def parse_revj(rw, ed):
+# helper function to parse revolute hinge joints
+def parse_revolute_hinge(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_revj(): Parsing revolute hinge joint " + rw[1])
+    print("parse_revolute_hinge(): Parsing revolute hinge joint " + rw[1])
     try:
         el = ed['revolute_hinge_' + str(rw[1])]
-        print("parse_revj(): found existing entry in elements dictionary. Updating it.")
+        print("parse_revolute_hinge(): found existing entry in elements dictionary. Updating it.")
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -69,7 +69,7 @@ def parse_revj(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_revj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_revolute_hinge(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'revolute_hinge'
         el.int_label = int(rw[1])
@@ -111,23 +111,23 @@ def parse_revj(rw, ed):
         R2[2][2] = float(rw[27])
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_revj"
+        el.import_function = "add.mbdyn_elem_revolute_hinge"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
         pass
     return ret_val
 # -------------------------------------------------------------------------- 
-# end of parse_revj(rw, ed) function
+# end of parse_revolue_hinge(rw, ed) function
 
 # helper function to parse revolute pin joints
-def parse_revpinj(rw, ed):
+def parse_revolute_pin(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_revpinj(): Parsing revolute pin joint " + rw[1])
+    print("parse_revolute_pin(): Parsing revolute pin joint " + rw[1])
     try:
         el = ed['revolute_pin_' + str(rw[1])]
-        print("parse_revpinj(): found existing entry in elements dictionary. Updating it.")
+        print("parse_revolute_pin(): found existing entry in elements dictionary. Updating it.")
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         R1 = Matrix()
@@ -146,7 +146,7 @@ def parse_revpinj(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_revpinj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_revolute_pin(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'revolute_pin'
         el.int_label = int(rw[1])
@@ -170,25 +170,25 @@ def parse_revpinj(rw, ed):
         R1[2][2] = float(rw[14])
         el.rotoffsets[0].value = R1.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_revpinj"
+        el.import_function = "add.mbdyn_elem_revolute_pin"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
         pass
     return ret_val
 # -------------------------------------------------------------------------- 
-# end of parse_revpinj(rw, ed) function
+# end of parse_revolute_pin(rw, ed) function
 
-# Creates the object representing a revolute joint element
-def spawn_revj_element(elem, context):
-    """ Draws a revolute joint element, loading a wireframe
+# Creates the object representing a revolute hinge joint element
+def spawn_revolute_hinge_element(elem, context):
+    """ Draws a revolute hinge joint element, loading a wireframe
         object from the addon library """
     mbs = context.scene.mbdyn
     nd = mbs.nodes
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_revj_element(): Element is already imported. \
+        print("spawn_revolute_hinge_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -196,7 +196,7 @@ def spawn_revj_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_revj_element(): Could not find a Blender \
+        print("spawn_revolute_hinge_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -204,7 +204,7 @@ def spawn_revj_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_revj_element(): Could not find a Blender \
+        print("spawn_revolute_hinge_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -270,11 +270,11 @@ def spawn_revj_element(elem, context):
     else:
         return {'LIBRARY_ERROR'}
 # -----------------------------------------------------------
-# end of spawn_revj_element(elem, context) function
+# end of spawn_revolute_hinge_element(elem, context) function
 
 # Imports a Revolute Joint in the scene
 class Scene_OT_MBDyn_Import_Revolute_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_revj"
+    bl_idname = "add.mbdyn_elem_revolute_hinge"
     bl_label = "MBDyn revolute joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -288,7 +288,7 @@ class Scene_OT_MBDyn_Import_Revolute_Joint_Element(bpy.types.Operator):
     
         try:
             elem = ed['revolute_hinge_' + str(self.int_label)]
-            retval = spawn_revj_element(elem, context)
+            retval = spawn_revolute_hinge_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
                     elem.blender_object + \
@@ -317,7 +317,7 @@ class Scene_OT_MBDyn_Import_Revolute_Joint_Element(bpy.types.Operator):
 # end of Scene_OT_MBDyn_Import_Revolute_Joint_Element class
  
 # Creates the object representing a revolute joint element
-def spawn_revpinj_element(elem, context):
+def spawn_revolute_pin_element(elem, context):
     """ Draws a revolute pin joint element, loading a wireframe
         object from the addon library """
     mbs = context.scene.mbdyn
@@ -325,7 +325,7 @@ def spawn_revpinj_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_revpinj_element(): Element is already imported. \
+        print("spawn_revolute_pin_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -333,7 +333,7 @@ def spawn_revpinj_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_revj_element(): Could not find a Blender \
+        print("spawn_revolute_pin_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -379,11 +379,11 @@ def spawn_revpinj_element(elem, context):
     else:
         return {'LIBRARY_ERROR'}
 # -----------------------------------------------------------
-# end of spawn_revpinj_element(elem, context) function
+# end of spawn_revolute_pin_element(elem, context) function
 
 # Imports a Revolute Pin Joint in the scene
 class Scene_OT_MBDyn_Import_Revolute_Pin_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_revpinj"
+    bl_idname = "add.mbdyn_elem_revolute_pin"
     bl_label = "MBDyn revolute pin joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -421,13 +421,13 @@ class Scene_OT_MBDyn_Import_Revolute_Pin_Joint_Element(bpy.types.Operator):
                 return retval
 
         except KeyError:
-            self.report({'ERROR'}, "Element revolute_pi_" + str(elem.int_label) + "not found")
+            self.report({'ERROR'}, "Element revolute_pin_" + str(elem.int_label) + "not found")
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Revolute_Pin_Joint_Element class
 
 # Displays revolute joint infos in the tools panel [ optional ]
-def revj_info_draw(elem, layout):
+def revolute_hinge_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -479,10 +479,10 @@ def revj_info_draw(elem, layout):
 
             layout.separator()
 # -----------------------------------------------------------
-# end of revj_info_draw() function
+# end of revolute_hinge_info_draw() function
     
 # Displays revolute joint infos in the tools panel [ optional ]
-def revpinj_info_draw(elem, layout):
+def revolute_pin_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -511,4 +511,4 @@ def revpinj_info_draw(elem, layout):
             layout.separator()
     pass
 # -------------------------------------------------------------------------- 
-# end of revpinj_info_draf(elem, layout) function
+# end of revolute_pin_info_draw(elem, layout) function
