@@ -627,7 +627,7 @@ def spawn_total_pin_element(elem, context):
     # display traslation arrows
     pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
     for kk in range(3):
-        if not(elem.offsets[2].value[kk]):
+        if not(elem.offsets[0].value[kk]):
             app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
             if app_retval != {'FINISHED'}:
                 return {'LIBRARY_ERROR'}
@@ -645,7 +645,7 @@ def spawn_total_pin_element(elem, context):
 
     rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
     for kk in range(3):
-        if not(elem.offsets[3].value[kk]):
+        if not(elem.offsets[1].value[kk]):
             app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
             if app_retval != {'FINISHED'}:
                 return {'LIBRARY_ERROR'}
@@ -720,7 +720,7 @@ class Scene_OT_MBDyn_Import_Total_Pin_Joint_Element(bpy.types.Operator):
         
         try:
             elem = ed['total_pin_joint_' + str(self.int_label)]
-            retval = spawn_total_element(elem, context)
+            retval = spawn_total_pin_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
                     elem.blender_object + \
