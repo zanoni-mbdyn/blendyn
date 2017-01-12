@@ -76,6 +76,7 @@ def parse_rod(rw, ed):
         
         el.import_function = "add.mbdyn_elem_rod"
         el.update_info_operator = "update.rod"
+        el.info_draw = "rod_info_draw"
         el.write_operator = "write.rod"
         
         el.name = el.type + "_" + str(el.int_label)

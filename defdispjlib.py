@@ -23,10 +23,13 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
+
+from .utilslib import parse_rotmat
 
 # helper function to parse deformable displacement joints
 def parse_deformable_displacement(rw, ed):
@@ -44,28 +47,12 @@ def parse_deformable_displacement(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
         
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion(); 
         
         if el.name in bpy.data.objects.keys():
@@ -87,15 +74,7 @@ def parse_deformable_displacement(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.offsets.add()
@@ -103,15 +82,7 @@ def parse_deformable_displacement(rw, ed):
 
         el.rotoffsets.add()
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_deformable_displacement"
@@ -121,11 +92,6 @@ def parse_deformable_displacement(rw, ed):
     return ret_val
 # -----------------------------------------------------------
 # end of parse_deformable_displacement(rw, ed) function
-
-# function that displays deformable displacement info in panel -- [ optional ]
-# def deformable_displacement_info_draw(elem, layout)
-# -----------------------------------------------------------
-# end of deformable_displacement_info_draw(elem, layout) function
 
 # Creates the object representing a deformable displacement joint element
 def spawn_deformable_displacement_element(elem, context):

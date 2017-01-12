@@ -72,7 +72,7 @@ def set_obj_locrot_mov(obj, rw):
                     (0.0, 0.0, 0.0, 1.0)))
         obj.rotation_quaternion = R.to_quaternion()
     else:
-        # Shoul not be reached
+        # Should not be reached
         print("Error: unsupported rotation parametrization")
     
     bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')

@@ -30,6 +30,8 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
+from .utilslib import parse_rotmat
+
 # helper function to parse revolute hinge joints
 def parse_revolute_hinge(rw, ed):
     ret_val = True
@@ -37,33 +39,24 @@ def parse_revolute_hinge(rw, ed):
     print("parse_revolute_hinge(): Parsing revolute hinge joint " + rw[1])
     try:
         el = ed['revolute_hinge_' + str(rw[1])]
+
         print("parse_revolute_hinge(): found existing entry in elements dictionary. Updating it.")
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
+        
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2) 
         el.rotoffsets[1].value = R2.to_quaternion(); 
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -84,15 +77,7 @@ def parse_revolute_hinge(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.offsets.add()
@@ -100,15 +85,7 @@ def parse_revolute_hinge(rw, ed):
 
         el.rotoffsets.add()
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_revolute_hinge"
@@ -127,20 +104,16 @@ def parse_revolute_pin(rw, ed):
     print("parse_revolute_pin(): Parsing revolute pin joint " + rw[1])
     try:
         el = ed['revolute_pin_' + str(rw[1])]
+
         print("parse_revolute_pin(): found existing entry in elements dictionary. Updating it.")
+        
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -159,15 +132,7 @@ def parse_revolute_pin(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_revolute_pin"
@@ -265,6 +230,8 @@ def spawn_revolute_hinge_element(elem, context):
         n1OBJ.select = True
         bpy.context.scene.objects.active = n1OBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+        elem.blender_object = revjOBJ.name
 
         return {'FINISHED'}
     else:
@@ -375,6 +342,8 @@ def spawn_revolute_pin_element(elem, context):
         bpy.context.scene.objects.active = n1OBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
+        elem.blender_object = revjOBJ.name
+
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
@@ -397,7 +366,7 @@ class Scene_OT_MBDyn_Import_Revolute_Pin_Joint_Element(bpy.types.Operator):
     
         try:
             elem = ed['revolute_pin_' + str(self.int_label)]
-            retval = spawn_revpinj_element(elem, context)
+            retval = spawn_revolute_pin_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
                     elem.blender_object + \
@@ -426,89 +395,3 @@ class Scene_OT_MBDyn_Import_Revolute_Pin_Joint_Element(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Revolute_Pin_Joint_Element class
 
-# Displays revolute joint infos in the tools panel [ optional ]
-def revolute_hinge_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
-    col = layout.column(align=True)
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
-
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display offset from node 1
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 1
-            row = layout.row()
-            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
-
-            layout.separator()
-
-        elif node.int_label == elem.nodes[1].int_label:
-            
-            # Display node 2 info
-            row = layout.row()
-            col = layout.column(align = True)
-            col.prop(node, "int_label", text = "Node 2 ID ")
-            col.prop(node, "string_label", text = "Node 2 label ")
-            col.prop(node, "blender_object", text = "Node 2 Object: ")
-            col.enabled = False
-
-            # Display offset from node 2
-            row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[2], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 2
-            row = layout.row()
-            row.label(text = "rot. offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
-
-            layout.separator()
-# -----------------------------------------------------------
-# end of revolute_hinge_info_draw() function
-    
-# Displays revolute joint infos in the tools panel [ optional ]
-def revolute_pin_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
-    col = layout.column(align=True)
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
-
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display offset from node 1
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 1
-            row = layout.row()
-            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
-
-            layout.separator()
-    pass
-# -------------------------------------------------------------------------- 
-# end of revolute_pin_info_draw(elem, layout) function
