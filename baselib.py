@@ -418,31 +418,40 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_end + 1):
                 scene.frame_current = frame
                 tdx = frame*freq
+                
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                obj.keyframe_insert(data_path = "location")
+            
                 obj.rotation_euler = \
                         Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
                                 axes[obj.mbdyn.parametrization[7]] +\
                                 axes[obj.mbdyn.parametrization[6]] +\
                                 axes[obj.mbdyn.parametrization[5]] )
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+                obj.keyframe_insert(data_path = "rotation_euler")
         elif obj.mbdyn.parametrization == 'PHI':
             for frame in range(scene.frame_end + 1):
                 scene.frame_current = frame
                 tdx = frame*freq
+
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                obj.keyframe_insert(data_path = "location")
+
                 rotvec = Vector(( nc.variables[node_var + 'Phi'][tdx, :] ))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+                obj.keyframe_insert(data_path = "rotation_axis_angle")
         elif obj.mbdyn.parametrization == 'MATRIX':
             for frame in range(scene.frame_end + 1):
                 scene.frame_current = frame
                 tdx = frame*freq
+
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                obj.keyframe_insert(data_path = "location")
+
                 R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
                 obj.rotation_quaternion = R.to_quaternion()
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+                obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
             print("set_motion_paths_netcdf() Error: unrecognised rotation parametrization")

@@ -52,6 +52,8 @@ def set_obj_locrot_mov(obj, rw):
     obj.location[1] = float(rw[2])
     obj.location[2] = float(rw[3])
     
+    obj.keyframe_insert(data_path = "location", frame = 1)
+    
     # Orientation
     parametrization = obj.mbdyn.parametrization
     
@@ -60,23 +62,24 @@ def set_obj_locrot_mov(obj, rw):
                                             math.radians(float(rw[5])),\
                                             math.radians(float(rw[6])) )),\
                      axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]])
+        obj.keyframe_insert(data_path = "rotation_euler")
     elif parametrization == 'PHI':
         rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
         rotvec_norm = rotvec.normalized()
         obj.rotation_axis_angle = Vector((rotvec.magnitude, \
                                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
+        obj.keyframe_insert(data_path = "rotation_axis_angle")
     elif parametrization == 'MATRIX':
         R = Matrix((( float(rw[4]), float(rw[5]), float(rw[6]), 0.0),\
                     (float(rw[7]), float(rw[8]), float(rw[9]), 0.0),\
                     (float(rw[10]), float(rw[11]), float(rw[12]), 0.0),\
                     (0.0, 0.0, 0.0, 1.0)))
         obj.rotation_quaternion = R.to_quaternion()
+        obj.keyframe_insert(data_path = "rotation_quaternion")
     else:
         # Should not be reached
         print("Error: unsupported rotation parametrization")
-    
-    bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
-    
+
     return
 # -----------------------------------------------------------
 # end of set_obj_locrot_mov() function 

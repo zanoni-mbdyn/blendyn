@@ -678,8 +678,11 @@ def update_beam3(elem, insert_keyframe = False):
     if insert_keyframe:
         try:
             cp2.select = True
+            cp2.keyframe_insert(data_path = "location")
+            
             cp3.select = True
-            bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+            cp3.keyframe_insert(data_path = "location")
+            
         except RuntimeError as err:
             if 'context is incorrect' in str(err):
                 pass
