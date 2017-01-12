@@ -814,7 +814,9 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
                             # Display MBDyn elements info
                             row = layout.row()
                             row.label(text = "MBDyn's element info:")
+
                             eval(elem.info_draw + "(elem, layout)")
+                            
                             if elem.update_info_operator != 'none' and elem.is_imported == True:
                                 row = layout.row()
                                 row.operator(elem.update_info_operator, \

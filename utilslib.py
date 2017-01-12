@@ -125,3 +125,14 @@ def fmax(x):
 # -----------------------------------------------------------
 # end of fmax function
 
+def parse_rotmat(rw, idx, R): 
+    R[0][0] = float(rw[idx])
+    R[0][1] = float(rw[idx + 1])
+    R[0][2] = float(rw[idx + 2])
+    R[1][0] = float(rw[idx + 3])
+    R[1][1] = float(rw[idx + 4])
+    R[1][2] = float(rw[idx + 5])
+    R[2][0] = float(rw[idx + 6])
+    R[2][1] = float(rw[idx + 7])
+    R[2][2] = float(rw[idx + 8])
+    pass

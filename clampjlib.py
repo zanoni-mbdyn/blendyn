@@ -30,6 +30,8 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
+from .utilslib import parse_rotmat
+
 # helper function to parse clamp joints
 def parse_clamp(rw, ed):
     ret_val = True
@@ -46,29 +48,13 @@ def parse_clamp(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
         
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion(); 
         
         if el.name in bpy.data.objects.keys():
@@ -92,15 +78,7 @@ def parse_clamp(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.offsets.add()
@@ -108,15 +86,7 @@ def parse_clamp(rw, ed):
 
         el.rotoffsets.add()
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_clamp"
@@ -186,6 +156,8 @@ def spawn_clamp_element(elem, context):
         bpy.context.scene.objects.active = n1OBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
+        elem.blender_object = clampjOBJ.name
+
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
@@ -194,39 +166,7 @@ def spawn_clamp_element(elem, context):
 # -----------------------------------------------------------
 # end of spawn_clamp_elem(elem, layout) function
 
-## Displays clamp joint infos in the tools panel
-def clamp_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
-    col = layout.column(align=True)
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
-
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display offset from node 1
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 1
-            row = layout.row()
-            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
-
-            layout.separator()
-    pass
-# -----------------------------------------------------------
-# end of clamp_info_draw(elem, layout) function
-
-# Imports a Revolute Pin Joint in the scene
+# Imports a Clamp Joint in the scene
 class Scene_OT_MBDyn_Import_Clamp_Joint_Element(bpy.types.Operator):
     bl_idname = "add.mbdyn_elem_clamp"
     bl_label = "MBDyn clamp joint element importer"

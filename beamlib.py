@@ -310,7 +310,6 @@ def spawn_beam2_element(elem, context):
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
 
-
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'elem.beam'

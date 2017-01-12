@@ -87,9 +87,9 @@ def elem_info_draw(elem, layout):
         kk = kk + 1
         for node in nd:
              if node.int_label == elnode.int_label:
-                col.prop(node, "int_label", text = "Node " + str(kk) + " ID: ")
-                col.prop(node, "string_label", text = "Node " + str(kk) + " label: ")
-                col.prop(node, "blender_object", text = "Node " + str(kk) + " Object: ")
+                col.prop(node, "int_label", text = "Node " + str(kk) + " ID")
+                col.prop(node, "string_label", text = "Node " + str(kk) + " label")
+                col.prop(node, "blender_object", text = "Node " + str(kk) + " Object")
                 col.enabled = False
     
     kk = 0
@@ -104,7 +104,7 @@ def elem_info_draw(elem, layout):
     for rotoff in elem.rotoffsets:
         kk = kk + 1
         row = layout.row()
-        row.label(text = "rot. offset" + str(kk))
+        row.label(text = "orientation offset " + str(kk))
         col = layout.column(align = True)
         col.prop(rotoff, "value", text = "", slider = False)
 # -----------------------------------------------------------

@@ -30,6 +30,8 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
+from .utilslib import parse_rotmat
+
 ## Parses cardano hinge joint entry in the .log file
 def parse_cardano_hinge(rw, ed):
     ret_val = True
@@ -45,29 +47,13 @@ def parse_cardano_hinge(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
         
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R1)
         el.rotoffsets[1].value = R2.to_quaternion(); 
 
         if el.name in bpy.data.objects.keys():
@@ -90,15 +76,7 @@ def parse_cardano_hinge(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.offsets.add()
@@ -106,15 +84,7 @@ def parse_cardano_hinge(rw, ed):
 
         el.rotoffsets.add()
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_cardano_hinge"
@@ -140,15 +110,7 @@ def parse_cardano_pin(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
@@ -171,15 +133,7 @@ def parse_cardano_pin(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_cardano_pin"
@@ -192,7 +146,7 @@ def parse_cardano_pin(rw, ed):
 # end of parse_cardano_pin(rw, ed) function
 
 ## Spawns a Blender object representing a Cardano Hinge joint
-def spawn_cardano_hinge_elem(elem, context):
+def spawn_cardano_hinge_element(elem, context):
     """ Draws a Cardano Hinge joint element, loading a wireframe
         object from the addon library """
     mbs = context.scene.mbdyn
@@ -264,7 +218,7 @@ def spawn_cardano_hinge_elem(elem, context):
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = \
                 n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
-        RF2.scale = .33*revjOBJ.scale
+        RF2.scale = .33*carjOBJ.scale
         RF2.name = carjOBJ.name + '_RF2'
         RF2.select = True
         bpy.context.scene.objects.active = carjOBJ
@@ -277,6 +231,8 @@ def spawn_cardano_hinge_elem(elem, context):
         n1OBJ.select = True
         bpy.context.scene.objects.active = n1OBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+        elem.blender_object = carjOBJ.name
 
         return {'FINISHED'}
     else:
@@ -438,93 +394,3 @@ class Scene_OT_MBDyn_Import_Cardano_Pin_Joint_Element(bpy.types.Operator):
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Cardano_Joint_Element class
-
-## Displays cardano joint infos in the tools panel
-def cardano_hinge_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
-    col = layout.column(align=True)
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
-
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display offset from node 1
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 1
-            row = layout.row()
-            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
-
-            layout.separator()
-
-        elif node.int_label == elem.nodes[1].int_label:
-            
-            # Display node 2 info
-            row = layout.row()
-            col = layout.column(align = True)
-            col.prop(node, "int_label", text = "Node 2 ID ")
-            col.prop(node, "string_label", text = "Node 2 label ")
-            col.prop(node, "blender_object", text = "Node 2 Object: ")
-            col.enabled = False
-
-            # Display offset from node 2
-            row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[2], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 2
-            row = layout.row()
-            row.label(text = "rot. offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
-
-            layout.separator()
-    pass
-# -----------------------------------------------------------
-# end of cardano_hinge_info_draw(elem, layout) function
-
-## Displays cardano joint infos in the tools panel
-def cardano_pin_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
-    col = layout.column(align=True)
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
-
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display offset from node 1
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
-            # Display rotation offset from node 1
-            row = layout.row()
-            row.label(text = "rot. offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
-
-            layout.separator()
-
-    pass
-# -----------------------------------------------------------
-# end of cardano_pin_info_draw(elem, layout) function
-
