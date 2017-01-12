@@ -161,7 +161,8 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
             
             obj.location = Vector(( nc.variables[node_var + 'X'][eigsol.step - 1, :] ))
-            
+            obj.keyframe_insert(data_path = "location")
+
             if obj.mbdyn.parametrization[0:5] == 'EULER':
                 eu_seq = axes[obj.mbdyn.parametrization[7]] +\
                          axes[obj.mbdyn.parametrization[6]] +\
@@ -174,22 +175,24 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                                 )), \
                                 eu_seq
                             )
+                obj.keyframe_insert(data_path = "rotation_euler")
             elif obj.mbdyn.parametrization == 'PHI':
                 obj.rotation_mode = 'AXIS_ANGLE'
                 rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
+                obj.keyframe_insert(data_path = "rotation_axis_angle")
             elif obj.mbdyn.parametrization == 'MATRIX':
                 obj.rotation_mode = 'QUATERNION'
                 R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
                 obj.rotation_quaternion = R.to_quaternion()
+                obj.keyframe_insert(data_path = "rotation_quaternion")
             else:
                 # Should not be reached
                 print("ops.mbdyn_eig_geometry: Error: unrecognised rotation parametrization")
                 self.report({'ERROR'}, "Unrecognised rotation parametrization")
             
-            bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
             obj.select = False
 
         # Triggers the updte of deformable elements
@@ -267,6 +270,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
             for frame in range(eigsol.anim_frames):
                 context.scene.frame_current = init_frame + frame
                 t = frame/eigsol.anim_frames
+
                 obj.location = ref_pos + \
                         Vector((
                             scale*eigvec_abs[node_idx]*math.cos(2*math.pi*t + \
@@ -276,6 +280,9 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
                             scale*eigvec_abs[node_idx + 2]*math.cos(2*math.pi*t + \
                                     eigvec_phase[node_idx + 2])
                             ))
+
+                obj.keyframe_insert(data_path = "location")
+
                 new_phi = ref_phi + \
                         Vector((
                             scale*eigvec_abs[node_idx + 3]*math.cos(2*math.pi*t + \
@@ -285,6 +292,8 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
                             scale*eigvec_abs[node_idx + 5]*math.cos(2*math.pi*t + \
                                     eigvec_phase[node_idx + 5])
                             ))
+
+
                 new_phi_axis = new_phi.normalized()
                 obj.rotation_axis_angle = \
                     Vector(( 
@@ -293,7 +302,8 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
                         new_phi_axis[1],
                         new_phi_axis[2]
                         ))
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+
+                obj.keyframe_insert(data_path = "rotation_axis_angle")
            
             obj.select = False
             kk = kk + 1
