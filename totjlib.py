@@ -218,7 +218,10 @@ def spawn_total_element(elem, context):
                 return {'LIBRARY_ERROR'}
             
             obj = bpy.context.selected_objects[0]
-            
+
+            # position it correctly
+            obj.location = totjOBJ.location
+
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = \
@@ -236,6 +239,9 @@ def spawn_total_element(elem, context):
                 return {'LIBRARY_ERROR'}
 
             obj = bpy.context.selected_objects[0]
+
+            # position it correctly
+            obj.location = totjOBJ.location
             
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
@@ -246,7 +252,7 @@ def spawn_total_element(elem, context):
             bpy.ops.object.join()
 
     # automatic scaling
-    s = .5*(1./sqrt(3.))*(n1OBJ.scale.magnitude + \
+    s = (1./sqrt(3.))*(n1OBJ.scale.magnitude + \
             n2OBJ.scale.magnitude)
     totjOBJ.scale = Vector(( s, s, s ))
 
@@ -633,6 +639,9 @@ def spawn_total_pin_element(elem, context):
                 return {'LIBRARY_ERROR'}
             
             obj = bpy.context.selected_objects[0]
+
+            # position it correctly
+            obj.location = totjOBJ.location
             
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
@@ -651,7 +660,10 @@ def spawn_total_pin_element(elem, context):
                 return {'LIBRARY_ERROR'}
 
             obj = bpy.context.selected_objects[0]
-            
+           
+            # position it correctly
+            obj.location = totjOBJ.location
+
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = \
@@ -661,7 +673,7 @@ def spawn_total_pin_element(elem, context):
             bpy.ops.object.join()
 
     # automatic scaling
-    s = .5*(1./sqrt(3.))*n1OBJ.scale.magnitude
+    s = (1./sqrt(3.))*n1OBJ.scale.magnitude
     totjOBJ.scale = Vector(( s, s, s ))
 
     # create an object representing the RF used to express the relative
