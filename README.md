@@ -2,6 +2,8 @@
 
 Welcome to the **Blendyn** github repository!
 
+![Blendyn Logo](https://github.com/zanoni-mbdyn/blendyn/wiki/images/blendyn_logo_subtitle_big.png)
+
 **Blendyn** is a [Blender](http://www.blender.org/) add-on, written in
 Python, that allows to import the output of the
 [free](http://www.gnu.org/philosophy/free-sw.html) multibody solver
