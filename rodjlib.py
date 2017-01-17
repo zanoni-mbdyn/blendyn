@@ -1,23 +1,23 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file rodlib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file rodlib.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
@@ -33,38 +33,52 @@ from .utilslib import *
 import pdb
 
 ## Parses rod joint entry in the .log file
-def parse_rodj(rw, ed):
+def parse_rod(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_rodj(): Parsing rod " + rw[1])
+    print("parse_rod(): Parsing rod " + rw[1])
 
     try:
         el = ed['rod_' + str(rw[1])]
-        print("parse_rodj(): found existing entry in elements dictionary for element "\
+
+        print("parse_rod(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        
         el.is_imported = True
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
     except KeyError:
-        print("parse_rodj(): didn't find entry in elements dictionary. Creating one.")
+        
+        print("parse_rod(): didn't find entry in elements dictionary. Creating one.")
+        
         el = ed.add()
-        el.type = 'rodj'
+        el.type = 'rod'
+        
         el.int_label = int(rw[1])
+        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
+        
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
         el.nodes.add()
         el.nodes[1].int_label = int(rw[6])
+        
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        
         el.import_function = "add.mbdyn_elem_rod"
         el.update_info_operator = "update.rod"
+        el.info_draw = "rod_info_draw"
         el.write_operator = "write.rod"
+        
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -72,53 +86,68 @@ def parse_rodj(rw, ed):
 
     return ret_val
 # -------------------------------------------------------------------------------
-# end of parse_rodj(rw, ed) function
+# end of parse_rod(rw, ed) function
 
 ## Parses rod bezier joint entry in the .log file
-def parse_rodbezj(rw, ed):
+def parse_rod_bezier(rw, ed):
     ret_val = True
+
     # Debug message
-    print("parse_rodbezj(): Parsing rod bezier " + rw[2])
+    print("parse_rod_bezier(): Parsing rod bezier " + rw[2])
+    
     try:
         el = ed['rod_bezier_' + rw[2]]
-        print("parse_rodbezj(): found existing entry in elements dictionary.\
+
+        print("parse_rod_bezier(): found existing entry in elements dictionary.\
                 Updating it.")
+        
         el.nodes[0].int_label = int(rw[3])
         el.nodes[1].int_label = int(rw[10])
+        
         el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
         el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
             el.is_imported = True
     except KeyError:
-        print("parse_rodbezj(): didn't find entry in elements dictionary. Creating one.")
+
+        print("parse_rod_bezier(): didn't find entry in elements dictionary. Creating one.")
+        
         el = ed.add()
-        el.type = 'rod bezier'
+        el.type = 'rod_bezier'
         el.int_label = int(rw[2])
+        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[3])
+        
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
+        
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        
         el.nodes.add()
         el.nodes[1].int_label = int(rw[10])
+        
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+        
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
-        el.import_function = "add.mbdyn_elem_rodbez"
-        el.info_draw = "rodbez_info_draw"
-        el.update_info_operator = "update.rodbez"
-        el.write_operator = "write.rodbez"
+        
+        el.import_function = "add.mbdyn_elem_rod_bezier"
+        el.info_draw = "rod_bezier_info_draw"
+        el.update_info_operator = "update.rod_bezier"
+        el.write_operator = "write.rod_bezier"
         el.name = "rod_bezier_" + str(el.int_label)
         ret_val = False
         pass
     return ret_val
 # -------------------------------------------------------------------------------
-# end of parse_rodbezj(rw, ed) function
+# end of parse_rod_bezier(rw, ed) function
 
 # Function that displays Rod Element info in panel
 def rod_info_draw(elem, layout):
@@ -164,7 +193,7 @@ def rod_info_draw(elem, layout):
 # end of rod_info_draw() function
 
 # Function that displays Bezier Rod Element info in panel
-def rodbez_info_draw(elem, layout):
+def rod_bezier_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -220,7 +249,7 @@ def rodbez_info_draw(elem, layout):
 
             layout.separator()
 # -----------------------------------------------------------
-# end of rodbez_info_draw() function
+# end of rod_bezier_info_draw() function
 
 ## Updates info for Rod element
 class RodUpdate(Operator):
@@ -250,13 +279,12 @@ class RodUpdate(Operator):
                 elem.offsets[1]['value'] = RN2.transposed()*(f2 - xN2)
 
         return {'FINISHED'} 
-bpy.utils.register_class(RodUpdate)
 # -----------------------------------------------------------
 # end of RodUpdate class
 
 ## Updates info for Bezier Rod element
-class RodBezUpdate(Operator):
-    bl_idname = "update.rodbez"
+class RodBezierUpdate(Operator):
+    bl_idname = "update.rod_bezier"
     bl_label = "MBDyn Rod Bezier info updater"
     elem_key = bpy.props.StringProperty()
 
@@ -290,12 +318,11 @@ class RodBezUpdate(Operator):
                 elem.offsets[3]['value'] = RN2.transposed()*(fIG - xN2)
 
         return {'FINISHED'}
-bpy.utils.register_class(RodBezUpdate)
 # -----------------------------------------------------------
-# end of RodBezUpdate class
+# end of RodBezierUpdate class
 
 ## Imports a Rob element in the scene as a line joining two nodes
-class MBDynImportElemRod(bpy.types.Operator):
+class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
     bl_idname = "add.mbdyn_elem_rod"
     bl_label = "MBDyn rod element importer"
     int_label = bpy.props.IntProperty()
@@ -308,8 +335,8 @@ class MBDynImportElemRod(bpy.types.Operator):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
         try: 
-            elem = ed['rodj_' + str(self.int_label)]
-            retval = spawn_rodj_element(elem, context)
+            elem = ed['rod_' + str(self.int_label)]
+            retval = spawn_rod_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
                     elem.blender_object + \
@@ -333,13 +360,12 @@ class MBDynImportElemRod(bpy.types.Operator):
             return {'CANCELLED'}
             
         return {'FINISHED'}
-bpy.utils.register_class(MBDynImportElemRod)
 # -----------------------------------------------------------
-# end of MBDynImportElemRod class
+# end of Scene_OT_MBDyn_Import_Rod_Joint_Element class
 
 ## Helps import a Rob Bezier element in the scene
-class MBDynImportElemRodBez(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_rodbez"
+class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_rod_bezier"
     bl_label = "MBDyn rod element importer"
     int_label = bpy.props.IntProperty()
 
@@ -351,8 +377,8 @@ class MBDynImportElemRodBez(bpy.types.Operator):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
         try:
-            elem = ed['rodbez_' + str(self.int_label)]
-            retval = spawn_rodbezj_element(elem)
+            elem = ed['rod_bezier_' + str(self.int_label)]
+            retval = spawn_rod_bezier_element(elem)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + elem.blender_object + \
                 " remove or rename it to re-import the element!")
@@ -370,12 +396,11 @@ class MBDynImportElemRodBez(bpy.types.Operator):
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element rod_" + str(self.int_label) + " not found.")
+            self.report({'ERROR'}, "Element rod_bezier_" + str(self.int_label) + " not found.")
 
             return {'CANCELLED'}
-bpy.utils.register_class(MBDynImportElemRodBez)
 # -----------------------------------------------------------
-# end of MBDynImportElemRodBez class
+# end of Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element class
 
 
 ## Writes the input for Rod Element in the text panel
@@ -429,13 +454,12 @@ class RodWrite(Operator):
         self.report({'INFO'}, "Input file contribute for element written. See " +\
                         rbtext.name + " in text editor")
         return {'FINISHED'}
-bpy.utils.register_class(RodWrite)
 # -----------------------------------------------------------
 # end of RodWrite class
          
 ## Writes the input for Bezier Rod Element in text panel
-class RodBezWrite(Operator):
-    bl_idname = "write.rodbez"
+class RodBezierWrite(Operator):
+    bl_idname = "write.rod_bezier"
     bl_label = "MBDyn Rod Bezier input writer"
     elem_key = bpy.props.StringProperty()
 
@@ -491,12 +515,11 @@ class RodBezWrite(Operator):
         self.report({'INFO'}, "Input file contribute for element written. See " +\
                         rbtext.name + " in text editor")
         return {'FINISHED'}
-bpy.utils.register_class(RodBezWrite)
 # -----------------------------------------------------------
-# end of RodBezWrite class
+# end of RodBezierWrite class
 
 # Created the object representing a rod joint element
-def spawn_rodj_element(elem, context):
+def spawn_rod_element(elem, context):
     """ Draws a rod joint element as a line connecting two points 
         belonging to two objects """
     
@@ -504,7 +527,7 @@ def spawn_rodj_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_rodj_element(): Element is already imported. \
+        print("spawn_rod_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return{'CANCELLED'}
@@ -515,7 +538,7 @@ def spawn_rodj_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_rodj_element(): Could not find a Blender \
+        print("spawn_rod_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -523,7 +546,7 @@ def spawn_rodj_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_rodj_element(): Could not find a Blender \
+        print("spawn_rod_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -534,7 +557,7 @@ def spawn_rodj_element(elem, context):
     n2OBJ = bpy.data.objects[n2]
 
     # creation of line representing the rod
-    rodobj_id = 'rodj_' + str(elem.int_label)
+    rodobj_id = 'rod_' + str(elem.int_label)
     rodcv_id = rodobj_id + '_cvdata'
         
     # check if the object is already present. If it is, remove it.
@@ -606,9 +629,9 @@ def spawn_rodj_element(elem, context):
     elem.is_imported = True
     return{'FINISHED'}
 # -----------------------------------------------------------
-# end of spawn_rodj_element(elem) function
+# end of spawn_rod_element(elem) function
 
-def spawn_rodbezj_element(elem):
+def spawn_rod_bezier_element(elem):
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
     else:
@@ -752,4 +775,4 @@ def spawn_rodbezj_element(elem):
         elem.is_imported = True
         return{'FINISHED'}
 # -----------------------------------------------------------
-# end of spawn_rodbezj_element(elem) function
+# end of spawn_rod_bezier_element(elem) function

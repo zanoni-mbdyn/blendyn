@@ -1,23 +1,23 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file beamlib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file beamlib.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
@@ -93,7 +93,7 @@ def parse_beam3(rw, ed):
     
     try:
 
-        el = ed['beam3' + rw[1]]
+        el = ed['beam3_' + rw[1]]
         el.is_imported = False
         print("parse_beam3(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
@@ -310,7 +310,6 @@ def spawn_beam2_element(elem, context):
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
 
-
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'elem.beam'
@@ -476,9 +475,9 @@ def spawn_beam3_element(elem, context):
     t3 = P3 - M2
     t3.normalize()
 
-    theta1, phi1 = n1OBJ.rotation_quaternion.to_axis_angle()
-    theta2, phi2 = n2OBJ.rotation_quaternion.to_axis_angle()
-    theta3, phi3 = n3OBJ.rotation_quaternion.to_axis_angle()
+    phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
     
     polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
     polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
@@ -609,6 +608,9 @@ def spawn_beam3_element(elem, context):
     bpy.ops.group.create(name = beamOBJ.name)
     elem.is_imported = True
 
+    obj2.hide = True
+    obj3.hide = True
+
     bpy.ops.object.select_all(action = 'DESELECT')
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -663,9 +665,9 @@ def update_beam3(elem, insert_keyframe = False):
     t3 = P3.to_3d() - cp2.location
     t3.normalize()
 
-    theta1, phi1 = n1.rotation_quaternion.to_axis_angle()
-    theta2, phi2 = n2.rotation_quaternion.to_axis_angle()
-    theta3, phi3 = n3.rotation_quaternion.to_axis_angle()
+    phi1, theta1 = n1.matrix_world.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2.matrix_world.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3.matrix_world.to_quaternion().to_axis_angle()
     
     cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
     cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
@@ -676,8 +678,11 @@ def update_beam3(elem, insert_keyframe = False):
     if insert_keyframe:
         try:
             cp2.select = True
+            cp2.keyframe_insert(data_path = "location")
+            
             cp3.select = True
-            bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+            cp3.keyframe_insert(data_path = "location")
+            
         except RuntimeError as err:
             if 'context is incorrect' in str(err):
                 pass

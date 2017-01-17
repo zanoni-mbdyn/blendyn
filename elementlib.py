@@ -1,23 +1,23 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file elementlib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file elementlib.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
@@ -34,6 +34,7 @@ from collections import namedtuple
 
 from .beamlib import *
 from .carjlib import *
+from .clampjlib import *
 from .defdispjlib import *
 from .revjlib import *
 from .rodjlib import *
@@ -51,15 +52,19 @@ def parse_joint(context, jnt_type, rw):
     joint_types  = {    
             "beam2": parse_beam2,
             "beam3": parse_beam3,
-            "deformabledisplacementjoint": parse_defdispj,
-            "revolute": parse_revj,
-            "revolute pin": parse_revpinj,
-            "rod": parse_rodj,
-            "rod bezier": parse_rodbezj,
+            "cardanohinge": parse_cardano_hinge,
+            "cardanopin": parse_cardano_pin,
+            "clamp": parse_clamp,
+            "deformabledisplacementjoint": parse_deformable_displacement,
+            "revolutehinge": parse_revolute_hinge,
+            "revolutepin": parse_revolute_pin,
+            "rod": parse_rod,
+            "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
-            "spherical hinge": parse_sphj,
-            "total joint": parse_totj,
-            "total pin joint": parse_totpinj
+            "sphericalhinge": parse_spherical_hinge,
+            "spericalpin": parse_spherical_pin,
+            "totaljoint": parse_total,
+            "totalpinjoint": parse_total_pin
             }
  
     try:
@@ -82,9 +87,9 @@ def elem_info_draw(elem, layout):
         kk = kk + 1
         for node in nd:
              if node.int_label == elnode.int_label:
-                col.prop(node, "int_label", text = "Node " + str(kk) + " ID: ")
-                col.prop(node, "string_label", text = "Node " + str(kk) + " label: ")
-                col.prop(node, "blender_object", text = "Node " + str(kk) + " Object: ")
+                col.prop(node, "int_label", text = "Node " + str(kk) + " ID")
+                col.prop(node, "string_label", text = "Node " + str(kk) + " label")
+                col.prop(node, "blender_object", text = "Node " + str(kk) + " Object")
                 col.enabled = False
     
     kk = 0
@@ -99,7 +104,7 @@ def elem_info_draw(elem, layout):
     for rotoff in elem.rotoffsets:
         kk = kk + 1
         row = layout.row()
-        row.label(text = "rot. offset" + str(kk))
+        row.label(text = "orientation offset " + str(kk))
         col = layout.column(align = True)
         col.prop(rotoff, "value", text = "", slider = False)
 # -----------------------------------------------------------

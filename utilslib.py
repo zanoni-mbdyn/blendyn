@@ -1,23 +1,23 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file utilslib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file utilslib.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
@@ -125,3 +125,14 @@ def fmax(x):
 # -----------------------------------------------------------
 # end of fmax function
 
+def parse_rotmat(rw, idx, R): 
+    R[0][0] = float(rw[idx])
+    R[0][1] = float(rw[idx + 1])
+    R[0][2] = float(rw[idx + 2])
+    R[1][0] = float(rw[idx + 3])
+    R[1][1] = float(rw[idx + 4])
+    R[1][2] = float(rw[idx + 5])
+    R[2][0] = float(rw[idx + 6])
+    R[2][1] = float(rw[idx + 7])
+    R[2][2] = float(rw[idx + 8])
+    pass

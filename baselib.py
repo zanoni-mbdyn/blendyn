@@ -1,23 +1,23 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file base.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file base.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
@@ -42,7 +42,7 @@ import pdb
 try: 
     from netCDF4 import Dataset
 except ImportError:
-    print("mbdyn-blender: could not find netCDF4 module. NetCDF import "\
+    print("blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
 ## Function that parses the .log file and calls parse_joints() to add elements
@@ -150,10 +150,13 @@ def path_leaf(path, keep_extension = False):
 
 def file_len(filepath):
     """ Function to count the number of rows in a file """
-    with open(filepath) as f:
-        for kk, ll in enumerate(f):
-            pass
-    return kk + 1
+    try:
+        with open(filepath) as f:
+            for kk, ll in enumerate(f):
+                pass
+        return kk + 1
+    except UnboundLocalError:
+        return 0
 # -----------------------------------------------------------
 # end of file_len() function 
 
@@ -375,7 +378,7 @@ def set_motion_paths_mov(context):
 
 def set_motion_paths_netcdf(context):
 
-    scene = bpy.context.scene
+    scene = context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
     ed = mbs.elems 
@@ -415,30 +418,40 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_end + 1):
                 scene.frame_current = frame
                 tdx = frame*freq
+                
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
-                obj.rotation_euler = Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
+                obj.keyframe_insert(data_path = "location")
+            
+                obj.rotation_euler = \
+                        Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
                                 axes[obj.mbdyn.parametrization[7]] +\
                                 axes[obj.mbdyn.parametrization[6]] +\
                                 axes[obj.mbdyn.parametrization[5]] )
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+                obj.keyframe_insert(data_path = "rotation_euler")
         elif obj.mbdyn.parametrization == 'PHI':
             for frame in range(scene.frame_end + 1):
                 scene.frame_current = frame
                 tdx = frame*freq
+
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                obj.keyframe_insert(data_path = "location")
+
                 rotvec = Vector(( nc.variables[node_var + 'Phi'][tdx, :] ))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+                obj.keyframe_insert(data_path = "rotation_axis_angle")
         elif obj.mbdyn.parametrization == 'MATRIX':
             for frame in range(scene.frame_end + 1):
                 scene.frame_current = frame
                 tdx = frame*freq
+
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                obj.keyframe_insert(data_path = "location")
+
                 R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
                 obj.rotation_quaternion = R.to_quaternion()
-                bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+                obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
             print("set_motion_paths_netcdf() Error: unrecognised rotation parametrization")

@@ -1,75 +1,67 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file defdisplib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file defdisplib.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
 import bpy
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
+from .utilslib import parse_rotmat
+
 # helper function to parse deformable displacement joints
-def parse_defdispj(rw, ed):
+def parse_deformable_displacement(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_defdispj(): Parsing deformable displacement joint " + rw[1])
+    print("parse_deformable_displacementj(): Parsing deformable displacement joint " + rw[1])
     try:
-        el = ed['defdisp_' + str(rw[1])]
-        print("parse_rodj(): found existing entry in elements dictionary. Updating it.")
+        el = ed['deformable_displacement_' + str(rw[1])]
+
+        print("parse_deformable_displacement(): found existing entry in elements dictionary. Updating it.")
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+        
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion(); 
-        el.is_imported = True
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
-            el.is_imported = True 
+        el.is_imported = True 
     except KeyError:
-        print("parse_rodj(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_deformable_displacement(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
-        el.type = 'deformable displacement joint'
+        el.type = 'deformable_displacement'
         el.int_label = int(rw[1])
 
         el.nodes.add()
@@ -82,15 +74,7 @@ def parse_defdispj(rw, ed):
 
         el.rotoffsets.add()
         R1 = Matrix()
-        R1[0][0] = float(rw[6])
-        R1[0][1] = float(rw[7])
-        R1[0][2] = float(rw[8])
-        R1[1][0] = float(rw[9])
-        R1[1][1] = float(rw[10])
-        R1[1][2] = float(rw[11])
-        R1[2][0] = float(rw[12])
-        R1[2][1] = float(rw[13])
-        R1[2][2] = float(rw[14])
+        parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.offsets.add()
@@ -98,56 +82,43 @@ def parse_defdispj(rw, ed):
 
         el.rotoffsets.add()
         R2 = Matrix()
-        R2[0][0] = float(rw[19])
-        R2[0][1] = float(rw[20])
-        R2[0][2] = float(rw[21])
-        R2[1][0] = float(rw[22])
-        R2[1][1] = float(rw[23])
-        R2[1][2] = float(rw[24])
-        R2[2][0] = float(rw[25])
-        R2[2][1] = float(rw[26])
-        R2[2][2] = float(rw[27])
+        parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_defdisp"
+        el.import_function = "add.mbdyn_elem_deformable_displacement"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
     return ret_val
 # -----------------------------------------------------------
-# end of parse_defdispj(rw, ed) function
-
-# function that displays deformable displacement info in panel -- [ optional ]
-# def defdispj_info_draw(elem, layout)
-# -----------------------------------------------------------
-# end of defdispj_info_draw(elem, layout) function
+# end of parse_deformable_displacement(rw, ed) function
 
 # Creates the object representing a deformable displacement joint element
-def spawn_defdispj_element(elem, context):
+def spawn_deformable_displacement_element(elem, context):
+    # TODO
     return {'FINISHED'}
 # -----------------------------------------------------------
-# end of spawn_defdispj_element(elem, context) function
+# end of spawn_deformable_displacament_element(elem, context) function
 
 ## Imports a Deformable Displacement Joint in the scene -- TODO
-    class Scene_OT_MBDyn_Import_DefDispJoint_Element(bpy.types.Operator):
-        bl_idname = "add.mbdyn_elem_defdispj"
-        bl_label = "MBDyn deformable displacement joint element importer"
-        int_label = bpy.props.IntProperty()
+class Scene_OT_MBDyn_Import_Deformable_Displacement_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_deformable_displacement"
+    bl_label = "MBDyn deformable displacement joint element importer"
+    int_label = bpy.props.IntProperty()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        ed = bpy.context.scene.mbdyn.elems
+        nd = bpy.context.scene.mbdyn.nodes
     
-        def draw(self, context):
-            layout = self.layout
-            layout.alignment = 'LEFT'
-
-        def execute(self, context):
-            ed = bpy.context.scene.mbdyn.elems
-            nd = bpy.context.scene.mbdyn.nodes
-        
-            try:
-                elem = ed['defdispj_' + str(self.int_label)]
-                return spawn_defdispj_element(elem, context)
-            except KeyError:
-                self.report({'ERROR'}, "Element defdispj_" + str(elem.int_label) + "not found")
-                return {'CANCELLED'}
+        try:
+            elem = ed['defdispj_' + str(self.int_label)]
+            return spawn_defdispj_element(elem, context)
+        except KeyError:
+            self.report({'ERROR'}, "Element deformable_displacement_" + str(elem.int_label) + "not found")
+            return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_DefDisp_Element class
-
+# end of Scene_OT_MBDyn_Import_Deformable_Displacement_Element class
