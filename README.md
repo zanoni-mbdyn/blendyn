@@ -7,7 +7,7 @@ Welcome to the **Blendyn** github repository!
 **Blendyn** is a [Blender](http://www.blender.org/) add-on, written in
 Python, that allows to import the output of the
 [free](http://www.gnu.org/philosophy/free-sw.html) multibody solver
-[MBDyn](https://www.mbdyn.org /) developed at the [Aerospace Science and
+[MBDyn](https://www.mbdyn.org /), developed at the [Aerospace Science and
 Technology Department](https://www.aero.polimi.it/) of [Politecnico di Milano
 University](http://www.polimi.it/). [MBDyn](https://www.mbdyn.org/) does not
 come with a built-in graphical pre- or post-processor, as it is able to process
