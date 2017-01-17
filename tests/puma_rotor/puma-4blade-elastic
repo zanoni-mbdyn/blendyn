@@ -28,7 +28,7 @@ set: BLADE_N = 4;
 
 begin: initial value; 
 	initial time: 0.; 
-	final time: (1./omega_h) * 10;	# revolutions 
+	final time: (1./omega_h) * 25;	# revolutions 
 	time step: (1./omega_h)/100;	# time step must allow about 100 steps/rev
 
 
