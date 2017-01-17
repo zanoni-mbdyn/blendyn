@@ -91,7 +91,7 @@ begin: control data;
 		+1		# slider load
 	;
 
-	# output results: netcdf;
+	output results: netcdf, no text;
 	default orientation: orientation vector;
 	print: all;
 end: control data;
