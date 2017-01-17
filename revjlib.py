@@ -1,23 +1,23 @@
 # --------------------------------------------------------------------------
-# MBDynImporter -- file revjlib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Blendyn -- file revjlib.py
+# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
-#    This file is part of MBDynImporter, add-on script for Blender.
+#    This file is part of Blendyn, add-on script for Blender.
 #
-#    MBDynImporter is free software: you can redistribute it and/or modify
+#    Blendyn is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    MBDynImporter  is distributed in the hope that it will be useful,
+#    Blendyn  is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with MBDynImporter.  If not, see <http://www.gnu.org/licenses/>.
+#    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
@@ -180,7 +180,7 @@ def spawn_revolute_hinge_element(elem, context):
 
     # load the wireframe revolute joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'mbdyn-blender-master', 'library', 'joints.blend', \
+            'blendyn-master', 'library', 'joints.blend', \
             'Object'), filename = 'revolute')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
@@ -310,7 +310,7 @@ def spawn_revolute_pin_element(elem, context):
 
     # load the wireframe revolute joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'mbdyn-blender-master', 'library', 'joints.blend', \
+            'blendyn-master', 'library', 'joints.blend', \
             'Object'), filename = 'revolute.pin')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
