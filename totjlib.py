@@ -464,13 +464,7 @@ class Scene_OT_MBDyn_Import_Total_Joint_Element(bpy.types.Operator):
 
 
 ## Parses total pin joint entry in the .log file
-<<<<<<< HEAD
-#  Entry:
-#    totalpinjoint: (int)<label> (int)<node_1_label> (Vec3Float)<node_1_offset> (Mat3x3Float)<node_1_rot_offset>
-def parse_totpinj(rw, ed):
-=======
 def parse_total_pin(rw, ed):
->>>>>>> testing
     ret_val = True
     # Debug message
     print("parse_total_pin(): Parsing total pin joint " + rw[1])
