@@ -27,8 +27,8 @@ bl_info = {
     "version": (1, 0, 0),
     "blender": (2, 6, 0),
     "location": "View3D -> MBDyn",
-    "description": "Imports simulation results of MBDyn (Open Source MultiBody
-    Dynamic solver -- https://www.mbdyn.org/).",
+    "description": "Imports simulation results of MBDyn (Open Source MultiBody\
+            Dynamic solver -- https://www.mbdyn.org/).",
     "wiki_url": "https://github.com/zanoni-mbdyn/blendyn/wiki",
     "bugtracker": "https://github.com/zanoni-mbdyn/blendyn/issues",
     "category": "Animation"}
