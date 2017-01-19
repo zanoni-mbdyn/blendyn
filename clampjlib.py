@@ -132,7 +132,7 @@ def spawn_clamp_element(elem, context):
         clampjOBJ.name = elem.name
 
         # automatic scaling
-        s = n1OBJ.scale.magnitude*(1./sqrt(3.))
+        s = n1OBJ.scale.magnitude*(1./sqrt(3.))*elem.scale_factor
         clampjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes

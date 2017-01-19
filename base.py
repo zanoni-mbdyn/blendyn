@@ -917,7 +917,7 @@ class MBDynNodesScenePanel(bpy.types.Panel):
 class MBDynElemsScenePanel(bpy.types.Panel):
     """ List of MBDyn elements: use import button to add \
             them to the scene  """
-    bl_label = "MBDyn elements list"
+    bl_label = "MBDyn elements"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "scene"

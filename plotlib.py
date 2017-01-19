@@ -58,7 +58,7 @@ def get_plot_vars_glob(self, context):
         var_list = list()
         for var in nc.variables:
             m = nc.variables[var].shape
-            if m[0] == N:
+            if (m[0] == N) and (var not in mbs.plot_vars.keys()):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var 
 
