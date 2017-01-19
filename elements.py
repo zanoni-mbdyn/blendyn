@@ -100,6 +100,12 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
         description = "MBDyn nodes that the element connects"
         )
 
+    magnitude = FloatProperty(
+            name = "Magnitude of element",
+            description = "Magnitude of element if present (e.g. force, couple...)",
+            default = 0.
+            )
+
     offsets = CollectionProperty(
         type = MBDynElemOffset,
         name = "Offsets of attach points",
@@ -110,6 +116,13 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
         type = MBDynElemRotOffset,
         name = "Rotational offsets of attach R.Fs. of joint",
         description = "Collector of rotational offsets of element attach R.Fs."
+        )
+
+    scale_factor = FloatProperty(
+        name = "Scale",
+        description = "Scale factor for element visualization",
+        default = 1.0,
+        update = update_scale_factor
         )
 
     import_function = StringProperty(

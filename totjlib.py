@@ -253,7 +253,7 @@ def spawn_total_element(elem, context):
 
     # automatic scaling
     s = (1./sqrt(3.))*(n1OBJ.scale.magnitude + \
-            n2OBJ.scale.magnitude)
+            n2OBJ.scale.magnitude)*elem.scale_factor
     totjOBJ.scale = Vector(( s, s, s ))
 
     # create an object representing the RF used to express the relative
@@ -329,7 +329,7 @@ def spawn_total_element(elem, context):
 def total_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
-    col = layout.column(align=True)
+    col = layout.column(align = True)
 
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
@@ -673,7 +673,7 @@ def spawn_total_pin_element(elem, context):
             bpy.ops.object.join()
 
     # automatic scaling
-    s = (1./sqrt(3.))*n1OBJ.scale.magnitude
+    s = (1./sqrt(3.))*n1OBJ.scale.magnitude*elem.scale_factor
     totjOBJ.scale = Vector(( s, s, s ))
 
     # create an object representing the RF used to express the relative

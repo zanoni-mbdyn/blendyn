@@ -186,7 +186,7 @@ def rod_info_draw(elem, layout):
             row = layout.row()
             row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
             col = layout.column(align = True)
-            col.prop(elem.offsets[2], "value", text = "", slider = False)
+            col.prop(elem.offsets[1], "value", text = "", slider = False)
 
             layout.separator()
 # -----------------------------------------------------------

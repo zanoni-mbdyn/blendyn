@@ -33,9 +33,11 @@ import ntpath, os, csv, math
 from collections import namedtuple
 
 from .beamlib import *
+from .bodylib import *
 from .carjlib import *
 from .clampjlib import *
 from .defdispjlib import *
+from .forcelib import *
 from .revjlib import *
 from .rodjlib import *
 from .shell4lib import *
@@ -44,14 +46,15 @@ from .totjlib import *
 from .utilslib import *
 
 ## Function that parses the single row of the .log file and stores
-#  the joint element definition in elems
-def parse_joint(context, jnt_type, rw):
+#  the element definition in elems
+def parse_elements(context, jnt_type, rw):
     objects = context.scene.objects
     ed = context.scene.mbdyn.elems
 
     joint_types  = {    
             "beam2": parse_beam2,
             "beam3": parse_beam3,
+            "body": parse_body,
             "cardanohinge": parse_cardano_hinge,
             "cardanopin": parse_cardano_pin,
             "clamp": parse_clamp,
@@ -63,6 +66,10 @@ def parse_joint(context, jnt_type, rw):
             "shell4" : parse_shell4,
             "sphericalhinge": parse_spherical_hinge,
             "spericalpin": parse_spherical_pin,
+            "structural absolute force": parse_structural_absolute_force,
+            "structural absolute couple": parse_structural_absolute_couple,
+            "structural follower force": parse_structural_follower_force,
+            "structural follower couple": parse_structural_follower_couple,
             "totaljoint": parse_total,
             "totalpinjoint": parse_total_pin
             }
@@ -70,18 +77,24 @@ def parse_joint(context, jnt_type, rw):
     try:
         ret_val = joint_types[jnt_type](rw, ed)
     except KeyError:
-        print("parse_joint(): Element type " + jnt_type + " not implemented yet. \
+        print("parse_elements(): Element type " + jnt_type + " not implemented yet. \
                 Skipping...")
         ret_val = True
         pass
     return ret_val
 # -----------------------------------------------------------
-# end of parse_joint() function
+# end of parse_elements() function
 
 ## Displays "generic" element infos in the tools panel
 def elem_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     col = layout.column(align=True)
+    
+    col.prop(elem, "scale_factor")
+    
+    row = layout.row()
+    col = row.column()
+
     kk = 0
     for elnode in elem.nodes:
         kk = kk + 1
@@ -112,7 +125,6 @@ def elem_info_draw(elem, layout):
 
 # App handler to update the configuration of deformable elements
 # after the location of the nodes has been updated
-
 @persistent
 def update_elements(scene):
     ed = scene.mbdyn.elems
@@ -186,3 +198,12 @@ class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of Data_OT_MBDyn_Elems_Beams class
 
+# Update function for scale factor
+def update_scale_factor(self, context):
+    ed = context.scene.mbdyn.elems
+    for elem in ed:
+        if elem.blender_object == self.name:
+            if elem.scale_factor < 0.:
+                elem.scale_factor = 0.
+            s = bpy.data.objects[elem.blender_object].scale
+            bpy.data.objects[elem.blender_object].scale = s*elem.scale_factor

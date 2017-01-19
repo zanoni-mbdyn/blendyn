@@ -45,7 +45,7 @@ except ImportError:
     print("blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
-## Function that parses the .log file and calls parse_joints() to add elements
+## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
 # TODO: support more joint types
 def parse_log_file(context):
@@ -92,7 +92,7 @@ def parse_log_file(context):
                     b_nodes_consistent = b_nodes_consistent * (parse_node(context, rw))
                 else:
                     print("parse_log_file(): Found " + entry[:-1] + " element.")
-                    b_elems_consistent = b_elems_consistent * parse_joint(context, entry[:-1], rw)
+                    b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
 
             if (is_init_nd and is_init_ed) or (b_nodes_consistent*b_elems_consistent):
                 ret_val = {'FINISHED'}
