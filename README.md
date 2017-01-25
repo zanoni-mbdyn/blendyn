@@ -1,6 +1,6 @@
 # Blendyn
 
-Welcome to the **Blendyn** github repository!
+Welcome to the **Blendyn** GitHub repository!
 
 ![Blendyn Logo](https://github.com/zanoni-mbdyn/blendyn/wiki/images/blendyn_logo_subtitle_big.png)
 
