@@ -52,7 +52,7 @@ def set_obj_locrot_mov(obj, rw):
     obj.location[1] = float(rw[2])
     obj.location[2] = float(rw[3])
     
-    obj.keyframe_insert(data_path = "location", frame = 1)
+    obj.keyframe_insert(data_path = "location")
     
     # Orientation
     parametrization = obj.mbdyn.parametrization
