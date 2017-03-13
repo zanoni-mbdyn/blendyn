@@ -998,7 +998,7 @@ class MBDynOBJNodeSelect(bpy.types.Panel):
                 row.label(nd_entry.blender_object)
                 row.operator("sel.mbdynnode", text="ASSIGN").int_label = nd_entry.int_label
                 if bpy.data.objects.get(nd_entry.blender_object) == None:
-                    row.operator(Scene_OT_MBDyn_Node_import_Single.bl_idname, \
+                    row.operator(Scene_OT_MBDyn_Node_Import_Single.bl_idname, \
                             text="ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
 # end of MBDynOBJNodeSelect class
