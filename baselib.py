@@ -274,6 +274,17 @@ def update_label(self, context):
 # -----------------------------------------------------------
 # end of update_label() function 
 
+## Function that clears the scene of keyframes of current simulation
+def remove_oldframes(context):
+	mbs = context.scene.mbdyn
+
+	node_names = mbs.nodes.keys()
+	obj_names = [bpy.context.scene.mbdyn.nodes[var].blender_object for var in node_names]
+	obj_list = [bpy.data.objects[var] for var in obj_names]
+	for obj in obj_list:
+		obj.animation_data_clear()
+# -----------------------------------------------------------
+# end of remove_oldframes() function		
 
 ## Function that parses the .mov file and sets the motion paths
 def set_motion_paths_mov(context):
