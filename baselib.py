@@ -58,6 +58,12 @@ def parse_log_file(context):
     is_init_nd = len(nd) == 0
     is_init_ed = len(ed) == 0
 
+    for node_name in nd.keys():
+        nd[node_name].is_imported = False
+
+    for elem_name in ed.keys():
+        ed[elem_name].is_imported = False
+
     log_file = mbs.file_path + mbs.file_basename + '.log'
 
     # Debug message to console
@@ -110,6 +116,19 @@ def parse_log_file(context):
         pass
     except StopIteration:
         print("Reached the end of .log file")
+
+    del_nodes = [var for var in nd.keys() if var.is_imported == False]
+    del_elems = [var for var in ed.keys() if var.is_imported == False]
+
+    obj_names = [bpy.context.scene.mbdyn.nodes[var].blender_object for var in del_nodes]
+    obj_names += [bpy.context.scene.mbdyn.elems[var].blender_object for var in del_elems]
+    obj_list = [bpy.data.objects[var] for var in obj_names]
+
+    bpy.ops.object.select_all(action='DESELECT')
+
+    for obj in obj_list:
+        obj.select = True
+        bpy.ops.object.delete()
 
     nn = len(nd)
     if nn:

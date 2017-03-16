@@ -102,6 +102,11 @@ class MBDynNodesDictionary(bpy.types.PropertyGroup):
             default = "EULER123"
             )
 
+    is_imported = BoolProperty(
+        name = "Is imported flag",
+        description = "Flag set to true at the end of the import process"
+        )
+
 bpy.utils.register_class(MBDynNodesDictionary)
 # -----------------------------------------------------------
 # end of MBDynNodesDictionary class
