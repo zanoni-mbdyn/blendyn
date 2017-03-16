@@ -535,6 +535,9 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+        
+        remove_oldframes(context)
+
         mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
         if self.filepath[-2:] == 'nc':
             try:
