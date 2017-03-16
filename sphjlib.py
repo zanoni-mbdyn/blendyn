@@ -188,8 +188,8 @@ def spawn_spherical_hinge_element(elem, context):
         sphjOBJ.name = elem.name
 
         # automatic scaling
-        s = .5*(n1OBJ.scale.magnitude*(1./sqrt(3.)) + \
-        n2OBJ.scale.magnitude*(1./sqrt(3.)))
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+            n2OBJ.scale.magnitude)
         sphjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes

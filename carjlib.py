@@ -189,8 +189,8 @@ def spawn_cardano_hinge_element(elem, context):
         carjOBJ.name = elem.name
 
         # automatic scaling
-        s = .5*elem.scale_factor*(n1OBJ.scale.magnitude*(1./sqrt(3.)) + \
-                n2OBJ.scale.magnitude*(1./sqrt(3.)))
+        s = (5./sqrt(3.))*elem.scale_factor*(n1OBJ.scale.magnitude + \
+                n2OBJ.scale.magnitude)
         carjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes

@@ -161,7 +161,7 @@ def spawn_total_joint_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_total_element(): Element is already imported. \
+        print("spawn_total_joint_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -169,7 +169,7 @@ def spawn_total_joint_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_total_element(): Could not find a Blender \
+        print("spawn_total_joint_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -177,7 +177,7 @@ def spawn_total_joint_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_total_element(): Could not find a Blender \
+        print("spawn_total_joint_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -275,7 +275,7 @@ def spawn_total_joint_element(elem, context):
 
 
     # automatic scaling
-    s = (1./sqrt(3.))*(n1OBJ.scale.magnitude + \
+    s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
             n2OBJ.scale.magnitude)*elem.scale_factor
     totjOBJ.scale = Vector(( s, s, s ))
 
@@ -485,7 +485,7 @@ class Scene_OT_MBDyn_Import_Total_Joint_Element(bpy.types.Operator):
         
         try:
             elem = ed['total_joint_' + str(self.int_label)]
-            retval = spawn_total_element(elem, context)
+            retval = spawn_total_joint_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
                     elem.blender_object + \
@@ -537,19 +537,19 @@ def parse_total_pin(rw, ed):
         
         # note: this is not really an offset, but a bool vector 
         #       indicating which position constraints are active
-        el.offsets[1].value = Vector(( float(rw[24]), float(rw[25]), float(rw[26]) ))
+        el.offsets[1].value = Vector(( float(rw[45]), float(rw[46]), float(rw[47]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating which velocity constraints are active
-        el.offsets[2].value = Vector(( float(rw[27]), float(rw[28]), float(rw[29]) ))
+        el.offsets[2].value = Vector(( float(rw[48]), float(rw[49]), float(rw[50]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating which rotation constraints are active
-        el.offsets[3].value = Vector(( float(rw[30]), float(rw[31]), float(rw[32]) ))
+        el.offsets[3].value = Vector(( float(rw[51]), float(rw[52]), float(rw[53]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating which angular velocity constraints are active
-        el.offsets[4].value = Vector(( float(rw[33]), float(rw[34]), float(rw[35]) ))
+        el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
 
         pass
     except KeyError:
@@ -577,22 +577,22 @@ def parse_total_pin(rw, ed):
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating the position constraints that are active
         el.offsets.add()
-        el.offsets[1].value = Vector(( float(rw[24]), float(rw[25]), float(rw[26]) ))
+        el.offsets[1].value = Vector(( float(rw[45]), float(rw[46]), float(rw[47]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating which velocity constraints are active
         el.offsets.add()
-        el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
+        el.offsets[2].value = Vector(( float(rw[48]), float(rw[49]), float(rw[50]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating which rotation constraints are active
         el.offsets.add()
-        el.offsets[4].value = Vector(( float(rw[52]), float(rw[53]), float(rw[54]) ))
+        el.offsets[3].value = Vector(( float(rw[51]), float(rw[52]), float(rw[53]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
         #       indicating which angular velocity constraints are active
         el.offsets.add()
-        el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
+        el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
 
         el.import_function = "add.mbdyn_elem_total_pin"
         el.info_draw = "total_pin_info_draw"
@@ -844,7 +844,7 @@ def spawn_total_pin_joint_element(elem, context):
 
     return {'FINISHED'}
 # -----------------------------------------------------------
-# end of spawn_totpinj_element(elem, context) function
+# end of spawn_total_pin_joint_element(elem, context) function
 
 class Scene_OT_MBDyn_Import_Total_Pin_Joint_Element(bpy.types.Operator):
     bl_idname = "add.mbdyn_elem_total_pin"
@@ -861,7 +861,7 @@ class Scene_OT_MBDyn_Import_Total_Pin_Joint_Element(bpy.types.Operator):
         
         try:
             elem = ed['total_pin_joint_' + str(self.int_label)]
-            retval = spawn_total_pin_element(elem, context)
+            retval = spawn_total_pin_joint_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 self.report({'WARNING'}, "Found the Object " + \
                     elem.blender_object + \
