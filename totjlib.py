@@ -135,7 +135,7 @@ def parse_total(rw, ed):
 # end of parse_total(rw, ed) function
 
 ## Creates the object representing a Total Joint element
-def spawn_total_element(elem, context):
+def spawn_total_joint_element(elem, context):
     """ Draws a total joint element, loading a wireframe
         object from the addon library """
     mbs = context.scene.mbdyn
@@ -574,7 +574,7 @@ def totpinj_info_draw(elem, layout):
 # end of totpinj_info_draw(elem, layout) function
 
 ## Creates the object representing a Total Joint element
-def spawn_total_pin_element(elem, context):
+def spawn_total_pin_joint_element(elem, context):
     """ Draws a total pin joint element, loading a wireframe
         object from the addon library """
     mbs = context.scene.mbdyn
