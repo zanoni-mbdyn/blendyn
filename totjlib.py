@@ -64,13 +64,21 @@ def parse_total(rw, ed):
         parse_rotmat(rw, 37, R2r)
         el.rotoffsets[3].value = R2r.to_quaternion();
 
-        # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        # note: this is not really an offset, but a bool vector 
+        #       indicating which position constraints are active
         el.offsets[2].value = Vector(( float(rw[46]), float(rw[47]), float(rw[48]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the rotation constraints that are active
+        #       indicating which velocity constraints are active
         el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which rotation constraints are active
+        el.offsets[4].value = Vector(( float(rw[52]), float(rw[53]), float(rw[54]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which angular velocity constraints are active
+        el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
 
 
         if el.name in bpy.data.objects.keys():
@@ -115,15 +123,25 @@ def parse_total(rw, ed):
         el.rotoffsets[3].value = R2r.to_quaternion();
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        #       indicating which position constraints are active
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[46]), float(rw[47]), float(rw[48]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the rotation constraints that are active
+        #       indicating which velocity constraints are active
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
 
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which rotation constraints are active
+        el.offsets.add()
+        el.offsets[4].value = Vector(( float(rw[52]), float(rw[53]), float(rw[54]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which rotation constraints are active
+        el.offsets.add()
+        el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
+        
         el.import_function = "add.mbdyn_elem_total"
         el.info_draw = "total_info_draw"
         el.name = el.type + "_" + str(el.int_label)
@@ -231,9 +249,10 @@ def spawn_total_joint_element(elem, context):
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
 
+    # display rotation arrows
     rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
     for kk in range(3):
-        if not(elem.offsets[3].value[kk]):
+        if not(elem.offsets[4].value[kk]):
             app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
             if app_retval != {'FINISHED'}:
                 return {'LIBRARY_ERROR'}
@@ -250,6 +269,10 @@ def spawn_total_joint_element(elem, context):
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
+
+
+    # TODO: display also velocity contraints arrows
+
 
     # automatic scaling
     s = (1./sqrt(3.))*(n1OBJ.scale.magnitude + \
@@ -391,7 +414,8 @@ def total_info_draw(elem, layout):
             # Display total joint active components
             box = layout.box()
             split = box.split(1./2.)
-            
+           
+            # position
             column = split.column()
             column.row().label(text = "pos.X")
             column.row().label(text = "pos.Y")
@@ -404,6 +428,20 @@ def total_info_draw(elem, layout):
                 else:
                     column.row().label(text = "inactive")
 
+            # linear velocity
+            column = split.column()
+            column.row().label(text = "vel.X")
+            column.row().label(text = "vel.Y")
+            column.row().label(text = "vel.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[3].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+            # rotation
             column = split.column()
             column.row().label(text = "rot.X")
             column.row().label(text = "rot.Y")
@@ -411,7 +449,20 @@ def total_info_draw(elem, layout):
 
             column = split.column()
             for kk in range(3):
-                if elem.offsets[3].value[kk]:
+                if elem.offsets[4].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+            # angular velocity 
+            column = split.column()
+            column.row().label(text = "angvel.X")
+            column.row().label(text = "angvel.Y")
+            column.row().label(text = "angvel.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[5].value[kk]:
                     column.row().label(text = "active")
                 else:
                     column.row().label(text = "inactive")
@@ -484,13 +535,21 @@ def parse_total_pin(rw, ed):
         parse_rotmat(rw, 15, R1r)
         el.rotoffsets[1].value = R1r.to_quaternion(); 
         
-        # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        # note: this is not really an offset, but a bool vector 
+        #       indicating which position constraints are active
         el.offsets[1].value = Vector(( float(rw[24]), float(rw[25]), float(rw[26]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        #       indicating which velocity constraints are active
         el.offsets[2].value = Vector(( float(rw[27]), float(rw[28]), float(rw[29]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which rotation constraints are active
+        el.offsets[3].value = Vector(( float(rw[30]), float(rw[31]), float(rw[32]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which angular velocity constraints are active
+        el.offsets[4].value = Vector(( float(rw[33]), float(rw[34]), float(rw[35]) ))
 
         pass
     except KeyError:
@@ -521,9 +580,19 @@ def parse_total_pin(rw, ed):
         el.offsets[1].value = Vector(( float(rw[24]), float(rw[25]), float(rw[26]) ))
 
         # NOTE: This is not really an offset, but a bool vector 
-        #       indicating the position constraints that are active
+        #       indicating which velocity constraints are active
         el.offsets.add()
-        el.offsets[2].value = Vector(( float(rw[27]), float(rw[28]), float(rw[29]) ))
+        el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which rotation constraints are active
+        el.offsets.add()
+        el.offsets[4].value = Vector(( float(rw[52]), float(rw[53]), float(rw[54]) ))
+
+        # NOTE: This is not really an offset, but a bool vector 
+        #       indicating which angular velocity constraints are active
+        el.offsets.add()
+        el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
 
         el.import_function = "add.mbdyn_elem_total_pin"
         el.info_draw = "total_pin_info_draw"
@@ -536,7 +605,7 @@ def parse_total_pin(rw, ed):
 # end of parse_total_pin(rw, ed) function
 
 ## Displays total pin joint infos in the tools panel
-def totpinj_info_draw(elem, layout):
+def total_pin_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -569,6 +638,63 @@ def totpinj_info_draw(elem, layout):
             col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
 
             layout.separator()
+            
+            # Display total joint active components
+            box = layout.box()
+            split = box.split(1./2.)
+           
+            # position
+            column = split.column()
+            column.row().label(text = "pos.X")
+            column.row().label(text = "pos.Y")
+            column.row().label(text = "pos.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[1].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+            # linear velocity
+            column = split.column()
+            column.row().label(text = "vel.X")
+            column.row().label(text = "vel.Y")
+            column.row().label(text = "vel.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[2].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+            # rotation
+            column = split.column()
+            column.row().label(text = "rot.X")
+            column.row().label(text = "rot.Y")
+            column.row().label(text = "rot.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[3].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
+            # angular velocity 
+            column = split.column()
+            column.row().label(text = "angvel.X")
+            column.row().label(text = "angvel.Y")
+            column.row().label(text = "angvel.Z")
+
+            column = split.column()
+            for kk in range(3):
+                if elem.offsets[4].value[kk]:
+                    column.row().label(text = "active")
+                else:
+                    column.row().label(text = "inactive")
+
     pass
 # -----------------------------------------------------------
 # end of totpinj_info_draw(elem, layout) function
@@ -633,7 +759,7 @@ def spawn_total_pin_joint_element(elem, context):
     # display traslation arrows
     pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
     for kk in range(3):
-        if not(elem.offsets[0].value[kk]):
+        if not(elem.offsets[1].value[kk]):
             app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
             if app_retval != {'FINISHED'}:
                 return {'LIBRARY_ERROR'}
@@ -654,7 +780,7 @@ def spawn_total_pin_joint_element(elem, context):
 
     rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
     for kk in range(3):
-        if not(elem.offsets[1].value[kk]):
+        if not(elem.offsets[3].value[kk]):
             app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
             if app_retval != {'FINISHED'}:
                 return {'LIBRARY_ERROR'}
@@ -671,6 +797,9 @@ def spawn_total_pin_joint_element(elem, context):
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
+
+
+    # TODO: display also velocity contraints arrows
 
     # automatic scaling
     s = (1./sqrt(3.))*n1OBJ.scale.magnitude*elem.scale_factor
