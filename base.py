@@ -35,6 +35,7 @@ from math import *
 
 import ntpath, os, csv, math
 from collections import namedtuple
+import subprocess
 
 import pdb
 
@@ -170,7 +171,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
             name = "MBDyn nodes collection",
-	    type = MBDynNodesDictionary
+        type = MBDynNodesDictionary
             )
 
     # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
@@ -617,6 +618,32 @@ bpy.utils.register_class(MBDynClearData)
 # -----------------------------------------------------------
 # end of MBDynClearData class
 
+class MBDynRunSimulation(bpy.types.Operator, ImportHelper):
+    """docstring for MBDynRunSimulation"""
+    bl_idname = "sel.mbdyn_mbd_file"
+    bl_label = "Select MBDyn mbd file"
+
+    filter_glob = StringProperty(
+        default = "*.mbd",
+        options = {'HIDDEN'},
+        )
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        mbs.file_path = os.path.relpath(self.filepath)
+
+        subprocess.call('mbdyn -f ' + mbs.file_path, shell = True)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+bpy.utils.register_class(MBDynRunSimulation)
+# -----------------------------------------------------------
+# end of MBDynRunSimulation class
+
 class MBDynSetMotionPaths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
     bl_idname = "animate.set_mbdyn_motion_path"
@@ -636,6 +663,30 @@ class MBDynSetMotionPaths(bpy.types.Operator):
 bpy.utils.register_class(MBDynSetMotionPaths)
 # -----------------------------------------------------------
 # end of MBDynSetMotionPaths class
+
+class MBDynSimulationPanel(bpy.types.Panel):
+    """ Imports results of MBDyn simulation - Toolbar Panel """
+    bl_idname = "VIEW3D_TL_MBDyn_RunSim"
+    bl_label = "Run Simulation"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = 'objectmode'
+    bl_category = 'MBDyn'
+
+    def draw(self, context):
+
+     # utility renaming
+        layout = self.layout
+        obj = context.object
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
+
+        #Running MBDyn from Blender interface
+        row = layout.row()
+        row.label(text='Run MBDyn simulation')
+        col = layout.column(align = True)
+        col.operator(MBDynRunSimulation.bl_idname, text = 'Select .mbd file')
 
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
