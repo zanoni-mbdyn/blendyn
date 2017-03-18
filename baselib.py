@@ -117,18 +117,18 @@ def parse_log_file(context):
     except StopIteration:
         print("Reached the end of .log file")
 
-    del_nodes = [var for var in nd.keys() if var.is_imported == False]
-    del_elems = [var for var in ed.keys() if var.is_imported == False]
+    del_nodes = [var for var in nd.keys() if nd[var].is_imported == False]
+    del_elems = [var for var in ed.keys() if ed[var].is_imported == False]
 
-    obj_names = [bpy.context.scene.mbdyn.nodes[var].blender_object for var in del_nodes]
-    obj_names += [bpy.context.scene.mbdyn.elems[var].blender_object for var in del_elems]
+    obj_names = [nd[var].blender_object for var in del_nodes]
+    obj_names += [ed[var].blender_object for var in del_elems]
+
+    obj_names = list(filter(None, obj_names))
+
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
-    bpy.ops.object.select_all(action='DESELECT')
-
     for obj in obj_list:
-        obj.select = True
-        bpy.ops.object.delete()
+        obj.hide = True
 
     nn = len(nd)
     if nn:
