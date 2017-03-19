@@ -36,6 +36,7 @@ from math import *
 import ntpath, os, csv, math
 from collections import namedtuple
 import subprocess
+import os
 
 import pdb
 
@@ -631,8 +632,9 @@ class MBDynRunSimulation(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         mbs = context.scene.mbdyn
         mbs.file_path = os.path.relpath(self.filepath)
-
-        subprocess.call('mbdyn -f ' + mbs.file_path, shell = True)
+        mbdyn_env = os.environ.copy()
+        mbdyn_env['PATH'] = "/usr/local/mbdyn/bin/:" + mbdyn_env['PATH']
+        subprocess.call('mbdyn -f ' + mbs.file_path, shell = True, env=mbdyn_env)
 
         return {'FINISHED'}
 
