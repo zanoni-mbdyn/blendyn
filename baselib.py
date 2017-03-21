@@ -299,6 +299,7 @@ def remove_oldframes(context):
 
 	node_names = mbs.nodes.keys()
 	obj_names = [bpy.context.scene.mbdyn.nodes[var].blender_object for var in node_names]
+	obj_names = list(filter(lambda v: v != 'none', obj_names))	
 	obj_list = [bpy.data.objects[var] for var in obj_names]
 	for obj in obj_list:
 		obj.animation_data_clear()
