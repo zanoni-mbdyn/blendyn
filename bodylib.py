@@ -200,6 +200,7 @@ def body_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align = True)
 
+    col.prop(elem, "scale_factor")
     col.prop(elem, "magnitude", text = "mass")
 
     row = layout.row()

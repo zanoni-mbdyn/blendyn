@@ -354,6 +354,8 @@ def total_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align = True)
 
+    col.prop(elem, "scale_factor")
+
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
 
@@ -609,6 +611,8 @@ def total_pin_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
+
+    col.prop(elem, "scale_factor")
 
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
