@@ -498,10 +498,21 @@ bpy.app.handlers.frame_change_pre.append(update_time)
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
     bl_idname = "animate.read_mbdyn_log_file"
-    bl_label = "MBDyn .log file parsing"
+    bl_label = "Some of the nodes/elements are missing"
+    
+    hide = bpy.props.BoolProperty()
+    delete = bpy.props.BoolProperty()
+    obj_names = []
+
+    ret_val = {'FINISHED'}
 
     def execute(self, context):
-        ret_val = parse_log_file(context)
+
+        ret_val = self.ret_val
+
+        if len(self.obj_names) > 0:
+            hide_or_delete(self.obj_names, self.hide, self.delete)
+
         if ret_val == {'LOG_NOT_FOUND'}:
             self.report({'ERROR'}, "MBDyn .log file not found")
             return {'CANCELLED'}
@@ -522,7 +533,19 @@ class MBDynReadLog(bpy.types.Operator):
             return {'FINISHED'}
 
     def invoke(self, context, event):
+        self.ret_val, self.obj_names = parse_log_file(context)
+
+        if len(self.obj_names) > 0:
+            return context.window_manager.invoke_props_dialog(self, width=250, height=50)
+
         return self.execute(context)
+
+
+    def draw(self, context):
+        row = self.layout
+        row.prop(self, "hide", text="Hide Objects")
+        row.prop(self, "delete", text="Delete Objects")
+
 bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
@@ -665,6 +688,9 @@ class MBDynImportPanel(bpy.types.Panel):
         row.label(text="MBDyn simulation results")
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text="Select results file")
+
+
+        # Mbdyn set path of installation
 
         # Display MBDyn file basename and info
         row = layout.row()

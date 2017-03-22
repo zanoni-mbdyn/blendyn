@@ -125,11 +125,6 @@ def parse_log_file(context):
 
     obj_names = list(filter(None, obj_names))
 
-    obj_list = [bpy.data.objects[var] for var in obj_names]
-
-    for obj in obj_list:
-        obj.hide = True
-
     nn = len(nd)
     if nn:
         mbs.num_nodes = nn
@@ -152,9 +147,9 @@ def parse_log_file(context):
         ret_val = {'NODES_NOT_FOUND'}
     pass 
     
-    return ret_val
+    return ret_val, obj_names
 # -----------------------------------------------------------
-# end of parse_log_file() function 
+# end of parse_log_file() function
 
 def path_leaf(path, keep_extension = False):
     """ Helper function to strip filename of path """
@@ -295,16 +290,38 @@ def update_label(self, context):
 
 ## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
-	mbs = context.scene.mbdyn
+    mbs = context.scene.mbdyn
 
-	node_names = mbs.nodes.keys()
-	obj_names = [bpy.context.scene.mbdyn.nodes[var].blender_object for var in node_names]
-	obj_names = list(filter(lambda v: v != 'none', obj_names))	
-	obj_list = [bpy.data.objects[var] for var in obj_names]
-	for obj in obj_list:
-		obj.animation_data_clear()
+    node_names = mbs.nodes.keys()
+    obj_names = [bpy.context.scene.mbdyn.nodes[var].blender_object for var in node_names]
+
+    obj_names = list(filter(lambda v: v != 'none', obj_names))
+    obj_names = list(filter(lambda v: v in bpy.data.objects.keys(), obj_names))
+
+    if len(obj_names) > 0:
+       obj_list = [bpy.data.objects[var] for var in obj_names]
+       for obj in obj_list:
+           obj.animation_data_clear()
+           obj.hide = False
 # -----------------------------------------------------------
 # end of remove_oldframes() function		
+
+def hide_or_delete(obj_names, hide, delete):
+
+    obj_list = [bpy.data.objects[var] for var in obj_names]
+    obj_list = [bpy.data.objects[var] for var in obj_names]
+
+    if hide and not delete:
+        obj_list = [bpy.data.objects[var] for var in obj_names]
+
+        for obj in obj_list:
+            obj.hide = True
+
+    if delete:
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in obj_list:
+            obj.select = True
+            bpy.ops.object.delete()
 
 ## Function that parses the .mov file and sets the motion paths
 def set_motion_paths_mov(context):
