@@ -196,6 +196,14 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = "ARROWS"
             )
 
+    missing = EnumProperty(
+            items = [("DO NOTHING", "Do Nothing","","" ,1),\
+                     ("HIDE", "Hide", "","" ,2),\
+                     ("DELETE", "Delete", "", "", 3)],
+            name = "Handling Missing nodes/elements",
+            default = "HIDE"
+            )
+
     # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
     mesh_import_mode = EnumProperty(
             items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
@@ -498,21 +506,14 @@ bpy.app.handlers.frame_change_pre.append(update_time)
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
     bl_idname = "animate.read_mbdyn_log_file"
-    bl_label = "Some of the nodes/elements are missing"
-    
-    hide = bpy.props.BoolProperty()
-    delete = bpy.props.BoolProperty()
-    obj_names = []
-
-    ret_val = {'FINISHED'}
+    bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
+        ret_val, obj_names = parse_log_file(context)
 
-        ret_val = self.ret_val
-
-        if len(self.obj_names) > 0:
-            hide_or_delete(self.obj_names, self.hide, self.delete)
-
+        missing = context.scene.mbdyn.missing
+        if len(obj_names) > 0:
+            hide_or_delete(obj_names, missing)
         if ret_val == {'LOG_NOT_FOUND'}:
             self.report({'ERROR'}, "MBDyn .log file not found")
             return {'CANCELLED'}
@@ -533,18 +534,7 @@ class MBDynReadLog(bpy.types.Operator):
             return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.ret_val, self.obj_names = parse_log_file(context)
-
-        if len(self.obj_names) > 0:
-            return context.window_manager.invoke_props_dialog(self, width=250, height=50)
-
         return self.execute(context)
-
-
-    def draw(self, context):
-        row = self.layout
-        row.prop(self, "hide", text="Hide Objects")
-        row.prop(self, "delete", text="Delete Objects")
 
 bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
@@ -928,8 +918,10 @@ class MBDynNodesScenePanel(bpy.types.Panel):
             col.enabled = False
             
             row = layout.row()
+            row.prop(mbs, "missing")
+
+            row = layout.row()
             row.prop(mbs, "node_object")
-            
             
             col = layout.column()
             col.prop(mbs, "min_node_import")

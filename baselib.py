@@ -306,18 +306,18 @@ def remove_oldframes(context):
 # -----------------------------------------------------------
 # end of remove_oldframes() function		
 
-def hide_or_delete(obj_names, hide, delete):
+def hide_or_delete(obj_names, missing):
 
     obj_list = [bpy.data.objects[var] for var in obj_names]
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
-    if hide and not delete:
+    if missing == "HIDE":
         obj_list = [bpy.data.objects[var] for var in obj_names]
 
         for obj in obj_list:
             obj.hide = True
 
-    if delete:
+    if missing == "DELETE":
         bpy.ops.object.select_all(action='DESELECT')
         for obj in obj_list:
             obj.select = True
