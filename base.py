@@ -545,7 +545,7 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        
+
         remove_oldframes(context)
 
         mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
@@ -647,32 +647,69 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
 bpy.utils.register_class(MBDynSetInstallPath)
 
-class MBDynRunSimulation(bpy.types.Operator):
-    """docstring for MBDynRunSimulation"""
+class MBDynSelectMbd(bpy.types.Operator, ImportHelper):
+    """docstring for MBDynSelectMbd"""
+
     bl_idname = "sel.mbdyn_mbd_file"
-    bl_label = "Select MBDyn mbd file"
+    bl_label = "Select MBDyn .mbd file"
 
     filter_glob = StringProperty(
-        default = "*.mbd",
-        options = {'HIDDEN'},
-        )
+            default = "*.mbd",
+            options = {'HIDDEN'},
+            )
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+
         mbs.file_path = os.path.relpath(self.filepath)
-        mbdyn_env = os.environ.copy()
-        mbdyn_env['PATH'] = "/usr/local/mbdyn/bin/:" + mbdyn_env['PATH']
-        subprocess.call('mbdyn -f ' + mbs.file_path, shell = True, env=mbdyn_env)
 
         return {'FINISHED'}
-
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-bpy.utils.register_class(MBDynRunSimulation)
+bpy.utils.register_class(MBDynSelectMbd)
 # -----------------------------------------------------------
-# end of MBDynRunSimulation class
+# end of MBDynSelectMbd class
+
+class MBDynRunSimulation(bpy.types.Operator):
+    """docstring for MBDynRunSimulation"""
+    bl_idname = "sel.mbdyn_run_simulation"
+    bl_label = "Run MBDyn Simulation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        mbdyn_env = os.environ.copy()
+        mbdyn_path = '/usr/local/mbdyn/bin/'
+
+        with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+            mbdyn_path = json.load(f)['mbdyn_path']
+
+        mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
+
+        subprocess.call('mbdyn -f ' + mbs.file_path + ' &', shell = True, env = mbdyn_env)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynRunSimulation)
+
+class MBDynStopSimulation(bpy.types.Operator):
+    """docstring for MBDynStopSimulation"""
+    bl_idname = "sel.mbdyn_stop_simulation"
+    bl_label = "Stop MBDyn Simulation"
+
+    def execute(self, context):
+        subprocess.call('kill $(pidof mbdyn)', shell = True)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynStopSimulation)
 
 class MBDynSetMotionPaths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
@@ -726,9 +763,15 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
         row = layout.row()
         row.label(text='Run MBDyn simulation')
-        col = layout.column(align = True)
-        col.operator(MBDynRunSimulation.bl_idname, text = 'Select .mbd file')
 
+        col = layout.column(align = True)
+        col.operator(MBDynSelectMbd.bl_idname, text = 'Select .mbd file')
+
+        col = layout.column(align = True)
+        col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
+
+        col = layout.column(align = True)
+        col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath" 
@@ -756,7 +799,7 @@ class MBDynImportPanel(bpy.types.Panel):
         # Display MBDyn file basename and info
         row = layout.row()
         row.label(text="Loaded results file")
-            
+
         col = layout.column(align=True)
         col.prop(mbs, "file_basename", text="")
         col.prop(mbs, "num_nodes", text="nodes total")
@@ -770,7 +813,7 @@ class MBDynImportPanel(bpy.types.Panel):
         # row.label(text="Load MBDyn data")
         col = layout.column(align = True)
         col.operator(MBDynReadLog.bl_idname, text = "Load .log file")
-        
+
         # Assign MBDyn labels to elements in dictionaries
         col.operator(MBDynAssignLabels.bl_idname, text = "Load MBDyn labels")
 
