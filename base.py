@@ -102,6 +102,11 @@ class MBDynNodesDictionary(bpy.types.PropertyGroup):
             default = "EULER123"
             )
 
+    is_imported = BoolProperty(
+        name = "Is imported flag",
+        description = "Flag set to true at the end of the import process"
+        )
+
 bpy.utils.register_class(MBDynNodesDictionary)
 # -----------------------------------------------------------
 # end of MBDynNodesDictionary class
@@ -189,6 +194,14 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                      ("CONE", "Cone", "", 'MESH_CONE', 6)],
             name = "Import nodes as",
             default = "ARROWS"
+            )
+
+    missing = EnumProperty(
+            items = [("DO NOTHING", "Do Nothing","","" ,1),\
+                     ("HIDE", "Hide", "","" ,2),\
+                     ("DELETE", "Delete", "", "", 3)],
+            name = "Handling Missing nodes/elements",
+            default = "HIDE"
             )
 
     # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
@@ -496,7 +509,13 @@ class MBDynReadLog(bpy.types.Operator):
     bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
-        ret_val = parse_log_file(context)
+        ret_val, obj_names = parse_log_file(context)
+
+        missing = context.scene.mbdyn.missing
+        if len(obj_names) > 0:
+            self.report({'WARNING'}, "Some of the nodes/elements are missing in the new .log file")
+            hide_or_delete(obj_names, missing)
+            return {'FINISHED'}
         if ret_val == {'LOG_NOT_FOUND'}:
             self.report({'ERROR'}, "MBDyn .log file not found")
             return {'CANCELLED'}
@@ -518,6 +537,7 @@ class MBDynReadLog(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
+
 bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
@@ -660,6 +680,9 @@ class MBDynImportPanel(bpy.types.Panel):
         row.label(text="MBDyn simulation results")
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text="Select results file")
+
+
+        # Mbdyn set path of installation
 
         # Display MBDyn file basename and info
         row = layout.row()
@@ -897,8 +920,10 @@ class MBDynNodesScenePanel(bpy.types.Panel):
             col.enabled = False
             
             row = layout.row()
+            row.prop(mbs, "missing")
+
+            row = layout.row()
             row.prop(mbs, "node_object")
-            
             
             col = layout.column()
             col.prop(mbs, "min_node_import")
