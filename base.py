@@ -702,7 +702,12 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynReadLog.bl_idname, text = "Load .log file")
         
+        # Set action to be taken for missing nodes/elements
+        row = layout.row()
+        row.prop(mbs, "missing")
+
         # Assign MBDyn labels to elements in dictionaries
+        col = layout.column(align = True)
         col.operator(MBDynAssignLabels.bl_idname, text = "Load MBDyn labels")
 
         # Clear MBDyn data for scene
@@ -918,9 +923,6 @@ class MBDynNodesScenePanel(bpy.types.Panel):
             col.prop(item, "string_label")
             col.prop(item, "blender_object")
             col.enabled = False
-            
-            row = layout.row()
-            row.prop(mbs, "missing")
 
             row = layout.row()
             row.prop(mbs, "node_object")
