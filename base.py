@@ -37,6 +37,7 @@ import ntpath, os, csv, math
 from collections import namedtuple
 import subprocess
 import os
+import json
 
 import pdb
 
@@ -420,6 +421,13 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             description = "String label of MBDyn's node assigned to the object (if present)",
             default = "not assigned"
             )
+    #String representing path of the directory of the installation of MBDyn
+    dir_path = StringProperty(
+            name = "Directory Path",
+            description = "Path to Directory",
+            default = "/usr/local/mbdyn/bin/",
+            subtype = 'DIR_PATH'
+            )
 
     # Rotation parametrization of node
     parametrization = EnumProperty(
@@ -619,7 +627,27 @@ bpy.utils.register_class(MBDynClearData)
 # -----------------------------------------------------------
 # end of MBDynClearData class
 
-class MBDynRunSimulation(bpy.types.Operator, ImportHelper):
+class MBDynSetInstallPath(bpy.types.Operator):
+    """docstring for MBDynSetInstallPath"""
+    bl_idname = "sel.mbdyn_install_path"
+    bl_label = "Set installation path of MBDyn"
+
+    def execute(self, context):
+        blendyn_path = context.scene.mbdyn.addon_path
+        mbdyn_path = context.object.mbdyn.dir_path
+
+        config = {'mbdyn_path': mbdyn_path}
+        with open(os.path.join(blendyn_path, 'config.json'), 'w') as f:
+            json.dump(config, f)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynSetInstallPath)
+
+class MBDynRunSimulation(bpy.types.Operator):
     """docstring for MBDynRunSimulation"""
     bl_idname = "sel.mbdyn_mbd_file"
     bl_label = "Select MBDyn mbd file"
@@ -685,6 +713,17 @@ class MBDynSimulationPanel(bpy.types.Panel):
         ed = mbs.elems
 
         #Running MBDyn from Blender interface
+        try:
+            blendyn_path = mbs.addon_path
+            f = open(os.path.join(blendyn_path, 'config.json'), 'r')
+
+        except FileNotFoundError:
+            row = layout.row()
+            row.label(text='Path of MBDyn')
+            col = layout.column(align=True)
+            col.prop(obj.mbdyn, "dir_path", text="Path:")
+            col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
+
         row = layout.row()
         row.label(text='Run MBDyn simulation')
         col = layout.column(align = True)
@@ -850,12 +889,12 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
 
             try:
                 row.prop(obj, "name")
-    
+
                 if any(item.blender_object == obj.name for item in nd):
-    
+
                     # Display MBDyn node info
                     row = col.row()
-            
+
                     # Select MBDyn node
                     col = layout.column(align=True)
                     col.prop(obj.mbdyn, "int_label")
@@ -863,7 +902,7 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
                     col.prop(obj.mbdyn, "string_label", text="")
                     col.prop(obj.mbdyn, "parametrization", text="")
                     col.enabled = False
-    
+
                 else:
                     for elem in ed:
                         if elem.blender_object == obj.name:
@@ -872,7 +911,7 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
                             row.label(text = "MBDyn's element info:")
 
                             eval(elem.info_draw + "(elem, layout)")
-                            
+
                             if elem.update_info_operator != 'none' and elem.is_imported == True:
                                 row = layout.row()
                                 row.operator(elem.update_info_operator, \
