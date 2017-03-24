@@ -513,7 +513,9 @@ class MBDynReadLog(bpy.types.Operator):
 
         missing = context.scene.mbdyn.missing
         if len(obj_names) > 0:
+            self.report({'WARNING'}, "Some of the nodes/elements are missing in the new .log file")
             hide_or_delete(obj_names, missing)
+            return {'FINISHED'}
         if ret_val == {'LOG_NOT_FOUND'}:
             self.report({'ERROR'}, "MBDyn .log file not found")
             return {'CANCELLED'}
