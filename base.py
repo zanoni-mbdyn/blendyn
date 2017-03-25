@@ -425,7 +425,6 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
     dir_path = StringProperty(
             name = "Directory Path",
             description = "Path to Directory",
-            default = "/usr/local/mbdyn/bin/",
             subtype = 'DIR_PATH'
             )
 
@@ -662,6 +661,7 @@ class MBDynSelectMbd(bpy.types.Operator, ImportHelper):
         mbs = context.scene.mbdyn
 
         mbs.file_path = os.path.relpath(self.filepath)
+        mbs.file_basename = os.path.splitext(os.path.basename(self.filepath))[0]
 
         return {'FINISHED'}
     def invoke(self, context, event):
@@ -679,6 +679,7 @@ class MBDynRunSimulation(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+        obj = context.object.mbdyn
         mbdyn_env = os.environ.copy()
         mbdyn_path = '/usr/local/mbdyn/bin/'
 
@@ -687,7 +688,12 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
 
-        subprocess.call('mbdyn -f ' + mbs.file_path + ' &', shell = True, env = mbdyn_env)
+        command = ('mbdyn -f {}').format(mbs.file_path)
+
+        if len(obj.dir_path) > 0:
+            command += (' -o {0}').format(obj.dir_path + mbs.file_basename)
+
+        subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
         return {'FINISHED'}
 
@@ -768,10 +774,17 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynSelectMbd.bl_idname, text = 'Select .mbd file')
 
         col = layout.column(align = True)
+        col.prop(obj.mbdyn, "dir_path", text = "Output Directory:")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "file_basename", text = "Output Filename:")
+
+        col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
 
         col = layout.column(align = True)
         col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
+
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath" 
