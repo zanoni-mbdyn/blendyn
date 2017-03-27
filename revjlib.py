@@ -180,8 +180,7 @@ def spawn_revolute_hinge_element(elem, context):
 
     # load the wireframe revolute joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object'), filename = 'revolute')
+            'library', 'joints.blend', 'Object'), filename = 'revolute')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]
@@ -310,8 +309,7 @@ def spawn_revolute_pin_element(elem, context):
 
     # load the wireframe revolute joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object'), filename = 'revolute.pin')
+            'library', 'joints.blend', 'Object'), filename = 'revolute.pin')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]

@@ -24,6 +24,8 @@
 
 # TODO: check for unnecessary stuff
 
+import os.path
+
 import bpy
 import bmesh
 from bpy.props import *
@@ -105,6 +107,11 @@ class MBDynNodesDictionary(bpy.types.PropertyGroup):
             default = "EULER123"
             )
 
+    is_imported = BoolProperty(
+        name = "Is imported flag",
+        description = "Flag set to true at the end of the import process"
+        )
+
 bpy.utils.register_class(MBDynNodesDictionary)
 # -----------------------------------------------------------
 # end of MBDynNodesDictionary class
@@ -133,7 +140,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     addon_path = StringProperty(
             name = "Addon path",
             description = "Base path of addon files",
-            default = bpy.utils.user_resource('SCRIPTS', "addons")
+            default = os.path.dirname(__file__)
             )
 
     # Boolean: is the .mov (or .nc) file loaded properly?
@@ -192,6 +199,14 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                      ("CONE", "Cone", "", 'MESH_CONE', 6)],
             name = "Import nodes as",
             default = "ARROWS"
+            )
+
+    missing = EnumProperty(
+            items = [("DO NOTHING", "Do Nothing","","" ,1),\
+                     ("HIDE", "Hide", "","" ,2),\
+                     ("DELETE", "Delete", "", "", 3)],
+            name = "Handling of missing nodes/elements",
+            default = "HIDE"
             )
 
     # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
@@ -505,7 +520,13 @@ class MBDynReadLog(bpy.types.Operator):
     bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
-        ret_val = parse_log_file(context)
+        ret_val, obj_names = parse_log_file(context)
+
+        missing = context.scene.mbdyn.missing
+        if len(obj_names) > 0:
+            self.report({'WARNING'}, "Some of the nodes/elements are missing in the new .log file")
+            hide_or_delete(obj_names, missing)
+            return {'FINISHED'}
         if ret_val == {'LOG_NOT_FOUND'}:
             self.report({'ERROR'}, "MBDyn .log file not found")
             return {'CANCELLED'}
@@ -527,6 +548,7 @@ class MBDynReadLog(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
+
 bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
@@ -801,20 +823,25 @@ class MBDynImportPanel(bpy.types.Panel):
 
         # MBDyn output file selection
         row = layout.row()
-        row.label(text="MBDyn simulation results")
+        row.label(text = "MBDyn simulation results")
         col = layout.column(align = True)
-        col.operator(MBDynSelectOutputFile.bl_idname, text="Select results file")
+        col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
+
+
+        # Mbdyn set path of installation
 
         # Display MBDyn file basename and info
         row = layout.row()
-        row.label(text="Loaded results file")
 
-        col = layout.column(align=True)
-        col.prop(mbs, "file_basename", text="")
-        col.prop(mbs, "num_nodes", text="nodes total")
+        row.label(text = "Loaded results file")
+            
+        col = layout.column(align = True)
+        col.prop(mbs, "file_basename", text = "")
+        col.prop(mbs, "num_nodes", text = "nodes total")
+
         if not(mbs.use_netcdf):
-            col.prop(mbs, "num_rows", text="rows total")
-        col.prop(mbs, "num_timesteps", text="time steps")
+            col.prop(mbs, "num_rows", text = "rows total")
+        col.prop(mbs, "num_timesteps", text = "time steps")
         col.enabled = False
 
         # Import MBDyn data
@@ -824,7 +851,15 @@ class MBDynImportPanel(bpy.types.Panel):
         col.operator(MBDynReadLog.bl_idname, text = "Load .log file")
 
         # Assign MBDyn labels to elements in dictionaries
+        col = layout.column(align = True)
         col.operator(MBDynAssignLabels.bl_idname, text = "Load MBDyn labels")
+        
+        # Set action to be taken for missing nodes/elements
+        row = layout.row()
+        row.label(text = "Missing nodes/elements")
+        row = layout.row()
+        row.prop(mbs, "missing", text = "")
+
 
         # Clear MBDyn data for scene
         row = layout.row()
@@ -1039,10 +1074,9 @@ class MBDynNodesScenePanel(bpy.types.Panel):
             col.prop(item, "string_label")
             col.prop(item, "blender_object")
             col.enabled = False
-            
+
             row = layout.row()
             row.prop(mbs, "node_object")
-            
             
             col = layout.column()
             col.prop(mbs, "min_node_import")
