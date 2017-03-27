@@ -202,7 +202,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             items = [("DO NOTHING", "Do Nothing","","" ,1),\
                      ("HIDE", "Hide", "","" ,2),\
                      ("DELETE", "Delete", "", "", 3)],
-            name = "Handling Missing nodes/elements",
+            name = "Handling of missing nodes/elements",
             default = "HIDE"
             )
 
@@ -679,23 +679,23 @@ class MBDynImportPanel(bpy.types.Panel):
 
         # MBDyn output file selection
         row = layout.row()
-        row.label(text="MBDyn simulation results")
+        row.label(text = "MBDyn simulation results")
         col = layout.column(align = True)
-        col.operator(MBDynSelectOutputFile.bl_idname, text="Select results file")
+        col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
 
         # Mbdyn set path of installation
 
         # Display MBDyn file basename and info
         row = layout.row()
-        row.label(text="Loaded results file")
+        row.label(text = "Loaded results file")
             
-        col = layout.column(align=True)
-        col.prop(mbs, "file_basename", text="")
-        col.prop(mbs, "num_nodes", text="nodes total")
+        col = layout.column(align = True)
+        col.prop(mbs, "file_basename", text = "")
+        col.prop(mbs, "num_nodes", text = "nodes total")
         if not(mbs.use_netcdf):
-            col.prop(mbs, "num_rows", text="rows total")
-        col.prop(mbs, "num_timesteps", text="time steps")
+            col.prop(mbs, "num_rows", text = "rows total")
+        col.prop(mbs, "num_timesteps", text = "time steps")
         col.enabled = False
 
         # Import MBDyn data
@@ -704,13 +704,16 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynReadLog.bl_idname, text = "Load .log file")
         
-        # Set action to be taken for missing nodes/elements
-        row = layout.row()
-        row.prop(mbs, "missing")
-
         # Assign MBDyn labels to elements in dictionaries
         col = layout.column(align = True)
         col.operator(MBDynAssignLabels.bl_idname, text = "Load MBDyn labels")
+        
+        # Set action to be taken for missing nodes/elements
+        row = layout.row()
+        row.label(text = "Missing nodes/elements")
+        row = layout.row()
+        row.prop(mbs, "missing", text = "")
+
 
         # Clear MBDyn data for scene
         row = layout.row()
