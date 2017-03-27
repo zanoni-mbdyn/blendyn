@@ -646,16 +646,11 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
 bpy.utils.register_class(MBDynSetInstallPath)
 
-class MBDynSelectMbd(bpy.types.Operator, ImportHelper):
-    """docstring for MBDynSelectMbd"""
+class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
+    """docstring for MBDynSelectInputFile"""
 
-    bl_idname = "sel.mbdyn_mbd_file"
-    bl_label = "Select MBDyn .mbd file"
-
-    filter_glob = StringProperty(
-            default = "*.mbd",
-            options = {'HIDDEN'},
-            )
+    bl_idname = "sel.mbdyn_input_file"
+    bl_label = "MBDyn input file"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -668,9 +663,9 @@ class MBDynSelectMbd(bpy.types.Operator, ImportHelper):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-bpy.utils.register_class(MBDynSelectMbd)
+bpy.utils.register_class(MBDynSelectInputFile)
 # -----------------------------------------------------------
-# end of MBDynSelectMbd class
+# end of MBDynSelectInputFile class
 
 class MBDynRunSimulation(bpy.types.Operator):
     """docstring for MBDynRunSimulation"""
@@ -681,16 +676,17 @@ class MBDynRunSimulation(bpy.types.Operator):
         mbs = context.scene.mbdyn
         obj = context.object.mbdyn
         mbdyn_env = os.environ.copy()
-        mbdyn_path = '/usr/local/mbdyn/bin/'
 
         with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
             mbdyn_path = json.load(f)['mbdyn_path']
 
         mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
 
-        command = ('mbdyn -f {}').format(mbs.file_path)
+        command_line_options = "" if obj.string_label == "not assigned" else obj.string_label
 
-        if len(obj.dir_path) > 0:
+        command = ('mbdyn {0} {1}').format(command_line_options, mbs.file_path)
+
+        if obj.dir_path:
             command += (' -o {0}').format(obj.dir_path + mbs.file_basename)
 
         subprocess.call(command + ' &', shell = True, env = mbdyn_env)
@@ -710,6 +706,7 @@ class MBDynStopSimulation(bpy.types.Operator):
     def execute(self, context):
         subprocess.call('kill $(pidof mbdyn)', shell = True)
 
+        self.report({'INFO'}, "The MBDyn simulation was interrupted")
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -756,11 +753,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
         ed = mbs.elems
 
         #Running MBDyn from Blender interface
-        try:
-            blendyn_path = mbs.addon_path
-            f = open(os.path.join(blendyn_path, 'config.json'), 'r')
-
-        except FileNotFoundError:
+        if not os.path.exists(os.path.join(mbs.addon_path, 'config.json')):
             row = layout.row()
             row.label(text='Path of MBDyn')
             col = layout.column(align=True)
@@ -771,13 +764,16 @@ class MBDynSimulationPanel(bpy.types.Panel):
         row.label(text='Run MBDyn simulation')
 
         col = layout.column(align = True)
-        col.operator(MBDynSelectMbd.bl_idname, text = 'Select .mbd file')
+        col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
 
         col = layout.column(align = True)
         col.prop(obj.mbdyn, "dir_path", text = "Output Directory:")
 
         col = layout.column(align = True)
         col.prop(mbs, "file_basename", text = "Output Filename:")
+
+        col = layout.column(align = True)
+        col.prop(obj.mbdyn, "string_label", text = "Command-line options")
 
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
