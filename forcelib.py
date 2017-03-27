@@ -236,8 +236,7 @@ def spawn_structural_force_element(elem, context):
 
     # load the wireframe force object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'forces.blend', \
-            'Object'), filename = 'force')
+            'library', 'forces.blend', 'Object'), filename = 'force')
 
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
@@ -304,8 +303,7 @@ def spawn_structural_couple_element(elem, context):
 
     # load the wireframe couple object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'forces.blend', \
-            'Object'), filename = 'couple')
+            'library', 'forces.blend', 'Object'), filename = 'couple')
 
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected

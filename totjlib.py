@@ -188,8 +188,7 @@ def spawn_total_joint_element(elem, context):
 
     # load the wireframe total joint object from the library
     lib_path = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object')
+            'library', 'joints.blend', 'Object')
     app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total')
 
     if app_retval == {'FINISHED'}:
@@ -730,8 +729,7 @@ def spawn_total_pin_joint_element(elem, context):
 
     # load the wireframe total joint object from the library
     lib_path = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object')
+            'library', 'joints.blend', 'Object')
     app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total.pin')
 
     if app_retval == {'FINISHED'}:

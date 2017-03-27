@@ -115,8 +115,7 @@ def spawn_body_element(elem, context):
 
     # load the wireframe body object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'other.blend', \
-            'Object'), filename = 'cg')
+            'library', 'other.blend', 'Object'), filename = 'cg')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         bodyOBJ = bpy.context.selected_objects[0]
