@@ -124,8 +124,7 @@ def spawn_clamp_element(elem, context):
 
     # load the wireframe joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object'), filename = 'clamp')
+            'library', 'joints.blend', 'Object'), filename = 'clamp')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         clampjOBJ = bpy.context.selected_objects[0]

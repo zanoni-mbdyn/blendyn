@@ -179,6 +179,7 @@ def parse_node(context, rw):
     print("parse_node(): Parsing node " + rw[2])
     try:
         node = nd['node_' + str(rw[2])]
+        node.is_imported = True
         print("parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
                 + ". Updating it.")
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -191,6 +192,7 @@ def parse_node(context, rw):
         print("parse_node(): didn't find an existing entry in nodes dictionary for node " + rw[2]\
                 + ". Creating it.")
         node = nd.add()
+        node.is_imported = True
         node.int_label = int(rw[2])
         node.name = "node_" + rw[2]
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
