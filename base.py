@@ -24,6 +24,8 @@
 
 # TODO: check for unnecessary stuff
 
+import os.path
+
 import bpy
 import bmesh
 from bpy.props import *
@@ -135,7 +137,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     addon_path = StringProperty(
             name = "Addon path",
             description = "Base path of addon files",
-            default = bpy.utils.user_resource('SCRIPTS', "addons")
+            default = os.path.dirname(__file__)
             )
 
     # Boolean: is the .mov (or .nc) file loaded properly?
