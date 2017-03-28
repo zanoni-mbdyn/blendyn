@@ -443,6 +443,18 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             subtype = 'DIR_PATH'
             )
 
+    sim_num = IntProperty(
+            name = "Number of Simulation",
+            description = "",
+            default = 0
+            )
+
+    overwrite = BoolProperty(
+            name = "Overwrite Property",
+            description = "True if the user wants to overwrite the previous output files",
+            default = False
+            )
+
     # Rotation parametrization of node
     parametrization = EnumProperty(
             items = [("EULER123", "euler123", "euler123", '', 1),\
@@ -708,8 +720,19 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         command = ('mbdyn {0} {1}').format(command_line_options, mbs.file_path)
 
+        if not obj.overwrite:
+            obj.sim_num += 1
+
+        if len(mbs.file_basename.split('_')) > 1:
+            filename = mbs.file_basename.split('_')
+            filename[-1] = str(obj.sim_num)
+            mbs.file_basename = "_".join(filename)
+
+        else:
+            mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, obj.sim_num) 
+
         if obj.dir_path:
-            command += (' -o {0}').format(obj.dir_path + mbs.file_basename)
+            command += (' -o {}').format(obj.dir_path + mbs.file_basename)
 
         subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
@@ -789,6 +812,9 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
 
         col = layout.column(align = True)
+        col.prop(obj.mbdyn, "overwrite", text = "Overwrite Previous Files")
+
+        col = layout.column(align = True)
         col.prop(obj.mbdyn, "dir_path", text = "Output Directory:")
 
         col = layout.column(align = True)
@@ -826,9 +852,6 @@ class MBDynImportPanel(bpy.types.Panel):
         row.label(text = "MBDyn simulation results")
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
-
-
-        # Mbdyn set path of installation
 
         # Display MBDyn file basename and info
         row = layout.row()
