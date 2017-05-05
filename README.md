@@ -15,7 +15,7 @@ text-only input files and generates either text or binary (in
 [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) format) output. The
 purpose of the **Blendyn** add-on is to exploit the numerous features of
 the 3D graphics software [Blender](http://www.blender.org/) to post-process
-[MBDyn](https://www.mbdyn.org /) output data. The add-on is, therefore, strictly
+[MBDyn](https://www.mbdyn.org/) output data. The add-on is, therefore, strictly
 a post-processor, but the goal is to make it as useful as possible also during
 the model definition phase.
 
