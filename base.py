@@ -585,7 +585,7 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
         mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
 
         formatter = '%(asctime)s - %(levelname)s - %(message)s'
-        logFile = mbs.file_path + mbs.file_basename + '.err'
+        logFile = mbs.file_path + mbs.file_basename + '.bylog'
         logging.basicConfig(level=logging.DEBUG, format=formatter,
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename=logFile)
