@@ -147,6 +147,16 @@ def parse_log_file(context):
         ret_val = {'NODES_NOT_FOUND'}
     pass 
     
+    out_file = mbs.file_path + mbs.file_basename + '.out'
+
+    with open(out_file) as of:
+        reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
+        for ii in range(4):
+            next(reader)
+        mbs.time_step = float(next(reader)[3])
+
+    mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
+
     return ret_val, obj_names
 # -----------------------------------------------------------
 # end of parse_log_file() function
@@ -348,7 +358,8 @@ def set_motion_paths_mov(context):
    
     # total number of frames to be animated
     num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_end = int(num_frames/mbs.load_frequency) - 1
+    scene.frame_start = int(mbs.start_time/(mbs.load_frequency*mbs.time_step)) + 1
+    scene.frame_end = int(mbs.end_time/(mbs.load_frequency*mbs.time_step))
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
@@ -356,12 +367,16 @@ def set_motion_paths_mov(context):
     # Cycle to establish which objects to animate
     anim_objs = dict()
 
-    wm.progress_begin(1, scene.frame_end)
+    wm.progress_begin(scene.frame_start, scene.frame_end)
     try:
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
             # first loop: we establish which object to animate
-            scene.frame_current = 0
+            scene.frame_current = scene.frame_start
+
+            for ndx in range(scene.frame_start * mbs.num_nodes):
+                next(reader)
+
             for ndx in range(mbs.num_nodes):
                 rw = next(reader)
                 obj_name = nd['node_' + rw[0]].blender_object
@@ -376,8 +391,8 @@ def set_motion_paths_mov(context):
             if mbs.load_frequency > 1:
                 Nskip = (mbs.load_frequency - 1)*mbs.num_nodes
 
-            for frame in range(scene.frame_end):
-                scene.frame_current = (frame + 1)
+            for frame in range(scene.frame_end - scene.frame_start):
+                scene.frame_current+= 1
                 for ndx in range(mbs.num_nodes):
                     rw = next(reader)
                     try:
@@ -389,7 +404,7 @@ def set_motion_paths_mov(context):
                 # skip (freq - 1)*N lines
                 for ii in range(Nskip):
                     rw = next(reader)
-                wm.progress_update(frame)
+                wm.progress_update(scene.frame_current)
     except StopIteration:
         pass
     wm.progress_end()

@@ -174,6 +174,24 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 1
             )
 
+    #Start time
+    start_time = FloatProperty(
+        name = "Start Time",
+        description = "If this value is X, different than 0, the import starts at X seconds",
+        min = 0.0,
+        default = 0.0
+        )
+
+    end_time = FloatProperty(
+        name = "End Time",
+        description = "If this value is X, different than total simulation time, the import stops at X seconds"
+        )
+
+    time_step = FloatProperty(
+        name = "Time Step",
+        description = "The number of timesteps in one second"
+        )
+
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
             name = "MBDyn nodes collection",
@@ -645,6 +663,8 @@ class MBDynSetMotionPaths(bpy.types.Operator):
     bl_label = "MBDyn Motion Path setter"
     
     def execute(self, context):
+        remove_oldframes(context)
+
         if not(context.scene.mbdyn.use_netcdf):
             ret_val = set_motion_paths_mov(context)
         else:
@@ -744,6 +764,12 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col.label(text = "Start animating")
         col.operator(MBDynSetMotionPaths.bl_idname, text = "Animate scene")
         col.prop(mbs, "load_frequency")
+
+        col = layout.column(align=True)
+        col.label(text = "Time Range of import")
+        col.prop(mbs, "start_time")
+        col.prop(mbs, "end_time")
+
 
         col = layout.column(align=True)
         col.label(text = "Simulation time")
