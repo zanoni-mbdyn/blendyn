@@ -34,6 +34,8 @@ import pygal
 import cairosvg
 import numpy as np
 
+import logging
+
 from .nodelib import *
 from .elementlib import *
 
@@ -114,7 +116,9 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
             if (mbs.plot_xrange_min >= 0) and (mbs.plot_xrange_max > mbs.plot_xrange_min):
                 config.xrange = (mbs.plot_xrange_min, mbs.plot_xrange_max)
             else:
-                self.report({'ERROR'}, 'Invalid range for abscissa')
+                message = 'Invalid range for abscissa'
+                self.report({'ERROR'}, message)
+                logging.error(message)
         chart = pygal.XY(config)
 
         # calculate autospectra and plot them
@@ -182,7 +186,9 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         chart.x_title = "Frequency [Hz]"
 
         if not(bpy.data.is_saved):
-            self.report({'ERROR'}, "Please save current Blender file first")
+            message = "Please save current Blender file first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
  
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
@@ -203,7 +209,9 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
-        self.report({'INFO'}, "Variable " + varname + " autospectrum plotted")
+        message = "Variable " + varname + " autospectrum plotted"
+        self.report({'INFO'}, message)
+        logging.info(message)
         return {'FINISHED'}
         
 
@@ -237,7 +245,9 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
             if (mbo.plot_xrange_min >= 0) and (mbo.plot_xrange_max > mbo.plot_xrange_min):
                 config.xrange = (mbo.plot_xrange_min, mbo.plot_xrange_max)
             else:
-                self.report({'ERROR'}, 'Invalid range for abscissa')
+                message = "Invalid range for abscissa"
+                self.report({'ERROR'}, message)
+                logging.error(message)
         chart = pygal.XY(config)
 
         # calculate autospectra and plot them
@@ -306,7 +316,9 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
-            self.report({'ERROR'}, "Please save current Blender file first")
+            message = "Please save current Blender file first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
@@ -326,7 +338,9 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
-        self.report({'INFO'}, "Variable " + mbo.plot_var + " plotted")
+        message = "Variable " + mbo.plot_var + " plotted"
+        self.report({'INFO'}, message)
+        logging.info(message)
         return {'FINISHED'}
 
 class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
@@ -391,7 +405,9 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
-            self.report({'ERROR'}, "Please save current Blender file first")
+            message = "Please save current Blender file first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
  
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
@@ -412,7 +428,9 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
-        self.report({'INFO'}, "Variable " + varname + " plotted")
+        message = "Variable " + varname + " plotted"
+        self.report({'INFO'}, message)
+        logging.info(message)
         return {'FINISHED'}
         
 
@@ -475,7 +493,9 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
-            self.report({'ERROR'}, "Please save current Blender file first")
+            message = "Please save current Blender file first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
@@ -495,7 +515,9 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
-        self.report({'INFO'}, "Variable " + mbo.plot_var + " plotted")
+        message = "Variable " + mbo.plot_var + " plotted"
+        self.report({'INFO'}, message)
+        logging.info(message)
         return {'FINISHED'}
 
 ## Simple operator to set plot frequency for object

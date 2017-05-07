@@ -23,6 +23,9 @@
 # -------------------------------------------------------------------------- 
 
 import bpy, bmesh
+
+import logging
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -225,26 +228,38 @@ class Scene_OT_MBDyn_Import_Shell4_Element(bpy.types.Operator):
             elem = ed['shell4_' + str(self.int_label)]
             ret_val = spawn_shell4_element(elem, context)
             if ret_val == {'OBJECT_EXISTS'}:
-                self.report({'ERROR'}, "Element is already imported. Remove the Blender object before re-importing")
+                message = "Element is already imported. Remove the Blender object before re-importing"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return{'CANCELLED'}
             elif ret_val == {'NODE1_NOTFOUND'}:
-                self.report({'ERROR'}, "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[0].int_label))
+                message = "Could not find a Blender object associated to Node " \
+                        + str(elem.nodes[0].int_label)
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return{'CANCELLED'}
             elif ret_val == {'NODE2_NOTFOUND'}:
-                self.report({'ERROR'}, "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[1].int_label))
+                message = "Could not find a Blender object associated to Node " \
+                        + str(elem.nodes[1].int_label)
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return{'CANCELLED'}
             elif ret_val == {'NODE3_NOTFOUND'}:
-                self.report({'ERROR'}, "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[2].int_label))
+                message = "Could not find a Blender object associated to Node " \
+                        + str(elem.nodes[2].int_label)
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return{'CANCELLED'}
             elif ret_val == {'NODE4_NOTFOUND'}:
-                self.report({'ERROR'}, "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[3].int_label))
+                message = "Could not find a Blender object associated to Node " \
+                        + str(elem.nodes[3].int_label)
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return{'CANCELLED'}
             else:
                 return ret_val
         except KeyError:
-            self.report({'ERROR'}, "Element shell4_" + str(elem.int_label) + "not found")
+            message = "Element shell4_" + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}

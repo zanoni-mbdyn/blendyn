@@ -25,6 +25,8 @@
 import bpy
 import os
 
+import logging
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -325,28 +327,37 @@ class Scene_OT_MBDyn_Import_Cardano_Hinge_Joint_Element(bpy.types.Operator):
             retval = spawn_cardano_hinge_element(elem, context)
 
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
+                message = "Found the Object " + \
                     elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
+                message = "Could not import element: Blender object \
                     associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                self.report({'ERROR'}, "Could not import element: could not \
-                        load library object")
+                message = "Could not import element: could not \
+                        load library object"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element revolute_hinge_" + str(elem.int_label) + "not found")
+            message = "Element revolute_hinge_" + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Cardano_Joint_Element class
@@ -371,24 +382,30 @@ class Scene_OT_MBDyn_Import_Cardano_Pin_Joint_Element(bpy.types.Operator):
             retval = spawn_cardano_pin_element(elem, context)
             
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
+                message = "Could not import element: Blender object \
                     associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                self.report({'ERROR'}, "Could not import element: could not \
-                        load library object")
+                message = "Could not import element: could not \
+                        load library object"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element cardano_pin_" + str(elem.int_label) + "not found")
+            message = "Element cardano_pin_" + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Cardano_Joint_Element class

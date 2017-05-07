@@ -29,6 +29,8 @@ import numpy as np
 from bpy.types import Operator, Panel
 from bpy.props import IntProperty, FloatProperty
 
+import logging
+
 from .nodelib import axes
 
 import pdb
@@ -152,7 +154,9 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                 anim_nodes.append(node.name)
 
         if not(anim_nodes):
-            self.report({'ERROR'}, "Import nodes first")
+            message = "Import nodes first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
     
         for ndx in anim_nodes:
@@ -191,7 +195,9 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
             else:
                 # Should not be reached
                 print("ops.mbdyn_eig_geometry: Error: unrecognised rotation parametrization")
-                self.report({'ERROR'}, "Unrecognised rotation parametrization")
+                message = "Unrecognised rotation parametrization"
+                self.report({'ERROR'}, message)
+                logging.error(message)
             
             obj.select = False
 
@@ -246,7 +252,9 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
                 anim_nodes.append(node.name)
 
         if not(anim_nodes):
-            self.report({'ERROR'}, "Import nodes first")
+            message = "Import nodes first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
     
         wm.progress_begin(1, len(anim_nodes))
