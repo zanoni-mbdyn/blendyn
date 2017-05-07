@@ -358,8 +358,8 @@ def set_motion_paths_mov(context):
    
     # total number of frames to be animated
     num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_start = int(mbs.start_time/(mbs.load_frequency*mbs.time_step)) + 1
-    scene.frame_end = int(mbs.end_time/(mbs.load_frequency*mbs.time_step))
+    scene.frame_start = int(mbs.start_time/(mbs.load_frequency*mbs.time_step))
+    scene.frame_end = int(mbs.end_time/(mbs.load_frequency*mbs.time_step)) + 1
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
@@ -374,7 +374,7 @@ def set_motion_paths_mov(context):
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
 
-            for ndx in range(scene.frame_start * mbs.num_nodes):
+            for ndx in range(scene.frame_start * mbs.num_nodes * mbs.load_frequency):
                 next(reader)
 
             for ndx in range(mbs.num_nodes):
