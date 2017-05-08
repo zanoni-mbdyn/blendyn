@@ -184,7 +184,8 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
     end_time = FloatProperty(
         name = "End Time",
-        description = "If this value is X, different than total simulation time, the import stops at X seconds"
+        description = "If this value is X, different than total simulation time, the import stops at X seconds",
+        min = 0.0
         )
 
     time_step = FloatProperty(
@@ -598,8 +599,8 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
                 except KeyError:
                     print('MBDynSelectOutputFile: no eigenanalysis results found')
                     pass
-
-                get_plot_vars_glob(self, context)
+                if HAVE_PLOT:
+                    get_plot_vars_glob(self, context)
             except NameError:
                 self.report({'ERROR'}, "NetCDF module not imported correctly")
                 return {'CANCELLED'}
@@ -663,6 +664,16 @@ class MBDynSetMotionPaths(bpy.types.Operator):
     bl_label = "MBDyn Motion Path setter"
     
     def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        if mbs.end_time > (mbs.num_timesteps) * mbs.time_step:
+            self.report({'ERROR'}, "End time greater than total simulation time")
+            return {'CANCELLED'}
+
+        if mbs.start_time > (mbs.num_timesteps) * mbs.time_step:
+            self.report({'ERROR'}, "Start time greater than total simulation time")
+            return {'CANCELLED'}
+
         remove_oldframes(context)
 
         if not(context.scene.mbdyn.use_netcdf):

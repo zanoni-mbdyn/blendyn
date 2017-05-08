@@ -451,20 +451,25 @@ def set_motion_paths_netcdf(context):
     nc = Dataset(ncfile, "r", format="NETCDF3")
     nctime = nc.variables["time"]
 
+    mbs.time_step = nctime[1]
+
     freq = mbs.load_frequency
-    scene.frame_end = len(nctime)/freq - 1
+    # scene.frame_end = len(nctime)/freq - 1
+
+    scene.frame_start = int(mbs.start_time/(freq*mbs.time_step))
+    scene.frame_end = int(mbs.end_time/(freq*mbs.time_step)) + 1
 
     anim_nodes = list()
     for node in nd:
         if node.blender_object != 'none':
             anim_nodes.append(node.name)
 
-    scene.frame_current = 0
+    scene.frame_current = scene.frame_start
     if mbs.simtime:
         mbs.simtime.clear()
 
     # set time
-    for frame in range(scene.frame_end + 1):
+    for frame in range(scene.frame_start, scene.frame_end):
         tdx = frame*freq
         st = mbs.simtime.add()
         st.time = nctime[tdx]
@@ -478,8 +483,8 @@ def set_motion_paths_netcdf(context):
         obj.select = True
         node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
         if obj.mbdyn.parametrization[0:5] == 'EULER':
-            for frame in range(scene.frame_end + 1):
-                scene.frame_current = frame
+            for frame in range(scene.frame_start, scene.frame_end):
+                scene.frame_current += 1
                 tdx = frame*freq
                 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
@@ -492,8 +497,8 @@ def set_motion_paths_netcdf(context):
                                 axes[obj.mbdyn.parametrization[5]] )
                 obj.keyframe_insert(data_path = "rotation_euler")
         elif obj.mbdyn.parametrization == 'PHI':
-            for frame in range(scene.frame_end + 1):
-                scene.frame_current = frame
+            for frame in range(scene.frame_start, scene.frame_end):
+                scene.frame_current += 1
                 tdx = frame*freq
 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
@@ -505,8 +510,8 @@ def set_motion_paths_netcdf(context):
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
         elif obj.mbdyn.parametrization == 'MATRIX':
-            for frame in range(scene.frame_end + 1):
-                scene.frame_current = frame
+            for frame in range(scene.frame_start, scene.frame_end):
+                scene.frame_current += 1
                 tdx = frame*freq
 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
