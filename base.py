@@ -163,6 +163,12 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = "not yet loaded"
             )
 
+    #
+    env_vars = StringProperty(
+            name = "MBDyn environment variables",
+            description = "Environment variables used in MBDyn simulation"
+            )
+
     # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
     num_rows = IntProperty(
             name = "MBDyn .mov file number of rows",
@@ -180,7 +186,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
             name = "MBDyn nodes collection",
-        type = MBDynNodesDictionary
+            type = MBDynNodesDictionary
             )
 
     # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
@@ -670,7 +676,7 @@ class MBDynSetInstallPath(bpy.types.Operator):
         mbdyn_path = context.object.mbdyn.dir_path
 
         config = {'mbdyn_path': mbdyn_path}
-        with open(os.path.join(blendyn_path, 'config.json'), 'w') as f:
+        with open(os.path.join(os.path.dirname(blendyn_path), 'config.json'), 'w') as f:
             json.dump(config, f)
 
         return {'FINISHED'}
@@ -709,9 +715,15 @@ class MBDynRunSimulation(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         obj = context.object.mbdyn
+
+        env_variables = "{" + mbs.env_vars + "}"
+        env_variables = json.loads(env_variables)
+        for var in env_variables:
+            os.environ[var] = env_variables[var]
+
         mbdyn_env = os.environ.copy()
 
-        with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+        with open(os.path.join(os.path.dirname(mbs.addon_path), 'config.json'), 'r') as f:
             mbdyn_path = json.load(f)['mbdyn_path']
 
         mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
@@ -798,7 +810,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
         ed = mbs.elems
 
         #Running MBDyn from Blender interface
-        if not os.path.exists(os.path.join(mbs.addon_path, 'config.json')):
+        if not os.path.exists(os.path.join(os.path.dirname(mbs.addon_path), 'config.json')):
             row = layout.row()
             row.label(text='Path of MBDyn')
             col = layout.column(align=True)
@@ -822,6 +834,9 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
         col = layout.column(align = True)
         col.prop(obj.mbdyn, "string_label", text = "Command-line options")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "env_vars", text = "Set Environment Variables")
 
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
