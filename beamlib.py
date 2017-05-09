@@ -26,6 +26,8 @@ import bpy
 import numpy as np
 import csv
 
+import logging
+
 from mathutils import *
 from math import *
 
@@ -687,7 +689,9 @@ def update_beam3(elem, insert_keyframe = False):
             if 'context is incorrect' in str(err):
                 pass
             else:
-                self.report({'WARNING'}, str(err))
+                message = str(err)
+                self.report({'WARNING'}, message)
+                logging.warning(message)
         except TypeError:
             pass
 
@@ -713,25 +717,32 @@ class Scene_OT_MBDyn_Elems_Import_Beam2(bpy.types.Operator):
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
+                message = "Found the Object " + \
                     elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
+                message = "Could not import element: Blender object \
                     associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
 
         except KeyError:
-            self.report({'ERROR'}, "Element beam2_" + str(elem.int_label) + "not found.")
+            message = "Element beam2_" + str(elem.int_label) + "not found."
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
             
         return {'FINISHED'}
@@ -754,29 +765,37 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
             elem = ed['beam3_' + str(self.int_label)]
             retval = spawn_beam3_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
+                message = "Could not import element: Blender object \
                     associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE3_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[2].int_label) + " not found")
+                message = "Could not import element: Blender object \
+                        associated to Node " + str(elem.nodes[2].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
 
         except KeyError:
-            self.report({'ERROR'}, "Element beam3_" + str(elem.int_label) + "not found.")
+            message = "Element beam3_" + str(elem.int_label) + "not found."
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
             
 # -----------------------------------------------------------
@@ -792,7 +811,9 @@ class Object_OT_MBDyn_update_beam3(bpy.types.Operator):
         ed = context.scene.mbdyn.elems
         ret_val = update_beam3(ed[context.object.name])
         if ret_val == 'OBJECTS_NOTFOUND':
-            self.report({'ERROR'}, "Unable to find Blender objects needed")
+            message = "Unable to find Blender objects needed"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
         else:
             return ret_val

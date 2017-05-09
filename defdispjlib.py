@@ -24,6 +24,8 @@
 
 import bpy
 
+import logging
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -118,7 +120,10 @@ class Scene_OT_MBDyn_Import_Deformable_Displacement_Joint_Element(bpy.types.Oper
             elem = ed['defdispj_' + str(self.int_label)]
             return spawn_defdispj_element(elem, context)
         except KeyError:
-            self.report({'ERROR'}, "Element deformable_displacement_" + str(elem.int_label) + "not found")
+            message = "Element deformable_displacement_" + str(elem.int_label) \
+                   + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Deformable_Displacement_Element class

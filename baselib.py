@@ -31,6 +31,8 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
+import logging
+
 import ntpath, os, csv, math
 from collections import namedtuple
 
@@ -277,12 +279,20 @@ def update_label(self, context):
                 ret_val = update_parametrization(obj)
 
             if ret_val == 'ROT_NOT_SUPPORTED':
-                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-                + obj.mbdyn.string_label)
+                message = "Rotation parametrization not supported, node " \
+                + obj.mbdyn.string_label
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
             elif ret_val == 'LOG_NOT_FOUND':
-                self.report({'ERROR'}, "MBDyn .log file not found")
+                message = "MBDyn .log file not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
         except KeyError:
-            self.report({'ERROR'}, "Node not found")
+            message = "Node not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             pass
     return
 # -----------------------------------------------------------
