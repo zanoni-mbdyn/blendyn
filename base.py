@@ -248,7 +248,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                             the scene is changed"
         )
 
-    # Simulation time
+    # Current Simulation Time
     simtime = CollectionProperty(
             name = "MBDyn simulation time",
             type = MBDynTime
@@ -777,13 +777,14 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col.prop(mbs, "load_frequency")
 
         col = layout.column(align=True)
+
         col.label(text = "Time Range of import")
         col.prop(mbs, "start_time")
         col.prop(mbs, "end_time")
 
 
         col = layout.column(align=True)
-        col.label(text = "Simulation time")
+        col.label(text = "Current Simulation Time")
         col.prop(mbs, "time")
 # -----------------------------------------------------------
 # end of MBDynAnimatePanel class

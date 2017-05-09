@@ -234,7 +234,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         print(eigvec_abs)
         
         eigvec_phase = np.arctan2(eigvec_im, eigvec_re)
-        eigvec_phase = eigvec_phase - eigvec_phase[0]   # FIXME: is this correct?
+        # eigvec_phase = eigvec_phase - eigvec_phase[0]   # FIXME: is this correct?
         
         scale = eigsol.anim_scale
 
@@ -263,14 +263,18 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
             
             print("ops.mbdyn_eig_animate_mode: node_idx = " + str(node_idx))
 
-            ref_pos = obj.location
-            phi_tmp = obj.rotation_axis_angle
+            ref_pos = obj.location.copy()
+            phi_tmp = Vector(( obj.rotation_axis_angle[0], \
+                               obj.rotation_axis_angle[1], \
+                               obj.rotation_axis_angle[2], \
+                               obj.rotation_axis_angle[3] ))
+
             ref_phi = Vector(( phi_tmp[1:4] ))*phi_tmp[0]
 
             for frame in range(eigsol.anim_frames):
                 context.scene.frame_current = init_frame + frame
                 t = frame/eigsol.anim_frames
-
+                
                 obj.location = ref_pos + \
                         Vector((
                             scale*eigvec_abs[node_idx]*math.cos(2*math.pi*t + \
