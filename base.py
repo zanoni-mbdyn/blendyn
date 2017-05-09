@@ -126,6 +126,19 @@ bpy.utils.register_class(MBDynTime)
 # -----------------------------------------------------------
 # end of MBDynTime class
 
+class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
+    variable = StringProperty(
+            name = "Environment variables",
+            description = 'Variables to be set'
+            )
+    value = StringProperty(
+            name = "Values of Environment variables",
+            description = "Values of variables to be set"
+            )
+bpy.utils.register_class(MBDynEnvVarsDictionary)
+# -----------------------------------------------------------
+# end of MBDynEnvVarsDictionary class
+
 ## PropertyGroup of MBDyn plottable variables
 class MBDynPlotVars(bpy.types.PropertyGroup):
     name = StringProperty(
@@ -164,10 +177,25 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     #
-    env_vars = StringProperty(
+    env_vars = CollectionProperty(
+            name = "MBDyn environment variables collection",
+            type = MBDynEnvVarsDictionary
+        )
+
+    env_index = IntProperty(
+            name = "MBDyn Environment variables collection index",
+            default = 0
+        )
+
+    env_variable = StringProperty(
             name = "MBDyn environment variables",
             description = "Environment variables used in MBDyn simulation"
             )
+
+    env_value = StringProperty(
+            name = "Values of MBDyn environment values",
+            description = "Values of the environment variables used in MBDyn simulation"
+        )
 
     # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
     num_rows = IntProperty(
@@ -199,7 +227,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     node_object = EnumProperty(
             items = [("ARROWS", "Arrows", "Empty - arrows", 'OUTLINER_OB_EMPTY', 1),\
                      ("AXES", "Axes", "Empty - axes", 'EMPTY_DATA', 2),\
-                     ("CUBE", "Cube", "", 'MESH_CUBE', 3),\
+                     ("CUBE", "Currentbe", "", 'MESH_CUBE', 3),\
                      ("UVSPHERE", "UV Sphere", "", 'MESH_UVSPHERE', 4),\
                      ("NSPHERE", "Nurbs Sphere", "", 'SURFACE_NSPHERE', 5),\
                      ("CONE", "Cone", "", 'MESH_CONE', 6)],
@@ -449,6 +477,12 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             subtype = 'DIR_PATH'
             )
 
+    install_path = StringProperty(
+            name = "Installation path of MBDyn",
+            description = "Installation path of MBDyn",
+            subtype = 'DIR_PATH'
+            )
+
     sim_num = IntProperty(
             name = "Number of Simulation",
             description = "",
@@ -673,7 +707,7 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
     def execute(self, context):
         blendyn_path = context.scene.mbdyn.addon_path
-        mbdyn_path = context.object.mbdyn.dir_path
+        mbdyn_path = context.object.mbdyn.install_path
 
         config = {'mbdyn_path': mbdyn_path}
         with open(os.path.join(os.path.dirname(blendyn_path), 'config.json'), 'w') as f:
@@ -707,6 +741,33 @@ bpy.utils.register_class(MBDynSelectInputFile)
 # -----------------------------------------------------------
 # end of MBDynSelectInputFile class
 
+class MBDynSetEnvVariables(bpy.types.Operator):
+    """docstring for MBDynSetEnvVariable"""
+
+    bl_idname = "sel.set_env_variable"
+    bl_label = "Set Environment Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        exist_env_vars = [mbs.env_vars[var].variable for var in range(len(mbs.env_vars))]
+
+        try:
+            index = exist_env_vars.index(mbs.env_variable)
+            mbs.env_vars[index].value = mbs.env_value
+
+        except ValueError:
+            env = mbs.env_vars.add()
+            env.variable = mbs.env_variable
+            env.value = mbs.env_value
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynSetEnvVariables)
+
 class MBDynRunSimulation(bpy.types.Operator):
     """docstring for MBDynRunSimulation"""
     bl_idname = "sel.mbdyn_run_simulation"
@@ -716,10 +777,11 @@ class MBDynRunSimulation(bpy.types.Operator):
         mbs = context.scene.mbdyn
         obj = context.object.mbdyn
 
-        env_variables = "{" + mbs.env_vars + "}"
-        env_variables = json.loads(env_variables)
-        for var in env_variables:
-            os.environ[var] = env_variables[var]
+        for idx in len(env_variables):
+            variable = mbs.env_vars[idx].variable
+            value = mbs.env_vars[idx].value
+
+            os.environ[variable] = value
 
         mbdyn_env = os.environ.copy()
 
@@ -810,12 +872,13 @@ class MBDynSimulationPanel(bpy.types.Panel):
         ed = mbs.elems
 
         #Running MBDyn from Blender interface
-        if not os.path.exists(os.path.join(os.path.dirname(mbs.addon_path), 'config.json')):
-            row = layout.row()
-            row.label(text='Path of MBDyn')
-            col = layout.column(align=True)
-            col.prop(obj.mbdyn, "dir_path", text="Path:")
-            col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
+        # if not os.path.exists(os.path.join(os.path.dirname(mbs.addon_path), 'config.json')):
+
+        row = layout.row()
+        row.label(text='Path of MBDyn')
+        col = layout.column(align=True)
+        col.prop(obj.mbdyn, "install_path", text="Path:")
+        col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
 
         row = layout.row()
         row.label(text='Run MBDyn simulation')
@@ -835,8 +898,13 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.prop(obj.mbdyn, "string_label", text = "Command-line options")
 
+        row = layout.row()
+        row.label(text='Set Environment Variables')
+
         col = layout.column(align = True)
-        col.prop(mbs, "env_vars", text = "Set Environment Variables")
+        col.prop(mbs, "env_variable", text = "Variable")
+        col.prop(mbs, "env_value", text = "Value")
+        col.operator(MBDynSetEnvVariables.bl_idname, text = 'Set Variable')
 
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
@@ -1081,8 +1149,29 @@ class MBDynPlotVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.label(item.name)
 # -----------------------------------------------------------
-# end of MBDynNodes_UL_List class
-    
+# end of MBDynPLotVar_UL_List class
+
+class MBDynEnvVar_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.variable)
+        layout.label(item.value)
+# -----------------------------------------------------------
+# end of MBDynEnvVar_UL_List class
+
+class MBDynEnvVarScenePanel(bpy.types.Panel):
+    """ List of MBDyn nodes: use import all button to add \
+            them all to the scene at once """
+    bl_label = "MBDyn Environment variables"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        layout = self.layout
+        row = layout.row()
+        row.template_list('MBDynEnvVar_UL_List', "MBDyn Environment variables list", mbs, "env_vars",\
+                mbs, "env_index")
 
 ## Panel in scene properties toolbar that shows the MBDyn 
 #  nodes found in the .log file and links to an operator
