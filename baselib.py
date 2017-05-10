@@ -484,7 +484,7 @@ def set_motion_paths_netcdf(context):
         node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
         if obj.mbdyn.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current += 1
+                scene.frame_current = frame
                 tdx = frame*freq
                 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
@@ -498,7 +498,7 @@ def set_motion_paths_netcdf(context):
                 obj.keyframe_insert(data_path = "rotation_euler")
         elif obj.mbdyn.parametrization == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current += 1
+                scene.frame_current = frame
                 tdx = frame*freq
 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
@@ -511,7 +511,7 @@ def set_motion_paths_netcdf(context):
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
         elif obj.mbdyn.parametrization == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current += 1
+                scene.frame_current = frame
                 tdx = frame*freq
 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
