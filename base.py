@@ -170,6 +170,20 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = ""
             )
 
+    #String representing path of the output directory
+    dir_path = StringProperty(
+            name = "Directory Path",
+            description = "Path to Directory",
+            subtype = 'DIR_PATH'
+            )
+
+    # String representing path of MBDyn Installation
+    install_path = StringProperty(
+            name = "Installation path of MBDyn",
+            description = "Installation path of MBDyn",
+            subtype = 'DIR_PATH'
+            )
+
     # Base name of MBDyn's imported files
     file_basename = StringProperty(
             name = "MBDyn base file name",
@@ -177,6 +191,23 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = "not yet loaded"
             )
 
+    # Integer representing the current animation number
+    anim_num = IntProperty(
+            name = "Number of Simulation",
+            default = 0
+            )
+
+    # Command-line options to be specified in MBDyn simulation
+    cmd_options = StringProperty(
+            name = "Command-line Options",
+            default = ''
+            )
+    # Boolean representing whether user wants to overwrite existing output files
+    overwrite = BoolProperty(
+            name = "Overwrite Property",
+            description = "True if the user wants to overwrite the existing output files",
+            default = False
+            )
     # Collection of Environment variables and corresponding values
     env_vars = CollectionProperty(
             name = "MBDyn environment variables collection",
@@ -473,33 +504,6 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             name = "MBDyn's node or joint string label",
             description = "String label of MBDyn's node assigned to the object (if present)",
             default = "not assigned"
-            )
-
-    #String representing path of the output directory
-    dir_path = StringProperty(
-            name = "Directory Path",
-            description = "Path to Directory",
-            subtype = 'DIR_PATH'
-            )
-
-    # String representing path of MBDyn Installation
-    install_path = StringProperty(
-            name = "Installation path of MBDyn",
-            description = "Installation path of MBDyn",
-            subtype = 'DIR_PATH'
-            )
-
-    # Integer representing the current animation number
-    anim_num = IntProperty(
-            name = "Number of Simulation",
-            default = 0
-            )
-
-    # Boolean representing whether user wants to overwrite existing output files
-    overwrite = BoolProperty(
-            name = "Overwrite Property",
-            description = "True if the user wants to overwrite the existing output files",
-            default = False
             )
 
     # Rotation parametrization of node
@@ -801,23 +805,23 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
 
-        command_line_options = "" if obj.string_label == "not assigned" else obj.string_label
+        command_line_options = mbs.cmd_options
 
         command = ('mbdyn {0} {1}').format(command_line_options, mbs.file_path)
 
-        if not obj.overwrite:
-            obj.anim_num += 1
+        if not mbs.overwrite:
+            mbs.anim_num += 1
 
         if len(mbs.file_basename.split('_')) > 1:
             filename = mbs.file_basename.split('_')
-            filename[-1] = str(obj.anim_num)
+            filename[-1] = str(mbs.anim_num)
             mbs.file_basename = "_".join(filename)
 
         else:
-            mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, obj.anim_num)
+            mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.anim_num)
 
-        if obj.dir_path:
-            command += (' -o {}').format(obj.dir_path + mbs.file_basename)
+        if mbs.dir_path:
+            command += (' -o {}').format(mbs.dir_path + mbs.file_basename)
 
         subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
@@ -890,7 +894,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
         row = layout.row()
         row.label(text='Path of MBDyn')
         col = layout.column(align=True)
-        col.prop(obj.mbdyn, "install_path", text="Path:")
+        col.prop(mbs, "install_path", text="Path:")
         col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
 
         row = layout.row()
@@ -900,19 +904,23 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
 
         col = layout.column(align = True)
-        col.prop(obj.mbdyn, "overwrite", text = "Overwrite Previous Files")
+        col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
 
         col = layout.column(align = True)
-        col.prop(obj.mbdyn, "dir_path", text = "Output Directory:")
+        col.prop(mbs, "dir_path", text = "Output Directory:")
 
         col = layout.column(align = True)
         col.prop(mbs, "file_basename", text = "Output Filename:")
 
         col = layout.column(align = True)
-        col.prop(obj.mbdyn, "string_label", text = "Command-line options")
+        col.prop(mbs, "cmd_options", text = "Command-line options")
 
         row = layout.row()
         row.label(text='Set Environment Variables')
+
+        row = layout.row()
+        row.template_list('MBDynEnvVar_UL_List', "MBDyn Environment variables list", mbs, "env_vars",\
+                mbs, "env_index")
 
         col = layout.column(align = True)
         col.prop(mbs, "env_variable", text = "Variable")
@@ -1173,21 +1181,6 @@ class MBDynEnvVar_UL_List(bpy.types.UIList):
         layout.label(item.value)
 # -----------------------------------------------------------
 # end of MBDynEnvVar_UL_List class
-
-class MBDynEnvVarScenePanel(bpy.types.Panel):
-    """ List of Environment variables to be used\
-        in MBDyn simulation"""
-    bl_label = "MBDyn Environment variables"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'scene'
-
-    def draw(self, context):
-        mbs = context.scene.mbdyn
-        layout = self.layout
-        row = layout.row()
-        row.template_list('MBDynEnvVar_UL_List', "MBDyn Environment variables list", mbs, "env_vars",\
-                mbs, "env_index")
 
 ## Panel in scene properties toolbar that shows the MBDyn
 #  nodes found in the .log file and links to an operator
