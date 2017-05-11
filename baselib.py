@@ -422,6 +422,10 @@ def set_motion_paths_mov(context):
             reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
             for ii in range(3):
                 next(reader)
+
+            for ii in range(scene.frame_start):
+                next(reader)
+
             kk = scene.frame_start
             jj = scene.frame_start
             while kk < scene.frame_end:
