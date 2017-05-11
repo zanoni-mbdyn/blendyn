@@ -26,6 +26,8 @@
 from mathutils import *
 from math import *
 
+import os
+
 import bpy
 from bpy.types import Operator, Panel
 from bpy.props import *
@@ -318,7 +320,7 @@ def remove_oldframes(context):
 
 def hide_or_delete(obj_names, missing):
 
-    obj_list = [bpy.data.objects[var] for var in obj_names]
+    obj_names = list(filter(lambda v: v != 'none', obj_names))
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
     if missing == "HIDE":
@@ -523,3 +525,15 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function 
+
+def log_messages(mbs, baseLogger):
+
+        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
+                    else 'untitled.blend'
+        formatter = ('%(asctime)s - %(levelname)s - {} - %(message)s').format(blendFile)
+        logFile = mbs.file_path + mbs.file_basename + '.bylog'
+
+        fh = logging.FileHandler(logFile)
+        fh.setFormatter(logging.Formatter(formatter))
+
+        baseLogger.addHandler(fh)
