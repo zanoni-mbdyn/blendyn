@@ -358,8 +358,8 @@ def set_motion_paths_mov(context):
    
     # total number of frames to be animated
     num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_start = int(mbs.start_time/(mbs.load_frequency*mbs.time_step))
-    scene.frame_end = int(mbs.end_time/(mbs.load_frequency*mbs.time_step)) + 1
+    scene.frame_start = round(mbs.start_time/(mbs.load_frequency*mbs.time_step))
+    scene.frame_end = round(mbs.end_time/(mbs.load_frequency*mbs.time_step)) + 1
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
@@ -422,8 +422,13 @@ def set_motion_paths_mov(context):
             reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
             for ii in range(3):
                 next(reader)
-            kk = 0
-            jj = 0
+
+            for ii in range(scene.frame_start):
+                next(reader)
+                mbs.simtime.add()
+
+            kk = scene.frame_start
+            jj = scene.frame_start
             while kk < scene.frame_end:
                 rw = next(reader)
                 if int(rw[8]):
@@ -456,8 +461,8 @@ def set_motion_paths_netcdf(context):
     freq = mbs.load_frequency
     # scene.frame_end = len(nctime)/freq - 1
 
-    scene.frame_start = int(mbs.start_time/(freq*mbs.time_step))
-    scene.frame_end = int(mbs.end_time/(freq*mbs.time_step)) + 1
+    scene.frame_start = round(mbs.start_time/(freq*mbs.time_step))
+    scene.frame_end = round(mbs.end_time/(freq*mbs.time_step)) + 1
 
     anim_nodes = list()
     for node in nd:
@@ -469,6 +474,9 @@ def set_motion_paths_netcdf(context):
         mbs.simtime.clear()
 
     # set time
+    for frame in range(scene.frame_start):
+        mbs.simtime.add()
+
     for frame in range(scene.frame_start, scene.frame_end):
         tdx = frame*freq
         st = mbs.simtime.add()
