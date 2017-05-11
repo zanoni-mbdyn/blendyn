@@ -870,72 +870,6 @@ bpy.utils.register_class(MBDynSetMotionPaths)
 # -----------------------------------------------------------
 # end of MBDynSetMotionPaths class
 
-class MBDynSimulationPanel(bpy.types.Panel):
-    """ Imports results of MBDyn simulation - Toolbar Panel """
-    bl_idname = "VIEW3D_TL_MBDyn_RunSim"
-    bl_label = "Run Simulation"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_context = 'objectmode'
-    bl_category = 'MBDyn'
-
-    def draw(self, context):
-
-     # utility renaming
-        layout = self.layout
-        obj = context.object
-        mbs = context.scene.mbdyn
-        nd = mbs.nodes
-        ed = mbs.elems
-
-        #Running MBDyn from Blender interface
-        # if not os.path.exists(os.path.join(os.path.dirname(mbs.addon_path), 'config.json')):
-
-        row = layout.row()
-        row.label(text='Path of MBDyn')
-        col = layout.column(align=True)
-        col.prop(mbs, "install_path", text="Path:")
-        col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
-
-        row = layout.row()
-        row.label(text='Run MBDyn simulation')
-
-        col = layout.column(align = True)
-        col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
-
-        col = layout.column(align = True)
-        col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
-
-        col = layout.column(align = True)
-        col.prop(mbs, "dir_path", text = "Output Directory:")
-
-        col = layout.column(align = True)
-        col.prop(mbs, "file_basename", text = "Output Filename:")
-
-        col = layout.column(align = True)
-        col.prop(mbs, "cmd_options", text = "Command-line options")
-
-        row = layout.row()
-        row.label(text='Set Environment Variables')
-
-        row = layout.row()
-        row.template_list('MBDynEnvVar_UL_List', "MBDyn Environment variables list", mbs, "env_vars",\
-                mbs, "env_index")
-
-        col = layout.column(align = True)
-        col.prop(mbs, "env_variable", text = "Variable")
-        col.prop(mbs, "env_value", text = "Value")
-        col.operator(MBDynSetEnvVariables.bl_idname, text = 'Set Variable')
-
-        col = layout.column(align = True)
-        col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
-
-        col = layout.column(align = True)
-        col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
-
-# -----------------------------------------------------------
-# end of MBDynSimulationPanel class
-
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath"
@@ -1026,6 +960,72 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col.prop(mbs, "time")
 # -----------------------------------------------------------
 # end of MBDynAnimatePanel class
+
+class MBDynSimulationPanel(bpy.types.Panel):
+    """ Imports results of MBDyn simulation - Toolbar Panel """
+    bl_idname = "VIEW3D_TL_MBDyn_RunSim"
+    bl_label = "Run Simulation"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = 'objectmode'
+    bl_category = 'MBDyn'
+
+    def draw(self, context):
+
+     # utility renaming
+        layout = self.layout
+        obj = context.object
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
+
+        #Running MBDyn from Blender interface
+        # if not os.path.exists(os.path.join(os.path.dirname(mbs.addon_path), 'config.json')):
+
+        row = layout.row()
+        row.label(text='Path of MBDyn')
+        col = layout.column(align=True)
+        col.prop(mbs, "install_path", text="Path:")
+        col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
+
+        row = layout.row()
+        row.label(text='Run MBDyn simulation')
+
+        col = layout.column(align = True)
+        col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
+
+        col = layout.column(align = True)
+        col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "dir_path", text = "Output Directory:")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "file_basename", text = "Output Filename:")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "cmd_options", text = "Command-line options")
+
+        row = layout.row()
+        row.label(text='Set Environment Variables')
+
+        row = layout.row()
+        row.template_list('MBDynEnvVar_UL_List', "MBDyn Environment variables list", mbs, "env_vars",\
+                mbs, "env_index")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "env_variable", text = "Variable")
+        col.prop(mbs, "env_value", text = "Value")
+        col.operator(MBDynSetEnvVariables.bl_idname, text = 'Set Variable')
+
+        col = layout.column(align = True)
+        col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
+
+        col = layout.column(align = True)
+        col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
+
+# -----------------------------------------------------------
+# end of MBDynSimulationPanel class
 
 class MBDynEigenanalysisPanel(bpy.types.Panel):
     """ Visualizes the results of an eigenanalysis - Toolbar Panel """
