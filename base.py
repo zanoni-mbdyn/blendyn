@@ -192,7 +192,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     # Integer representing the current animation number
-    anim_num = IntProperty(
+    sim_num = IntProperty(
             name = "Number of Simulation",
             default = 0
             )
@@ -743,6 +743,8 @@ class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
+        mbs.sim_num = 0
+
         mbs.file_path = os.path.relpath(self.filepath)
         mbs.file_basename = os.path.splitext(os.path.basename(self.filepath))[0]
 
@@ -783,6 +785,24 @@ bpy.utils.register_class(MBDynSetEnvVariables)
 # -----------------------------------------------------------
 # end of MBDynSetEnvVariables class
 
+class MBDynDeleteEnvVariables(bpy.types.Operator):
+    """Delete Environment variables"""
+    bl_idname = "sel.delete_env_variable"
+    bl_label = "Delete Environment Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.env_vars.remove(mbs.env_index)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynDeleteEnvVariables)
+# -----------------------------------------------------------
+# end of MBDynDeleteEnvVariables class
+
 class MBDynRunSimulation(bpy.types.Operator):
     """Runs the MBDyn Simulation in background"""
     bl_idname = "sel.mbdyn_run_simulation"
@@ -790,9 +810,8 @@ class MBDynRunSimulation(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        obj = context.object.mbdyn
 
-        for idx in len(env_variables):
+        for idx in range(len(mbs.env_vars)):
             variable = mbs.env_vars[idx].variable
             value = mbs.env_vars[idx].value
 
@@ -810,15 +829,15 @@ class MBDynRunSimulation(bpy.types.Operator):
         command = ('mbdyn {0} {1}').format(command_line_options, mbs.file_path)
 
         if not mbs.overwrite:
-            mbs.anim_num += 1
+            mbs.sim_num += 1
 
         if len(mbs.file_basename.split('_')) > 1:
             filename = mbs.file_basename.split('_')
-            filename[-1] = str(mbs.anim_num)
+            filename[-1] = str(mbs.sim_num)
             mbs.file_basename = "_".join(filename)
 
         else:
-            mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.anim_num)
+            mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.sim_num)
 
         if mbs.dir_path:
             command += (' -o {}').format(mbs.dir_path + mbs.file_basename)
@@ -1017,6 +1036,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.prop(mbs, "env_variable", text = "Variable")
         col.prop(mbs, "env_value", text = "Value")
         col.operator(MBDynSetEnvVariables.bl_idname, text = 'Set Variable')
+        col.operator(MBDynDeleteEnvVariables.bl_idname, text = 'Delete Variable')
 
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
