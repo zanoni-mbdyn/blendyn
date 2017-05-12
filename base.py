@@ -719,7 +719,7 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
     def execute(self, context):
         blendyn_path = context.scene.mbdyn.addon_path
-        mbdyn_path = context.object.mbdyn.install_path
+        mbdyn_path = context.scene.mbdyn.install_path
 
         config = {'mbdyn_path': mbdyn_path}
         with open(os.path.join(os.path.dirname(blendyn_path), 'config.json'), 'w') as f:
