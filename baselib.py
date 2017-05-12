@@ -425,6 +425,7 @@ def set_motion_paths_mov(context):
 
             for ii in range(scene.frame_start):
                 next(reader)
+                mbs.simtime.add()
 
             kk = scene.frame_start
             jj = scene.frame_start
@@ -473,6 +474,9 @@ def set_motion_paths_netcdf(context):
         mbs.simtime.clear()
 
     # set time
+    for frame in range(scene.frame_start):
+        mbs.simtime.add()
+
     for frame in range(scene.frame_start, scene.frame_end):
         tdx = frame*freq
         st = mbs.simtime.add()
