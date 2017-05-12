@@ -714,7 +714,6 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
-
         # Mbdyn set path of installation
 
         # Display MBDyn file basename and info
@@ -727,6 +726,12 @@ class MBDynImportPanel(bpy.types.Panel):
         if not(mbs.use_netcdf):
             col.prop(mbs, "num_rows", text = "rows total")
         col.prop(mbs, "num_timesteps", text = "time steps")
+        
+        row = layout.row()
+        if mbs.file_path:
+            row.label(text = "Full file path:")
+            row = layout.row()
+            row.label(text = mbs.file_path)
         col.enabled = False
 
         # Import MBDyn data
