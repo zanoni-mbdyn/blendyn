@@ -530,8 +530,10 @@ def log_messages(mbs, baseLogger):
 
         blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
                     else 'untitled.blend'
-        formatter = ('%(asctime)s - %(levelname)s - {} - %(message)s').format(blendFile)
-        logFile = mbs.file_path + mbs.file_basename + '.bylog'
+        blendFile = os.path.splitext(blendFile)[0]
+
+        formatter = '%(asctime)s - %(levelname)s - %(message)s'
+        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
 
         fh = logging.FileHandler(logFile)
         fh.setFormatter(logging.Formatter(formatter))
