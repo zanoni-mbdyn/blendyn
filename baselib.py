@@ -533,9 +533,12 @@ def log_messages(mbs, baseLogger):
         blendFile = os.path.splitext(blendFile)[0]
 
         formatter = '%(asctime)s - %(levelname)s - %(message)s'
+        datefmt = '%m/%d/%Y %I:%M:%S %p'
         logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
 
         fh = logging.FileHandler(logFile)
-        fh.setFormatter(logging.Formatter(formatter))
+        fh.setFormatter(logging.Formatter(formatter, datefmt))
 
         baseLogger.addHandler(fh)
+
+        bpy.ops.text.open(filepath = logFile)
