@@ -379,9 +379,11 @@ def set_motion_paths_mov(context):
                 next(reader)
 
             first = []
+            second = []
             for ndx in range(mbs.num_nodes):
                 rw = np.array(next(reader)).astype(np.float)
-                first = rw
+                first.append(rw)
+                second.append(rw)
 
                 obj_name = nd['node_' + str(int(rw[0]))].blender_object
                 if obj_name != 'none':
@@ -403,22 +405,24 @@ def set_motion_paths_mov(context):
                 print(frame, frac)
 
                 # skip (freq - 1)*N lines
-                for ii in range(int(Nskip) - idx%2):
-                    first = np.array(next(reader)).astype(np.float)
+                for ii in range(int(Nskip) - (idx%2)*mbs.num_nodes):
+                    first[ii % mbs.num_nodes] = np.array(next(reader)).astype(np.float)
 
                 for ndx in range(mbs.num_nodes):
                     rw = np.array(next(reader)).astype(np.float)
-                    second = rw
+                    second[ndx] = rw
+
+                for ndx in range(mbs.num_nodes):
                     try:
-                        answer = frac*first + (1-frac)*second
-                        obj = bpy.data.objects[anim_objs[answer[0]]]
+                        answer = frac*first[ndx] + (1-frac)*second[ndx]
+                        obj = bpy.data.objects[anim_objs[round(answer[0])]]
                         obj.select = True
                         set_obj_locrot_mov(obj, answer)
 
                     except KeyError:
                         pass
 
-                    first = second
+                first = second
                 wm.progress_update(scene.frame_current)
     except StopIteration:
         pass
