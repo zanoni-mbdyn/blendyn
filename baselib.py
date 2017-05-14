@@ -435,29 +435,13 @@ def set_motion_paths_mov(context):
     if mbs.simtime:
         mbs.simtime.clear()
 
-    out_file = mbs.file_path + mbs.file_basename + '.out'
-    try:
-        with open(out_file) as of:
-            reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
-            for ii in range(3):
-                next(reader)
+    for ii in np.arange(0, scene.frame_start, mbs.load_frequency):
+        mbs.simtime.add()
 
-            for ii in range(scene.frame_start):
-                next(reader)
-                mbs.simtime.add()
+    for ii in np.arange(scene.frame_start, scene.frame_end, mbs.load_frequency):
+        st = mbs.simtime.add()
+        st.time = mbs.time_step * ii
 
-            kk = scene.frame_start
-            jj = scene.frame_start
-            while kk < scene.frame_end:
-                rw = next(reader)
-                if int(rw[8]):
-                    jj = jj + 1
-                    if (jj - 1) == kk*mbs.load_frequency:
-                        st = mbs.simtime.add()
-                        st.time = float(rw[2])
-                        kk = kk + 1
-    except StopIteration:
-        pass
 
     return {'FINISHED'}
 # -----------------------------------------------------------
