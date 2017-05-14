@@ -31,6 +31,7 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
+import numpy as np
 import ntpath, os, csv, math
 from collections import namedtuple
 
@@ -358,8 +359,8 @@ def set_motion_paths_mov(context):
    
     # total number of frames to be animated
     num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_start = round(mbs.start_time/(mbs.load_frequency*mbs.time_step))
-    scene.frame_end = round(mbs.end_time/(mbs.load_frequency*mbs.time_step)) + 1
+    scene.frame_start = round(mbs.start_time/mbs.time_step)
+    scene.frame_end = round(mbs.end_time/mbs.time_step) + 1
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
@@ -372,38 +373,52 @@ def set_motion_paths_mov(context):
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
             # first loop: we establish which object to animate
-            scene.frame_current = scene.frame_start
+            scene.frame_current = round(scene.frame_start / mbs.load_frequency)
 
-            for ndx in range(scene.frame_start * mbs.num_nodes * mbs.load_frequency):
+            for ndx in range(scene.frame_start * mbs.num_nodes):
                 next(reader)
 
+            first = []
             for ndx in range(mbs.num_nodes):
-                rw = next(reader)
-                obj_name = nd['node_' + rw[0]].blender_object
+                rw = np.array(next(reader)).astype(np.float)
+                first = rw
+
+                obj_name = nd['node_' + str(int(rw[0]))].blender_object
                 if obj_name != 'none':
                     anim_objs[rw[0]] = obj_name
                     obj = bpy.data.objects[obj_name]
                     obj.select = True
                     set_obj_locrot_mov(obj, rw)
 
-            # main for loop, from second frame to last 
+            # main for loop, from second frame to last
+            freq = mbs.load_frequency
             Nskip = 0
-            if mbs.load_frequency > 1:
-                Nskip = (mbs.load_frequency - 1)*mbs.num_nodes
+            if freq > 1:
+                Nskip = (np.ceil(freq) - 1)*mbs.num_nodes
 
-            for frame in range(scene.frame_end - scene.frame_start):
-                scene.frame_current+= 1
+            for idx, frame in enumerate(np.arange(scene.frame_start + freq, scene.frame_end, freq)):
+                scene.frame_current += 1
+                frac = np.ceil(frame) - frame
+
+                print(frame, frac)
+
+                # skip (freq - 1)*N lines
+                for ii in range(int(Nskip) - idx%2):
+                    first = np.array(next(reader)).astype(np.float)
+
                 for ndx in range(mbs.num_nodes):
-                    rw = next(reader)
+                    rw = np.array(next(reader)).astype(np.float)
+                    second = rw
                     try:
-                        obj = bpy.data.objects[anim_objs[rw[0]]]
+                        answer = frac*first + (1-frac)*second
+                        obj = bpy.data.objects[anim_objs[answer[0]]]
                         obj.select = True
-                        set_obj_locrot_mov(obj, rw)
+                        set_obj_locrot_mov(obj, answer)
+
                     except KeyError:
                         pass
-                # skip (freq - 1)*N lines
-                for ii in range(Nskip):
-                    rw = next(reader)
+
+                    first = second
                 wm.progress_update(scene.frame_current)
     except StopIteration:
         pass

@@ -167,11 +167,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     # Load frequency: if different than 1, the .mov file is read every N time steps
-    load_frequency = IntProperty(
+    load_frequency = FloatProperty(
             name = "frequency",
             description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
-            min = 1,
-            default = 1
+            min = 1.0,
+            default = 1.0
             )
 
     #Start time
