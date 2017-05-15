@@ -358,9 +358,11 @@ def set_motion_paths_mov(context):
     print("Reading from file:", mov_file)
    
     # total number of frames to be animated
-    num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_start = round(mbs.start_time/mbs.time_step)
-    scene.frame_end = round(mbs.end_time/mbs.time_step) + 1
+    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
+    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
+
+    loop_start = int(scene.frame_start * mbs.load_frequency)
+    loop_end = int(scene.frame_end * mbs.load_frequency)
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
@@ -373,9 +375,9 @@ def set_motion_paths_mov(context):
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
             # first loop: we establish which object to animate
-            scene.frame_current = round(scene.frame_start / mbs.load_frequency)
+            scene.frame_current = scene.frame_start
 
-            for ndx in range(scene.frame_start * mbs.num_nodes):
+            for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
                 next(reader)
 
             first = []
@@ -398,7 +400,7 @@ def set_motion_paths_mov(context):
             if freq > 1:
                 Nskip = (np.ceil(freq) - 1)*mbs.num_nodes
 
-            for idx, frame in enumerate(np.arange(scene.frame_start + freq, scene.frame_end, freq)):
+            for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                 scene.frame_current += 1
                 frac = np.ceil(frame) - frame
 
@@ -435,7 +437,7 @@ def set_motion_paths_mov(context):
     if mbs.simtime:
         mbs.simtime.clear()
 
-    for ii in np.arange(0, scene.frame_start, mbs.load_frequency):
+    for ii in np.arange(0, loop_start, mbs.load_frequency):
         mbs.simtime.add()
 
     for ii in np.arange(scene.frame_start, scene.frame_end, mbs.load_frequency):
@@ -464,8 +466,8 @@ def set_motion_paths_netcdf(context):
     freq = mbs.load_frequency
     # scene.frame_end = len(nctime)/freq - 1
 
-    scene.frame_start = round(mbs.start_time/(freq*mbs.time_step))
-    scene.frame_end = round(mbs.end_time/(freq*mbs.time_step)) + 1
+    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
+    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
 
     anim_nodes = list()
     for node in nd:
@@ -473,17 +475,19 @@ def set_motion_paths_netcdf(context):
             anim_nodes.append(node.name)
 
     scene.frame_current = scene.frame_start
+
+    loop_start = int(scene.frame_start * mbs.load_frequency)
+    loop_end = int(scene.frame_end * mbs.load_frequency)
+
     if mbs.simtime:
         mbs.simtime.clear()
 
-    # set time
-    for frame in range(scene.frame_start):
+    for ii in np.arange(0, loop_start, mbs.load_frequency):
         mbs.simtime.add()
 
-    for frame in range(scene.frame_start, scene.frame_end):
-        tdx = frame*freq
+    for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
-        st.time = nctime[tdx]
+        st.time = mbs.time_step * ii
     
     # set objects location and rotation
     wm.progress_begin(1, len(anim_nodes))
@@ -496,13 +500,23 @@ def set_motion_paths_netcdf(context):
         if obj.mbdyn.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
+
                 tdx = frame*freq
-                
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                frac = np.ceil(tdx) - tdx
+
+                first = nc.variables[node_var + 'X'][int(tdx), :]
+                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
-            
+
+                first = math.radians(1.0)*(nc.variables[node_var + 'E'][int(tdx), :])
+                second = math.radians(1.0)*(nc.variables[node_var + 'E'][int(np.ceil(tdx)), :])
+                answer = first * frac + second * (1-frac)
+
                 obj.rotation_euler = \
-                        Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
+                        Euler( Vector((answer)),
                                 axes[obj.mbdyn.parametrization[7]] +\
                                 axes[obj.mbdyn.parametrization[6]] +\
                                 axes[obj.mbdyn.parametrization[5]] )
@@ -510,12 +524,22 @@ def set_motion_paths_netcdf(context):
         elif obj.mbdyn.parametrization == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
+
                 tdx = frame*freq
+                frac = np.ceil(tdx) - tdx
+
+                first = nc.variables[node_var + 'X'][int(tdx), :]
+                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
                 obj.keyframe_insert(data_path = "location")
 
-                rotvec = Vector(( nc.variables[node_var + 'Phi'][tdx, :] ))
+                first = nc.variables[node_var + 'Phi'][int(tdx), :]
+                second = nc.variables[node_var + 'Phi'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
@@ -523,12 +547,22 @@ def set_motion_paths_netcdf(context):
         elif obj.mbdyn.parametrization == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
-                tdx = frame*freq
 
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                tdx = frame*freq
+                frac = np.ceil(tdx) - tdx
+
+                first = nc.variables[node_var + 'X'][int(tdx), :]
+                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
+                first = nc.variables[node_var + 'R'][int(tdx), :]
+                second = nc.variables[node_var + 'R'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                R = Matrix((answer))
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
