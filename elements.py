@@ -29,6 +29,8 @@ from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 from bpy.app.handlers import persistent
 
+import logging
+
 from mathutils import *
 from math import *
 
@@ -210,8 +212,10 @@ class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
                 try:
                     verts.append(bpy.data.objects[nd[node].blender_object].location)
                 except KeyError:
-                    self.report({'ERROR'}, "Could not find Blender Objects for " + \
-                            elem.name + " import")
+                    message = "Could not find Blender Objects for " + \
+                            elem.name + " import"
+                    self.report({'ERROR'}, message)
+                    logging.error(message)
         
         node_to_vert = dict(zip((node_set), range(len(verts))))
 
@@ -248,6 +252,8 @@ class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
 
             return {'FINISHED'}
         else:
-            self.report({'WARNING'}, "No mesh data was created")
+            message = "No mesh data was created"
+            self.report({'WARNING'}, message)
+            logging.warranty(message)
             return {'CANCELLED'}
 

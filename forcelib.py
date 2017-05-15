@@ -25,6 +25,8 @@
 import bpy
 import os
 
+import logging
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -361,25 +363,31 @@ class Scene_OT_MBDyn_Import_Structural_Absolute_Force_Element(bpy.types.Operator
             elem = ed['structural_absolute_force_' + str(self.int_label)]
             retval = spawn_structural_force_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                self.report({'ERROR'}, "Could not import element: could not \
-                        load library object")
+                message = "Could not import element: could not " +\
+                        "load library object"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element structural_absolute_force_"\
-                    + str(elem.int_label) + "not found")
+            message = "Element structural_absolute_force_"\
+                    + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Structural_Absolute_Force_Element class
@@ -402,25 +410,31 @@ class Scene_OT_MBDyn_Import_Structural_Follower_Force_Element(bpy.types.Operator
             elem = ed['structural_follower_force_' + str(self.int_label)]
             retval = spawn_structural_force_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                self.report({'ERROR'}, "Could not import element: could not \
-                        load library object")
+                message = "Could not import element: could not " +\
+                        "load library object"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element structural_follower_force_"\
-                    + str(elem.int_label) + "not found")
+            message = "Element structural_follower_force_"\
+                    + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Structural_Follower_Force_Element class
@@ -443,25 +457,31 @@ class Scene_OT_MBDyn_Import_Structural_Absolute_Couple_Element(bpy.types.Operato
             elem = ed['structural_absolute_couple_' + str(self.int_label)]
             retval = spawn_structural_couple_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                self.report({'ERROR'}, "Could not import element: could not \
-                        load library object")
+                message = "Could not import element: could not " +\
+                        "load library object"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element structural_absolute_couple_"\
-                    + str(elem.int_label) + "not found")
+            message = "Element structural_absolute_couple_"\
+                    + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Structural_Absolute_Couple_Element class
@@ -484,25 +504,31 @@ class Scene_OT_MBDyn_Import_Structural_Follower_Couple_Element(bpy.types.Operato
             elem = ed['structural_follower_couple_' + str(self.int_label)]
             retval = spawn_structural_couple_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
+                message = "Could not import element: Blender object \
                     associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                self.report({'ERROR'}, "Could not import element: could not \
-                        load library object")
+                message = "Could not import element: could not \
+                        load library object"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element structural_follower_couple_"\
-                    + str(elem.int_label) + "not found")
+            message = "Element structural_follower_couple_"\
+                    + str(elem.int_label) + "not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Structural_Follower_Couple_Element class
