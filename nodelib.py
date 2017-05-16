@@ -50,9 +50,9 @@ class RotKeyError(Exception):
 def set_obj_locrot_mov(obj, rw):
 
     # Position
-    obj.location[0] = float(rw[1])
-    obj.location[1] = float(rw[2])
-    obj.location[2] = float(rw[3])
+    obj.location[0] = rw[1]
+    obj.location[1] = rw[2]
+    obj.location[2] = rw[3]
     
     obj.keyframe_insert(data_path = "location")
     
@@ -60,21 +60,21 @@ def set_obj_locrot_mov(obj, rw):
     parametrization = obj.mbdyn.parametrization
     
     if parametrization[0:5] == 'EULER':
-        obj.rotation_euler = Euler(Vector(( math.radians(float(rw[4])),\
-                                            math.radians(float(rw[5])),\
-                                            math.radians(float(rw[6])) )),\
+        obj.rotation_euler = Euler(Vector(( math.radians(rw[4]),\
+                                            math.radians(rw[5]),\
+                                            math.radians(rw[6]))),\
                      axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]])
         obj.keyframe_insert(data_path = "rotation_euler")
     elif parametrization == 'PHI':
-        rotvec = Vector((float(rw[4]), float(rw[5]), float(rw[6])))
+        rotvec = Vector((rw[4], rw[5], rw[6]))
         rotvec_norm = rotvec.normalized()
         obj.rotation_axis_angle = Vector((rotvec.magnitude, \
                                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
         obj.keyframe_insert(data_path = "rotation_axis_angle")
     elif parametrization == 'MATRIX':
-        R = Matrix((( float(rw[4]), float(rw[5]), float(rw[6]), 0.0),\
-                    (float(rw[7]), float(rw[8]), float(rw[9]), 0.0),\
-                    (float(rw[10]), float(rw[11]), float(rw[12]), 0.0),\
+        R = Matrix(((rw[4], rw[5], rw[6], 0.0),\
+                    (rw[7], rw[8], rw[9], 0.0),\
+                    (rw[10], rw[11], rw[12], 0.0),\
                     (0.0, 0.0, 0.0, 1.0)))
         obj.rotation_quaternion = R.to_quaternion()
         obj.keyframe_insert(data_path = "rotation_quaternion")
