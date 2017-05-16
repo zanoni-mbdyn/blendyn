@@ -181,8 +181,7 @@ def spawn_cardano_hinge_element(elem, context):
 
     # load the wireframe revolute joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object'), filename = 'cardano')
+            'library', 'joints.blend', 'Object'), filename = 'cardano')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         carjOBJ = bpy.context.selected_objects[0]
@@ -268,8 +267,7 @@ def spawn_cardano_pin_elem(elem, context):
 
     # load the wireframe revolute joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'blendyn-master', 'library', 'joints.blend', \
-            'Object'), filename = 'cardano.pin')
+            'library', 'joints.blend', 'Object'), filename = 'cardano.pin')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         carjOBJ = bpy.context.selected_objects[0]

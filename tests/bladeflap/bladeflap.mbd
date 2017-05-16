@@ -1,4 +1,4 @@
-# $Header$
+# bladeflap.mbd -- Single helicopter rotor blade flapping in vacuum
 #
 # MBDyn (C) is a multibody analysis code. 
 # http://www.mbdyn.org
@@ -8,7 +8,7 @@
 # Pierangelo Masarati	<masarati@aero.polimi.it>
 # Paolo Mantegazza	<mantegazza@aero.polimi.it>
 # 
-# Dipartimento di Ingegneria Aerospaziale - Politecnico di Milano
+# Aerospace Science and Technology Department - Politecnico di Milano
 # via La Masa, 34 - 20156 Milano, Italy
 # http://www.aero.polimi.it
 # 
@@ -29,8 +29,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # File modified by Andrea Zanoni <andrea.zanoni@polimi.it>
-# and distributed with mbdyn-blender add-on.
-# https://github.com/zanoni-mbdyn/mbdyn-blender/
+# and distributed with Blendyn: a Blender add-on for post-processing MBDyn
+# output.
+# https://github.com/zanoni-mbdyn/blendyn
 
 begin: data;
 	integrator: initial value;
