@@ -239,12 +239,31 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     # Load frequency: if different than 1, the .mov file is read every N time steps
-    load_frequency = IntProperty(
+    load_frequency = FloatProperty(
             name = "frequency",
             description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
-            min = 1,
-            default = 1
+            min = 1.0,
+            default = 1.0
             )
+
+    #Start time
+    start_time = FloatProperty(
+        name = "Start Time",
+        description = "If this value is X, different than 0, the import starts at X seconds",
+        min = 0.0,
+        default = 0.0
+        )
+
+    end_time = FloatProperty(
+        name = "End Time",
+        description = "If this value is X, different than total simulation time, the import stops at X seconds",
+        min = 0.0
+        )
+
+    time_step = FloatProperty(
+        name = "Time Step",
+        description = "The number of timesteps in one second"
+        )
 
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
@@ -652,8 +671,8 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
                 except KeyError:
                     print('MBDynSelectOutputFile: no eigenanalysis results found')
                     pass
-
-                get_plot_vars_glob(self, context)
+                if HAVE_PLOT:
+                    get_plot_vars_glob(self, context)
             except NameError:
                 self.report({'ERROR'}, "NetCDF module not imported correctly")
                 return {'CANCELLED'}
@@ -876,6 +895,18 @@ class MBDynSetMotionPaths(bpy.types.Operator):
     bl_label = "MBDyn Motion Path setter"
 
     def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        if mbs.end_time > (mbs.num_timesteps) * mbs.time_step:
+            self.report({'ERROR'}, "End time greater than total simulation time")
+            return {'CANCELLED'}
+
+        if mbs.start_time > (mbs.num_timesteps) * mbs.time_step:
+            self.report({'ERROR'}, "Start time greater than total simulation time")
+            return {'CANCELLED'}
+
+        remove_oldframes(context)
+
         if not(context.scene.mbdyn.use_netcdf):
             ret_val = set_motion_paths_mov(context)
         else:
@@ -974,6 +1005,13 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col.label(text = "Start animating")
         col.operator(MBDynSetMotionPaths.bl_idname, text = "Animate scene")
         col.prop(mbs, "load_frequency")
+
+        col = layout.column(align=True)
+
+        col.label(text = "Time Range of import")
+        col.prop(mbs, "start_time")
+        col.prop(mbs, "end_time")
+
 
         col = layout.column(align=True)
         col.label(text = "Current Simulation Time")
