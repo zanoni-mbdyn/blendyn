@@ -179,14 +179,14 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
     input_path = StringProperty(
             name = "Input File Path",
-            description = "Path of Input files for MBDyn",
+            description = "Path of MBDyn input files",
             default = ""
         )
 
     input_basename = StringProperty(
             name = "Input File basename",
             description = "Base name of Input File",
-            default = "not yet loaded"
+            default = "not yet selected"
         )
     #String representing path of the output directory
     dir_path = StringProperty(
@@ -1080,23 +1080,24 @@ class MBDynSimulationPanel(bpy.types.Panel):
         row = layout.row()
         row.label(text='Path of MBDyn')
         col = layout.column(align=True)
-        col.prop(mbs, "install_path", text="Path:")
+        col.prop(mbs, "install_path", text="Path")
         col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
-
-        row = layout.row()
-        row.label(text='Run MBDyn simulation')
 
         col = layout.column(align = True)
         col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
+        
+        col = layout.column(align = True)
+        col.label(text = os.path.basename(mbs.input_path));
+        col.enabled = False
 
         col = layout.column(align = True)
         col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
 
         col = layout.column(align = True)
-        col.prop(mbs, "dir_path", text = "Output Directory:")
+        col.prop(mbs, "dir_path", text = "Output Directory")
 
         col = layout.column(align = True)
-        col.prop(mbs, "file_basename", text = "Output Filename:")
+        col.prop(mbs, "file_basename", text = "Output Filename")
 
         col = layout.column(align = True)
         col.prop(mbs, "cmd_options", text = "Command-line options")
