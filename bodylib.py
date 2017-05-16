@@ -179,15 +179,15 @@ class Scene_OT_MBDyn_Import_Body_Element(bpy.types.Operator):
                 logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
                     + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                message = "Could not import element: could not \
-                        load library object"
+                message = "Could not import element: could not " +\
+                        "load library object"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
@@ -195,7 +195,7 @@ class Scene_OT_MBDyn_Import_Body_Element(bpy.types.Operator):
                 return retval
         except KeyError:
             message = "Element body_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, mes)
+            self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------

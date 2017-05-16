@@ -228,7 +228,8 @@ class Scene_OT_MBDyn_Import_Shell4_Element(bpy.types.Operator):
             elem = ed['shell4_' + str(self.int_label)]
             ret_val = spawn_shell4_element(elem, context)
             if ret_val == {'OBJECT_EXISTS'}:
-                message = "Element is already imported. Remove the Blender object before re-importing"
+                message = "Element is already imported. Remove the Blender " +\
+                            "object before re-importing"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return{'CANCELLED'}

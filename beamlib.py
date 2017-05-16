@@ -717,22 +717,21 @@ class Scene_OT_MBDyn_Elems_Import_Beam2(bpy.types.Operator):
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                message = "Found the Object " + \
-                    elem.blender_object + \
+                message = "Found the Object " + elem.blender_object + \
                     " remove or rename it to re-import the element!"
                 self.report({'WARNING'}, message)
                 logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
+                message = "Could not import element: Blender object" + \
+                    "associated to Node " + str(elem.nodes[0].int_label) \
                     + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                message = "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                message = "Could not import element: Blender object" + \
+                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
@@ -771,21 +770,21 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
                 logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
                     + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                message = "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                message = "Could not import element: Blender object " +\
+                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE3_NOTFOUND':
-                message = "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[2].int_label) + " not found"
+                message = "Could not import element: Blender object " +\
+                        "associated to Node " + str(elem.nodes[2].int_label) + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}

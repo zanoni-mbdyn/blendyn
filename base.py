@@ -630,6 +630,7 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
                 get_plot_vars_glob(self, context)
             except NameError:
                 message = "NetCDF module not imported correctly"
+
                 self.report({'ERROR'}, message)
                 baseLogger.error(message)
                 return {'CANCELLED'}
@@ -653,8 +654,8 @@ class MBDynAssignLabels(bpy.types.Operator):
     def execute(self, context):
         ret_val = assign_labels(context)
         if ret_val == {'NOTHING_DONE'}:
-            message = "MBDyn labels file provided appears to not contain \
-            correct labels."
+            message = 'MBDyn labels file provided appears to not contain ' +\
+            'correct labels.'
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'CANCELLED'}
@@ -1110,8 +1111,9 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
                 if not(spawn_node_obj(context, node)):
-                    message = "Could not spawn the Blender object assigned to node " \
-                            + str(node.int_label)
+                    message = "Could not spawn the Blender object assigned to node {}"\
+                            .format(node.int_label)
+
                     self.report({'ERROR'}, message)
                     baseLogger.error(message)
                     return {'CANCELLED'}
@@ -1161,8 +1163,9 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
         for node in context.scene.mbdyn.nodes:
             if node.int_label == self.int_label:
                 if not(spawn_node_obj(context, node)):
-                    message = "Could not spawn the Blender object assigned to node " \
-                            + str(node.int_label)
+                    message = "Could not spawn the Blender object assigned to node {}"\
+                            .format(node.int_label)
+
                     self.report({'ERROR'}, message)
                     baseLogger.error(message)
                     return {'CANCELLED'}
@@ -1210,6 +1213,7 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
                     eval("spawn_" + elem.type + "_element(elem, context)")
                 except NameError:
                     message = "Couldn't find the element import function"
+
                     self.report({'ERROR'}, message)
                     baseLogger.error(message)
                     return {'CANCELLED'}
@@ -1238,7 +1242,8 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
 
             if ret_val == 'ROT_NOT_SUPPORTED':
                 message = "Rotation parametrization not supported, node " \
-                            + obj.mbdyn.string_label
+                + obj.mbdyn.string_label
+
                 self.report({'ERROR'}, message)
                 baseLogger.error(message)
 
