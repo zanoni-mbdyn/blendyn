@@ -170,6 +170,24 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = ""
             )
 
+    # Base name of MBDyn's imported files
+    file_basename = StringProperty(
+            name = "MBDyn base file name",
+            description = "Base file name of MBDyn's imported files",
+            default = "not yet loaded"
+            )
+
+    input_path = StringProperty(
+            name = "Input File Path",
+            description = "Path of Input files for MBDyn",
+            default = ""
+        )
+
+    input_basename = StringProperty(
+            name = "Input File basename",
+            description = "Base name of Input File",
+            default = "not yet loaded"
+        )
     #String representing path of the output directory
     dir_path = StringProperty(
             name = "Directory Path",
@@ -182,13 +200,6 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "Installation path of MBDyn",
             description = "Installation path of MBDyn",
             subtype = 'DIR_PATH'
-            )
-
-    # Base name of MBDyn's imported files
-    file_basename = StringProperty(
-            name = "MBDyn base file name",
-            description = "Base file name of MBDyn's imported files",
-            default = "not yet loaded"
             )
 
     # Integer representing the current animation number
@@ -764,8 +775,10 @@ class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
 
         mbs.sim_num = 0
 
-        mbs.file_path = os.path.relpath(self.filepath)
-        mbs.file_basename = os.path.splitext(os.path.basename(self.filepath))[0]
+        mbs.input_path = os.path.relpath(self.filepath)
+        mbs.input_basename = os.path.splitext(os.path.basename(self.filepath))[0]
+
+        mbs.file_basename = mbs.input_basename
 
         return {'FINISHED'}
     def invoke(self, context, event):
@@ -845,7 +858,7 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         command_line_options = mbs.cmd_options
 
-        command = ('mbdyn {0} {1}').format(command_line_options, mbs.file_path)
+        command = ('mbdyn {0} {1}').format(command_line_options, mbs.input_path)
 
         if not mbs.overwrite:
             mbs.sim_num += 1
