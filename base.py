@@ -170,6 +170,24 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = ""
             )
 
+    # Base name of MBDyn's imported files
+    file_basename = StringProperty(
+            name = "MBDyn base file name",
+            description = "Base file name of MBDyn's imported files",
+            default = "not yet loaded"
+            )
+
+    input_path = StringProperty(
+            name = "Input File Path",
+            description = "Path of Input files for MBDyn",
+            default = ""
+        )
+
+    input_basename = StringProperty(
+            name = "Input File basename",
+            description = "Base name of Input File",
+            default = "not yet loaded"
+        )
     #String representing path of the output directory
     dir_path = StringProperty(
             name = "Directory Path",
@@ -182,13 +200,6 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "Installation path of MBDyn",
             description = "Installation path of MBDyn",
             subtype = 'DIR_PATH'
-            )
-
-    # Base name of MBDyn's imported files
-    file_basename = StringProperty(
-            name = "MBDyn base file name",
-            description = "Base file name of MBDyn's imported files",
-            default = "not yet loaded"
             )
 
     # Integer representing the current animation number
@@ -239,11 +250,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     # Load frequency: if different than 1, the .mov file is read every N time steps
-    load_frequency = IntProperty(
+    load_frequency = FloatProperty(
             name = "frequency",
             description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
-            min = 1,
-            default = 1
+            min = 1.0,
+            default = 1.0
             )
 
     #Start time
@@ -262,7 +273,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
     time_step = FloatProperty(
         name = "Time Step",
-        description = "The number of timesteps in one second"
+        description = "Simulation time step"
         )
 
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
@@ -764,8 +775,10 @@ class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
 
         mbs.sim_num = 0
 
-        mbs.file_path = os.path.relpath(self.filepath)
-        mbs.file_basename = os.path.splitext(os.path.basename(self.filepath))[0]
+        mbs.input_path = os.path.relpath(self.filepath)
+        mbs.input_basename = os.path.splitext(os.path.basename(self.filepath))[0]
+
+        mbs.file_basename = mbs.input_basename
 
         return {'FINISHED'}
     def invoke(self, context, event):
@@ -829,7 +842,6 @@ class MBDynRunSimulation(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        obj = context.object.mbdyn
 
         for idx in range(len(mbs.env_vars)):
             variable = mbs.env_vars[idx].variable
@@ -846,7 +858,7 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         command_line_options = mbs.cmd_options
 
-        command = ('mbdyn {0} {1}').format(command_line_options, mbs.file_path)
+        command = ('mbdyn {0} {1}').format(command_line_options, mbs.input_path)
 
         if not mbs.overwrite:
             mbs.sim_num += 1
@@ -921,6 +933,20 @@ bpy.utils.register_class(MBDynSetMotionPaths)
 # -----------------------------------------------------------
 # end of MBDynSetMotionPaths class
 
+class MBDynSetImportFreqAuto(bpy.types.Operator):
+    """ Sets the import frequency automatically in order to match the Blender
+        time and the simulation time, based on the current render fps """
+    bl_idname = "set.mbdyn_loadfreq_auto"
+    bl_label = "Import frequency: auto"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        mbs.load_frequency = 1./(context.scene.render.fps*mbs.time_step)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath"
@@ -957,6 +983,12 @@ class MBDynImportPanel(bpy.types.Panel):
         if not(mbs.use_netcdf):
             col.prop(mbs, "num_rows", text = "rows total")
         col.prop(mbs, "num_timesteps", text = "time steps")
+        
+        row = layout.row()
+        if mbs.file_path:
+            row.label(text = "Full file path:")
+            row = layout.row()
+            row.label(text = mbs.file_path)
         col.enabled = False
 
         # Import MBDyn data
@@ -1004,7 +1036,12 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col = layout.column(align=True)
         col.label(text = "Start animating")
         col.operator(MBDynSetMotionPaths.bl_idname, text = "Animate scene")
+        col.operator(MBDynSetImportFreqAuto.bl_idname, text = "Auto set frequency")
         col.prop(mbs, "load_frequency")
+        
+        # time_step > 0 only if .log file had been loaded
+        col.enabled = bool(mbs.time_step)   
+
 
         col = layout.column(align=True)
 
