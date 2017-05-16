@@ -23,10 +23,6 @@
 # --------------------------------------------------------------------------
 
 # TODO: check for unnecessary stuff
-import os
-
-# from mathutils import *
-# from math import *
 
 import bpy
 
@@ -38,6 +34,7 @@ from .nodelib import *
 from .elementlib import *
 
 import pdb
+import os
 
 try: 
     from netCDF4 import Dataset
@@ -51,7 +48,8 @@ def get_plot_vars_glob(self, context):
     mbs = context.scene.mbdyn
 
     if mbs.use_netcdf:
-        ncfile = mbs.file_path + mbs.file_basename + ".nc"
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, 'r', format='NETCDF3')
         N = len(nc.variables["time"])
 
@@ -67,7 +65,8 @@ def get_plot_vars(self, context):
     mbo = context.active_object.mbdyn
 
     if mbs.use_netcdf:
-        ncfile = mbs.file_path + mbs.file_basename + ".nc"
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, 'r', format='NETCDF3')
         key = mbo.type + "." + str(mbo.int_label)
 
@@ -94,7 +93,8 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         # get requested netCDF variable
-        ncfile = mbs.file_path + mbs.file_basename + ".nc"
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, 'r', format='NETCDF3')
 
         # get its dimensions
@@ -218,7 +218,8 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         # get requested netCDF variable
-        ncfile = mbs.file_path + mbs.file_basename + ".nc"
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, 'r', format='NETCDF3')
 
         # get its dimensions
@@ -343,7 +344,8 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         # get requested netCDF variable
-        ncfile = mbs.file_path + mbs.file_basename + ".nc"
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, 'r', format='NETCDF3')
 
         # get its dimensions
@@ -427,7 +429,8 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         # get requested netCDF variable
-        ncfile = mbs.file_path + mbs.file_basename + ".nc"
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, 'r', format='NETCDF3')
 
         # get its dimensions
@@ -535,7 +538,8 @@ class MBDynPlotPanelObject(bpy.types.Panel):
         row = layout.row()
 
         if mbs.use_netcdf:
-            ncfile = mbs.file_path + mbs.file_basename + ".nc"
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r', format='NETCDF3')
             row.prop(mbo, "plot_var")
             try:
@@ -617,7 +621,8 @@ class MBDynPlotPanelScene(bpy.types.Panel):
         row = layout.row()
 
         if mbs.use_netcdf:
-            ncfile = mbs.file_path + mbs.file_basename + ".nc"
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r', format='NETCDF3')
             # row.prop(mbs, 'plot_var')
             row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",

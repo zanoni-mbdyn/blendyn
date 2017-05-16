@@ -32,12 +32,13 @@ from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
 import numpy as np
-import ntpath, os, csv, math
+import ntpath, csv, math
 from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
 
+import os
 import pdb
 
 try: 
@@ -65,7 +66,8 @@ def parse_log_file(context):
     for elem_name in ed.keys():
         ed[elem_name].is_imported = False
 
-    log_file = mbs.file_path + mbs.file_basename + '.log'
+    log_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.log')
 
     # Debug message to console
     print("parse_log_file(): Trying to read nodes and elements from file: "\
@@ -137,7 +139,8 @@ def parse_log_file(context):
             elif nd[ndx].int_label > mbs.max_node_import:
                 mbs.max_node_import = nd[ndx].int_label
         if mbs.use_netcdf:
-            ncfile = mbs.file_path + mbs.file_basename + ".nc"
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
             nc = Dataset(ncfile, "r", format="NETCDF3")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
@@ -148,9 +151,8 @@ def parse_log_file(context):
         ret_val = {'NODES_NOT_FOUND'}
     pass 
     
-    out_file = mbs.file_path + mbs.file_basename + '.out'
-
-    with open(out_file) as of:
+    with open(os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.out')) as of:
         reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
         for ii in range(4):
             next(reader)
@@ -195,7 +197,8 @@ def assign_labels(context):
 
     labels_changed = False
     
-    log_file = mbs.file_path + mbs.file_basename + ".log"
+    log_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.log')
 
     set_strings_node = ["  const integer Node_", \
                         "  integer Node_", \
@@ -352,7 +355,8 @@ def set_motion_paths_mov(context):
         return {'CANCELLED'}
 
     # .mov filename
-    mov_file = mbs.file_path + mbs.file_basename + '.mov'
+    mov_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.mov')
     
     # Debug message
     print("Reading from file:", mov_file)
@@ -457,7 +461,8 @@ def set_motion_paths_netcdf(context):
     ed = mbs.elems 
     wm = context.window_manager
 
-    ncfile = mbs.file_path + mbs.file_basename + '.nc'
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r", format="NETCDF3")
     nctime = nc.variables["time"]
 

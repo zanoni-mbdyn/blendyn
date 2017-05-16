@@ -31,6 +31,7 @@ from bpy.props import IntProperty, FloatProperty
 
 from .nodelib import axes
 
+import os
 import pdb
 
 try: 
@@ -41,7 +42,8 @@ except ImportError:
 
 def update_curr_eigmode(self, context):
     mbs = context.scene.mbdyn
-    nc = Dataset(mbs.file_path + mbs.file_basename + ".nc", 'r', format='NETCDF3')
+    nc = Dataset(os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc'), 'r', format='NETCDF3')
     eigsol_idx = context.scene.mbdyn.curr_eigsol
     if self.curr_eigmode < 1:
         self.curr_eigmode = 1
@@ -141,7 +143,8 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
         nd = mbs.nodes
         ed = mbs.elems
         
-        ncfile = mbs.file_path + mbs.file_basename + '.nc'
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
@@ -214,7 +217,8 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         ed = mbs.elems
         wm = context.window_manager
         
-        ncfile = mbs.file_path + mbs.file_basename + '.nc'
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
