@@ -167,7 +167,8 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     file_path = StringProperty(
             name = "MBDyn file path",
             description = "Path of MBDyn's imported files",
-            default = ""
+            default = "",
+            subtype = 'DIR_PATH'
             )
 
     # Base name of MBDyn's imported files
@@ -188,12 +189,6 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             description = "Base name of Input File",
             default = "not yet loaded"
         )
-    #String representing path of the output directory
-    dir_path = StringProperty(
-            name = "Directory Path",
-            description = "Path to Directory",
-            subtype = 'DIR_PATH'
-            )
 
     # String representing path of MBDyn Installation
     install_path = StringProperty(
@@ -871,8 +866,8 @@ class MBDynRunSimulation(bpy.types.Operator):
         else:
             mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.sim_num)
 
-        if mbs.dir_path:
-            command += (' -o {}').format(mbs.dir_path + mbs.file_basename)
+        if mbs.file_path:
+            command += (' -o {}').format(mbs.file_path + mbs.file_basename)
 
         subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
@@ -1093,7 +1088,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
 
         col = layout.column(align = True)
-        col.prop(mbs, "dir_path", text = "Output Directory:")
+        col.prop(mbs, "file_path", text = "Output Directory:")
 
         col = layout.column(align = True)
         col.prop(mbs, "file_basename", text = "Output Filename:")
