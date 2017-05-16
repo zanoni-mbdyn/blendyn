@@ -239,11 +239,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     # Load frequency: if different than 1, the .mov file is read every N time steps
-    load_frequency = IntProperty(
+    load_frequency = FloatProperty(
             name = "frequency",
             description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
-            min = 1,
-            default = 1
+            min = 1.0,
+            default = 1.0
             )
 
     #Start time
@@ -262,7 +262,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
     time_step = FloatProperty(
         name = "Time Step",
-        description = "The number of timesteps in one second"
+        description = "Simulation time step"
         )
 
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
@@ -920,6 +920,20 @@ bpy.utils.register_class(MBDynSetMotionPaths)
 # -----------------------------------------------------------
 # end of MBDynSetMotionPaths class
 
+class MBDynSetImportFreqAuto(bpy.types.Operator):
+    """ Sets the import frequency automatically in order to match the Blender
+        time and the simulation time, based on the current render fps """
+    bl_idname = "set.mbdyn_loadfreq_auto"
+    bl_label = "Import frequency: auto"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        mbs.load_frequency = 1./(context.scene.render.fps*mbs.time_step)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath"
@@ -1009,7 +1023,12 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col = layout.column(align=True)
         col.label(text = "Start animating")
         col.operator(MBDynSetMotionPaths.bl_idname, text = "Animate scene")
+        col.operator(MBDynSetImportFreqAuto.bl_idname, text = "Auto set frequency")
         col.prop(mbs, "load_frequency")
+        
+        # time_step > 0 only if .log file had been loaded
+        col.enabled = bool(mbs.time_step)   
+
 
         col = layout.column(align=True)
 
