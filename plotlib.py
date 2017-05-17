@@ -44,9 +44,8 @@ except ImportError:
 
 import pdb
 
-def get_plot_vars_glob(self, context):
+def get_plot_vars_glob(context):
     mbs = context.scene.mbdyn
-
     if mbs.use_netcdf:
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')

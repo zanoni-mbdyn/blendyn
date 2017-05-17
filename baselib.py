@@ -37,6 +37,7 @@ from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
+from .plotlib import get_plot_vars_glob
 
 import os
 import pdb
@@ -46,6 +47,45 @@ try:
 except ImportError:
     print("blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
+    pass
+
+## Function that sets up the data for the import process
+def setup_import(filepath, context):
+    mbs = context.scene.mbdyn
+    mbs.file_path, mbs.file_basename = path_leaf(filepath)
+    if filepath[-2:] == 'nc':
+        try:
+            nc = Dataset(filepath, "r", format="NETCDF3")
+            mbs.use_netcdf = True
+            mbs.num_rows = 0
+            try:
+                eig_step = nc.variables['eig.step']
+                eig_time = nc.variables['eig.time']
+                eig_dCoef = nc.variables['eig.dCoef']
+                for ii in range(0, len(eig_step)):
+                    eigsol = mbs.eigensolutions.add()
+                    eigsol.step = eig_step[ii]
+                    eigsol.time = eig_time[ii]
+                    eigsol.dCoef = eig_dCoef[ii]
+                    eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
+                    eigsol.curr_eigmode = 1
+            except KeyError:
+                print('MBDynSelectOutputFile: no eigenanalysis results found')
+                pass
+            try:
+                get_plot_vars_glob(context)
+            except AttributeError:
+                pass
+
+        except NameError:
+            return {'NETCDF_ERROR'}
+    else:
+        mbs.num_rows = file_len(filepath)
+    return {'FINISHED'}
+
+# -----------------------------------------------------------
+# end of setup_import() function
+
 
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary

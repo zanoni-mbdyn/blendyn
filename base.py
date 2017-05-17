@@ -50,6 +50,7 @@ except ImportError:
         + "will be disabled.")
 
 HAVE_PLOT = False
+
 try:
     import pygal
     from .plotlib import *
@@ -178,16 +179,26 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = "not yet loaded"
             )
 
+    # Use text output even when NetCDF is available?
+    # This property is used when a simulation is run from Blender
+    force_text_import = BoolProperty(
+            name = "Always use text output",
+            description = "Use text output even when NetCDF output is available",
+            default = False
+            )
+
+    # Path of MBDyn input file (to run simulation from Blender)
     input_path = StringProperty(
             name = "Input File Path",
             description = "Path of Input files for MBDyn",
-            default = ""
+            default = "not yet selected"
         )
 
+    # MBDyn input file (to run simulation from Blender)
     input_basename = StringProperty(
             name = "Input File basename",
             description = "Base name of Input File",
-            default = "not yet loaded"
+            default = "not yet selected"
         )
 
     # String representing path of MBDyn Installation
@@ -655,36 +666,16 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
+        # removes keyframes before importing a new file
         remove_oldframes(context)
 
-        mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
-        if self.filepath[-2:] == 'nc':
-            try:
-                nc = Dataset(self.filepath, "r", format="NETCDF3")
-                mbs.use_netcdf = True
-                mbs.num_rows = 0
-                try:
-                    eig_step = nc.variables['eig.step']
-                    eig_time = nc.variables['eig.time']
-                    eig_dCoef = nc.variables['eig.dCoef']
-                    for ii in range(0, len(eig_step)):
-                        eigsol = mbs.eigensolutions.add()
-                        eigsol.step = eig_step[ii]
-                        eigsol.time = eig_time[ii]
-                        eigsol.dCoef = eig_dCoef[ii]
-                        eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
-                        eigsol.curr_eigmode = 1
-                except KeyError:
-                    print('MBDynSelectOutputFile: no eigenanalysis results found')
-                    pass
-                if HAVE_PLOT:
-                    get_plot_vars_glob(self, context)
-            except NameError:
-                self.report({'ERROR'}, "NetCDF module not imported correctly")
-                return {'CANCELLED'}
-        else:
-            mbs.num_rows = file_len(self.filepath)
-        return {'FINISHED'}
+        si_retval = setup_import(self.filepath, context)
+
+        if si_retval == {'NETCDF_ERROR'}:
+            self.report({'ERROR'}, "NetCDF module not imported correctly")
+            return {'CANCELLED'}
+        elif is_retval == {'FINISHED'}:
+            return si_retval
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -867,11 +858,29 @@ class MBDynRunSimulation(bpy.types.Operator):
             mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.sim_num)
 
         if mbs.file_path:
-            command += (' -o {}').format(mbs.file_path + mbs.file_basename)
+            command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
-        subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
-        return {'FINISHED'}
+        mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
+        if not(mbdyn_retcode):
+            self.report('INFO', "MBDyn simulation ended without errors")
+            if ( os.path.isfile(os.path.join(mbs.file_path, \
+                    mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
+                si_retval = setup_import(os.path.join(mbs.file_path, \
+                        mbs.file_basename + '.nc'), context)
+            else:
+                mbs.use_netcdf = False
+                si_retval = setup_import(os.path.join(mbs.file_path, \
+                        mbs.file_basename + '.mov'), context)
+        else:
+            self.report('ERROR', "Something went wrong with the MBDyn simulation.")
+            return {'CANCELLED'}
+
+        if si_retval == {'NETCDF_ERROR'}:
+            self.report({'ERROR'}, "NetCDF module not imported correctly")
+            return {'CANCELLED'}
+        elif is_retval == {'FINISHED'}:
+            return si_retval
 
     def invoke(self, context, event):
         return self.execute(context)
@@ -1085,7 +1094,14 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynSelectInputFile.bl_idname, text = 'Select input file')
 
         col = layout.column(align = True)
+        col.prop(mbs, "input_path", text = "Selected input file")
+        col.enabled = False
+
+        col = layout.column(align = True)
         col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "force_text_import", text = "Always load text output")
 
         col = layout.column(align = True)
         col.prop(mbs, "file_path", text = "Output Directory:")
