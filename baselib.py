@@ -35,9 +35,7 @@ from bpy_extras.io_utils import ImportHelper
 import logging
 
 import numpy as np
-
-import ntpath, os, csv, math
-
+import ntpath, os, csv, math, atexit
 from collections import namedtuple
 
 from .nodelib import *
@@ -596,6 +594,11 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function 
+class BlenderHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        editor = bpy.data.texts[os.path.basename(logFile)]
+        editor.write(log_entry + '\n')
 
 def log_messages(mbs, baseLogger):
 
@@ -605,11 +608,14 @@ def log_messages(mbs, baseLogger):
 
         formatter = '%(asctime)s - %(levelname)s - %(message)s'
         datefmt = '%m/%d/%Y %I:%M:%S %p'
+        global logFile
         logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
 
         fh = logging.FileHandler(logFile)
         fh.setFormatter(logging.Formatter(formatter, datefmt))
 
+        custom = BlenderHandler()
         baseLogger.addHandler(fh)
+        baseLogger.addHandler(custom)
 
-        bpy.ops.text.open(filepath = logFile)
+        bpy.data.texts.new(os.path.basename(logFile))
