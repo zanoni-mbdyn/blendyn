@@ -619,7 +619,7 @@ def blend_log(scene):
     mbs = bpy.context.scene.mbdyn
 
     if mbs.file_path:
-        log_messages(mbs, baseLogger)
+        log_messages(mbs, baseLogger, False)
 
 bpy.app.handlers.load_post.append(blend_log)
 
@@ -631,7 +631,9 @@ def rename_log(scene):
     newLog = ('{0}_{1}.bylog').format(mbs.file_path + newBlend, mbs.file_basename)
     os.rename(logFile, newLog)
 
-    log_messages(mbs, baseLogger)
+    bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
+
+    log_messages(mbs, baseLogger, True)
 
 bpy.app.handlers.save_post.append(rename_log)
 
@@ -714,7 +716,7 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
         mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
 
         baseLogger.handlers = []
-        log_messages(mbs, baseLogger)
+        log_messages(mbs, baseLogger, False)
 
         if self.filepath[-2:] == 'nc':
             try:

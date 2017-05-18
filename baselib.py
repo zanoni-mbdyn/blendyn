@@ -600,7 +600,7 @@ class BlenderHandler(logging.Handler):
         editor = bpy.data.texts[os.path.basename(logFile)]
         editor.write(log_entry + '\n')
 
-def log_messages(mbs, baseLogger):
+def log_messages(mbs, baseLogger, saved_blend):
 
         blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
                     else 'untitled.blend'
@@ -615,10 +615,13 @@ def log_messages(mbs, baseLogger):
         fh.setFormatter(logging.Formatter(formatter, datefmt))
 
         custom = BlenderHandler()
+        custom.setFormatter(logging.Formatter(formatter, datefmt))
+
         baseLogger.addHandler(fh)
         baseLogger.addHandler(custom)
 
-        bpy.data.texts.new(os.path.basename(logFile))
+        if not saved_blend:
+            bpy.data.texts.new(os.path.basename(logFile))
 
 def delete_log():
     mbs = bpy.context.scene.mbdyn
