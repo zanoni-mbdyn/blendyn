@@ -619,3 +619,14 @@ def log_messages(mbs, baseLogger):
         baseLogger.addHandler(custom)
 
         bpy.data.texts.new(os.path.basename(logFile))
+
+def delete_log():
+    mbs = bpy.context.scene.mbdyn
+
+    if not bpy.data.is_saved:
+        os.remove(logFile)
+
+    elif mbs.del_log:
+        os.remove(logFile)
+
+atexit.register(delete_log)

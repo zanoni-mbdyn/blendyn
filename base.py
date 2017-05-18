@@ -24,7 +24,7 @@
 
 # TODO: check for unnecessary stuff
 
-import os.path
+import os
 
 import bpy
 import bmesh
@@ -210,6 +210,12 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     overwrite = BoolProperty(
             name = "Overwrite Property",
             description = "True if the user wants to overwrite the existing output files",
+            default = False
+            )
+
+    del_log = BoolProperty(
+            name = "Log property",
+            description = "True if the user wants to delete log files on exit",
             default = False
             )
     # Collection of Environment variables and corresponding values
@@ -616,7 +622,18 @@ def blend_log(scene):
         log_messages(mbs, baseLogger)
 
 bpy.app.handlers.load_post.append(blend_log)
-bpy.app.handlers.save_post.append(blend_log)
+
+@persistent
+def rename_log(scene):
+    mbs = bpy.context.scene.mbdyn
+    logFile = ('{0}_{1}.bylog').format(mbs.file_path + 'untitled', mbs.file_basename)
+    newBlend = path_leaf(bpy.data.filepath)[1]
+    newLog = ('{0}_{1}.bylog').format(mbs.file_path + newBlend, mbs.file_basename)
+    os.rename(logFile, newLog)
+
+    log_messages(mbs, baseLogger)
+
+bpy.app.handlers.save_post.append(rename_log)
 
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
@@ -1041,6 +1058,10 @@ class MBDynImportPanel(bpy.types.Panel):
             row = layout.row()
             row.label(text = mbs.file_path)
         col.enabled = False
+
+        row = layout.row()
+        col = layout.column(align = True)
+        col.prop(mbs, "del_log", text = "Delete Log Files on Exit")
 
         # Import MBDyn data
         row = layout.row()
