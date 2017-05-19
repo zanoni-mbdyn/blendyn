@@ -1061,10 +1061,6 @@ class MBDynImportPanel(bpy.types.Panel):
             row.label(text = mbs.file_path)
         col.enabled = False
 
-        row = layout.row()
-        col = layout.column(align = True)
-        col.prop(mbs, "del_log", text = "Delete Log Files on Exit")
-
         # Import MBDyn data
         row = layout.row()
         # row.label(text="Load MBDyn data")
@@ -1081,6 +1077,9 @@ class MBDynImportPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(mbs, "missing", text = "")
 
+        row = layout.row()
+        col = layout.column(align = True)
+        col.prop(mbs, "del_log", text = "Delete Log Files on Exit")
 
         # Clear MBDyn data for scene
         row = layout.row()
