@@ -220,7 +220,7 @@ def spawn_structural_force_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_structural_force(): Element is already imported. \
+        print("spawn_structural_force_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
