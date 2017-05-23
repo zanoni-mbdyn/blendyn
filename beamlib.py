@@ -622,9 +622,9 @@ def update_beam3(elem, insert_keyframe = False):
     t3 = P3.to_3d() - cp2.location
     t3.normalize()
 
-    phi1, theta1 = n1.matrix_world.to_quaternion().to_axis_angle()
-    phi2, theta2 = n2.matrix_world.to_quaternion().to_axis_angle()
-    phi3, theta3 = n3.matrix_world.to_quaternion().to_axis_angle()
+    phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
     
     cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
     cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
