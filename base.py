@@ -1418,6 +1418,19 @@ class MBDynElemsScenePanel(bpy.types.Panel):
         if mbs.ed_index >= 0 and len(mbs.elems):
             item = mbs.elems[mbs.ed_index]
 
+            row = layout.row()
+            row.separator()
+
+            col = layout.column()
+            col.prop(item, "int_label")
+            col.prop(item, "string_label")
+            col.prop(item, "blender_object")
+            col.enabled = False
+
+            row = layout.row()
+            row.operator(item.import_function, \
+                    text="Add element to the scene").int_label = item.int_label
+
             col = layout.column()
 
             row = col.row()
@@ -1434,19 +1447,8 @@ class MBDynElemsScenePanel(bpy.types.Panel):
                 col.operator(Scene_OT_MBDyn_Import_Elements_as_Mesh.bl_idname, \
                         text="Import elements by type")
 
-
-            row = layout.row()
-            row.separator()
-
             col = layout.column()
-            col.prop(item, "int_label")
-            col.prop(item, "string_label")
-            col.prop(item, "blender_object")
-            col.enabled = False
-
-            row = layout.row()
-            row.operator(item.import_function, \
-                    text="Add element to the scene").int_label = item.int_label
+            col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
@@ -1602,14 +1604,67 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
                 try:
                     eval("spawn_" + elem.type + "_element(elem, context)")
                 except NameError:
-                    message = "Couldn't find the element import function"
-
-                    self.report({'ERROR'}, message)
-                    baseLogger.error(message)
-                    return {'CANCELLED'}
+                    if ( elem.type == 'structural_absolute_force' ) \
+                            or ( elem.type == 'structural_follower_force' ):
+                        eval("spawn_structural_force_element(elem, context)")
+                    elif ( elem.type == 'structural_absolute_couple' ) \
+                            or ( elem.type == 'structural_follower_couple' ):
+                        eval("spawn_structural_couple_element(elem, context)")
+                    else:
+                        message = "Could not find the import function for element of type " + \
+                                elem.type + ". Element " + elem.name + " not imported."
+                        self.report({'ERROR'}, message)
+                        baseLogger.error(message)
+                        return {'CANCELLED'}
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Elements_by_Type class
+
+class Scene_OT_MBDyn_Elements_Import_All(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elems_all"
+    bl_label = "Add all the elements to the scene"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+
+        ELEMS_MISSING = False
+        for elem in ed:
+            if (elem.int_label >= mbs.min_elem_import) \
+                    and (elem.int_label <= mbs.max_elem_import):
+                try:
+                    eval("spawn_" + elem.type + "_element(elem, context)")
+                except NameError:
+                    if ( elem.type == 'structural_absolute_force' ) \
+                            or ( elem.type == 'structural_follower_force' ):
+                        eval("spawn_structural_force_element(elem, context)")
+                    elif ( elem.type == 'structural_absolute_couple' ) \
+                            or ( elem.type == 'structural_follower_couple' ):
+                        eval("spawn_structural_couple_element(elem, context)")
+                    else:
+                        message = "Could not find the import function for element of type " + \
+                            elem.type + ". Element " + elem.name + " not imported."
+                        baseLogger.warning(message)
+                        if not(ELEMS_MISSING):
+                            ELEMS_MISSING = True
+                        pass
+
+        if ELEMS_MISSING:
+            message = "Some elements were not imported. See log file for details"
+            baseLogger.warning(message)
+            self.report({'WARNING'}, message)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Elements_Import_All class
 
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
     bl_idname = "sel.mbdynnode"
