@@ -553,51 +553,6 @@ def spawn_beam3_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
  
     bpy.ops.object.select_all(action = 'DESELECT')
-
-    if False:   # NOT CORRECT! -- Moved to update_beam3
-        # P1 driver for bevel section rotation
-        drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
-        xrot_P1 = drv_tilt_P1.driver.variables.new()
-        xrot_P1.name = "xrot_P1"
-        xrot_P1.type = 'TRANSFORMS'
-        xrot_P1.targets[0].id = n1OBJ
-        xrot_P1.targets[0].data_path = 'rotation.x'
-        xrot_P1.targets[0].transform_type = 'ROT_X'
-        xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_P1.driver.expression = "xrot_P1"
-    
-        # P3 driver for bevel section rotation
-        drv_tilt_P3 = beamOBJ.data.splines[0].points[3].driver_add('tilt')
-        xrot_P3 = drv_tilt_P3.driver.variables.new()
-        xrot_P3.name = "xrot_P3"
-        xrot_P3.type = 'TRANSFORMS'
-        xrot_P3.targets[0].id = n3OBJ
-        xrot_P3.targets[0].data_path = 'rotation.x'
-        xrot_P3.targets[0].transform_type = 'ROT_X'
-        xrot_P3.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_P3.driver.expression = "xrot_P3"
-    
-        # M1 driver for bevel section rotation (TODO: check correctness)
-        drv_tilt_M1 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
-        xrot_P2_1 = drv_tilt_M1.driver.variables.new()
-        xrot_P2_1.name = "xrot_P2"
-        xrot_P2_1.type = 'TRANSFORMS'
-        xrot_P2_1.targets[0].id = n2OBJ
-        xrot_P2_1.targets[0].data_path = 'rotation.x'
-        xrot_P2_1.targets[0].transform_type = 'ROT_X'
-        xrot_P2_1.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_M1.driver.expression = "xrot_P2"
-        
-        # M2 driver for bevel section rotation (TODO: check correctness)
-        drv_tilt_M2 = beamOBJ.data.splines[0].points[2].driver_add('tilt')
-        xrot_P2_2 = drv_tilt_M2.driver.variables.new()
-        xrot_P2_2.name = "xrot_P2"
-        xrot_P2_2.type = 'TRANSFORMS'
-        xrot_P2_2.targets[0].id = n2OBJ
-        xrot_P2_2.targets[0].data_path = 'rotation.x'
-        xrot_P2_2.targets[0].transform_type = 'ROT_X'
-        xrot_P2_2.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_M2.driver.expression = "xrot_P2"
         
     beamOBJ.select = True
     n1OBJ.select = True
