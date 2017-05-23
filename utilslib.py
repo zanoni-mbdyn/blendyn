@@ -24,6 +24,9 @@
 
 # TODO: check for unnecessary stuff
 import bpy
+
+import logging
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -79,7 +82,9 @@ class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
                         if jj != kk:
                             obj.layers[jj] = False
                 except IndexError:
-                    self.report({'INFO'}, "Couldn't find an empty layer. Using the active layer")
+                    message = "Couldn't find an empty layer. Using the active layer"
+                    self.report({'INFO'}, message)
+                    logging.info(message)
                     pass
                 
                 # context.curve.bevel_object = obj
@@ -93,10 +98,14 @@ class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
 
                 return {'FINISHED'}
         except IOError:
-           self.report({'ERROR'}, {'Could not locate file'})
+           message = 'Could not locate file'
+           self.report({'ERROR'}, message)
+           logging.error(message)
            return {'CANCELLED'}
         except StopIteration:
-            self.report({'WARNING'}, {'Reached the end of file'})
+            message = 'Reached the end of file'
+            self.report({'WARNING'}, message)
+            logging.warning(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of fmin function Object_OT_MBDyn_load_section class
