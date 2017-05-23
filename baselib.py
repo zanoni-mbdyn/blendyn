@@ -26,21 +26,22 @@
 from mathutils import *
 from math import *
 
-import os
-
 import bpy
 from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
+
 import logging
 
-import ntpath, os, csv, math
+import numpy as np
+import ntpath, os, csv, math, atexit
 from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
 
+import os
 import pdb
 
 try: 
@@ -68,7 +69,8 @@ def parse_log_file(context):
     for elem_name in ed.keys():
         ed[elem_name].is_imported = False
 
-    log_file = mbs.file_path + mbs.file_basename + '.log'
+    log_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.log')
 
     # Debug message to console
     print("parse_log_file(): Trying to read nodes and elements from file: "\
@@ -140,7 +142,8 @@ def parse_log_file(context):
             elif nd[ndx].int_label > mbs.max_node_import:
                 mbs.max_node_import = nd[ndx].int_label
         if mbs.use_netcdf:
-            ncfile = mbs.file_path + mbs.file_basename + ".nc"
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
             nc = Dataset(ncfile, "r", format="NETCDF3")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
@@ -151,6 +154,15 @@ def parse_log_file(context):
         ret_val = {'NODES_NOT_FOUND'}
     pass 
     
+    with open(os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.out')) as of:
+        reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
+        for ii in range(4):
+            next(reader)
+        mbs.time_step = float(next(reader)[3])
+
+    mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
+
     return ret_val, obj_names
 # -----------------------------------------------------------
 # end of parse_log_file() function
@@ -188,7 +200,8 @@ def assign_labels(context):
 
     labels_changed = False
     
-    log_file = mbs.file_path + mbs.file_basename + ".log"
+    log_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.log')
 
     set_strings_node = ["  const integer Node_", \
                         "  integer Node_", \
@@ -353,14 +366,18 @@ def set_motion_paths_mov(context):
         return {'CANCELLED'}
 
     # .mov filename
-    mov_file = mbs.file_path + mbs.file_basename + '.mov'
+    mov_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.mov')
     
     # Debug message
     print("Reading from file:", mov_file)
    
     # total number of frames to be animated
-    num_frames = int(mbs.num_rows/mbs.num_nodes)
-    scene.frame_end = int(num_frames/mbs.load_frequency) - 1
+    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
+    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
+
+    loop_start = int(scene.frame_start * mbs.load_frequency)
+    loop_end = int(scene.frame_end * mbs.load_frequency)
 
     # list of animatable Blender object types
     anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
@@ -368,40 +385,62 @@ def set_motion_paths_mov(context):
     # Cycle to establish which objects to animate
     anim_objs = dict()
 
-    wm.progress_begin(1, scene.frame_end)
+    wm.progress_begin(scene.frame_start, scene.frame_end)
     try:
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
             # first loop: we establish which object to animate
-            scene.frame_current = 0
+            scene.frame_current = scene.frame_start
+
+            for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
+                next(reader)
+
+            first = []
+            second = []
             for ndx in range(mbs.num_nodes):
-                rw = next(reader)
-                obj_name = nd['node_' + rw[0]].blender_object
+                rw = np.array(next(reader)).astype(np.float)
+                first.append(rw)
+                second.append(rw)
+
+                obj_name = nd['node_' + str(int(rw[0]))].blender_object
                 if obj_name != 'none':
                     anim_objs[rw[0]] = obj_name
                     obj = bpy.data.objects[obj_name]
                     obj.select = True
                     set_obj_locrot_mov(obj, rw)
 
-            # main for loop, from second frame to last 
+            # main for loop, from second frame to last
+            freq = mbs.load_frequency
             Nskip = 0
-            if mbs.load_frequency > 1:
-                Nskip = (mbs.load_frequency - 1)*mbs.num_nodes
+            if freq > 1:
+                Nskip = (np.ceil(freq) - 1)*mbs.num_nodes
 
-            for frame in range(scene.frame_end):
-                scene.frame_current = (frame + 1)
+            for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
+                scene.frame_current += 1
+                frac = np.ceil(frame) - frame
+
+                print(frame, frac)
+
+                # skip (freq - 1)*N lines
+                for ii in range(int(Nskip) - (idx%2)*mbs.num_nodes):
+                    first[ii % mbs.num_nodes] = np.array(next(reader)).astype(np.float)
+
                 for ndx in range(mbs.num_nodes):
-                    rw = next(reader)
+                    rw = np.array(next(reader)).astype(np.float)
+                    second[ndx] = rw
+
+                for ndx in range(mbs.num_nodes):
                     try:
-                        obj = bpy.data.objects[anim_objs[rw[0]]]
+                        answer = frac*first[ndx] + (1-frac)*second[ndx]
+                        obj = bpy.data.objects[anim_objs[round(answer[0])]]
                         obj.select = True
-                        set_obj_locrot_mov(obj, rw)
+                        set_obj_locrot_mov(obj, answer)
+
                     except KeyError:
                         pass
-                # skip (freq - 1)*N lines
-                for ii in range(Nskip):
-                    rw = next(reader)
-                wm.progress_update(frame)
+
+                first = second
+                wm.progress_update(scene.frame_current)
     except StopIteration:
         pass
     wm.progress_end()
@@ -413,24 +452,13 @@ def set_motion_paths_mov(context):
     if mbs.simtime:
         mbs.simtime.clear()
 
-    out_file = mbs.file_path + mbs.file_basename + '.out'
-    try:
-        with open(out_file) as of:
-            reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
-            for ii in range(3):
-                next(reader)
-            kk = 0
-            jj = 0
-            while kk < scene.frame_end:
-                rw = next(reader)
-                if int(rw[8]):
-                    jj = jj + 1
-                    if (jj - 1) == kk*mbs.load_frequency:
-                        st = mbs.simtime.add()
-                        st.time = float(rw[2])
-                        kk = kk + 1
-    except StopIteration:
-        pass
+    for ii in np.arange(0, loop_start, mbs.load_frequency):
+        mbs.simtime.add()
+
+    for ii in np.arange(scene.frame_start, scene.frame_end, mbs.load_frequency):
+        st = mbs.simtime.add()
+        st.time = mbs.time_step * ii
+
 
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -444,27 +472,38 @@ def set_motion_paths_netcdf(context):
     ed = mbs.elems 
     wm = context.window_manager
 
-    ncfile = mbs.file_path + mbs.file_basename + '.nc'
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r", format="NETCDF3")
     nctime = nc.variables["time"]
 
+    mbs.time_step = nctime[1]
+
     freq = mbs.load_frequency
-    scene.frame_end = len(nctime)/freq - 1
+    # scene.frame_end = len(nctime)/freq - 1
+
+    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
+    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
 
     anim_nodes = list()
     for node in nd:
         if node.blender_object != 'none':
             anim_nodes.append(node.name)
 
-    scene.frame_current = 0
+    scene.frame_current = scene.frame_start
+
+    loop_start = int(scene.frame_start * mbs.load_frequency)
+    loop_end = int(scene.frame_end * mbs.load_frequency)
+
     if mbs.simtime:
         mbs.simtime.clear()
 
-    # set time
-    for frame in range(scene.frame_end + 1):
-        tdx = frame*freq
+    for ii in np.arange(0, loop_start, mbs.load_frequency):
+        mbs.simtime.add()
+
+    for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
-        st.time = nctime[tdx]
+        st.time = mbs.time_step * ii
     
     # set objects location and rotation
     wm.progress_begin(1, len(anim_nodes))
@@ -475,41 +514,71 @@ def set_motion_paths_netcdf(context):
         obj.select = True
         node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
         if obj.mbdyn.parametrization[0:5] == 'EULER':
-            for frame in range(scene.frame_end + 1):
+            for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
+
                 tdx = frame*freq
-                
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                frac = np.ceil(tdx) - tdx
+
+                first = nc.variables[node_var + 'X'][int(tdx), :]
+                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
-            
+
+                first = math.radians(1.0)*(nc.variables[node_var + 'E'][int(tdx), :])
+                second = math.radians(1.0)*(nc.variables[node_var + 'E'][int(np.ceil(tdx)), :])
+                answer = first * frac + second * (1-frac)
+
                 obj.rotation_euler = \
-                        Euler( Vector(( math.radians(1.0)*(nc.variables[node_var + 'E'][tdx, :]) )),
+                        Euler( Vector((answer)),
                                 axes[obj.mbdyn.parametrization[7]] +\
                                 axes[obj.mbdyn.parametrization[6]] +\
                                 axes[obj.mbdyn.parametrization[5]] )
                 obj.keyframe_insert(data_path = "rotation_euler")
         elif obj.mbdyn.parametrization == 'PHI':
-            for frame in range(scene.frame_end + 1):
+            for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
+
                 tdx = frame*freq
+                frac = np.ceil(tdx) - tdx
+
+                first = nc.variables[node_var + 'X'][int(tdx), :]
+                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
 
                 obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
                 obj.keyframe_insert(data_path = "location")
 
-                rotvec = Vector(( nc.variables[node_var + 'Phi'][tdx, :] ))
+                first = nc.variables[node_var + 'Phi'][int(tdx), :]
+                second = nc.variables[node_var + 'Phi'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
         elif obj.mbdyn.parametrization == 'MATRIX':
-            for frame in range(scene.frame_end + 1):
+            for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
-                tdx = frame*freq
 
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                tdx = frame*freq
+                frac = np.ceil(tdx) - tdx
+
+                first = nc.variables[node_var + 'X'][int(tdx), :]
+                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
+                first = nc.variables[node_var + 'R'][int(tdx), :]
+                second = nc.variables[node_var + 'R'][int(np.ceil(tdx)), :]
+                answer = first * frac + second * (1-frac)
+
+                R = Matrix((answer))
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
@@ -525,8 +594,13 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function 
+class BlenderHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        editor = bpy.data.texts[os.path.basename(logFile)]
+        editor.write(log_entry + '\n')
 
-def log_messages(mbs, baseLogger):
+def log_messages(mbs, baseLogger, saved_blend):
 
         blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
                     else 'untitled.blend'
@@ -534,11 +608,28 @@ def log_messages(mbs, baseLogger):
 
         formatter = '%(asctime)s - %(levelname)s - %(message)s'
         datefmt = '%m/%d/%Y %I:%M:%S %p'
+        global logFile
         logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
 
         fh = logging.FileHandler(logFile)
         fh.setFormatter(logging.Formatter(formatter, datefmt))
 
-        baseLogger.addHandler(fh)
+        custom = BlenderHandler()
+        custom.setFormatter(logging.Formatter(formatter, datefmt))
 
-        bpy.ops.text.open(filepath = logFile)
+        baseLogger.addHandler(fh)
+        baseLogger.addHandler(custom)
+
+        if not saved_blend:
+            bpy.data.texts.new(os.path.basename(logFile))
+
+def delete_log():
+    mbs = bpy.context.scene.mbdyn
+
+    if not bpy.data.is_saved:
+        os.remove(logFile)
+
+    elif mbs.del_log:
+        os.remove(logFile)
+
+atexit.register(delete_log)
