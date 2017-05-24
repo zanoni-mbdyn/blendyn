@@ -24,13 +24,17 @@
 
 # TODO: check for unnecessary stuff
 
-import os.path
+import os
 
 import bpy
 import bmesh
 from bpy.props import *
 from bpy.app.handlers import persistent
 from bpy_extras.io_utils import ImportHelper
+
+import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -223,6 +227,12 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     overwrite = BoolProperty(
             name = "Overwrite Property",
             description = "True if the user wants to overwrite the existing output files",
+            default = False
+            )
+
+    del_log = BoolProperty(
+            name = "Log property",
+            description = "True if the user wants to delete log files on exit",
             default = False
             )
     # Collection of Environment variables and corresponding values
@@ -613,6 +623,37 @@ def update_time(scene):
         pass
 bpy.app.handlers.frame_change_pre.append(update_time)
 
+@persistent
+def close_log(scene):
+    baseLogger.handlers = []
+
+bpy.app.handlers.load_pre.append(close_log)
+bpy.app.handlers.save_pre.append(close_log)
+
+@persistent
+def blend_log(scene):
+
+    mbs = bpy.context.scene.mbdyn
+
+    if mbs.file_path:
+        log_messages(mbs, baseLogger, False)
+
+bpy.app.handlers.load_post.append(blend_log)
+
+@persistent
+def rename_log(scene):
+    mbs = bpy.context.scene.mbdyn
+    logFile = ('{0}_{1}.bylog').format(mbs.file_path + 'untitled', mbs.file_basename)
+    newBlend = path_leaf(bpy.data.filepath)[1]
+    newLog = ('{0}_{1}.bylog').format(mbs.file_path + newBlend, mbs.file_basename)
+    os.rename(logFile, newLog)
+
+    bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
+
+    log_messages(mbs, baseLogger, True)
+
+bpy.app.handlers.save_post.append(rename_log)
+
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
     bl_idname = "animate.read_mbdyn_log_file"
@@ -623,26 +664,47 @@ class MBDynReadLog(bpy.types.Operator):
 
         missing = context.scene.mbdyn.missing
         if len(obj_names) > 0:
-            self.report({'WARNING'}, "Some of the nodes/elements are missing in the new .log file")
+            message = "Some of the nodes/elements are missing in the new .log file"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             hide_or_delete(obj_names, missing)
             return {'FINISHED'}
+
         if ret_val == {'LOG_NOT_FOUND'}:
-            self.report({'ERROR'}, "MBDyn .log file not found")
+            message = "MBDyn .log file not found"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
             return {'CANCELLED'}
+
         elif ret_val == {'NODES_NOT_FOUND'}:
-            self.report({'ERROR'}, "The .log file selected does not contain MBDyn nodes definitions")
+            message = "The .log file selected does not contain MBDyn nodes definitions"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
             return {'CANCELLED'}
+
         elif ret_val == {'MODEL_INCONSISTENT'}:
-            self.report({'WARNING'}, "Contents of MBDyn .log file inconsistent with the scene")
+            message = "Contents of MBDyn .log file inconsistent with the scene"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             return {'FINISHED'}
+
         elif ret_val == {'NODES_INCONSISTENT'}:
-            self.report({'WARNING'}, "Nodes in MBDyn .log file inconsistent with the scene")
+            message = "Nodes in MBDyn .log file inconsistent with the scene"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             return {'FINISHED'}
+
         elif ret_val == {'ELEMS_INCONSISTENT'}:
-            self.report({'WARNING'}, "Elements in MBDyn .log file inconsistent with the scene")
+            message = "Elements in MBDyn .log file inconsistent with the scene"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             return {'FINISHED'}
+
         elif ret_val == {'FINISHED'}:
-            self.report({'INFO'}, "MBDyn entities imported successfully")
+            message = "MBDyn entities imported successfully"
+            self.report({'INFO'}, message) 
+            baseLogger.info(message)
+
             return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -671,6 +733,11 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
 
         si_retval = setup_import(self.filepath, context)
 
+        mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
+
+        baseLogger.handlers = []
+        log_messages(mbs, baseLogger, False)
+
         if si_retval == {'NETCDF_ERROR'}:
             self.report({'ERROR'}, "NetCDF module not imported correctly")
             return {'CANCELLED'}
@@ -693,14 +760,22 @@ class MBDynAssignLabels(bpy.types.Operator):
     def execute(self, context):
         ret_val = assign_labels(context)
         if ret_val == {'NOTHING_DONE'}:
-            self.report({'WARNING'}, "MBDyn labels file provided appears to not contain \
-                    correct labels.")
+            message = 'MBDyn labels file provided appears to not contain ' +\
+            'correct labels.'
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             return {'CANCELLED'}
+
         elif ret_val == {'LABELS_UPDATED'}:
-            self.report({'INFO'}, "MBDyn labels imported")
+            message = "MBDyn labels imported"
+            self.report({'INFO'}, message)
+            baseLogger.info(message)
             return {'FINISHED'}
+
         elif ret_val == {'FILE_NOT_FOUND'}:
-            self.report({'ERROR'}, "MBDyn labels file not found...")
+            message = "MBDyn labels file not found..."
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
             return {'CANCELLED'}
 
     def invoke(self, context, event):
@@ -718,7 +793,9 @@ class MBDynClearData(bpy.types.Operator):
     def execute(self, context):
         context.scene.mbdyn.nodes.clear()
         context.scene.mbdyn.elems.clear()
-        self.report({'INFO'}, "Scene MBDyn data cleared.")
+        message = "Scene MBDyn data cleared."
+        self.report({'INFO'}, message)
+        baseLogger.info(message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -928,7 +1005,10 @@ class MBDynSetMotionPaths(bpy.types.Operator):
         else:
             ret_val = set_motion_paths_netcdf(context)
         if ret_val == 'CANCELLED':
-            self.report({'WARNING'}, "MBDyn results file not loaded")
+            message = "MBDyn results file not loaded"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
+            
         return ret_val
 
     def invoke(self, context, event):
@@ -1011,6 +1091,9 @@ class MBDynImportPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(mbs, "missing", text = "")
 
+        row = layout.row()
+        col = layout.column(align = True)
+        col.prop(mbs, "del_log", text = "Delete Log Files on Exit")
 
         # Clear MBDyn data for scene
         row = layout.row()
@@ -1360,6 +1443,19 @@ class MBDynElemsScenePanel(bpy.types.Panel):
         if mbs.ed_index >= 0 and len(mbs.elems):
             item = mbs.elems[mbs.ed_index]
 
+            row = layout.row()
+            row.separator()
+
+            col = layout.column()
+            col.prop(item, "int_label")
+            col.prop(item, "string_label")
+            col.prop(item, "blender_object")
+            col.enabled = False
+
+            row = layout.row()
+            row.operator(item.import_function, \
+                    text="Add element to the scene").int_label = item.int_label
+
             col = layout.column()
 
             row = col.row()
@@ -1376,19 +1472,8 @@ class MBDynElemsScenePanel(bpy.types.Panel):
                 col.operator(Scene_OT_MBDyn_Import_Elements_as_Mesh.bl_idname, \
                         text="Import elements by type")
 
-
-            row = layout.row()
-            row.separator()
-
             col = layout.column()
-            col.prop(item, "int_label")
-            col.prop(item, "string_label")
-            col.prop(item, "blender_object")
-            col.enabled = False
-
-            row = layout.row()
-            row.operator(item.import_function, \
-                    text="Add element to the scene").int_label = item.int_label
+            col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
@@ -1443,8 +1528,11 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
                 if not(spawn_node_obj(context, node)):
-                    self.report({'ERROR'}, "Could not spawn the Blender object assigned to node " \
-                            + str(node.int_label))
+                    message = "Could not spawn the Blender object assigned to node {}"\
+                            .format(node.int_label)
+
+                    self.report({'ERROR'}, message)
+                    baseLogger.error(message)
                     return {'CANCELLED'}
 
                 obj = context.scene.objects.active
@@ -1465,10 +1553,14 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
                 added_nodes += 1
 
         if added_nodes:
-            self.report({'INFO'}, "All MBDyn nodes imported successfully")
+            message = "All MBDyn nodes imported successfully"
+            self.report({'INFO'}, message)
+            baseLogger.info(message)
             return {'FINISHED'}
         else:
-            self.report({'WARNING'}, "No MBDyn nodes imported")
+            message = "No MBDyn nodes imported"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Node_Import_All class
@@ -1488,8 +1580,11 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
         for node in context.scene.mbdyn.nodes:
             if node.int_label == self.int_label:
                 if not(spawn_node_obj(context, node)):
-                    self.report({'ERROR'}, "Could not spawn the Blender object assigned to node " \
-                            + str(node.int_label))
+                    message = "Could not spawn the Blender object assigned to node {}"\
+                            .format(node.int_label)
+
+                    self.report({'ERROR'}, message)
+                    baseLogger.error(message)
                     return {'CANCELLED'}
                 obj = context.scene.objects.active
                 obj.mbdyn.type = 'node.struct'
@@ -1508,10 +1603,14 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
                 print("MBDynNodeAddButton: added node " + str(node.int_label) + " to scene and associated with object " + obj.name)
                 added_node = True
         if added_node:
-            self.report({'INFO'}, "MBDyn node " + node.string_label + " imported to scene.")
+            message = "MBDyn node " + node.string_label + " imported to scene."
+            self.report({'INFO'}, message)
+            baseLogger.info(message)
             return {'FINISHED'}
         else:
-            self.report({'WARNING'}, "Cannot import MBDyn node " + node.string_label + ".")
+            message = "Cannot import MBDyn node " + node.string_label + "."
+            self.report({'WARNING'}, message) 
+            baseLogger.warning(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Node_Import_Single class
@@ -1530,11 +1629,67 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
                 try:
                     eval("spawn_" + elem.type + "_element(elem, context)")
                 except NameError:
-                    self.report({'ERROR'}, "Couldn't find the element import function")
-                    return {'CANCELLED'}
+                    if ( elem.type == 'structural_absolute_force' ) \
+                            or ( elem.type == 'structural_follower_force' ):
+                        eval("spawn_structural_force_element(elem, context)")
+                    elif ( elem.type == 'structural_absolute_couple' ) \
+                            or ( elem.type == 'structural_follower_couple' ):
+                        eval("spawn_structural_couple_element(elem, context)")
+                    else:
+                        message = "Could not find the import function for element of type " + \
+                                elem.type + ". Element " + elem.name + " not imported."
+                        self.report({'ERROR'}, message)
+                        baseLogger.error(message)
+                        return {'CANCELLED'}
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Elements_by_Type class
+
+class Scene_OT_MBDyn_Elements_Import_All(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elems_all"
+    bl_label = "Add all the elements to the scene"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+
+        ELEMS_MISSING = False
+        for elem in ed:
+            if (elem.int_label >= mbs.min_elem_import) \
+                    and (elem.int_label <= mbs.max_elem_import):
+                try:
+                    eval("spawn_" + elem.type + "_element(elem, context)")
+                except NameError:
+                    if ( elem.type == 'structural_absolute_force' ) \
+                            or ( elem.type == 'structural_follower_force' ):
+                        eval("spawn_structural_force_element(elem, context)")
+                    elif ( elem.type == 'structural_absolute_couple' ) \
+                            or ( elem.type == 'structural_follower_couple' ):
+                        eval("spawn_structural_couple_element(elem, context)")
+                    else:
+                        message = "Could not find the import function for element of type " + \
+                            elem.type + ". Element " + elem.name + " not imported."
+                        baseLogger.warning(message)
+                        if not(ELEMS_MISSING):
+                            ELEMS_MISSING = True
+                        pass
+
+        if ELEMS_MISSING:
+            message = "Some elements were not imported. See log file for details"
+            baseLogger.warning(message)
+            self.report({'WARNING'}, message)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Elements_Import_All class
 
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
     bl_idname = "sel.mbdynnode"
@@ -1554,9 +1709,14 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
             if self.int_label == item.int_label:
                 item.blender_object = context.object.name
                 ret_val = update_parametrization(context.object)
+
             if ret_val == 'ROT_NOT_SUPPORTED':
-                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-                            + obj.mbdyn.string_label)
+                message = "Rotation parametrization not supported, node " \
+                + obj.mbdyn.string_label
+
+                self.report({'ERROR'}, message)
+                baseLogger.error(message)
+
             else:
                 # DEBUG message to console
                 print("Object " + context.object.name + \
@@ -1640,7 +1800,9 @@ class MBDynCreateVerticesFromNodesButton(bpy.types.Operator):
                 bpy.ops.object.select_all()
 
         else:
-            self.report({'WARNING'}, "No MBDyn nodes associated with selected objects.")
+            message = "No MBDyn nodes associated with selected objects."
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
             return{'CANCELLED'}
 
         return{'FINISHED'}

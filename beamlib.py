@@ -26,6 +26,8 @@ import bpy
 import numpy as np
 import csv
 
+import logging
+
 from mathutils import *
 from math import *
 
@@ -553,51 +555,6 @@ def spawn_beam3_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
  
     bpy.ops.object.select_all(action = 'DESELECT')
-
-    if False:   # NOT CORRECT! -- Moved to update_beam3
-        # P1 driver for bevel section rotation
-        drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
-        xrot_P1 = drv_tilt_P1.driver.variables.new()
-        xrot_P1.name = "xrot_P1"
-        xrot_P1.type = 'TRANSFORMS'
-        xrot_P1.targets[0].id = n1OBJ
-        xrot_P1.targets[0].data_path = 'rotation.x'
-        xrot_P1.targets[0].transform_type = 'ROT_X'
-        xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_P1.driver.expression = "xrot_P1"
-    
-        # P3 driver for bevel section rotation
-        drv_tilt_P3 = beamOBJ.data.splines[0].points[3].driver_add('tilt')
-        xrot_P3 = drv_tilt_P3.driver.variables.new()
-        xrot_P3.name = "xrot_P3"
-        xrot_P3.type = 'TRANSFORMS'
-        xrot_P3.targets[0].id = n3OBJ
-        xrot_P3.targets[0].data_path = 'rotation.x'
-        xrot_P3.targets[0].transform_type = 'ROT_X'
-        xrot_P3.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_P3.driver.expression = "xrot_P3"
-    
-        # M1 driver for bevel section rotation (TODO: check correctness)
-        drv_tilt_M1 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
-        xrot_P2_1 = drv_tilt_M1.driver.variables.new()
-        xrot_P2_1.name = "xrot_P2"
-        xrot_P2_1.type = 'TRANSFORMS'
-        xrot_P2_1.targets[0].id = n2OBJ
-        xrot_P2_1.targets[0].data_path = 'rotation.x'
-        xrot_P2_1.targets[0].transform_type = 'ROT_X'
-        xrot_P2_1.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_M1.driver.expression = "xrot_P2"
-        
-        # M2 driver for bevel section rotation (TODO: check correctness)
-        drv_tilt_M2 = beamOBJ.data.splines[0].points[2].driver_add('tilt')
-        xrot_P2_2 = drv_tilt_M2.driver.variables.new()
-        xrot_P2_2.name = "xrot_P2"
-        xrot_P2_2.type = 'TRANSFORMS'
-        xrot_P2_2.targets[0].id = n2OBJ
-        xrot_P2_2.targets[0].data_path = 'rotation.x'
-        xrot_P2_2.targets[0].transform_type = 'ROT_X'
-        xrot_P2_2.targets[0].transform_space = 'WORLD_SPACE'
-        drv_tilt_M2.driver.expression = "xrot_P2"
         
     beamOBJ.select = True
     n1OBJ.select = True
@@ -640,6 +597,8 @@ def update_beam3(elem, insert_keyframe = False):
     f2 = elem.offsets[1].value
     f3 = elem.offsets[2].value
 
+    bpy.context.scene.update()
+
     # points on beam
     P1 = n1.matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
     P2 = n2.matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
@@ -665,15 +624,16 @@ def update_beam3(elem, insert_keyframe = False):
     t3 = P3.to_3d() - cp2.location
     t3.normalize()
 
-    phi1, theta1 = n1.matrix_world.to_quaternion().to_axis_angle()
-    phi2, theta2 = n2.matrix_world.to_quaternion().to_axis_angle()
-    phi3, theta3 = n3.matrix_world.to_quaternion().to_axis_angle()
+    phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
     
     cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
     cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
     cvdata.splines[0].points[2].tilt = t2.to_3d()*(theta2*phi2)
     cvdata.splines[0].points[3].tilt = t3.to_3d()*(theta3*phi3)
-    
+
+    bpy.context.scene.update()
 
     if insert_keyframe:
         try:
@@ -687,7 +647,9 @@ def update_beam3(elem, insert_keyframe = False):
             if 'context is incorrect' in str(err):
                 pass
             else:
-                self.report({'WARNING'}, str(err))
+                message = str(err)
+                self.report({'WARNING'}, message)
+                logging.warning(message)
         except TypeError:
             pass
 
@@ -713,25 +675,31 @@ class Scene_OT_MBDyn_Elems_Import_Beam2(bpy.types.Operator):
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                message = "Could not import element: Blender object" + \
+                    "associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object" + \
+                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
 
         except KeyError:
-            self.report({'ERROR'}, "Element beam2_" + str(elem.int_label) + "not found.")
+            message = "Element beam2_" + str(elem.int_label) + "not found."
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
             
         return {'FINISHED'}
@@ -754,29 +722,37 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
             elem = ed['beam3_' + str(self.int_label)]
             retval = spawn_beam3_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object " +\
+                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE3_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[2].int_label) + " not found")
+                message = "Could not import element: Blender object " +\
+                        "associated to Node " + str(elem.nodes[2].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
 
         except KeyError:
-            self.report({'ERROR'}, "Element beam3_" + str(elem.int_label) + "not found.")
+            message = "Element beam3_" + str(elem.int_label) + "not found."
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
             
 # -----------------------------------------------------------
@@ -792,7 +768,9 @@ class Object_OT_MBDyn_update_beam3(bpy.types.Operator):
         ed = context.scene.mbdyn.elems
         ret_val = update_beam3(ed[context.object.name])
         if ret_val == 'OBJECTS_NOTFOUND':
-            self.report({'ERROR'}, "Unable to find Blender objects needed")
+            message = "Unable to find Blender objects needed"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
         else:
             return ret_val
