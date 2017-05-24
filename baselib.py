@@ -1,4 +1,4 @@
-# --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 # Blendyn -- file base.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
@@ -42,9 +42,18 @@ from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
-from .plotlib import get_plot_vars_glob
+from .logwatcher import *
 
-import os
+try:
+    import pygal
+    from .plotlib import get_plot_vars_glob
+    HAVE_PLOT = True
+except ImportError:
+    print("blendyn: could not find pygal module. Plotting  "\
+        + "will be disabled.")
+    pass
+
+import os, time
 import pdb
 
 try: 
@@ -53,6 +62,27 @@ except ImportError:
     print("blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
     pass
+
+def parse_input_file(context):
+    mbs = context.scene.mbdyn
+
+    out_file = mbs.input_path
+
+    with open(out_file) as of:
+        reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
+
+        while True:
+            rw = next(reader)
+            print(rw)
+            if rw:
+                first = rw[0].strip()
+
+            if first == 'final':
+                time = rw[2]
+                time = float(time[:-1])
+                mbs.input_time = time
+
+                break
 
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
@@ -77,10 +107,9 @@ def setup_import(filepath, context):
             except KeyError:
                 print('MBDynSelectOutputFile: no eigenanalysis results found')
                 pass
-            try:
+            if HAVE_PLOT:
                 get_plot_vars_glob(context)
-            except AttributeError:
-                pass
+
 
         except NameError:
             return {'NETCDF_ERROR'}
@@ -90,7 +119,6 @@ def setup_import(filepath, context):
 
 # -----------------------------------------------------------
 # end of setup_import() function
-
 
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary

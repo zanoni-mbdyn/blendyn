@@ -39,10 +39,10 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import ntpath, os, csv, math
+import ntpath, os, csv, math, time, psutil
 from collections import namedtuple
 import subprocess
-import os
+from multiprocessing import Process
 import json
 
 import pdb
@@ -66,6 +66,7 @@ except ImportError:
 from .baselib import *
 from .elements import *
 from .eigenlib import *
+from .logwatcher import *
 
 import pdb
 
@@ -217,6 +218,16 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "Number of Simulation",
             default = 0
             )
+
+    sim_status = IntProperty(
+            name = "Percentage of simulation completed",
+            default = 0
+        )
+
+    input_time = FloatProperty(
+            name = "Previous State of Simulation",
+            default = 0.0
+        )
 
     # Command-line options to be specified in MBDyn simulation
     cmd_options = StringProperty(
@@ -741,7 +752,7 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
         if si_retval == {'NETCDF_ERROR'}:
             self.report({'ERROR'}, "NetCDF module not imported correctly")
             return {'CANCELLED'}
-        elif is_retval == {'FINISHED'}:
+        elif si_retval == {'FINISHED'}:
             return si_retval
 
     def invoke(self, context, event):
@@ -898,10 +909,14 @@ bpy.utils.register_class(MBDynDeleteEnvVariables)
 # -----------------------------------------------------------
 # end of MBDynDeleteEnvVariables class
 
+import time
+
 class MBDynRunSimulation(bpy.types.Operator):
     """Runs the MBDyn Simulation in background"""
     bl_idname = "sel.mbdyn_run_simulation"
     bl_label = "Run MBDyn Simulation"
+
+
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -926,10 +941,18 @@ class MBDynRunSimulation(bpy.types.Operator):
         if not mbs.overwrite:
             mbs.sim_num += 1
 
-        if len(mbs.file_basename.split('_')) > 1:
-            filename = mbs.file_basename.split('_')
-            filename[-1] = str(mbs.sim_num)
-            mbs.file_basename = "_".join(filename)
+        basename_list = mbs.file_basename.split('_')
+
+        if len(basename_list) > 1:
+            try:
+                if int(basename_list[-1]) == mbs.sim_num - 1:
+                    filename = basename_list
+                    filename[-1] = str(mbs.sim_num)
+                    mbs.file_basename = "_".join(filename)
+
+            except ValueError:
+                pass
+
 
         else:
             mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.sim_num)
@@ -939,8 +962,36 @@ class MBDynRunSimulation(bpy.types.Operator):
 
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
-        if not(mbdyn_retcode):
-            self.report('INFO', "MBDyn simulation ended without errors")
+
+        parse_input_file(context)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynRunSimulation)
+# -----------------------------------------------------------
+# end of MBDynRunSimulation class
+
+class MBDynSimulationStatus(bpy.types.Operator):
+    """Gives the status of the running MBDyn simulation"""
+    bl_idname = "sel.mbdyn_simulation_status"
+    bl_label = "Status of MBDyn Simulation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        file = mbs.file_path + mbs.file_basename
+
+        status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
+        status = status.split(' ')[2]
+        percent = round((float(status)/mbs.input_time)*100)
+
+        si_retval = {'FINISHED'}
+
+        if float(status) >= mbs.input_time:
+            self.report({'INFO'}, 'Simulation Completed')
+
             if ( os.path.isfile(os.path.join(mbs.file_path, \
                     mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
                 si_retval = setup_import(os.path.join(mbs.file_path, \
@@ -949,21 +1000,21 @@ class MBDynRunSimulation(bpy.types.Operator):
                 mbs.use_netcdf = False
                 si_retval = setup_import(os.path.join(mbs.file_path, \
                         mbs.file_basename + '.mov'), context)
+
         else:
-            self.report('ERROR', "Something went wrong with the MBDyn simulation.")
-            return {'CANCELLED'}
+            self.report({'INFO'}, str(percent) + '% of simulation completed')
 
         if si_retval == {'NETCDF_ERROR'}:
             self.report({'ERROR'}, "NetCDF module not imported correctly")
             return {'CANCELLED'}
-        elif is_retval == {'FINISHED'}:
+        elif si_retval == {'FINISHED'}:
             return si_retval
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynRunSimulation)
+bpy.utils.register_class(MBDynSimulationStatus)
 # -----------------------------------------------------------
-# end of MBDynRunSimulation class
+# end of MBDynSimulationStatus class
 
 class MBDynStopSimulation(bpy.types.Operator):
     """Stops the MBDyn simulation"""
@@ -971,13 +1022,16 @@ class MBDynStopSimulation(bpy.types.Operator):
     bl_label = "Stop MBDyn Simulation"
 
     def execute(self, context):
-        subprocess.call('kill $(pidof mbdyn)', shell = True)
+
+        mbdynProc = [var for var in psutil.process_iter() if var.name() == 'mbdyn']
+        mbdynProc[0].kill()
 
         self.report({'INFO'}, "The MBDyn simulation was interrupted")
         return {'FINISHED'}
 
     def invoke(self, context, event):
         return self.execute(context)
+
 bpy.utils.register_class(MBDynStopSimulation)
 # -----------------------------------------------------------
 # end of MBDynStopSimulation class
@@ -1052,6 +1106,7 @@ class MBDynImportPanel(bpy.types.Panel):
         # MBDyn output file selection
         row = layout.row()
         row.label(text = "MBDyn simulation results")
+
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
@@ -1214,6 +1269,9 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
+
+        col = layout.column(align = True)
+        col.operator(MBDynSimulationStatus.bl_idname, text = 'Status of Simulation')
 
         col = layout.column(align = True)
         col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
