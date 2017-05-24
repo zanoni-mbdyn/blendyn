@@ -597,6 +597,8 @@ def update_beam3(elem, insert_keyframe = False):
     f2 = elem.offsets[1].value
     f3 = elem.offsets[2].value
 
+    bpy.context.scene.update()
+
     # points on beam
     P1 = n1.matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
     P2 = n2.matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
@@ -630,7 +632,8 @@ def update_beam3(elem, insert_keyframe = False):
     cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
     cvdata.splines[0].points[2].tilt = t2.to_3d()*(theta2*phi2)
     cvdata.splines[0].points[3].tilt = t3.to_3d()*(theta3*phi3)
-    
+
+    bpy.context.scene.update()
 
     if insert_keyframe:
         try:
