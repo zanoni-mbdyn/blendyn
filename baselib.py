@@ -31,8 +31,13 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
+
+import logging
+
 import numpy as np
-import ntpath, csv, math
+
+import ntpath, os, csv, math, atexit
+
 from collections import namedtuple
 
 from .nodelib import *
@@ -291,12 +296,20 @@ def update_label(self, context):
                 ret_val = update_parametrization(obj)
 
             if ret_val == 'ROT_NOT_SUPPORTED':
-                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-                + obj.mbdyn.string_label)
+                message = "Rotation parametrization not supported, node " \
+                + obj.mbdyn.string_label
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
             elif ret_val == 'LOG_NOT_FOUND':
-                self.report({'ERROR'}, "MBDyn .log file not found")
+                message = "MBDyn .log file not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
         except KeyError:
-            self.report({'ERROR'}, "Node not found")
+            message = "Node not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             pass
     return
 # -----------------------------------------------------------
@@ -322,7 +335,7 @@ def remove_oldframes(context):
 
 def hide_or_delete(obj_names, missing):
 
-    obj_list = [bpy.data.objects[var] for var in obj_names]
+    obj_names = list(filter(lambda v: v != 'none', obj_names))
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
     if missing == "HIDE":
@@ -583,3 +596,42 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function 
+class BlenderHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        editor = bpy.data.texts[os.path.basename(logFile)]
+        editor.write(log_entry + '\n')
+
+def log_messages(mbs, baseLogger, saved_blend):
+
+        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
+                    else 'untitled.blend'
+        blendFile = os.path.splitext(blendFile)[0]
+
+        formatter = '%(asctime)s - %(levelname)s - %(message)s'
+        datefmt = '%m/%d/%Y %I:%M:%S %p'
+        global logFile
+        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
+
+        fh = logging.FileHandler(logFile)
+        fh.setFormatter(logging.Formatter(formatter, datefmt))
+
+        custom = BlenderHandler()
+        custom.setFormatter(logging.Formatter(formatter, datefmt))
+
+        baseLogger.addHandler(fh)
+        baseLogger.addHandler(custom)
+
+        if not saved_blend:
+            bpy.data.texts.new(os.path.basename(logFile))
+
+def delete_log():
+    mbs = bpy.context.scene.mbdyn
+
+    if not bpy.data.is_saved:
+        os.remove(logFile)
+
+    elif mbs.del_log:
+        os.remove(logFile)
+
+atexit.register(delete_log)
