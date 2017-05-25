@@ -969,9 +969,6 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
-        self.timer = context.window_manager.event_timer_add(0.02, context.window)
-        context.window_manager.modal_handler_add(self)
-
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
@@ -985,18 +982,19 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         status = ''
         percent = 0
-        if os.path.exists(file + '.out'):
-            try:
-                status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
-                status = status.split(' ')[2]
-                percent = (float(status)/mbs.input_time)*100
-            except IndexError:
-                pass
-            except ValueError:
-                pass
 
         if event.type == 'TIMER':
-             mbs.sim_status = percent
+            if os.path.exists(file + '.out'):
+                try:
+                    status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
+                    status = status.split(' ')[2]
+                    percent = (float(status)/mbs.input_time)*100
+                except IndexError:
+                    pass
+                except ValueError:
+                    pass
+            mbs.sim_status = percent
+            print(str(round(percent)) + '% completed')
 
         if percent >= 100:
             context.window_manager.event_timer_remove(self.timer)
@@ -1027,6 +1025,9 @@ class MBDynRunSimulation(bpy.types.Operator):
         if not mbs.input_time:
             self.report({'ERROR'}, "Enter input time for the simulation to proceed")
             return {'CANCELLED'}
+
+        self.timer = context.window_manager.event_timer_add(0.5, context.window)
+        context.window_manager.modal_handler_add(self)
 
         return self.execute(context)
 
