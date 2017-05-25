@@ -1,4 +1,4 @@
-# --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 # Blendyn -- file base.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
@@ -31,14 +31,29 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
+
+import logging
+
 import numpy as np
-import ntpath, csv, math
+
+import ntpath, os, csv, math, atexit
+
 from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
+from .logwatcher import *
 
-import os
+try:
+    import pygal
+    from .plotlib import get_plot_vars_glob
+    HAVE_PLOT = True
+except ImportError:
+    print("blendyn: could not find pygal module. Plotting  "\
+        + "will be disabled.")
+    pass
+
+import os, time
 import pdb
 
 try: 
@@ -46,6 +61,64 @@ try:
 except ImportError:
     print("blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
+    pass
+
+def parse_input_file(context):
+    mbs = context.scene.mbdyn
+
+    out_file = mbs.input_path
+
+    with open(out_file) as of:
+        reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
+
+        while True:
+            rw = next(reader)
+            print(rw)
+            if rw:
+                first = rw[0].strip()
+
+            if first == 'final':
+                time = rw[2]
+                time = float(time[:-1])
+                mbs.input_time = time
+
+                break
+
+## Function that sets up the data for the import process
+def setup_import(filepath, context):
+    mbs = context.scene.mbdyn
+    mbs.file_path, mbs.file_basename = path_leaf(filepath)
+    if filepath[-2:] == 'nc':
+        try:
+            nc = Dataset(filepath, "r", format="NETCDF3")
+            mbs.use_netcdf = True
+            mbs.num_rows = 0
+            try:
+                eig_step = nc.variables['eig.step']
+                eig_time = nc.variables['eig.time']
+                eig_dCoef = nc.variables['eig.dCoef']
+                for ii in range(0, len(eig_step)):
+                    eigsol = mbs.eigensolutions.add()
+                    eigsol.step = eig_step[ii]
+                    eigsol.time = eig_time[ii]
+                    eigsol.dCoef = eig_dCoef[ii]
+                    eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
+                    eigsol.curr_eigmode = 1
+            except KeyError:
+                print('MBDynSelectOutputFile: no eigenanalysis results found')
+                pass
+            if HAVE_PLOT:
+                get_plot_vars_glob(context)
+
+
+        except NameError:
+            return {'NETCDF_ERROR'}
+    else:
+        mbs.num_rows = file_len(filepath)
+    return {'FINISHED'}
+
+# -----------------------------------------------------------
+# end of setup_import() function
 
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
@@ -291,12 +364,20 @@ def update_label(self, context):
                 ret_val = update_parametrization(obj)
 
             if ret_val == 'ROT_NOT_SUPPORTED':
-                self.report({'ERROR'}, "Rotation parametrization not supported, node " \
-                + obj.mbdyn.string_label)
+                message = "Rotation parametrization not supported, node " \
+                + obj.mbdyn.string_label
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
             elif ret_val == 'LOG_NOT_FOUND':
-                self.report({'ERROR'}, "MBDyn .log file not found")
+                message = "MBDyn .log file not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
         except KeyError:
-            self.report({'ERROR'}, "Node not found")
+            message = "Node not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             pass
     return
 # -----------------------------------------------------------
@@ -322,7 +403,7 @@ def remove_oldframes(context):
 
 def hide_or_delete(obj_names, missing):
 
-    obj_list = [bpy.data.objects[var] for var in obj_names]
+    obj_names = list(filter(lambda v: v != 'none', obj_names))
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
     if missing == "HIDE":
@@ -583,3 +664,42 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function 
+class BlenderHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        editor = bpy.data.texts[os.path.basename(logFile)]
+        editor.write(log_entry + '\n')
+
+def log_messages(mbs, baseLogger, saved_blend):
+
+        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
+                    else 'untitled.blend'
+        blendFile = os.path.splitext(blendFile)[0]
+
+        formatter = '%(asctime)s - %(levelname)s - %(message)s'
+        datefmt = '%m/%d/%Y %I:%M:%S %p'
+        global logFile
+        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
+
+        fh = logging.FileHandler(logFile)
+        fh.setFormatter(logging.Formatter(formatter, datefmt))
+
+        custom = BlenderHandler()
+        custom.setFormatter(logging.Formatter(formatter, datefmt))
+
+        baseLogger.addHandler(fh)
+        baseLogger.addHandler(custom)
+
+        if not saved_blend:
+            bpy.data.texts.new(os.path.basename(logFile))
+
+def delete_log():
+    mbs = bpy.context.scene.mbdyn
+
+    if not bpy.data.is_saved:
+        os.remove(logFile)
+
+    elif mbs.del_log:
+        os.remove(logFile)
+
+atexit.register(delete_log)

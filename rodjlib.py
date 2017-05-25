@@ -23,6 +23,9 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
+
+import logging
+
 from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
@@ -338,25 +341,31 @@ class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
             elem = ed['rod_' + str(self.int_label)]
             retval = spawn_rod_element(elem, context)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + \
-                    elem.blender_object + \
-                    " remove or rename it to re-import the element!")
+                message = "Found the Object " + elem.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, \
-                    "Could not import element: Blender object \
-                    associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found")
+                message = "Could not import element: Blender object " +\
+                    "associated to Node " + str(elem.nodes[0].int_label) \
+                    + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                        associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object " +\
+                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
 
         except KeyError:
-            self.report({'ERROR'}, "Element rod_" + str(elem.int_label) + "not found.")
+            message = "Element rod_" + str(elem.int_label) + "not found."
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
             
         return {'FINISHED'}
@@ -380,23 +389,31 @@ class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
             elem = ed['rod_bezier_' + str(self.int_label)]
             retval = spawn_rod_bezier_element(elem)
             if retval == 'OBJECT_EXISTS':
-                self.report({'WARNING'}, "Found the Object " + elem.blender_object + \
-                " remove or rename it to re-import the element!")
-                print("Element is already imported. Remove it or rename it \
-                    before re-importing the element.")
+                message = "Found the Object " + elem.blender_object + \
+                " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                print("Element is already imported. Remove it or rename it " +\
+                    "before re-importing the element.")
+                logging.warning(message)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                associated to Node " + str(elem.nodes[0].int_label) + " not found")
+                message = "Could not import element: Blender object " +\
+                "associated to Node " + str(elem.nodes[0].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == 'NODE2_NOTFOUND':
-                self.report({'ERROR'}, "Could not import element: Blender object \
-                associated to Node " + str(elem.nodes[1].int_label) + " not found")
+                message = "Could not import element: Blender object " +\
+                "associated to Node " + str(elem.nodes[1].int_label) + " not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
                 return {'CANCELLED'}
             else:
                 return retval
         except KeyError:
-            self.report({'ERROR'}, "Element rod_bezier_" + str(self.int_label) + " not found.")
+            message = "Element rod_bezier_" + str(self.int_label) + " not found."
+            self.report({'ERROR'}, message)
+            logging.error(message)
 
             return {'CANCELLED'}
 # -----------------------------------------------------------
@@ -451,8 +468,10 @@ class RodWrite(Operator):
         rbtext.write("\t\t\t" + str(f2[2]) + ",\n")
         rbtext.write("\tfrom nodes;")
 
-        self.report({'INFO'}, "Input file contribute for element written. See " +\
-                        rbtext.name + " in text editor")
+        message = "Input file contribute for element written. See " +\
+                        rbtext.name + " in text editor"
+        self.report({'INFO'}, message)
+        logging.info(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of RodWrite class
@@ -512,8 +531,10 @@ class RodBezierWrite(Operator):
         rbtext.write("\t\t\t" + str(fI[2]) + "*msfz" + ",\n")
         rbtext.write("\tfrom nodes;")
 
-        self.report({'INFO'}, "Input file contribute for element written. See " +\
-                        rbtext.name + " in text editor")
+        message = "Input file contribute for element written. See " +\
+                        rbtext.name + " in text editor"
+        self.report({'INFO'}, message)
+        logging.info(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of RodBezierWrite class
