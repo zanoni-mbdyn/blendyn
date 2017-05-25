@@ -39,7 +39,8 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import ntpath, os, csv, math, time, psutil
+import ntpath, os, csv, math, time
+
 from collections import namedtuple
 import subprocess
 from multiprocessing import Process
@@ -50,7 +51,7 @@ import pdb
 try:
     from netCDF4 import Dataset
 except ImportError:
-    print("blendyn: could not find netCDF4 module. NetCDF import "\
+    print("Blendyn: could not find the netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
 HAVE_PLOT = False
@@ -60,8 +61,16 @@ try:
     from .plotlib import *
     HAVE_PLOT = True
 except ImportError:
-    print("blendyn: could not find pygal module. Plotting  "\
+    print("Blendyn: could not find the pygal module. Plotting  "\
         + "will be disabled.")
+
+HAVE_PSUTIL = False
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:
+    print("Blendyn: could not find the psutil module. Stopping "\
+            + "MBDyn from the Blender UI will be disabled.")
 
 from .baselib import *
 from .elements import *
@@ -1270,8 +1279,9 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynSimulationStatus.bl_idname, text = 'Status of Simulation')
 
-        col = layout.column(align = True)
-        col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
+        if HAVE_PSUTIL:
+            col = layout.column(align = True)
+            col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
 
 # -----------------------------------------------------------
 # end of MBDynSimulationPanel class
