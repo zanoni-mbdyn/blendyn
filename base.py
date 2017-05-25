@@ -228,13 +228,13 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
-    input_time = FloatProperty(
+    final_time = FloatProperty(
             name = "Previous State of Simulation",
             default = 0.0
         )
 
     ui_time = FloatProperty(
-        name = "Input time from user",
+        name = "Final time from user",
         default = 0.0
         )
 
@@ -993,11 +993,12 @@ class MBDynRunSimulation(bpy.types.Operator):
         percent = 0
 
         if event.type == 'TIMER':
+            context.area.tag_redraw()
             if os.path.exists(file + '.out'):
                 try:
                     status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
                     status = status.split(' ')[2]
-                    percent = (float(status)/mbs.input_time)*100
+                    percent = (float(status)/mbs.final_time)*100
                 except IndexError:
                     pass
                 except ValueError:
@@ -1031,8 +1032,8 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbs.mbdyn_running = True
 
-        if not mbs.input_time:
-            self.report({'ERROR'}, "Enter input time for the simulation to proceed")
+        if not mbs.final_time:
+            self.report({'ERROR'}, "Enter Final Time for the simulation to proceed")
             return {'CANCELLED'}
 
         self.timer = context.window_manager.event_timer_add(0.5, context.window)
@@ -1056,9 +1057,9 @@ class MBDynSimulationStatus(bpy.types.Operator):
 
         status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
         status = status.split(' ')[2]
-        percent = round((float(status)/mbs.input_time)*100)
+        percent = round((float(status)/mbs.final_time)*100)
 
-        if float(status) >= mbs.input_time:
+        if float(status) >= mbs.final_time:
             self.report({'INFO'}, 'Simulation Completed')
 
         else:
@@ -1322,10 +1323,10 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynDeleteEnvVariables.bl_idname, text = 'Delete Variable')
 
         col = layout.column(align = True)
-        col.prop(mbs, "ui_time", text = 'Input Time')
+        col.prop(mbs, "ui_time", text = 'Final Time')
 
         col = layout.column(align = True)
-        col.prop(mbs, "sim_status", text = 'Simulation Status')
+        col.prop(mbs, "sim_status", text = 'Simulation Status [compl. %]')
 
 
         col = layout.column(align = True)

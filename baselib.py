@@ -36,7 +36,7 @@ import logging
 
 import numpy as np
 
-import ntpath, os, csv, math, atexit, psutil
+import ntpath, os, csv, math, atexit
 
 from collections import namedtuple
 
@@ -51,6 +51,13 @@ try:
 except ImportError:
     print("blendyn: could not find pygal module. Plotting  "\
         + "will be disabled.")
+    pass
+
+HAVE_PSUTIL = False
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:
     pass
 
 import os, time
@@ -84,19 +91,20 @@ def parse_input_file(context):
                     time = float(time[:-1])
 
                 except ValueError:
-                    mbs.input_time = mbs.ui_time
+                    mbs.final_time = mbs.ui_time
                     break
 
-                mbs.input_time = time
+                mbs.final_time = time
                 mbs.ui_time = time
 
                 break
 
-def kill_mbdyn():
-    mbdynProc = [var for var in psutil.process_iter() if var.name() == 'mbdyn']
+if HAVE_PSUTIL:
+    def kill_mbdyn():
+        mbdynProc = [var for var in psutil.process_iter() if var.name() == 'mbdyn']
 
-    if mbdynProc:
-        mbdynProc[0].kill()
+        if mbdynProc:
+            mbdynProc[0].kill()
 
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
