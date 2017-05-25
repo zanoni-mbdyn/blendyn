@@ -224,15 +224,15 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = False
         )
 
-    sim_status = IntProperty(
-            name = "Percentage of simulation completed",
-            default = 0
-        )
-
     input_time = FloatProperty(
             name = "Previous State of Simulation",
             default = 0.0
         )
+
+    sim_status = IntProperty(
+            name = "Status of Simulation",
+            default = 0
+            )
 
     # Command-line options to be specified in MBDyn simulation
     cmd_options = StringProperty(
@@ -976,9 +976,13 @@ class MBDynRunSimulation(bpy.types.Operator):
         if not os.path.exists(file + '.out'):
             return {'PASS_THROUGH'}
 
+        # if not mbs.input_time:
+        #     return {'PASS_THROUGH'}
+
         status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
         status = status.split(' ')[2]
         percent = (float(status)/mbs.input_time)*100
+        mbs.sim_status = percent
 
         if percent >= 100:
             si_retval = {'FINISHED'}
@@ -1289,10 +1293,16 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynSetEnvVariables.bl_idname, text = 'Set Variable')
         col.operator(MBDynDeleteEnvVariables.bl_idname, text = 'Delete Variable')
 
+        # col = layout.column(align = True)
+        # col.prop(mbs, "input_time", text = 'Input Time')
+
+        col = layout.column(align = True)
+        col.prop(mbs, "sim_status", text = 'Simulation Status')
+
+
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
 
-        col = layout.column(align = True)
         col.operator(MBDynSimulationStatus.bl_idname, text = 'Status of Simulation')
 
         col = layout.column(align = True)

@@ -80,6 +80,7 @@ def parse_input_file(context):
             if first == 'final':
                 time = rw[2]
                 time = float(time[:-1])
+
                 mbs.input_time = time
 
                 break
