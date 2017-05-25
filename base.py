@@ -39,7 +39,8 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import ntpath, os, csv, math, time, psutil
+import ntpath, os, csv, math, time
+
 from collections import namedtuple
 import subprocess
 from multiprocessing import Process
@@ -50,7 +51,7 @@ import pdb
 try:
     from netCDF4 import Dataset
 except ImportError:
-    print("blendyn: could not find netCDF4 module. NetCDF import "\
+    print("Blendyn: could not find the netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
 HAVE_PLOT = False
@@ -60,8 +61,16 @@ try:
     from .plotlib import *
     HAVE_PLOT = True
 except ImportError:
-    print("blendyn: could not find pygal module. Plotting  "\
+    print("Blendyn: could not find the pygal module. Plotting  "\
         + "will be disabled.")
+
+HAVE_PSUTIL = False
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:
+    print("Blendyn: could not find the psutil module. Stopping "\
+            + "MBDyn from the Blender UI will be disabled.")
 
 from .baselib import *
 from .elements import *
@@ -195,7 +204,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     # Path of MBDyn input file (to run simulation from Blender)
     input_path = StringProperty(
             name = "Input File Path",
-            description = "Path of Input files for MBDyn",
+            description = "Path of MBDyn input files",
             default = "not yet selected"
         )
 
@@ -1273,9 +1282,6 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.prop(mbs, "install_path", text="Path")
         col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
 
-        row = layout.row()
-        row.label(text='Run MBDyn simulation')
-
         col = layout.column(align = True)
         col.label(text = "Selected input file")
         col.prop(mbs, "input_path", text = '')
@@ -1327,8 +1333,9 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
         col.operator(MBDynSimulationStatus.bl_idname, text = 'Status of Simulation')
 
-        col = layout.column(align = True)
-        col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
+        if HAVE_PSUTIL:
+            col = layout.column(align = True)
+            col.operator(MBDynStopSimulation.bl_idname, text = 'Stop Simulaton')
 
 # -----------------------------------------------------------
 # end of MBDynSimulationPanel class
