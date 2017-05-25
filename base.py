@@ -219,6 +219,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
+    sim_started = BoolProperty(
+            name = "Simulaton Started",
+            default = False
+        )
+
     sim_status = IntProperty(
             name = "Percentage of simulation completed",
             default = 0
@@ -909,14 +914,10 @@ bpy.utils.register_class(MBDynDeleteEnvVariables)
 # -----------------------------------------------------------
 # end of MBDynDeleteEnvVariables class
 
-import time
-
 class MBDynRunSimulation(bpy.types.Operator):
     """Runs the MBDyn Simulation in background"""
     bl_idname = "sel.mbdyn_run_simulation"
     bl_label = "Run MBDyn Simulation"
-
-
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -953,22 +954,58 @@ class MBDynRunSimulation(bpy.types.Operator):
             except ValueError:
                 pass
 
-
         else:
             mbs.file_basename = ('{0}_{1}').format(mbs.file_basename, mbs.sim_num)
 
         if mbs.file_path:
             command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
-
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
-
-        parse_input_file(context)
 
         return {'FINISHED'}
 
+    def modal(self, context, event):
+        mbs = context.scene.mbdyn
+
+        if not mbs.sim_started:
+            self.execute(context)
+            mbs.sim_started = True
+
+        file = mbs.file_path + mbs.file_basename
+
+        if not os.path.exists(file + '.out'):
+            return {'PASS_THROUGH'}
+
+        status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
+        status = status.split(' ')[2]
+        percent = (float(status)/mbs.input_time)*100
+
+        if percent >= 100:
+            si_retval = {'FINISHED'}
+            if ( os.path.isfile(os.path.join(mbs.file_path, \
+                    mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
+                si_retval = setup_import(os.path.join(mbs.file_path, \
+                        mbs.file_basename + '.nc'), context)
+            else:
+                mbs.use_netcdf = False
+                si_retval = setup_import(os.path.join(mbs.file_path, \
+                        mbs.file_basename + '.mov'), context)
+
+            si_retval = setup_import(os.path.join(mbs.file_path, \
+                        mbs.file_basename + '.mov'), context)
+            return si_retval
+
+
+        return {'PASS_THROUGH'}
+
     def invoke(self, context, event):
-        return self.execute(context)
+        parse_input_file(context)
+        mbs = context.scene.mbdyn
+        mbs.sim_started = False
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+        # return self.execute(context)
+
 bpy.utils.register_class(MBDynRunSimulation)
 # -----------------------------------------------------------
 # end of MBDynRunSimulation class
@@ -987,28 +1024,13 @@ class MBDynSimulationStatus(bpy.types.Operator):
         status = status.split(' ')[2]
         percent = round((float(status)/mbs.input_time)*100)
 
-        si_retval = {'FINISHED'}
-
         if float(status) >= mbs.input_time:
             self.report({'INFO'}, 'Simulation Completed')
-
-            if ( os.path.isfile(os.path.join(mbs.file_path, \
-                    mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
-                si_retval = setup_import(os.path.join(mbs.file_path, \
-                        mbs.file_basename + '.nc'), context)
-            else:
-                mbs.use_netcdf = False
-                si_retval = setup_import(os.path.join(mbs.file_path, \
-                        mbs.file_basename + '.mov'), context)
 
         else:
             self.report({'INFO'}, str(percent) + '% of simulation completed')
 
-        if si_retval == {'NETCDF_ERROR'}:
-            self.report({'ERROR'}, "NetCDF module not imported correctly")
-            return {'CANCELLED'}
-        elif si_retval == {'FINISHED'}:
-            return si_retval
+        return {'FINISHED'}
 
     def invoke(self, context, event):
         return self.execute(context)
