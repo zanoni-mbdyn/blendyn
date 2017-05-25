@@ -36,7 +36,7 @@ import logging
 
 import numpy as np
 
-import ntpath, os, csv, math, atexit
+import ntpath, os, csv, math, atexit, psutil
 
 from collections import namedtuple
 
@@ -79,11 +79,24 @@ def parse_input_file(context):
 
             if first == 'final':
                 time = rw[2]
-                time = float(time[:-1])
+
+                try:
+                    time = float(time[:-1])
+
+                except ValueError:
+                    mbs.input_time = mbs.ui_time
+                    break
 
                 mbs.input_time = time
+                mbs.ui_time = time
 
                 break
+
+def kill_mbdyn():
+    mbdynProc = [var for var in psutil.process_iter() if var.name() == 'mbdyn']
+
+    if mbdynProc:
+        mbdynProc[0].kill()
 
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):

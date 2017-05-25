@@ -219,18 +219,23 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
-    sim_started = BoolProperty(
-            name = "Simulaton Started",
-            default = False
-        )
-
     input_time = FloatProperty(
             name = "Previous State of Simulation",
             default = 0.0
         )
 
+    ui_time = FloatProperty(
+        name = "Input time from user",
+        default = 0.0
+        )
+
+    mbdyn_running = BoolProperty(
+            name = 'MBDyn running',
+            default = False
+        )
+
     sim_status = IntProperty(
-            name = "Status of Simulation",
+            name = "Progress of Simulation",
             default = 0
             )
 
@@ -919,6 +924,8 @@ class MBDynRunSimulation(bpy.types.Operator):
     bl_idname = "sel.mbdyn_run_simulation"
     bl_label = "Run MBDyn Simulation"
 
+    timer = None
+
     def execute(self, context):
         mbs = context.scene.mbdyn
 
@@ -962,29 +969,38 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
-        return {'FINISHED'}
+        self.timer = context.window_manager.event_timer_add(0.02, context.window)
+        context.window_manager.modal_handler_add(self)
+
+        return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
         mbs = context.scene.mbdyn
 
-        if not mbs.sim_started:
-            self.execute(context)
-            mbs.sim_started = True
-
         file = mbs.file_path + mbs.file_basename
 
-        if not os.path.exists(file + '.out'):
-            return {'PASS_THROUGH'}
+        if not mbs.mbdyn_running:
+            context.window_manager.event_timer_remove(self.timer)
+            return {'CANCELLED'}
 
-        # if not mbs.input_time:
-        #     return {'PASS_THROUGH'}
+        status = ''
+        percent = 0
+        if os.path.exists(file + '.out'):
+            try:
+                status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
+                status = status.split(' ')[2]
+                percent = (float(status)/mbs.input_time)*100
+            except IndexError:
+                pass
+            except ValueError:
+                pass
 
-        status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
-        status = status.split(' ')[2]
-        percent = (float(status)/mbs.input_time)*100
-        mbs.sim_status = percent
+        if event.type == 'TIMER':
+             mbs.sim_status = percent
 
         if percent >= 100:
+            context.window_manager.event_timer_remove(self.timer)
+
             si_retval = {'FINISHED'}
             if ( os.path.isfile(os.path.join(mbs.file_path, \
                     mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
@@ -1003,12 +1019,16 @@ class MBDynRunSimulation(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
     def invoke(self, context, event):
-        parse_input_file(context)
         mbs = context.scene.mbdyn
-        mbs.sim_started = False
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-        # return self.execute(context)
+        parse_input_file(context)
+
+        mbs.mbdyn_running = True
+
+        if not mbs.input_time:
+            self.report({'ERROR'}, "Enter input time for the simulation to proceed")
+            return {'CANCELLED'}
+
+        return self.execute(context)
 
 bpy.utils.register_class(MBDynRunSimulation)
 # -----------------------------------------------------------
@@ -1048,9 +1068,10 @@ class MBDynStopSimulation(bpy.types.Operator):
     bl_label = "Stop MBDyn Simulation"
 
     def execute(self, context):
+        mbs = context.scene.mbdyn
+        kill_mbdyn()
 
-        mbdynProc = [var for var in psutil.process_iter() if var.name() == 'mbdyn']
-        mbdynProc[0].kill()
+        mbs.mbdyn_running = False
 
         self.report({'INFO'}, "The MBDyn simulation was interrupted")
         return {'FINISHED'}
@@ -1293,8 +1314,8 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col.operator(MBDynSetEnvVariables.bl_idname, text = 'Set Variable')
         col.operator(MBDynDeleteEnvVariables.bl_idname, text = 'Delete Variable')
 
-        # col = layout.column(align = True)
-        # col.prop(mbs, "input_time", text = 'Input Time')
+        col = layout.column(align = True)
+        col.prop(mbs, "ui_time", text = 'Input Time')
 
         col = layout.column(align = True)
         col.prop(mbs, "sim_status", text = 'Simulation Status')
