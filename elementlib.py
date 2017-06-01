@@ -42,7 +42,7 @@ from .revjlib import *
 from .rodjlib import *
 from .shell4lib import *
 from .sphjlib import *
-from .prismlib import *
+from .prismjlib import *
 from .totjlib import *
 from .utilslib import *
 
