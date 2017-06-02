@@ -547,7 +547,7 @@ def set_motion_paths_mov(context):
     for ii in np.arange(0, loop_start, mbs.load_frequency):
         mbs.simtime.add()
 
-    for ii in np.arange(scene.frame_start, scene.frame_end, mbs.load_frequency):
+    for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
         st.time = mbs.time_step * ii
 

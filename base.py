@@ -868,10 +868,11 @@ class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
 
         mbs.sim_num = 0
 
-        mbs.input_path = os.path.relpath(self.filepath)
+        mbs.input_path = os.path.abspath(self.filepath)
         mbs.input_basename = os.path.splitext(os.path.basename(self.filepath))[0]
 
         mbs.file_basename = mbs.input_basename
+        mbs.file_path = os.path.dirname(mbs.input_path)
 
         return {'FINISHED'}
     def invoke(self, context, event):
@@ -983,7 +984,7 @@ class MBDynRunSimulation(bpy.types.Operator):
     def modal(self, context, event):
         mbs = context.scene.mbdyn
 
-        file = mbs.file_path + mbs.file_basename
+        file = os.path.join(mbs.file_path, mbs.file_basename)
 
         if not mbs.mbdyn_running:
             context.window_manager.event_timer_remove(self.timer)
@@ -1044,34 +1045,6 @@ class MBDynRunSimulation(bpy.types.Operator):
 bpy.utils.register_class(MBDynRunSimulation)
 # -----------------------------------------------------------
 # end of MBDynRunSimulation class
-
-class MBDynSimulationStatus(bpy.types.Operator):
-    """Gives the status of the running MBDyn simulation"""
-    bl_idname = "sel.mbdyn_simulation_status"
-    bl_label = "Status of MBDyn Simulation"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-
-        file = mbs.file_path + mbs.file_basename
-
-        status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
-        status = status.split(' ')[2]
-        percent = round((float(status)/mbs.final_time)*100)
-
-        if float(status) >= mbs.final_time:
-            self.report({'INFO'}, 'Simulation Completed')
-
-        else:
-            self.report({'INFO'}, str(percent) + '% of simulation completed')
-
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-bpy.utils.register_class(MBDynSimulationStatus)
-# -----------------------------------------------------------
-# end of MBDynSimulationStatus class
 
 class MBDynStopSimulation(bpy.types.Operator):
     """Stops the MBDyn simulation"""
@@ -1331,8 +1304,6 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
         col = layout.column(align = True)
         col.operator(MBDynRunSimulation.bl_idname, text = 'Run Simulation')
-
-        col.operator(MBDynSimulationStatus.bl_idname, text = 'Status of Simulation')
 
         if HAVE_PSUTIL:
             col = layout.column(align = True)
