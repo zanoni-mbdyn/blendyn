@@ -419,7 +419,6 @@ def remove_oldframes(context):
        obj_list = [bpy.data.objects[var] for var in obj_names]
        for obj in obj_list:
            obj.animation_data_clear()
-           obj.hide = False
 # -----------------------------------------------------------
 # end of remove_oldframes() function		
 
