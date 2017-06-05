@@ -39,7 +39,7 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import ntpath, os, csv, math, time
+import ntpath, os, csv, math, time, shutil
 
 from collections import namedtuple
 import subprocess
@@ -214,6 +214,12 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             description = "Base name of Input File",
             default = "not yet selected"
         )
+
+    default_mbdyn = BoolProperty(
+            name = "Default MBDyn Path",
+            description = "Use MBDyn Installation path from system PATH variable",
+            default = False
+    )
 
     # String representing path of MBDyn Installation
     install_path = StringProperty(
@@ -841,8 +847,9 @@ class MBDynSetInstallPath(bpy.types.Operator):
     bl_label = "Set installation path of MBDyn"
 
     def execute(self, context):
-        blendyn_path = context.scene.mbdyn.addon_path
-        mbdyn_path = context.scene.mbdyn.install_path
+        mbs = context.scene.mbdyn
+        blendyn_path = mbs.addon_path
+        mbdyn_path = mbs.install_path
 
         config = {'mbdyn_path': mbdyn_path}
         with open(os.path.join(os.path.dirname(blendyn_path), 'config.json'), 'w') as f:
@@ -947,8 +954,16 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_env = os.environ.copy()
 
-        with open(os.path.join(os.path.dirname(mbs.addon_path), 'config.json'), 'r') as f:
-            mbdyn_path = json.load(f)['mbdyn_path']
+        default_mbdyn = os.path.dirname(shutil.which('mbdyn'))
+
+        try:
+            with open(os.path.join(os.path.dirname(mbs.addon_path), 'config.json'), 'r') as f:
+                mbdyn_path = json.load(f)['mbdyn_path']
+        except FileNotFoundError:
+            mbdyn_path = default_mbdyn
+
+        if mbs.default_mbdyn:
+            mbdyn_path = default_mbdyn
 
         mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
 
@@ -1255,6 +1270,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(mbs, "install_path", text="Path")
         col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
+        col.prop(mbs, "default_mbdyn", text = 'Use default MBDyn')
 
         col = layout.column(align = True)
         col.label(text = "Selected input file")
