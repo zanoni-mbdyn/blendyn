@@ -63,7 +63,7 @@ except ImportError:
 import os, time
 import pdb
 
-try: 
+try:
     from netCDF4 import Dataset
 except ImportError:
     print("blendyn: could not find netCDF4 module. NetCDF import "\
@@ -176,19 +176,19 @@ def parse_log_file(context):
             b_nodes_consistent = True
             b_elems_consistent = True
             reader = csv.reader(lf, delimiter=' ', skipinitialspace=True)
-        
+
             entry = ""
             while entry[:-1] != "Symbol table":
                 # get the next row
                 rw = next(reader)
-            
+
                 entry = rw[0]
                 ii = 0
-            
+
                 while (rw[ii][-1] != ':') and (ii < min(3, (len(rw) - 1))):
                     ii = ii + 1
                     entry = entry + " " + rw[ii]
-            
+
                 if ii == min(3, (len(rw) - 1)):
                     print("parse_log_file(): row does not contain an element definition. Skipping...")
                 elif entry == "structural node:":
@@ -239,13 +239,13 @@ def parse_log_file(context):
             nc = Dataset(ncfile, "r", format="NETCDF3")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
-            mbs.num_timesteps = mbs.num_rows/nn 
+            mbs.num_timesteps = mbs.num_rows/nn
         mbs.is_ready = True
         ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
-    pass 
-    
+    pass
+
     with open(os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.out')) as of:
         reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
@@ -268,7 +268,7 @@ def path_leaf(path, keep_extension = False):
     else:
         return path.replace(tail1, ''), os.path.splitext(tail1)[0]
 # -----------------------------------------------------------
-# end of path_leaf() function 
+# end of path_leaf() function
 
 def file_len(filepath):
     """ Function to count the number of rows in a file """
@@ -280,7 +280,7 @@ def file_len(filepath):
     except UnboundLocalError:
         return 0
 # -----------------------------------------------------------
-# end of file_len() function 
+# end of file_len() function
 
 def assign_labels(context):
     """ Function that parses the (optional) labels file and assigns \
@@ -291,7 +291,7 @@ def assign_labels(context):
     ed = mbs.elems
 
     labels_changed = False
-    
+
     log_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.log')
 
@@ -354,21 +354,21 @@ def assign_labels(context):
         print("assign_labels(): can't read from file {}, \
                 sticking with default labeling...".format(log_file))
         return {'FILE_NOT_FOUND'}
-    
+
     if labels_changed:
         return {'LABELS_UPDATED'}
     else:
         return {'NOTHING_DONE'}
 # -----------------------------------------------------------
-# end of assign_labels() function 
+# end of assign_labels() function
 
-                    
+
 def update_label(self, context):
-    
+
     # utility renaming
     obj = context.scene.objects.active
-    nd = context.scene.mbdyn.nodes 
- 
+    nd = context.scene.mbdyn.nodes
+
     # Search for int label and assign corresponding string label, if found.
     # If not, signal it by assign the "not found" label
     node_string_label = "not_found"
@@ -403,7 +403,7 @@ def update_label(self, context):
             pass
     return
 # -----------------------------------------------------------
-# end of update_label() function 
+# end of update_label() function
 
 ## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
@@ -421,7 +421,7 @@ def remove_oldframes(context):
            obj.animation_data_clear()
            obj.hide = False
 # -----------------------------------------------------------
-# end of remove_oldframes() function		
+# end of remove_oldframes() function
 
 def hide_or_delete(obj_names, missing):
 
@@ -460,10 +460,10 @@ def set_motion_paths_mov(context):
     # .mov filename
     mov_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.mov')
-    
+
     # Debug message
     print("Reading from file:", mov_file)
-   
+
     # total number of frames to be animated
     scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
     scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
@@ -472,7 +472,7 @@ def set_motion_paths_mov(context):
     loop_end = int(scene.frame_end * mbs.load_frequency)
 
     # list of animatable Blender object types
-    anim_types = ['MESH', 'ARMATURE', 'EMPTY']    
+    anim_types = ['MESH', 'ARMATURE', 'EMPTY']
 
     # Cycle to establish which objects to animate
     anim_objs = dict()
@@ -538,7 +538,7 @@ def set_motion_paths_mov(context):
     wm.progress_end()
 
     # Update deformable elements
-    
+
 
     # Gets simulation time (FIXME: not the most clean and efficient way, for sure...)
     if mbs.simtime:
@@ -554,14 +554,14 @@ def set_motion_paths_mov(context):
 
     return {'FINISHED'}
 # -----------------------------------------------------------
-# end of set_motion_paths_mov() function 
+# end of set_motion_paths_mov() function
 
 def set_motion_paths_netcdf(context):
 
     scene = context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
-    ed = mbs.elems 
+    ed = mbs.elems
     wm = context.window_manager
 
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
@@ -596,7 +596,7 @@ def set_motion_paths_netcdf(context):
     for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
         st.time = mbs.time_step * ii
-    
+
     # set objects location and rotation
     wm.progress_begin(1, len(anim_nodes))
 
@@ -685,7 +685,7 @@ def set_motion_paths_netcdf(context):
     return {'FINISHED'}
 
 # -----------------------------------------------------------
-# end of set_motion_paths_netcdf() function 
+# end of set_motion_paths_netcdf() function
 class BlenderHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
@@ -719,9 +719,15 @@ def delete_log():
     mbs = bpy.context.scene.mbdyn
 
     if not bpy.data.is_saved:
-        os.remove(logFile)
+        try:
+            os.remove(logFile)
+        except NameError:
+            pass
 
     elif mbs.del_log:
-        os.remove(logFile)
+        try:
+            os.remove(logFile)
+        except NameError:
+            pass
 
 atexit.register(delete_log)
