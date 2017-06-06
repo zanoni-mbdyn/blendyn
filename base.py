@@ -848,7 +848,7 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        blendyn_path = mbs.addon_path
+        blendyn_path = os.path.join(mbs.addon_path, 'blendyn')
         mbdyn_path = mbs.install_path
 
         config = {'mbdyn_path': mbdyn_path}

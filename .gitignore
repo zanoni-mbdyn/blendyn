@@ -1,2 +1,4 @@
+config.json
+
 tests/bladeflap/
 __pycache__/
