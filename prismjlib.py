@@ -164,6 +164,20 @@ def spawn_prismatic_element(elem, context):
         prismjOBJ.rotation_quaternion = \
                 n2OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
+        # create an object representing the second RF used by the joint
+        # for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
+        RF2 = bpy.context.selected_objects[0]
+        RF2.rotation_mode = 'QUATERNION'
+        RF2.rotation_quaternion = \
+                n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+        RF2.scale = .33*prismjOBJ.scale
+        RF2.name = prismjOBJ.name + '_RF2'
+        RF2.select = True
+        bpy.context.scene.objects.active = prismjOBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        RF2.hide = True
+
         # set parenting of wireframe obj
         bpy.ops.object.select_all(action = 'DESELECT')
         prismjOBJ.select = True
