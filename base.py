@@ -954,16 +954,21 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_env = os.environ.copy()
 
-        default_mbdyn = os.path.dirname(shutil.which('mbdyn'))
-
         try:
             with open(os.path.join(os.path.dirname(mbs.addon_path), 'config.json'), 'r') as f:
                 mbdyn_path = json.load(f)['mbdyn_path']
         except FileNotFoundError:
-            mbdyn_path = default_mbdyn
+            if shutil.which('mbdyn'):
+                default_mbdyn_path = os.path.dirname(shutil.which('mbdyn'))
+            else:
+                message = 'Set the path manually'
+                self.report({'ERROR'}, message)
+                baseLogger.error(message)
+
+                return {'CANCELLED'}
 
         if mbs.default_mbdyn:
-            mbdyn_path = default_mbdyn
+            mbdyn_path = default_mbdyn_path
 
         mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
 
@@ -993,6 +998,9 @@ class MBDynRunSimulation(bpy.types.Operator):
             command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
+
+        self.timer = context.window_manager.event_timer_add(0.5, context.window)
+        context.window_manager.modal_handler_add(self)
 
         return {'RUNNING_MODAL'}
 
@@ -1051,9 +1059,6 @@ class MBDynRunSimulation(bpy.types.Operator):
         if not mbs.final_time:
             self.report({'ERROR'}, "Enter Final Time for the simulation to proceed")
             return {'CANCELLED'}
-
-        self.timer = context.window_manager.event_timer_add(0.5, context.window)
-        context.window_manager.modal_handler_add(self)
 
         return self.execute(context)
 
