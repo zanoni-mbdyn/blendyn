@@ -91,6 +91,8 @@ def parse_prismatic(rw, ed):
         el.rotoffsets[1].value = R2.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_prismatic"
+        el.info_draw = "prism_info_draw"
+
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -98,6 +100,48 @@ def parse_prismatic(rw, ed):
     return ret_val
 # -------------------------------------------------------------------------- 
 # end of parse_prismatic(rw, ed) function
+
+# function that displays prism info in panel -- [ optional ]
+def prism_info_draw(elem, layout):
+    nd = bpy.context.scene.mbdyn.nodes
+    row = layout.row()
+    col = layout.column(align=True)
+
+    try:
+        node = nd['node_' + str(elem.nodes[0].int_label)]
+        # Display node 1 info
+        col.prop(node, "int_label", text = "Node 1 ID ")
+        col.prop(node, "string_label", text = "Node 1 label ")
+        col.prop(node, "blender_object", text = "Node 1 Object: ")
+        col.enabled = False
+
+        # Display offset of node 1 info
+        row = layout.row()
+        row.label(text = "offset 1 w.r.t. Node " + node.string_label + " R.F.")
+        col = layout.column(align = True)
+        col.prop(elem.offsets[0], "value", text = "", slider = False)
+
+        node = nd['node_' + str(elem.nodes[1].int_label)]
+
+        # Display node 2 info
+        col.prop(node, "int_label", text = "Node 2 ID ")
+        col.prop(node, "string_label", text = "Node 2 label ")
+        col.prop(node, "blender_object", text = "Node 2 Object: ")
+        col.enabled = False
+
+        # Display offset of node 2 info
+        row = layout.row()
+        row.label(text = "offset 2 w.r.t. Node " + node.string_label + " R.F.")
+        col = layout.column(align = True)
+        col.prop(elem.offsets[1], "value", text = "", slider = False)
+        layout.separator()
+
+        return {'FINISHED'}
+    except KeyError:
+        return {'NODE_NOTFOUND'}
+
+# -----------------------------------------------------------
+# end of prism_info_draw(elem, layout) function
 
 # Creates the object representing a prismatic joint element
 def spawn_prismatic_element(elem, context):
