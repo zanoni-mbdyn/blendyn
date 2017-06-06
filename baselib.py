@@ -1,5 +1,5 @@
-    # --------------------------------------------------------------------------
-# Blendyn -- file base.py
+# --------------------------------------------------------------------------
+# Blendyn -- file baselib.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
@@ -151,6 +151,7 @@ def parse_log_file(context):
     mbs = context.scene.mbdyn
     nd = mbs.nodes
     ed = mbs.elems
+    rd = mbs.references
 
     is_init_nd = len(nd) == 0
     is_init_ed = len(ed) == 0
@@ -163,7 +164,13 @@ def parse_log_file(context):
 
     log_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.log')
-
+    
+    out_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.out')
+    
+    rfm_file = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.rfm')
+    
     # Debug message to console
     print("parse_log_file(): Trying to read nodes and elements from file: "\
             + log_file)
@@ -245,13 +252,27 @@ def parse_log_file(context):
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass 
-    
-    with open(os.path.join(os.path.dirname(mbs.file_path), \
-            mbs.file_basename + '.out')) as of:
-        reader = csv.reader(of, delimiter=' ', skipinitialspace=True)
-        for ii in range(4):
-            next(reader)
-        mbs.time_step = float(next(reader)[3])
+   
+    try:
+        with open(out_file) as of:
+            reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
+            for ii in range(4):
+                next(reader)
+            mbs.time_step = float(next(reader)[3])
+    except IOError:
+        print("Could not locate the file " + out_file + ".")
+        ret_val = {'OUT_NOT_FOUND'}
+        pass
+    except StopIteration:
+        print("Reached the end of .out file")
+
+    try:
+        with open(rfm_file) as rfm:
+            reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
+            rw = next(reader)
+            parse_reference_frame(rw, rd)
+    except StopIteration:
+        pass
 
     mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
 
@@ -289,6 +310,7 @@ def assign_labels(context):
     mbs = context.scene.mbdyn
     nd = mbs.nodes
     ed = mbs.elems
+    rd = mbs.references
 
     labels_changed = False
     
@@ -310,11 +332,24 @@ def assign_labels(context):
                          "  integer JOINT_"]
 
     set_strings_beam = ["  const integer Beam_", \
-                       "  integer Beam_", \
-                       "  const integer beam_", \
-                       "  integer beam_", \
-                       "  const integer BEAM_", \
-                       "  integer BEAM_"]
+                        "  integer Beam_", \
+                        "  const integer beam_", \
+                        "  integer beam_", \
+                        "  const integer BEAM_", \
+                        "  integer BEAM_"]
+
+    set_strings_refs = ["  const integer Ref_", \
+                        "  integer Ref_", \
+                        "  const integer ref_", \
+                        "  integer ref_", \
+                        "  const integer REF_", \
+                        "  integer REF_", \
+                        "  const integer Reference_", \
+                        "  integer Reference_", \
+                        "  const integer reference_", \
+                        "  integer reference_", \
+                        "  const integer REFERENCE_", \
+                        "  integer REFERENCE_"]
 
     def assign_label(line, type, set_string, dict):
         line_str = line.rstrip()
@@ -348,6 +383,12 @@ def assign_labels(context):
                     for set_string in set_strings_beam:
                         if set_string in line:
                             labels_changed += (assign_label(line, 'beam', set_string, ed))
+                            found = True
+                            break
+                if not (found):
+                    for set_string in set_string_refs:
+                        if set_string in line:
+                            labels_changed += (assign_label(line, 'ref', set_string, rd))
                             found = True
                             break
     except IOError:

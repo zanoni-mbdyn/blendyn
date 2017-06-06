@@ -79,7 +79,7 @@ from .logwatcher import *
 
 import pdb
 
-## Nodes Dictionary: contains integer/string labels associations
+## Nodes Dictionary: contains nodes informations
 class MBDynNodesDictionary(bpy.types.PropertyGroup):
     int_label = IntProperty(
             name = "node integer label",
@@ -126,10 +126,64 @@ class MBDynNodesDictionary(bpy.types.PropertyGroup):
         name = "Is imported flag",
         description = "Flag set to true at the end of the import process"
         )
-
-bpy.utils.register_class(MBDynNodesDictionary)
 # -----------------------------------------------------------
 # end of MBDynNodesDictionary class
+bpy.utils.register_class(MBDynNodesDictionary)
+
+class MBDynRefsDictionary(bpy.types.PropertyGroup):
+    int_label = IntProperty(
+            name = "reference integer label",
+            description = "Reference integer label"
+            )
+
+    string_label = StringProperty(
+            name = "reference string label",
+            description = "Reference string label",
+            default = "none"
+            )
+
+    blender_object = StringProperty(
+            name = "blender object label",
+            description = "Blender Object",
+            default = "none"
+            )
+
+    is_imported = BoolProperty(
+            name = "Is imported flag",
+            description = "Flag set to true at the end of the import process"
+            )
+    
+    pos = FloatVectorProperty(
+            name = "reference position",
+            description = "Position",
+            size = 3,
+            precision = 6
+            )
+
+    rot = FloatVectorProperty(
+            name = "reference orientation",
+            description = "Orientation",
+            size = 4,
+            precision = 6
+            )
+
+    vel = FloatVectorProperty(
+            name = "reference velocity",
+            description = "Velocity",
+            size = 3,
+            precision = 6
+            )
+
+    angvel = FloatVectorProperty(
+            name = "reference angular velocity",
+            description = "Angular Velocity",
+            size = 3,
+            precision = 6
+            )
+
+# -----------------------------------------------------------
+# end of MBDynRefsDictionary class
+bpy.utils.register_class(MBDynRefsDictionary)
 
 ## Time PropertyGroup for animation
 class MBDynTime(bpy.types.PropertyGroup):
@@ -328,9 +382,16 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         description = "Simulation time step"
         )
 
+    # Reference dictionary -- holds the associations between MBDyn references and blender
+    # objects
+    references = CollectionProperty(
+            name = "MBDyn references",
+            type = MBDynRefsDictionary
+            )
+
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
-            name = "MBDyn nodes collection",
+            name = "MBDyn nodes",
             type = MBDynNodesDictionary
             )
 
@@ -732,6 +793,12 @@ class MBDynReadLog(bpy.types.Operator):
 
         elif ret_val == {'ELEMS_INCONSISTENT'}:
             message = "Elements in MBDyn .log file inconsistent with the scene"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
+            return {'FINISHED'}
+
+        elif ret_val == {'OUT_NOT_FOUND'}:
+            message = "Could not locate the .out file"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
@@ -1397,6 +1464,7 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
         mbs = context.scene.mbdyn
         nd = mbs.nodes
         ed = mbs.elems
+        rd = mbd.references
 
         # Display the active object
         if bpy.context.active_object:
@@ -1421,23 +1489,26 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
                     col.prop(obj.mbdyn, "parametrization", text="")
                     col.enabled = False
 
-                else:
-                    for elem in ed:
-                        if elem.blender_object == obj.name:
-                            # Display MBDyn elements info
+                if any(item.blender_object == obj.name for item in ed):
+                    if elem.blender_object == obj.name:
+                        # Display MBDyn elements info
+                        row = layout.row()
+                        row.label(text = "MBDyn's element info:")
+
+                        eval(elem.info_draw + "(elem, layout)")
+
+                        if elem.update_info_operator != 'none' and elem.is_imported == True:
                             row = layout.row()
-                            row.label(text = "MBDyn's element info:")
+                            row.operator(elem.update_info_operator, \
+                                    text = "Update element info").elem_key = elem.name
+                        if elem.write_operator != 'none' and elem.is_imported == True:
+                            row = layout.row()
+                            row.operator(elem.write_operator, \
+                                    text = "Write element input").elem_key = elem.name
 
-                            eval(elem.info_draw + "(elem, layout)")
+                if any(ref.blender_object == obj.name for ref in rd):
+                    reference_info_draw(ref, layout)
 
-                            if elem.update_info_operator != 'none' and elem.is_imported == True:
-                                row = layout.row()
-                                row.operator(elem.update_info_operator, \
-                                        text = "Update element info").elem_key = elem.name
-                            if elem.write_operator != 'none' and elem.is_imported == True:
-                                row = layout.row()
-                                row.operator(elem.write_operator, \
-                                        text = "Write element input").elem_key = elem.name
             except AttributeError:
                 row.label(text="No active objects")
                 pass

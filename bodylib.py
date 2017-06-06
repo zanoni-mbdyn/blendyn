@@ -204,7 +204,7 @@ class Scene_OT_MBDyn_Import_Body_Element(bpy.types.Operator):
 # Displays body element info in the tools panel
 def body_info_draw(elem, layout): 
     nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
+    
     col = layout.column(align = True)
 
     col.prop(elem, "scale_factor")
@@ -246,3 +246,5 @@ def body_info_draw(elem, layout):
     column.row().prop(elem.offsets[3], 'value', index = 2, text = 'Jzz')
 
     pass
+# -----------------------------------------------------------
+# end of body_info_draw(elem, layout) function

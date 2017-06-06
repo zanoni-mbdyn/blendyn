@@ -62,10 +62,9 @@ def parse_clamp(rw, ed):
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
-        pass
+
     except KeyError:
-        pass
-        print("parse_clamp(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_clamp(): didn't found an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'clamp'
         el.int_label = int(rw[1])
@@ -107,11 +106,10 @@ def spawn_clamp_element(elem, context):
     nd = mbs.nodes
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-        return {'OBJECT_EXISTS'}
         print("spawn_clamp_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
-        return {'CANCELLED'}
+        return {'OBJECT_EXISTS'}
 
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
@@ -178,8 +176,8 @@ class Scene_OT_MBDyn_Import_Clamp_Joint_Element(bpy.types.Operator):
         layout.alignment = 'LEFT'
 
     def execute(self, context):
-        ed = bpy.context.scene.mbdyn.elems
-        nd = bpy.context.scene.mbdyn.nodes
+        ed = context.scene.mbdyn.elems
+        nd = context.scene.mbdyn.nodes
 
         try:
             elem = ed['clamp_' + str(self.int_label)]
