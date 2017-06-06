@@ -138,6 +138,12 @@ def spawn_body_element(elem, context):
         bodyOBJ.location = p1
         bodyOBJ.rotation_mode = 'QUATERNION'
 
+        # set mbdyn props of object
+        bodyOBJ.mbdyn.int_label = elem.int_label
+        bodyOBJ.mbdyn.string_label = elem.string_label
+        bodyOBJ.mbdyn.dkey = elem.name
+        bodyOBJ.mbdyn.type = 'body'
+
         # set parenting of wireframe obj
         bpy.ops.object.select_all(action = 'DESELECT')
         bodyOBJ.select = True
