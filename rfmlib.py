@@ -39,27 +39,29 @@ def parse_reference_frame(rw, rd):
     print("parse_refrence_frame(): Parsing Reference Frame " + rw[0])
 
     try:
-        ref = rd['ref_' + str(rw[0])]
+        ref = rd['ref_' + str(rw[0]).strip()]
         print("parse_reference_frame(): found existing entry in references dictionary." \
                 + " Updating it.")
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
     except KeyError:
-        print("parse_reference_frame()(): didn't found an entry in elements dictionary." \
+        print("parse_reference_frame(): didn't found an entry in elements dictionary." \
                 + " Creating one.")
         
         ref = rd.add()
-        ref.int_label = int(rw[0])
+        ref.int_label = int(rw[0].strip())
+        ref.name = 'ref_' + str(rw[0]).strip()
         ret_val = False
         pass
 
     ref.pos = Vector(( float(rw[1]), float(rw[2]), float(rw[3]) ))
 
     phi = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-    ref.rot = Quaternionn(phi.normalized(), phi.magnitude)
+    ref.rot = Quaternion(phi.normalized(), phi.magnitude)
 
     ref.vel = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+    ref.angvel = Vector(( float(rw[10]), float(rw[11]), float(rw[12]) ))
     ref.is_imported = True
 # -----------------------------------------------------------
 # end of parse_reference_frame(rw, rd) function
@@ -85,9 +87,11 @@ def spawn_reference_frame(ref, context):
 
     if obj.mbdyn.string_label != "none":
         obj.name = ref.string_label
+
     else:
         obj.name = ref.name
-    
+   
+    obj.mbdyn.dkey = ref.name
     ref.blender_object = obj.name
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -110,7 +114,7 @@ class Scene_OT_MBDyn_Import_Reference(bpy.types.Operator):
             ref = rd['ref_' + str(self.int_label)]
             retval = spawn_reference_frame(ref, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "Found the Object " + elem.blender_object + \
+                message = "Found the Object " + ref.blender_object + \
                     " remove or rename it to re-import the element!"
                 self.report({'WARNING'}, message)
                 logging.warning(message)

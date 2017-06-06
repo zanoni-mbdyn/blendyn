@@ -42,6 +42,7 @@ from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
+from .rfmlib import *
 from .logwatcher import *
 
 try:
@@ -259,20 +260,29 @@ def parse_log_file(context):
             for ii in range(4):
                 next(reader)
             mbs.time_step = float(next(reader)[3])
-    except IOError:
-        print("Could not locate the file " + out_file + ".")
+    except FileNotFoundError:
+        print("Could not locate the file " + out_file)
         ret_val = {'OUT_NOT_FOUND'}
         pass
     except StopIteration:
         print("Reached the end of .out file")
+    except IOError:
+        print("Could not read the file " + out_file)
+        pass
 
     try:
         with open(rfm_file) as rfm:
-            reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
-            rw = next(reader)
-            parse_reference_frame(rw, rd)
+            reader = csv.reader(rfm, delimiter = ' ', skipinitialspace = True)
+            for rfm_row in reader:
+                parse_reference_frame(rfm_row, rd)
     except StopIteration:
         pass
+    except FileNotFoundError:
+        print("Could not locate the file " + rfm_file)
+        pass
+    except IOError:
+        print("Could not read the file " + rfm_file)
+        pass 
 
     mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
 

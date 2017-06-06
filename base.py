@@ -75,6 +75,7 @@ except ImportError:
 from .baselib import *
 from .elements import *
 from .eigenlib import *
+from .rfmlib import *
 from .logwatcher import *
 
 import pdb
@@ -154,29 +155,29 @@ class MBDynRefsDictionary(bpy.types.PropertyGroup):
             )
     
     pos = FloatVectorProperty(
-            name = "reference position",
-            description = "Position",
+            name = "position",
+            description = "Reference Position",
             size = 3,
             precision = 6
             )
 
     rot = FloatVectorProperty(
-            name = "reference orientation",
-            description = "Orientation",
+            name = "orientation",
+            description = "Reference Orientation",
             size = 4,
             precision = 6
             )
 
     vel = FloatVectorProperty(
-            name = "reference velocity",
-            description = "Velocity",
+            name = "velocity",
+            description = "Reference Velocity",
             size = 3,
             precision = 6
             )
 
     angvel = FloatVectorProperty(
-            name = "reference angular velocity",
-            description = "Angular Velocity",
+            name = "angular velocity",
+            description = "Reference Angular Velocity",
             size = 3,
             precision = 6
             )
@@ -387,6 +388,13 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     references = CollectionProperty(
             name = "MBDyn references",
             type = MBDynRefsDictionary
+            )
+
+    # Reference dictionary index -- holds the index for displaying the Reference
+    # Dictionary in a UI List
+    ref_index = IntProperty(
+            name = "References collection index",
+            default = 0
             )
 
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
@@ -1464,7 +1472,7 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
         mbs = context.scene.mbdyn
         nd = mbs.nodes
         ed = mbs.elems
-        rd = mbd.references
+        rd = mbs.references
 
         # Display the active object
         if bpy.context.active_object:
@@ -1507,7 +1515,7 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
                                     text = "Write element input").elem_key = elem.name
 
                 if any(ref.blender_object == obj.name for ref in rd):
-                    reference_info_draw(ref, layout)
+                    reference_info_draw(rd[obj.mbdyn.dkey], layout)
 
             except AttributeError:
                 row.label(text="No active objects")
@@ -1525,7 +1533,7 @@ class MBDynNodes_UL_List(bpy.types.UIList):
             layout.label(item.name, icon = custom_icon)
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label("", icon = custom_icon)
+            layout.label('', icon = custom_icon)
 # -----------------------------------------------------------
 # end of MBDynNodes_UL_List class
 
@@ -1537,7 +1545,7 @@ class MBDynElems_UL_List(bpy.types.UIList):
             layout.label(item.name, icon = custom_icon)
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label("", icon = custom_icon)
+            layout.label('', icon = custom_icon)
 # -----------------------------------------------------------
 # end of MBDynElems_UL_List class
 
@@ -1553,6 +1561,18 @@ class MBDynEnvVar_UL_List(bpy.types.UIList):
         layout.label(item.value)
 # -----------------------------------------------------------
 # end of MBDynEnvVar_UL_List class
+
+class MBDynReferences_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        custom_icon = 'OUTLINER_DATA_EMPTY'
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(item.name, icon = custom_icon)
+        elif self.layout_type in {'GRID'}:
+            layout.aligment = 'CENTER'
+            layout.label('', icon = custom_icon) 
+# -----------------------------------------------------------
+# end of MBDynReferences_UL_List class
 
 ## Panel in scene properties toolbar that shows the MBDyn
 #  nodes found in the .log file and links to an operator
@@ -1573,7 +1593,7 @@ class MBDynNodesScenePanel(bpy.types.Panel):
         row.template_list('MBDynNodes_UL_List', "MBDyn nodes list", mbs, "nodes",\
                 mbs, "nd_index")
 
-        if mbs.nd_index >= 0 and len(nd):
+        if len(nd):
             item = mbs.nodes[mbs.nd_index]
 
             col = layout.column()
@@ -1591,13 +1611,14 @@ class MBDynNodesScenePanel(bpy.types.Panel):
             col.prop(mbs, "max_node_import")
             row = layout.row()
             row.operator(Scene_OT_MBDyn_Node_Import_All.bl_idname,\
-                    text="Add nodes to scene")
+                    text = "Add nodes to scene")
 
             row = layout.row()
-            row.operator("add.vertsfromnodes", text="Create vertex grid from nodes")
+            row.operator(MBDynCreateVerticesFromNodesButton.bl_idname,\
+                    text = "Create vertex grid from nodes")
 
             row = layout.row()
-            row.prop(mbs, "is_vertshook", text="Hook vertices to nodes")
+            row.prop(mbs, "is_vertshook", text = "Hook vertices to nodes")
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
@@ -1618,7 +1639,7 @@ class MBDynElemsScenePanel(bpy.types.Panel):
         row.template_list("MBDynElems_UL_List", "MBDyn elements", mbs, "elems",\
                 mbs, "ed_index")
 
-        if mbs.ed_index >= 0 and len(mbs.elems):
+        if len(mbs.elems):
             item = mbs.elems[mbs.ed_index]
 
             row = layout.row()
@@ -1654,6 +1675,41 @@ class MBDynElemsScenePanel(bpy.types.Panel):
             col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
+
+## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
+class MBDynReferenceScenePanel(bpy.types.Panel):
+    """ List of MBDyn references: use import button to add them to the scene as empty
+        axes objects """
+    bl_label = "MBDyn References"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        rd = mbs.references
+        layout = self.layout
+
+        row = layout.row()
+        row.template_list('MBDynReferences_UL_List', "MBDyn references list", \
+                mbs, "references", mbs, "ref_index")
+
+        try:
+            item = mbs.references[mbs.ref_index]
+
+            col = layout.column()
+            col.prop(item, "int_label")
+            col.prop(item, "string_label")
+            col.prop(item, "blender_object")
+            col.enabled = False
+
+            col = layout.column()
+            col.operator(Scene_OT_MBDyn_References_Import_Single.bl_idname, \
+                    text = "Add reference to the scene").int_label = item.int_label
+            col.operator(Scene_OT_MBDyn_References_Import_All.bl_idname, \
+                   text = "Add all references to the scene")
+        except KeyError:
+            pass
 
 ## Panel in object properties toolbar that helps associate
 #  MBDyn nodes to Blender objects
@@ -1727,7 +1783,9 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
                     obj.name = node.name
                 node.blender_object = obj.name
                 obj.mbdyn.is_assigned = True
-                print("MBDynNodeImportAllButton: added node " + str(node.int_label) + " to scene and associated with object " + obj.name)
+                print("MBDynNodeImportAllButton: added node " \
+                        + str(node.int_label) \
+                        + " to scene and associated with object " + obj.name)
                 added_nodes += 1
 
         if added_nodes:
@@ -1792,6 +1850,50 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Node_Import_Single class
+
+class Scene_OT_MBDyn_References_Import_All(bpy.types.Operator):
+    bl_idname = "add.mbdyn_reference_all"
+    bl_label = "Add MBDyn references to scene"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        rd = mbs.references
+
+        for ref in rd:
+            retval = spawn_reference_frame(ref, context)
+            if retval == {'OBJECT_EXISTS'}:
+                message = "Found the Object " + ref.blender_object + \
+                    " remove or rename it to re-import the element!"
+                self.report({'WARNING'}, message)
+                logging.warning(message)
+                return {'CANCELLED'}
+        return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_References_Import_All class
+
+class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
+    bl_idname = "add.mbdyn_reference_single"
+    bl_label = "Add MBDyn reference to scene"
+
+    int_label = IntProperty()
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        rd = mbs.references
+
+        for ref in rd:
+            if ref.int_label == self.int_label:
+                retval = spawn_reference_frame(ref, context)
+                if retval == {'OBJECT_EXISTS'}:
+                    message = "Found the Object " + ref.blender_object + \
+                        " remove or rename it to re-import the element!"
+                    self.report({'WARNING'}, message)
+                    logging.warning(message)
+                    return {'CANCELLED'}
+        return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_References_Import_Single class
+
 
 class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_type"
@@ -2004,6 +2106,10 @@ class Object_OT_Delete_Override(bpy.types.Operator):
             node = bpy.context.scene.mbdyn.nodes[obj.mbdyn.dkey]
             node.blender_object = 'none'
             node.is_imported = False
+        elif obj.mbdyn.type == 'reference':
+            ref = bpy.context.scene.mbdyn.references[obj.mbdyn.dkey]
+            ref.blender_object = 'none'
+            ref.is_imported = False
         else:
             elem = bpy.context.scene.mbdyn.elems[obj.mbdyn.dkey]
             elem.blender_object = 'none'
