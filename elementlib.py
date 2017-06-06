@@ -44,6 +44,7 @@ from .shell4lib import *
 from .sphjlib import *
 from .totjlib import *
 from .utilslib import *
+from .inplanejlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems
@@ -71,7 +72,8 @@ def parse_elements(context, jnt_type, rw):
             "structural follower force": parse_structural_follower_force,
             "structural follower couple": parse_structural_follower_couple,
             "totaljoint": parse_total,
-            "totalpinjoint": parse_total_pin
+            "totalpinjoint": parse_total_pin,
+            "inplane": parse_inplane
             }
  
     try:
