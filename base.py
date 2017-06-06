@@ -1710,6 +1710,8 @@ class MBDynReferenceScenePanel(bpy.types.Panel):
                    text = "Add all references to the scene")
         except KeyError:
             pass
+        except IndexError:
+            pass
 
 ## Panel in object properties toolbar that helps associate
 #  MBDyn nodes to Blender objects
