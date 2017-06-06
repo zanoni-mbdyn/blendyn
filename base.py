@@ -736,6 +736,19 @@ bpy.app.handlers.load_pre.append(close_log)
 bpy.app.handlers.save_pre.append(close_log)
 
 @persistent
+def set_mbdyn_path_startup(scene):
+    mbs = bpy.context.scene.mbdyn
+    try:
+        with open(os.path.join(os.path.dirname(mbs.addon_path), 'config.json'), 'r') as f:
+            mbs.install_path = json.load(f)['mbdyn_path']
+    except FileNotFoundError:
+        if shutil.which('mbdyn'):
+            mbs.install_path = os.path.dirname(shutil.which('mbdyn'))
+        pass
+
+bpy.app.handlers.load_post.append(set_mbdyn_path_startup)
+
+@persistent
 def blend_log(scene):
 
     mbs = bpy.context.scene.mbdyn
