@@ -396,7 +396,7 @@ def assign_labels(context):
                             found = True
                             break
                 if not (found):
-                    for set_string in set_string_refs:
+                    for set_string in set_strings_refs:
                         if set_string in line:
                             labels_changed += (assign_label(line, 'ref', set_string, rd))
                             found = True
