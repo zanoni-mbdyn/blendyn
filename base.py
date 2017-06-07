@@ -275,7 +275,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "Installation path of MBDyn",
             description = "Installation path of MBDyn",
             subtype = 'DIR_PATH',
-            default = 'not yet loaded'
+            default = 'not yet set'
             )
 
     # Integer representing the current animation number
