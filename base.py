@@ -537,7 +537,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     max_elem_import = IntProperty(
             name = "last element to import",
             description = "Higher limit of integer labels for range import for elements",
-            default = 0
+            default = 2**31 - 1
             )
     # True if output contains at least one eigensolution
     eigensolutions = CollectionProperty(

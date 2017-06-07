@@ -388,7 +388,7 @@ class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
         try:
             elem = ed['rod_bezier_' + str(self.int_label)]
             retval = spawn_rod_bezier_element(elem)
-            if retval == 'OBJECT_EXISTS':
+            if retval == {'OBJECT_EXISTS'}:
                 message = "Found the Object " + elem.blender_object + \
                 " remove or rename it to re-import the element!"
                 self.report({'WARNING'}, message)
@@ -396,13 +396,13 @@ class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
                     "before re-importing the element.")
                 logging.warning(message)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
+            elif retval == {'NODE1_NOTFOUND'}:
                 message = "Could not import element: Blender object " +\
                 "associated to Node " + str(elem.nodes[0].int_label) + " not found"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
-            elif retval == 'NODE2_NOTFOUND':
+            elif retval == {'NODE2_NOTFOUND'}:
                 message = "Could not import element: Blender object " +\
                 "associated to Node " + str(elem.nodes[1].int_label) + " not found"
                 self.report({'ERROR'}, message)
