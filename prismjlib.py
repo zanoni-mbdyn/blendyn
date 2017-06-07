@@ -117,13 +117,14 @@ def prism_info_draw(elem, layout):
 
         # Display offset of node 1 info
         row = layout.row()
-        row.label(text = "offset 1 w.r.t. Node " + node.string_label + " R.F.")
+        row.label(text = "offset 1 w.r.t. Node 1 R.F.")
         col = layout.column(align = True)
         col.prop(elem.offsets[0], "value", text = "", slider = False)
 
         node = nd['node_' + str(elem.nodes[1].int_label)]
 
         # Display node 2 info
+        col = layout.column()
         col.prop(node, "int_label", text = "Node 2 ID ")
         col.prop(node, "string_label", text = "Node 2 label ")
         col.prop(node, "blender_object", text = "Node 2 Object: ")
@@ -131,7 +132,7 @@ def prism_info_draw(elem, layout):
 
         # Display offset of node 2 info
         row = layout.row()
-        row.label(text = "offset 2 w.r.t. Node " + node.string_label + " R.F.")
+        row.label(text = "offset 2 w.r.t. Node 2 R.F.")
         col = layout.column(align = True)
         col.prop(elem.offsets[1], "value", text = "", slider = False)
         layout.separator()
