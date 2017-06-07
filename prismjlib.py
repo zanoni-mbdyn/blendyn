@@ -46,15 +46,11 @@ def parse_prismatic(rw, ed):
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
-        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+         
         R1 = Matrix()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
-        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
-
         R2 = Matrix()
         parse_rotmat(rw, 19, R2) 
         el.rotoffsets[1].value = R2.to_quaternion(); 
@@ -74,16 +70,10 @@ def parse_prismatic(rw, ed):
         el.nodes.add()
         el.nodes[1].int_label = int(rw[15])
 
-        el.offsets.add()
-        el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-
         el.rotoffsets.add()
         R1 = Matrix()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
-
-        el.offsets.add()
-        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         el.rotoffsets.add()
         R2 = Matrix()
@@ -115,11 +105,11 @@ def prism_info_draw(elem, layout):
         col.prop(node, "blender_object", text = "Node 1 Object: ")
         col.enabled = False
 
-        # Display offset of node 1 info
+        # Display orientation offset from node 1 info
         row = layout.row()
-        row.label(text = "offset 1 w.r.t. Node 1 R.F.")
+        row.label(text = "orientation offset from Node 1")
         col = layout.column(align = True)
-        col.prop(elem.offsets[0], "value", text = "", slider = False)
+        col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
 
         node = nd['node_' + str(elem.nodes[1].int_label)]
 
@@ -130,11 +120,11 @@ def prism_info_draw(elem, layout):
         col.prop(node, "blender_object", text = "Node 2 Object: ")
         col.enabled = False
 
-        # Display offset of node 2 info
+        # Display orientation offset from node 2 info
         row = layout.row()
-        row.label(text = "offset 2 w.r.t. Node 2 R.F.")
+        row.label(text = "orientation offset from Node 2")
         col = layout.column(align = True)
-        col.prop(elem.offsets[1], "value", text = "", slider = False)
+        col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
         layout.separator()
 
         return {'FINISHED'}
@@ -192,8 +182,8 @@ def spawn_prismatic_element(elem, context):
         prismjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
+        f1 = Vector(( 0.0, 0.0, 0.0 ))
+        f2 = Vector(( 0.0, 0.0, 0.0 ))
         q1 = elem.rotoffsets[0].value
         q2 = elem.rotoffsets[1].value
     
