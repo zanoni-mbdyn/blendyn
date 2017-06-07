@@ -43,6 +43,7 @@ from .rodjlib import *
 from .shell4lib import *
 from .sphjlib import *
 from .prismjlib import *
+from .inplanejlib import *
 from .totjlib import *
 from .utilslib import *
 
@@ -73,7 +74,8 @@ def parse_elements(context, jnt_type, rw):
             "structural follower couple": parse_structural_follower_couple,
             "totaljoint": parse_total,
             "totalpinjoint": parse_total_pin,
-            "prismatic": parse_prismatic
+            "prismatic": parse_prismatic,
+            "inplane": parse_inplane
             }
  
     try:
