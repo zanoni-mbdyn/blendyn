@@ -232,31 +232,31 @@ class Scene_OT_MBDyn_Import_Shell4_Element(bpy.types.Operator):
                             "object before re-importing"
                 self.report({'ERROR'}, message)
                 logging.error(message)
-                return{'CANCELLED'}
+                return {'CANCELLED'}
             elif ret_val == {'NODE1_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[0].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
-                return{'CANCELLED'}
+                return {'CANCELLED'}
             elif ret_val == {'NODE2_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[1].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
-                return{'CANCELLED'}
+                return {'CANCELLED'}
             elif ret_val == {'NODE3_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[2].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
-                return{'CANCELLED'}
+                return {'CANCELLED'}
             elif ret_val == {'NODE4_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[3].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
-                return{'CANCELLED'}
+                return {'CANCELLED'}
             else:
                 return ret_val
         except KeyError:

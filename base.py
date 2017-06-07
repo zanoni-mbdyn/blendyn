@@ -532,7 +532,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     max_elem_import = IntProperty(
             name = "last element to import",
             description = "Higher limit of integer labels for range import for elements",
-            default = 0
+            default = 2**31 - 1
             )
     # True if output contains at least one eigensolution
     eigensolutions = CollectionProperty(
@@ -1528,39 +1528,45 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
 
             try:
                 row.prop(obj, "name")
+                node = [node for node in nd if node.blender_object == obj.name]
 
-                if any(item.blender_object == obj.name for item in nd):
-
+                if node:
                     # Display MBDyn node info
                     row = col.row()
 
                     # Select MBDyn node
                     col = layout.column(align=True)
-                    col.prop(obj.mbdyn, "int_label")
+                    col.prop(node[0], "int_label")
                     col = layout.column(align=True)
-                    col.prop(obj.mbdyn, "string_label", text="")
-                    col.prop(obj.mbdyn, "parametrization", text="")
+                    col.prop(node[0], "string_label", text="")
+                    col.prop(node[0], "parametrization", text="")
                     col.enabled = False
+                    return
 
-                if any(item.blender_object == obj.name for item in ed):
-                    if elem.blender_object == obj.name:
-                        # Display MBDyn elements info
+                elem = [elem for elem in ed if elem.blender_object == obj.name]
+                if elem:
+                    # Display MBDyn elements info
+                    row = layout.row()
+                    row.label(text = "MBDyn's element info:")
+                    
+                    eval(elem[0].info_draw + "(elem[0], layout)")
+
+                    if elem[0].update_info_operator != 'none' and elem[0].is_imported == True:
                         row = layout.row()
-                        row.label(text = "MBDyn's element info:")
-
-                        eval(elem.info_draw + "(elem, layout)")
-
-                        if elem.update_info_operator != 'none' and elem.is_imported == True:
-                            row = layout.row()
-                            row.operator(elem.update_info_operator, \
-                                    text = "Update element info").elem_key = elem.name
-                        if elem.write_operator != 'none' and elem.is_imported == True:
-                            row = layout.row()
-                            row.operator(elem.write_operator, \
-                                    text = "Write element input").elem_key = elem.name
-
-                if any(ref.blender_object == obj.name for ref in rd):
-                    reference_info_draw(rd[obj.mbdyn.dkey], layout)
+                        row.operator(elem[0].update_info_operator, \
+                                text = "Update element info").elem_key = elem[0].name
+                    if elem[0].write_operator != 'none' and elem[0].is_imported == True:
+                        row = layout.row()
+                        row.operator(elem[0].write_operator, \
+                                text = "Write element input").elem_key = elem[0].name
+                    return
+                
+                ref  = [ref for ref in rd if node.blender_object == obj.name]    
+                if ref:
+                    reference_info_draw(ref[0], layout)
+                    return
+                else:
+                    pass
 
             except AttributeError:
                 row.label(text="No active objects")

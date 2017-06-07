@@ -71,6 +71,8 @@ def update_curr_eigmode(self, context):
         det = (alpha_r + beta)**2 + alpha_i**2
         self.lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
         self.lambda_freq = (1./self.dCoef)*(alpha_i*beta)/(det*math.pi)
+# -----------------------------------------------------------
+# end of update_curr_eigmode() function
 
 def update_curr_eigsol(self, context):
     if self.curr_eigsol < 0:
