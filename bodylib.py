@@ -47,8 +47,6 @@ def parse_body(rw, ed):
         
         el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
         
-        J = Matrix()
-
         # FIXME this is the inertia matrix... And this is a (dirty) trick 
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets[2].value = Vector(( float(rw[10]), float(rw[11]), float(rw[12]) ))
