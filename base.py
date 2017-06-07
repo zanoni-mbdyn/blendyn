@@ -270,17 +270,12 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = "not yet selected"
         )
 
-    default_mbdyn = BoolProperty(
-            name = "Default MBDyn Path",
-            description = "Use MBDyn Installation path from system PATH variable",
-            default = False
-    )
-
     # String representing path of MBDyn Installation
     install_path = StringProperty(
             name = "Installation path of MBDyn",
             description = "Installation path of MBDyn",
-            subtype = 'DIR_PATH'
+            subtype = 'DIR_PATH',
+            default = 'not yet set'
             )
 
     # Integer representing the current animation number
@@ -736,6 +731,19 @@ bpy.app.handlers.load_pre.append(close_log)
 bpy.app.handlers.save_pre.append(close_log)
 
 @persistent
+def set_mbdyn_path_startup(scene):
+    mbs = bpy.context.scene.mbdyn
+    try:
+        with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+            mbs.install_path = json.load(f)['mbdyn_path']
+    except FileNotFoundError:
+        if shutil.which('mbdyn'):
+            mbs.install_path = os.path.dirname(shutil.which('mbdyn'))
+        pass
+
+bpy.app.handlers.load_post.append(set_mbdyn_path_startup)
+
+@persistent
 def blend_log(scene):
 
     mbs = bpy.context.scene.mbdyn
@@ -923,11 +931,10 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        blendyn_path = mbs.addon_path
         mbdyn_path = mbs.install_path
-
         config = {'mbdyn_path': mbdyn_path}
-        with open(os.path.join(os.path.dirname(blendyn_path), 'config.json'), 'w') as f:
+
+        with open(os.path.join(mbs.addon_path, 'config.json'), 'w') as f:
             json.dump(config, f)
 
         return {'FINISHED'}
@@ -937,6 +944,54 @@ class MBDynSetInstallPath(bpy.types.Operator):
 bpy.utils.register_class(MBDynSetInstallPath)
 # -----------------------------------------------------------
 # end of MBDynSetInstallPath class
+
+class MBDynDefaultInstallPath(bpy.types.Operator):
+    """Sets the Installation path of MBDyn to the value\
+        found in the system $PATH variable"""
+
+    bl_idname = "sel.mbdyn_default_path"
+    bl_label = "Set Default Path for MBDyn"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        if shutil.which('mbdyn'):
+            mbs.install_path = os.path.dirname(shutil.which('mbdyn'))
+
+        else:
+            message = 'MBDyn path is not set in the system $PATH variable'
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynDefaultInstallPath)
+
+class MBDynConfigInstallPath(bpy.types.Operator):
+    """Sets the Installation path of MBDyn to the value\
+        found in config.json"""
+
+    bl_idname = "sel.mbdyn_config_path"
+    bl_label = "Set config.json Path for MBDyn"
+
+    def execute(self, context):
+        mbs = bpy.context.scene.mbdyn
+
+        try:
+            with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+                mbs.install_path = json.load(f)['mbdyn_path']
+        except FileNotFoundError:
+            message = 'No config.json file found. Set value above'
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynConfigInstallPath)
 
 class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
     """Set input file's path and basename\
@@ -1029,18 +1084,7 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         mbdyn_env = os.environ.copy()
 
-        default_mbdyn = os.path.dirname(shutil.which('mbdyn'))
-
-        try:
-            with open(os.path.join(os.path.dirname(mbs.addon_path), 'config.json'), 'r') as f:
-                mbdyn_path = json.load(f)['mbdyn_path']
-        except FileNotFoundError:
-            mbdyn_path = default_mbdyn
-
-        if mbs.default_mbdyn:
-            mbdyn_path = default_mbdyn
-
-        mbdyn_env['PATH'] = mbdyn_path + ":" + mbdyn_env['PATH']
+        mbdyn_env['PATH'] = mbs.install_path + ":" + mbdyn_env['PATH']
 
         command_line_options = mbs.cmd_options
 
@@ -1068,6 +1112,9 @@ class MBDynRunSimulation(bpy.types.Operator):
             command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
+
+        self.timer = context.window_manager.event_timer_add(0.5, context.window)
+        context.window_manager.modal_handler_add(self)
 
         return {'RUNNING_MODAL'}
 
@@ -1126,9 +1173,6 @@ class MBDynRunSimulation(bpy.types.Operator):
         if not mbs.final_time:
             self.report({'ERROR'}, "Enter Final Time for the simulation to proceed")
             return {'CANCELLED'}
-
-        self.timer = context.window_manager.event_timer_add(0.5, context.window)
-        context.window_manager.modal_handler_add(self)
 
         return self.execute(context)
 
@@ -1345,7 +1389,8 @@ class MBDynSimulationPanel(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(mbs, "install_path", text="Path")
         col.operator(MBDynSetInstallPath.bl_idname, text = 'Set Installation Path')
-        col.prop(mbs, "default_mbdyn", text = 'Use default MBDyn')
+        col.operator(MBDynDefaultInstallPath.bl_idname, text = 'Use default MBDyn')
+        col.operator(MBDynConfigInstallPath.bl_idname, text = 'Use config MBDyn Path')
 
         col = layout.column(align = True)
         col.label(text = "Selected input file")

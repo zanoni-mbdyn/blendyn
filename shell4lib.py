@@ -226,39 +226,39 @@ class Scene_OT_MBDyn_Import_Shell4_Element(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn.nodes
         try:
             elem = ed['shell4_' + str(self.int_label)]
-            ret_val = spawn_shell4_element(elem, context)
-            if ret_val == {'OBJECT_EXISTS'}:
+            retval = spawn_shell4_element(elem, context)
+            if retval == {'OBJECT_EXISTS'}:
                 message = "Element is already imported. Remove the Blender " +\
                             "object before re-importing"
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
-            elif ret_val == {'NODE1_NOTFOUND'}:
+            elif retval == {'NODE1_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[0].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
-            elif ret_val == {'NODE2_NOTFOUND'}:
+            elif retval == {'NODE2_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[1].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
-            elif ret_val == {'NODE3_NOTFOUND'}:
+            elif retval == {'NODE3_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[2].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
-            elif ret_val == {'NODE4_NOTFOUND'}:
+            elif retval == {'NODE4_NOTFOUND'}:
                 message = "Could not find a Blender object associated to Node " \
                         + str(elem.nodes[3].int_label)
                 self.report({'ERROR'}, message)
                 logging.error(message)
                 return {'CANCELLED'}
             else:
-                return ret_val
+                return retval
         except KeyError:
             message = "Element shell4_" + str(elem.int_label) + "not found"
             self.report({'ERROR'}, message)
