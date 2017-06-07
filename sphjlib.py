@@ -333,7 +333,7 @@ class Scene_OT_MBDyn_Import_Spherical_Hinge_Joint_Element(bpy.types.Operator):
                 self.report({'WARNING'}, message)
                 logging.warning(message)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
+            elif retval == {'NODE1_NOTFOUND'}:
                 message = "Could not import element: Blender object " +\
                     "associated to Node " + str(elem.nodes[0].int_label) \
                     + " not found"
@@ -385,7 +385,7 @@ class Scene_OT_MBDyn_Import_Spherical_Pin_Joint_Element(bpy.types.Operator):
                 self.report({'WARNING'}, message)
                 logging.warning(message)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
+            elif retval == {'NODE1_NOTFOUND'}:
                 message = "Could not import element: Blender object " +\
                     "associated to Node " + str(elem.nodes[0].int_label) \
                     + " not found"
