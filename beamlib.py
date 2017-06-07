@@ -168,7 +168,7 @@ def beam2_info_draw(elem, layout):
         col = layout.column(align = True)
         col.prop(elem.offsets[0], "value", text = "", slider = False)
 
-        node = nd['node_' + str(elem.nodes[0].int_label)]
+        node = nd['node_' + str(elem.nodes[1].int_label)]
         
         # Display node 2 info
         col.prop(node, "int_label", text = "Node 2 ID ")
