@@ -91,6 +91,7 @@ def parse_inplane(rw, ed):
         el.rotoffsets[1].value = R2.to_quaternion();
 
         el.import_function = "add.mbdyn_elem_inplane"
+        el.info_draw = "inplane_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -98,6 +99,48 @@ def parse_inplane(rw, ed):
     return ret_val
 # -------------------------------------------------------------------------- 
 # end of parse_inplane(rw, ed) function
+
+# function that displays inplane info in panel -- [ optional ]
+def inplane_info_draw(elem, layout):
+    nd = bpy.context.scene.mbdyn.nodes
+    row = layout.row()
+    col = layout.column(align=True)
+
+    try:
+        node = nd['node_' + str(elem.nodes[0].int_label)]
+        # Display node 1 info
+        col.prop(node, "int_label", text = "Node 1 ID ")
+        col.prop(node, "string_label", text = "Node 1 label ")
+        col.prop(node, "blender_object", text = "Node 1 Object: ")
+        col.enabled = False
+
+        # Display offset of node 1 info
+        row = layout.row()
+        row.label(text = "offset 1 w.r.t. Node " + node.string_label + " R.F.")
+        col = layout.column(align = True)
+        col.prop(elem.offsets[0], "value", text = "", slider = False)
+
+        node = nd['node_' + str(elem.nodes[1].int_label)]
+
+        # Display node 2 info
+        col.prop(node, "int_label", text = "Node 2 ID ")
+        col.prop(node, "string_label", text = "Node 2 label ")
+        col.prop(node, "blender_object", text = "Node 2 Object: ")
+        col.enabled = False
+
+        # Display offset of node 2 info
+        row = layout.row()
+        row.label(text = "offset 2 w.r.t. Node " + node.string_label + " R.F.")
+        col = layout.column(align = True)
+        col.prop(elem.offsets[1], "value", text = "", slider = False)
+        layout.separator()
+
+        return {'FINISHED'}
+    except KeyError:
+        return {'NODE_NOTFOUND'}
+
+# -----------------------------------------------------------
+# end of inplane_info_draw(elem, layout) function
 
 # Creates the object representing a inplane joint element
 def spawn_inplane_element(elem, context):
