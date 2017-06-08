@@ -280,6 +280,13 @@ def spawn_total_joint_element(elem, context):
             n2OBJ.scale.magnitude)*elem.scale_factor
     totjOBJ.scale = Vector(( s, s, s ))
 
+    # set mbdyn props of object
+    totjOBJ.mbdyn.int_label = elem.int_label
+    totjOBJ.mbdyn.string_label = elem.string_label
+    totjOBJ.mbdyn.dkey = elem.name
+    totjOBJ.mbdyn.type = elem.type 
+
+
     # create an object representing the RF used to express the relative
     # position w.r.t. node 1, for model debugging
     bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
