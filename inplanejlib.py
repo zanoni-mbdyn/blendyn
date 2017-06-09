@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------
-# Blendyn -- file prismjlib.py
+# Blendyn -- file inplanejlib.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
@@ -133,6 +133,19 @@ def inplane_info_draw(elem, layout):
         row.label(text = "offset 2 w.r.t. Node " + node.string_label + " R.F.")
         col = layout.column(align = True)
         col.prop(elem.offsets[1], "value", text = "", slider = False)
+        col.enabled = False
+
+        row = layout.row()
+        n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
+        n1OBJ = bpy.data.objects[n1]
+        q1 = elem.rotoffsets[0].value
+        direction = Vector((0, 0, 1))
+        janga = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        direction.rotate(janga)
+        direction = list(map(str, direction))
+        direction = ', '.join(direction)
+        row.label(text = "Normal to InPlane Joint" + direction)
+
         layout.separator()
 
         return {'FINISHED'}
@@ -181,13 +194,13 @@ def spawn_inplane_element(elem, context):
             'library', 'joints.blend', 'Object'), filename = 'inplane')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
-        prismjOBJ = bpy.context.selected_objects[0]
-        prismjOBJ.name = elem.name
+        inplanejOBJ = bpy.context.selected_objects[0]
+        inplanejOBJ.name = elem.name
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
         n2OBJ.scale.magnitude)*elem.scale_factor
-        prismjOBJ.scale = Vector(( s, s, s ))
+        inplanejOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
         f1 = elem.offsets[0].value
@@ -202,19 +215,19 @@ def spawn_inplane_element(elem, context):
         p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
     
         # place the joint object in the position defined relative to node 2
-        prismjOBJ.location = p1
-        prismjOBJ.rotation_mode = 'QUATERNION'
-        prismjOBJ.rotation_quaternion = \
-                n2OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        inplanejOBJ.location = p1
+        inplanejOBJ.rotation_mode = 'QUATERNION'
+        inplanejOBJ.rotation_quaternion = \
+                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
         bpy.ops.object.select_all(action = 'DESELECT')
-        prismjOBJ.select = True
+        inplanejOBJ.select = True
         n2OBJ.select = True
         bpy.context.scene.objects.active = n1OBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-        elem.blender_object = prismjOBJ.name
+        elem.blender_object = inplanejOBJ.name
 
         return {'FINISHED'}
     else:

@@ -252,8 +252,18 @@ def parse_log_file(context):
         ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
-    pass 
-   
+    pass
+
+    en = len(ed)
+    if en:
+        mbs.min_elem_import = ed[0].int_label
+        mbs.max_elem_import = ed[0].int_label
+        for edx in range(1, len(ed)):
+            if ed[edx].int_label < mbs.min_elem_import:
+                mbs.min_elem_import = ed[edx].int_label
+            elif ed[edx].int_label > mbs.max_elem_import:
+                mbs.max_elem_import = ed[edx].int_label
+
     try:
         with open(out_file) as of:
             reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
