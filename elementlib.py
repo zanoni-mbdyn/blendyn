@@ -44,6 +44,7 @@ from .shell4lib import *
 from .sphjlib import *
 from .prismjlib import *
 from .inplanejlib import *
+from .inlinejlib import *
 from .totjlib import *
 from .utilslib import *
 
@@ -75,7 +76,8 @@ def parse_elements(context, jnt_type, rw):
             "totaljoint": parse_total,
             "totalpinjoint": parse_total_pin,
             "prismatic": parse_prismatic,
-            "inplane": parse_inplane
+            "inplane": parse_inplane,
+            "inline": parse_inline
             }
  
     try:
