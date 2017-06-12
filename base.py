@@ -767,6 +767,25 @@ def rename_log(scene):
 
 bpy.app.handlers.save_post.append(rename_log)
 
+class MBDynStandardImport(bpy.types.Operator):
+    """ Standard Import Process """
+    bl_idname = "animate.standard_import"
+    bl_label = "MBDyn Standard Import"
+
+    def execute(self, context):
+        bpy.ops.animate.read_mbdyn_log_file('EXEC_DEFAULT')
+        bpy.ops.add.mbdynnode_all('EXEC_DEFAULT')
+        bpy.ops.add.mbdyn_elems_all('EXEC_DEFAULT')
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynStandardImport)
+# -----------------------------------------------------------
+# end of MBDynStandardImport class
+
+
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
     bl_idname = "animate.read_mbdyn_log_file"
@@ -1275,6 +1294,10 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
+        row = layout.row()
+        row.label(text = "MBDyn Standard Import")
+        col = layout.column(align = True)
+        col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
         # Display MBDyn file basename and info
         row = layout.row()
 
