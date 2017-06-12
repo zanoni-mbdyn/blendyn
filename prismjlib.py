@@ -60,7 +60,7 @@ def parse_prismatic(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_prismatic(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_prismatic(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'prismatic'
         el.int_label = int(rw[1])

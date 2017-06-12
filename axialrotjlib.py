@@ -64,7 +64,7 @@ def parse_axialrot(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_axialrot(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_axialrot(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'axialrot'
         el.int_label = int(rw[1])

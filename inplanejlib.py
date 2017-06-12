@@ -64,7 +64,7 @@ def parse_inplane(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_inplane(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_inplane(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'inplane'
         el.int_label = int(rw[1])

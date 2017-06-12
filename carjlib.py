@@ -63,7 +63,7 @@ def parse_cardano_hinge(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_cardano_hinge(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_cardano_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'cardano_hinge'
         el.int_label = int(rw[1])
@@ -122,7 +122,7 @@ def parse_cardano_pin(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_cardano_pin(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_cardano_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'cardano_pin'
         el.int_label = int(rw[1])
