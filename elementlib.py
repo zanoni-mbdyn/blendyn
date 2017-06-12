@@ -65,6 +65,7 @@ def parse_elements(context, jnt_type, rw):
             "deformabledisplacementjoint": parse_deformable_displacement,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
+            "revoluterotation": parse_revolute_rot,
             "rod": parse_rod,
             "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
