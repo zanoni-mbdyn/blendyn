@@ -773,9 +773,16 @@ class MBDynStandardImport(bpy.types.Operator):
     bl_label = "MBDyn Standard Import"
 
     def execute(self, context):
-        bpy.ops.animate.read_mbdyn_log_file('EXEC_DEFAULT')
-        bpy.ops.add.mbdynnode_all('EXEC_DEFAULT')
-        bpy.ops.add.mbdyn_elems_all('EXEC_DEFAULT')
+        try:
+            bpy.ops.animate.read_mbdyn_log_file('EXEC_DEFAULT')
+            bpy.ops.add.mbdynnode_all('EXEC_DEFAULT')
+            bpy.ops.add.mbdyn_elems_all('EXEC_DEFAULT')
+        except RuntimeError as re:
+            message = "StandardImport: something went wrong during the automatic import. "\
+                + " See the .bylog file for details"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+            return {'CANCELLED'}
         return {'FINISHED'}
 
     def invoke(self, context, event):
