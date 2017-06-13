@@ -212,7 +212,7 @@ def spawn_axialrot_element(elem, context):
         # set parenting of wireframe obj
         bpy.ops.object.select_all(action = 'DESELECT')
         axialrotjOBJ.select = True
-        n2OBJ.select = True
+        n1OBJ.select = True
         bpy.context.scene.objects.active = n1OBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 

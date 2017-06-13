@@ -48,6 +48,7 @@ from .inlinejlib import *
 from .totjlib import *
 from .utilslib import *
 from .axialrotjlib import *
+from .distjlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems
@@ -80,7 +81,8 @@ def parse_elements(context, jnt_type, rw):
             "prismatic": parse_prismatic,
             "inplane": parse_inplane,
             "inline": parse_inline,
-            "axialrotation": parse_axialrot
+            "axialrotation": parse_axialrot,
+            "distance": parse_distance
             }
  
     try:
