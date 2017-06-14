@@ -392,6 +392,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
+    disabled_output = StringProperty(
+            name = "Nodes for which Output is disabled",
+            default = ''
+    )
+
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
             name = "MBDyn nodes",
@@ -773,6 +778,7 @@ class MBDynReadLog(bpy.types.Operator):
     bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
+        mbs = context.scene.mbdyn
         ret_val, obj_names = parse_log_file(context)
 
         missing = context.scene.mbdyn.missing
@@ -782,6 +788,11 @@ class MBDynReadLog(bpy.types.Operator):
             baseLogger.warning(message)
             hide_or_delete(obj_names, missing)
             return {'FINISHED'}
+
+        if len(mbs.disabled_output) > 0:
+            message = "Some nodes have disabled outputs"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(message)
 
         if ret_val == {'LOG_NOT_FOUND'}:
             message = "MBDyn .log file not found"

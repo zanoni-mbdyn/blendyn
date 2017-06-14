@@ -1,4 +1,4 @@
-# --------------------------------------------------------------------------
+list1# --------------------------------------------------------------------------
 # Blendyn -- file baselib.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
@@ -36,7 +36,7 @@ import logging
 
 import numpy as np
 
-import ntpath, os, csv, math, atexit
+import ntpath, os, csv, math, atexit, re
 
 from collections import namedtuple
 
@@ -143,6 +143,30 @@ def setup_import(filepath, context):
 # -----------------------------------------------------------
 # end of setup_import() function
 
+def no_output(context):
+    """Check for nodes with no output"""
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+
+    print('Silicon Valley')
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r", format="NETCDF3")
+        list1 = nc.variables.keys()
+        regex = re.compile(r'node.struct.\d$')
+        list2 = list(filter(regex.search, janga))
+        result_nodes = list(map(lambda x: x[-1], list2))
+        result_nodes = list(map(int, result_nodes))
+        log_nodes = list(range(1, len(nd) + 1))
+
+        difference = list(set(result_nodes) ^ set(log_nodes))
+        difference = ' '.join(list(map(str, difference)))
+        print(difference)
+        mbs.disabled_output = difference
+# -----------------------------------------------------------
+# end of no_output() function
+
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
 # TODO: support more joint types
@@ -232,6 +256,12 @@ def parse_log_file(context):
     obj_names = list(filter(None, obj_names))
 
     nn = len(nd)
+
+    # Account for nodes with no output
+
+    if nn:
+        no_output(context)
+
     if nn:
         mbs.num_nodes = nn
         mbs.min_node_import = nd[0].int_label
@@ -652,6 +682,10 @@ def set_motion_paths_netcdf(context):
 
     kk = 0
     for ndx in anim_nodes:
+
+        if ndx[-1] in mbs.disabled_output.split(' '):
+            continue
+
         obj = bpy.data.objects[nd[ndx].blender_object]
         obj.select = True
         node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
