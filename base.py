@@ -521,6 +521,15 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "Elements to import",
             )
 
+    elem_scale_slider = FloatProperty(
+            name = 'Value of scaling',
+            default = 1.0
+    )
+
+    elem_type_scale = EnumProperty(
+            items = get_elems_types,
+            name = "Elements to scale",
+    )
     # Lower limit of range import for elemens
     min_elem_import = IntProperty(
             name = "first element to import",
@@ -1754,6 +1763,15 @@ class MBDynElemsScenePanel(bpy.types.Panel):
 
             col = layout.column()
             col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
+
+            box = layout.box()
+            box.label(text = 'Scale MBDyn elements')
+            row = box.row()
+            row.prop(mbs, "elem_type_scale")
+            row = box.row()
+            row.prop(mbs, "elem_scale_slider")
+            row = box.row()
+            row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
@@ -1977,6 +1995,21 @@ class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_References_Import_Single class
 
+
+class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "add.mbdyn_scale_type"
+    bl_label = "Scale all elements of selected type"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        s = mbs.elem_scale_slider
+        for elem in ed:
+            if elem.type == mbs.elem_type_scale:
+                scaleOBJ = bpy.data.objects[elem.name]
+                scaleOBJ.scale = Vector((s, s, s))
+
+        return {'FINISHED'}
 
 class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_type"
