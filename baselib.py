@@ -1,4 +1,4 @@
-list1# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # Blendyn -- file baselib.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
@@ -155,7 +155,7 @@ def no_output(context):
         nc = Dataset(ncfile, "r", format="NETCDF3")
         list1 = nc.variables.keys()
         regex = re.compile(r'node.struct.\d$')
-        list2 = list(filter(regex.search, janga))
+        list2 = list(filter(regex.search, list1))
         result_nodes = list(map(lambda x: x[-1], list2))
         result_nodes = list(map(int, result_nodes))
         log_nodes = list(range(1, len(nd) + 1))
