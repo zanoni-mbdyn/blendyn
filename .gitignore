@@ -1,4 +1,5 @@
 config.json
 
-tests/bladeflap/
+library/*.blend1
+tests/
 __pycache__/

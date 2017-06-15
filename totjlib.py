@@ -88,7 +88,7 @@ def parse_total(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_total(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_total(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_joint'
         el.int_label = int(rw[1])
@@ -571,7 +571,7 @@ def parse_total_pin(rw, ed):
 
         pass
     except KeyError:
-        print("parse_total_pin(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
