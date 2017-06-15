@@ -156,11 +156,10 @@ def no_output(context):
         regex = re.compile(r'node.struct.\d$')
         list2 = list(filter(regex.search, list1))
         result_nodes = list(map(lambda x: x[-1], list2))
-        result_nodes = list(map(int, result_nodes))
-        log_nodes = list(range(1, len(nd) + 1))
+        log_nodes = list(map(lambda x: x[5:], nd.keys()))
 
-        difference = list(set(result_nodes) ^ set(log_nodes))
-        difference = ' '.join(list(map(str, difference)))
+        difference = set(result_nodes) ^ set(log_nodes)
+        difference = ' '.join(difference)
         print(difference)
         mbs.disabled_output = difference
 
@@ -174,12 +173,12 @@ def no_output(context):
                 list1 = []
                 for ii in range(len(nd)):
                     rw = next(reader)
-                    list1.append(int(rw[0]))
+                    list1.append(rw[0])
 
                 result_nodes = list1
-                log_nodes = list(range(1, len(nd) + 1))
-                difference = list(set(result_nodes) ^ set(log_nodes))
-                difference = ' '.join(list(map(str, difference)))
+                log_nodes = list(map(lambda x: x[5:], nd.keys()))
+                difference = set(result_nodes) ^ set(log_nodes)
+                difference = ' '.join(difference)
                 print(difference)
                 mbs.disabled_output = difference
         except FileNotFoundError:
