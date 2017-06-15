@@ -1727,6 +1727,58 @@ class MBDynElemsScenePanel(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
+class MBDynPutText(bpy.types.Operator):
+    bl_idname = "sel.put_text"
+    bl_label = "Add text to video editor"
+
+    def execute(self, context):
+        scene = context.scene
+        mbs = scene.mbdyn
+        original_type = bpy.context.area.type
+        bpy.context.area.type = 'SEQUENCE_EDITOR'
+
+        bpy.ops.sequencer.select_all(action='SELECT')
+        bpy.ops.sequencer.delete()
+
+        bpy.ops.sequencer.scene_strip_add(scene='Scene', frame_start = scene.frame_start)
+        for ii in range(scene.frame_start, scene.frame_end):
+            bpy.ops.sequencer.effect_strip_add(frame_start = ii, frame_end = ii+1, type='TEXT')
+
+        placeholder = bpy.data.scenes['Scene'].sequence_editor.sequences_all
+        dummy = placeholder.keys()
+        dummy = list(filter( lambda x:'Text.' in x, dummy ))
+
+        ii = 0
+        for idx in dummy:
+            original_name = placeholder[idx].name
+            print (idx, mbs.simtime[int(original_name.strip('Text.'))].time)
+            # new_name = original_name.replace('Text', 'Time')
+            time = format(mbs.simtime[scene.frame_start + int(original_name.strip('Text.'))].time, '.2f')
+            placeholder[idx].font_size = 100
+            placeholder[idx].text = 'Time :' + time
+            # placeholder[idx].name = new_name
+
+        bpy.context.area.type = original_type
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynPutText)
+
+class MBDynTextOverlayPanel(bpy.types.Panel):
+    """ Text overlay over rendered images """
+    bl_label = "MBDyn Text Overlay"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        rd = mbs.references
+        layout = self.layout
+
+        row = layout.row()
+        row.operator(MBDynPutText.bl_idname, text = 'Add text Overlay')
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
     """ List of MBDyn references: use import button to add them to the scene as empty
