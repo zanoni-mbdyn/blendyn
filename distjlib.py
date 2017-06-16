@@ -160,46 +160,111 @@ def spawn_distance_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe distance joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'distance')
-    if app_retval == {'FINISHED'}:
-        # the append operator leaves just the imported object selected
-        distancejOBJ = bpy.context.selected_objects[0]
-        distancejOBJ.name = elem.name
+    # creation of line representing the dist
+    distobj_id = 'dist_' + str(elem.int_label)
+    distcv_id = distobj_id + '_cvdata'
 
-        # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)*elem.scale_factor
-        distancejOBJ.scale = Vector(( s, s, s ))
+    # check if the object is already present. If it is, remove it.
+    if distobj_id in bpy.data.objects.keys():
+        bpy.data.objects.remove(bpy.data.objects[distobj_id])
 
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
+    # check if the curve is already present. If it is, remove it.
+    if distcv_id in bpy.data.curves.keys():
+        bpy.data.curves.remove(bpy.data.curves[distcv_id])
+
+    # create a new curve
+    cvdata = bpy.data.curves.new(distcv_id, type = 'CURVE')
+    cvdata.dimensions = '3D'
+    polydata = cvdata.splines.new('POLY')
+    polydata.points.add(1)
+
+    # get offsets
+    f1 = elem.offsets[0].value
+    f2 = elem.offsets[1].value
+
+    # assign coordinates of knots in global frame
+    R1 = n1OBJ.rotation_quaternion.to_matrix()
+    R2 = n2OBJ.rotation_quaternion.to_matrix()
+    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+
+    polydata.points[0].co = p1.to_4d()
+    polydata.points[1].co = p2.to_4d()
+
+    distOBJ = bpy.data.objects.new(distobj_id, cvdata)
+    distOBJ.mbdyn.type = 'elem.joint'
+    distOBJ.mbdyn.dkey = elem.name
+    distOBJ.mbdyn.int_label= elem.int_label
+    bpy.context.scene.objects.link(distOBJ)
+    elem.blender_object = distOBJ.name
+
+    ## hooking of the line ends to the Blender objects
     
-        # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-        R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-        p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
-    
-        # place the joint object in the position defined relative to node 2
-        distancejOBJ.location = p1
-        distancejOBJ.rotation_mode = 'QUATERNION'
-        distancejOBJ.rotation_quaternion = n1OBJ.rotation_quaternion 
+    # P1 hook
+    bpy.ops.object.select_all(action = 'DESELECT')
+    n1OBJ.select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    bpy.ops.curve.select_all(action = 'DESELECT')
+    distOBJ.data.splines[0].points[0].select = True
+    bpy.ops.object.hook_add_selob(use_bone = False)
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-        # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        distancejOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    # P2 hook
+    bpy.ops.object.select_all(action = 'DESELECT')
+    n2OBJ.select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    bpy.ops.curve.select_all(action = 'DESELECT')
+    distOBJ.data.splines[0].points[1].select = True
+    bpy.ops.object.hook_add_selob(use_bone = False)
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-        elem.blender_object = distancejOBJ.name
+    bpy.ops.object.select_all(action = 'DESELECT')
 
-        return {'FINISHED'}
-    else:
-        return {'LIBRARY_ERROR'}
+    # create group for element
+    distOBJ.select = True
+    n1OBJ.select = True
+    n2OBJ.select = True
+    bpy.ops.group.create(name = distOBJ.name)
+
+    # Finishing up
+    cvdata.fill_mode = 'FULL'
+    length = (n2OBJ.location - n1OBJ.location).length
+    radius = 0.02 * length
+    cvdata.bevel_depth = radius
+    cvdata.bevel_resolution = 10
+    bpy.ops.object.select_all(action = 'DESELECT')
+    distOBJ.select = True
+    bpy.ops.object.convert(target = 'MESH')
+
+    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
+    bpy.context.active_object.name = distOBJ.name + '_child'
+    print (' bpy.context.active_object =', bpy.context.active_object)
+    bpy.ops.object.select_all(action = 'DESELECT')
+    bpy.data.objects[distOBJ.name + '_child'].select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.join()
+
+    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
+    bpy.context.active_object.name = distOBJ.name + '_child'
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.select_all(action = 'DESELECT')
+    bpy.data.objects[distOBJ.name + '_child'].select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.join()
+
+    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    bpy.ops.mesh.select_all(action = 'SELECT')
+    bpy.ops.mesh.delete(type = 'ONLY_FACE')
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
+    elem.is_imported = True
+    return{'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_distance_element(elem, context) function
 
