@@ -515,6 +515,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
+    node_scale_slider = FloatProperty(
+            name = "Value of Scaling",
+            default = 1.0
+    )
+
     # Type filter for elements import
     elem_type_import = EnumProperty(
             items  = get_elems_types,
@@ -1763,17 +1768,40 @@ class MBDynElemsScenePanel(bpy.types.Panel):
 
             col = layout.column()
             col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
-
-            box = layout.box()
-            box.label(text = 'Scale MBDyn elements')
-            row = box.row()
-            row.prop(mbs, "elem_type_scale")
-            row = box.row()
-            row.prop(mbs, "elem_scale_slider")
-            row = box.row()
-            row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
+
+class MBDynScalingPanel(bpy.types.Panel):
+    """ List of MBDyn elements: use import button to add \
+            them to the scene  """
+    bl_label = "Scale MBDyn Entities"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        layout = self.layout
+
+        box = layout.box()
+        row = box.row()
+        row.template_list('MBDynNodes_UL_List', "MBDyn nodes list", mbs, "nodes",\
+                mbs, "nd_index")
+        row = box.row()
+        row.prop(mbs, "node_scale_slider")
+        row = box.row()
+        row.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = 'Select all Nodes')
+        row.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = 'Scale Node')
+
+        box = layout.box()
+        row = box.row()
+        row.prop(mbs, "elem_type_scale")
+        row = box.row()
+        row.prop(mbs, "elem_scale_slider")
+        row = box.row()
+        row.operator(Scene_OT_MBDyn_Select_Elements_by_Type.bl_idname, text = 'Select Elements')
+        row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
+
 
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
@@ -1995,9 +2023,48 @@ class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_References_Import_Single class
 
+class Scene_OT_MBDyn_Select_all_Nodes(bpy.types.Operator):
+    bl_idname = "sel.select_all_nodes"
+    bl_label = "Select all MBDyn Node Objects"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for var in nd.keys():
+            obj = bpy.data.objects[var]
+            obj.select = True
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Select_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "sel.select_all_elements"
+    bl_label = "Select all MBDyn objects"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for var in ed.keys():
+            if mbs.elem_type_scale in var:
+                obj = bpy.data.objects[var]
+                obj.select = True
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Scale_Node(bpy.types.Operator):
+    bl_idname = "add.mbdyn_scale_node"
+    bl_label = "Scale selected node"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        s = mbs.node_scale_slider
+        scaleOBJ = bpy.data.objects[nd[mbs.nd_index].blender_object]
+        scaleOBJ.scale = Vector((s, s, s))
+
+        return {'FINISHED'}
 
 class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
-    bl_idname = "add.mbdyn_scale_type"
+    bl_idname = "add.mbdyn_scale_elems"
     bl_label = "Scale all elements of selected type"
 
     def execute(self, context):
