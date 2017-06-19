@@ -1735,10 +1735,11 @@ class MBDynPutText(bpy.types.Operator):
         scene = context.scene
         mbs = scene.mbdyn
         original_type = bpy.context.area.type
-        bpy.context.area.type = 'SEQUENCE_EDITOR'
+        bpy.context.area.type = "SEQUENCE_EDITOR"
 
-        bpy.ops.sequencer.select_all(action='SELECT')
-        bpy.ops.sequencer.delete()
+        if bpy.data.scenes['Scene'].sequence_editor:
+            bpy.ops.sequencer.select_all(action='SELECT')
+            bpy.ops.sequencer.delete()
 
         bpy.ops.sequencer.scene_strip_add(scene='Scene', frame_start = scene.frame_start)
         for ii in range(scene.frame_start, scene.frame_end):
@@ -1770,7 +1771,7 @@ class MBDynTextOverlayPanel(bpy.types.Panel):
     bl_label = "MBDyn Text Overlay"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = 'scene'
+    bl_context = 'render'
 
     def draw(self, context):
         mbs = context.scene.mbdyn
