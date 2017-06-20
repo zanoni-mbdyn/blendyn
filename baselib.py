@@ -137,6 +137,7 @@ def setup_import(filepath, context):
         except NameError:
             return {'NETCDF_ERROR'}
     else:
+        mbs.use_netcdf = False
         mbs.num_rows = file_len(filepath)
     return {'FINISHED'}
 
