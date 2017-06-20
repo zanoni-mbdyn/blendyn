@@ -766,8 +766,9 @@ def render_variables(scene):
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
-        string = [ '{0} : {1}'.format(var.variable, nc.variables[var.value][scene.frame_current])\
-         for var in mbs.render_vars ]
+        string = [ '{0} : {1}'.format(var.variable, \
+        parse_render_string(netcdf_helper(nc, scene, var.value))) \
+        for var in mbs.render_vars ]
         string = '\n'.join(string)
         if len(mbs.render_vars):
             print(str(scene.frame_current) + 'Janga_Reddy')

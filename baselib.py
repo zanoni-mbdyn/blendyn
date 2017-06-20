@@ -620,6 +620,25 @@ def get_render_vars(self, context):
 # -----------------------------------------------------------
 # end of get_render_vars() function
 
+def netcdf_helper(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current * freq
+    frac = np.ceil(tdx) - tdx
+
+    first = nc.variables[key][int(tdx)]
+    second = nc.variables[key][int(np.ceil(tdx))]
+    answer = first * frac + second * (1-frac)
+
+    return answer
+
+def parse_render_string(var):
+    if hasattr(var, '__iter__'):
+        return ', '.join(['{:.2f}'.format(item) for item in var])
+
+    else:
+        return '{:.2f}'.format(var)
+
 def set_motion_paths_netcdf(context):
 
     scene = context.scene
@@ -673,20 +692,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'X')
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = math.radians(1.0)*(nc.variables[node_var + 'E'][int(tdx), :])
-                second = math.radians(1.0)*(nc.variables[node_var + 'E'][int(np.ceil(tdx)), :])
-                answer = first * frac + second * (1-frac)
-
+                answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
                 obj.rotation_euler = \
                         Euler( Vector((answer)),
                                 axes[obj.mbdyn.parametrization[7]] +\
@@ -697,20 +707,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                answer = netcdf_helper(nc, scene, node_var + 'X')
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = nc.variables[node_var + 'Phi'][int(tdx), :]
-                second = nc.variables[node_var + 'Phi'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'Phi')
                 rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
@@ -720,20 +721,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'X')
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = nc.variables[node_var + 'R'][int(tdx), :]
-                second = nc.variables[node_var + 'R'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'R')
                 R = Matrix((answer))
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
