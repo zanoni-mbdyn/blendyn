@@ -606,6 +606,19 @@ def set_motion_paths_mov(context):
 # -----------------------------------------------------------
 # end of set_motion_paths_mov() function
 
+def get_render_vars(self, context):
+    mbs = context.scene.mbdyn
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    units = ['m/s', 's', 'm', 'N', 'Nm']
+    render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
+    render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
+
+    return [(var, var, "") for var in render_vars]
+# -----------------------------------------------------------
+# end of get_render_vars() function
+
 def set_motion_paths_netcdf(context):
 
     scene = context.scene
