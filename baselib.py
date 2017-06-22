@@ -607,8 +607,18 @@ def set_motion_paths_mov(context):
 # -----------------------------------------------------------
 # end of set_motion_paths_mov() function
 
+def active_object_rel(bool1, bool2):
+    if not bool1:
+        return True
+    if bool1:
+        if bool2:
+            return True
+        else:
+            return False
+
 def get_render_vars(self, context):
     mbs = context.scene.mbdyn
+    ed = mbs.elems
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r", format="NETCDF3")
@@ -616,6 +626,9 @@ def get_render_vars(self, context):
     render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
     render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
 
+    scene_objs = [ str(var.int_label) for var in ed if bpy.data.objects[var.blender_object].select ]
+    render_vars = list(filter( lambda x: active_object_rel('elem' in x, \
+                   any(i in scene_objs for i in x.split('.'))), render_vars))
     return [(var, var, "") for var in render_vars]
 # -----------------------------------------------------------
 # end of get_render_vars() function
