@@ -59,7 +59,7 @@ def parse_elements(context, jnt_type, rw):
             "cardanohinge": parse_cardano_hinge,
             "cardanopin": parse_cardano_pin,
             "clamp": parse_clamp,
-            "deformabledisplacementjoint": parse_deformable_displacement,
+            "deformabledisplacementjoint": parse_defdisp,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
             "rod": parse_rod,

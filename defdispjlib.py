@@ -34,14 +34,14 @@ from bpy.props import *
 from .utilslib import parse_rotmat
 
 # helper function to parse deformable displacement joints
-def parse_deformable_displacement(rw, ed):
+def parse_defdisp(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_deformable_displacementj(): Parsing deformable displacement joint " + rw[1])
+    print("parse_defdispj(): Parsing deformable displacement joint " + rw[1])
     try:
-        el = ed['deformable_displacement_' + str(rw[1])]
+        el = ed['defdisp_' + str(rw[1])]
 
-        print("parse_deformable_displacement(): found existing entry in elements dictionary. Updating it.")
+        print("parse_defdisp(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -61,9 +61,9 @@ def parse_deformable_displacement(rw, ed):
             el.blender_object = el.name
         el.is_imported = True 
     except KeyError:
-        print("parse_deformable_displacement(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_defdisp(): didn't found en entry in elements dictionary. Creating one.")
         el = ed.add()
-        el.type = 'deformable_displacement'
+        el.type = 'defdisp'
         el.int_label = int(rw[1])
 
         el.nodes.add()
@@ -87,14 +87,14 @@ def parse_deformable_displacement(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_deformable_displacement"
+        el.import_function = "add.mbdyn_elem_defdisp"
         el.update = "update_defdisp"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
     return ret_val
 # -----------------------------------------------------------
-# end of parse_deformable_displacement(rw, ed) function
+# end of parse_defdisp(rw, ed) function
 
 def update_defdisp(elem, insert_keyframe = False):
 
@@ -158,20 +158,22 @@ def spawn_defdispj_element(elem, context):
     n2OBJ = bpy.data.objects[n2]
 
     # creation of line representing the dist
-    distobj_id = 'dist_' + str(elem.int_label)
-    distcv_id = distobj_id + '_cvdata'
+    defdispobj_id = 'dist_' + str(elem.int_label)
+    defdispcv_id = defdispobj_id + '_cvdata'
 
     # check if the object is already present. If it is, remove it.
-    if distobj_id in bpy.data.objects.keys():
-        bpy.data.objects.remove(bpy.data.objects[distobj_id])
+    if defdispobj_id in bpy.data.objects.keys():
+        bpy.data.objects.remove(bpy.data.objects[defdispobj_id])
 
     # check if the curve is already present. If it is, remove it.
-    if distcv_id in bpy.data.curves.keys():
-        bpy.data.curves.remove(bpy.data.curves[distcv_id])
+    if defdispcv_id in bpy.data.curves.keys():
+        bpy.data.curves.remove(bpy.data.curves[defdispcv_id])
 
     # get offsets
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
+    q1 = elem.rotoffsets[0].value
+    q2 = elem.rotoffsets[1].value
 
     # assign coordinates of knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
@@ -185,41 +187,45 @@ def spawn_defdispj_element(elem, context):
     radius = 0.3 * length
     turns = 20
     bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=length, helixWidth=radius, helixEnd = 360* turns, helixPoints = 1000)
-    distOBJ = bpy.context.scene.objects.active
+    defdispOBJ = bpy.context.scene.objects.active
     bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
 
-    distOBJ.location = (p2 +p1)/2
+    defdispOBJ.location = (p2 +p1)/2
+    defdispOBJ.rotation_mode = 'QUATERNION'
+    defdispOBJ.rotation_quaternion = \
+            n2OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+
     elem.blender_object = elem.name
-    distOBJ.name = elem.name
+    defdispOBJ.name = elem.name
     ude = bpy.context.scene.mbdyn.elems_to_update.add()
     ude.dkey = elem.name
     ude.name = elem.name
 
     # Give the object an elastic nature
     bpy.ops.object.select_all(action='DESELECT')
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    defdispOBJ.select = True
+    bpy.context.scene.objects.active = defdispOBJ
     bpy.ops.object.modifier_add(type='SIMPLE_DEFORM')
-    distOBJ.modifiers['SimpleDeform'].deform_method = 'STRETCH'
-    distOBJ.modifiers['SimpleDeform'].lock_x = True
-    distOBJ.modifiers['SimpleDeform'].lock_y = True
-    distOBJ.modifiers['SimpleDeform'].factor = 0.0
+    defdispOBJ.modifiers['SimpleDeform'].deform_method = 'STRETCH'
+    defdispOBJ.modifiers['SimpleDeform'].lock_x = True
+    defdispOBJ.modifiers['SimpleDeform'].lock_y = True
+    defdispOBJ.modifiers['SimpleDeform'].factor = 0.0
 
     # create group for element
-    distOBJ.select = True
+    defdispOBJ.select = True
     n1OBJ.select = True
     n2OBJ.select = True
-    bpy.ops.group.create(name=distOBJ.name)
+    bpy.ops.group.create(name=defdispOBJ.name)
 
     elem.is_imported = True
 
     return {'FINISHED'}
 # -----------------------------------------------------------
-# end of spawn_deformable_displacament_element(elem, context) function
+# end of spawn_defdispj_element(elem, context) function
 
 ## Imports a Deformable Displacement Joint in the scene -- TODO
 class Scene_OT_MBDyn_Import_Deformable_Displacement_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_deformable_displacement"
+    bl_idname = "add.mbdyn_elem_defdisp"
     bl_label = "MBDyn deformable displacement joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -232,10 +238,10 @@ class Scene_OT_MBDyn_Import_Deformable_Displacement_Joint_Element(bpy.types.Oper
         nd = bpy.context.scene.mbdyn.nodes
     
         try:
-            elem = ed['deformable_displacement_' + str(self.int_label)]
+            elem = ed['defdisp_' + str(self.int_label)]
             return spawn_defdispj_element(elem, context)
         except KeyError:
-            message = "Element deformable_displacement_" + str(elem.int_label) \
+            message = "Element defdisp_" + str(elem.int_label) \
                    + "not found"
             self.report({'ERROR'}, message)
             logging.error(message)
