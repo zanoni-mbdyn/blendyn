@@ -118,7 +118,7 @@ def update_defdisp(elem, insert_keyframe = False):
     p1 = n1OBJ.location + R1 * Vector((f1[0], f1[1], f1[2]))
     p2 = n2OBJ.location + R2 * Vector((f2[0], f2[1], f2[2]))
 
-    distOBJ.location = p2
+    distOBJ.location = (p2 + p1)/2
     length = (p2 - p1).length
     change = length - elem.magnitude
     distOBJ.modifiers['SimpleDeform'].factor = change
@@ -186,15 +186,16 @@ def spawn_defdispj_element(elem, context):
     turns = 20
     bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=length, helixWidth=radius, helixEnd = 360* turns, helixPoints = 1000)
     distOBJ = bpy.context.scene.objects.active
+    bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
 
-    distOBJ.location = p2
+    distOBJ.location = (p2 +p1)/2
     elem.blender_object = elem.name
     distOBJ.name = elem.name
     ude = bpy.context.scene.mbdyn.elems_to_update.add()
     ude.dkey = elem.name
     ude.name = elem.name
 
-    # P1 hook
+    # Give the object an elastic nature
     bpy.ops.object.select_all(action='DESELECT')
     distOBJ.select = True
     bpy.context.scene.objects.active = distOBJ
