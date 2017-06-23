@@ -706,7 +706,7 @@ def set_motion_paths_netcdf(context):
     kk = 0
     for ndx in anim_nodes:
 
-        if ndx[-1] in mbs.disabled_output.split(' '):
+        if str(nd[ndx].int_label) in mbs.disabled_output.split(' '):
             continue
 
         obj = bpy.data.objects[nd[ndx].blender_object]
