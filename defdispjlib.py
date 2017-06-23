@@ -100,7 +100,7 @@ def update_defdisp(elem, insert_keyframe = False):
 
     nd = bpy.context.scene.mbdyn.nodes
 
-    distOBJ = bpy.data.objects[elem.blender_object]
+    defdispOBJ = bpy.data.objects[elem.blender_object]
     n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
 
@@ -111,6 +111,8 @@ def update_defdisp(elem, insert_keyframe = False):
     # get offsets
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
+    q1 = elem.rotoffsets[0].value
+    q2 = elem.rotoffsets[1].value
 
     # assign coordinates of knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
@@ -118,11 +120,16 @@ def update_defdisp(elem, insert_keyframe = False):
     p1 = n1OBJ.location + R1 * Vector((f1[0], f1[1], f1[2]))
     p2 = n2OBJ.location + R2 * Vector((f2[0], f2[1], f2[2]))
 
-    distOBJ.location = (p2 + p1)/2
-    length = (p2 - p1).length
-    change = length - elem.magnitude
-    distOBJ.modifiers['SimpleDeform'].factor = change
+    R1h =  Quaternion(( q1[0], q1[1], q1[2], q1[3] )).to_matrix()
 
+    defdispOBJ.location = (p2 + p1)/2
+    def_vector = (p2 - p1)
+    def_vector = R1h.transposed() * R1.transposed() * def_vector
+    print(def_vector)
+    axes = ['X', 'Y', 'Z']
+    for ii in range(3):
+        defdispChild = bpy.data.objects[defdispOBJ.name + '.' + axes[ii]]
+        defdispChild.dimensions[ii] = def_vector[ii]
 
 
 # Creates the object representing a deformable displacement joint element
@@ -181,19 +188,11 @@ def spawn_defdispj_element(elem, context):
     p1 = n1OBJ.location + R1 * Vector((f1[0], f1[1], f1[2]))
     p2 = n2OBJ.location + R2 * Vector((f2[0], f2[1], f2[2]))
 
-    # create a new curve
-    length = (p2 - p1).length
-    elem.magnitude = length
-    radius = 0.3 * length
-    turns = 20
-    bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=length, helixWidth=radius, helixEnd = 360* turns, helixPoints = 1000)
+    bpy.ops.object.empty_add(type='PLAIN_AXES')
     defdispOBJ = bpy.context.scene.objects.active
-    bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
-
     defdispOBJ.location = (p2 +p1)/2
     defdispOBJ.rotation_mode = 'QUATERNION'
-    defdispOBJ.rotation_quaternion = \
-            n2OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+    defdispOBJ.rotation_quaternion = n2OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
     elem.blender_object = elem.name
     defdispOBJ.name = elem.name
@@ -201,21 +200,39 @@ def spawn_defdispj_element(elem, context):
     ude.dkey = elem.name
     ude.name = elem.name
 
-    # Give the object an elastic nature
+    length = (p2 - p1)
+    length = Vector(map(abs, length))
+    radius = 0.3 * length
+    print(length, radius)
+    turns = 20
+    axes = ['X', 'Y', 'Z']
+    for ii in range(3):
+        bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=length[ii],\
+                                        helixWidth=radius[ii], helixEnd = 360* turns, helixPoints = 1000)
+        defdispChild = bpy.context.scene.objects.active
+        bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
+        track_axes = axes[:]
+        track_axes.remove(track_axes[ii])
+        defdispChild.location = (p2 +p1)/2
+        defdispChild.rotation_mode = 'QUATERNION'
+        axis_direction = Vector((0, 0, 0))
+        axis_direction[ii] = 1
+        defdispChild.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
+        defdispChild.name = defdispOBJ.name + '.' + axes[ii]
+
+        #Set parent to defdispOBJ
+        bpy.ops.object.select_all(action='DESELECT')
+        defdispChild.select = True
+        defdispOBJ.select = True
+        bpy.context.scene.objects.active = defdispOBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+    # Set parent to n1OBJ
     bpy.ops.object.select_all(action='DESELECT')
     defdispOBJ.select = True
-    bpy.context.scene.objects.active = defdispOBJ
-    bpy.ops.object.modifier_add(type='SIMPLE_DEFORM')
-    defdispOBJ.modifiers['SimpleDeform'].deform_method = 'STRETCH'
-    defdispOBJ.modifiers['SimpleDeform'].lock_x = True
-    defdispOBJ.modifiers['SimpleDeform'].lock_y = True
-    defdispOBJ.modifiers['SimpleDeform'].factor = 0.0
-
-    # create group for element
-    defdispOBJ.select = True
     n1OBJ.select = True
-    n2OBJ.select = True
-    bpy.ops.group.create(name=defdispOBJ.name)
+    bpy.context.scene.objects.active = n1OBJ
+    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     elem.is_imported = True
 
