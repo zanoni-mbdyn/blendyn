@@ -191,6 +191,7 @@ def spawn_distance_element(elem, context):
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
 
+
     distOBJ = bpy.data.objects.new(distobj_id, cvdata)
     distOBJ.mbdyn.type = 'elem.joint'
     distOBJ.mbdyn.dkey = elem.name
@@ -198,7 +199,30 @@ def spawn_distance_element(elem, context):
     bpy.context.scene.objects.link(distOBJ)
     elem.blender_object = distOBJ.name
 
-    ## hooking of the line ends to the Blender objects
+    # Finishing up
+    cvdata.fill_mode = 'FULL'
+    length = (n2OBJ.location - n1OBJ.location).length
+    radius = 0.02 * length
+    cvdata.bevel_depth = radius
+    cvdata.bevel_resolution = 10
+
+    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
+    bpy.context.active_object.name = distOBJ.name + '_child1'
+    bpy.ops.object.select_all(action = 'DESELECT')
+    bpy.data.objects[distOBJ.name + '_child1'].select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
+    bpy.context.active_object.name = distOBJ.name + '_child2'
+    bpy.ops.object.select_all(action = 'DESELECT')
+    bpy.data.objects[distOBJ.name + '_child2'].select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = distOBJ
+    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+    #hooking of the line ends to the Blender objects
     
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
@@ -224,44 +248,33 @@ def spawn_distance_element(elem, context):
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # create group for element
-    distOBJ.select = True
+    # P1 hook
+    bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
-    n2OBJ.select = True
-    bpy.ops.group.create(name = distOBJ.name)
-
-    # Finishing up
-    cvdata.fill_mode = 'FULL'
-    length = (n2OBJ.location - n1OBJ.location).length
-    radius = 0.02 * length
-    cvdata.bevel_depth = radius
-    cvdata.bevel_resolution = 10
-    bpy.ops.object.select_all(action = 'DESELECT')
-    distOBJ.select = True
-    bpy.ops.object.convert(target = 'MESH')
-
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
-    bpy.context.active_object.name = distOBJ.name + '_child'
-    print (' bpy.context.active_object =', bpy.context.active_object)
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[distOBJ.name + '_child'].select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.join()
-
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
-    bpy.context.active_object.name = distOBJ.name + '_child'
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[distOBJ.name + '_child'].select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.join()
-
+    bpy.data.objects[distOBJ.name + '_child1'].select = True
+    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child1']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.mesh.select_all(action = 'SELECT')
-    bpy.ops.mesh.delete(type = 'ONLY_FACE')
+    bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
+    # P2 hook
+    bpy.ops.object.select_all(action = 'DESELECT')
+    n2OBJ.select = True
+    bpy.data.objects[distOBJ.name + '_child2'].select = True
+    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child2']
+    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    bpy.ops.object.hook_add_selob(use_bone = False)
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
+    distOBJ.draw_type = 'WIRE'
+    bpy.data.objects[distOBJ.name + '_child1'].draw_type = 'WIRE'
+    bpy.data.objects[distOBJ.name + '_child2'].draw_type = 'WIRE'
+
+    bpy.ops.object.select_all(action = 'DESELECT')
+    n1OBJ.select = True
+    distOBJ.select = True
+    bpy.context.scene.objects.active = n1OBJ
+    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     elem.is_imported = True
     return{'FINISHED'}
