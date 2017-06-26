@@ -129,7 +129,7 @@ def update_defdisp(elem, insert_keyframe = False):
     axes = ['X', 'Y', 'Z']
     for ii in range(3):
         defdispChild = bpy.data.objects[defdispOBJ.name + '.' + axes[ii]]
-        defdispChild.dimensions[ii] = def_vector[ii]
+        defdispChild.dimensions[2] = def_vector[ii]
 
 
 # Creates the object representing a deformable displacement joint element
