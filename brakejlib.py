@@ -178,9 +178,21 @@ def spawn_brake_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
+    # joint offsets with respect to nodes
+    f1 = elem.offsets[0].value
+    f2 = elem.offsets[1].value
+    q1 = elem.rotoffsets[0].value
+    q2 = elem.rotoffsets[1].value
+
+    # project offsets in global frame
+    R1 = n1OBJ.rotation_quaternion.to_matrix()
+    R2 = n2OBJ.rotation_quaternion.to_matrix()
+    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+
     # load the wireframe brake joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'brake')
+            'library', 'joints.blend', 'Object'), filename = 'brake_disc')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         brakejOBJ = bpy.context.selected_objects[0]
@@ -190,18 +202,35 @@ def spawn_brake_element(elem, context):
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
         n2OBJ.scale.magnitude)*elem.scale_factor
         brakejOBJ.scale = Vector(( s, s, s ))
-
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
-        q1 = elem.rotoffsets[0].value
-        q2 = elem.rotoffsets[1].value
     
-        # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-        R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-        p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+        # place the joint object in the position defined relative to node 2
+        brakejOBJ.location = p1
+        brakejOBJ.rotation_mode = 'QUATERNION'
+        brakejOBJ.rotation_quaternion = \
+                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        # set parenting of wireframe obj
+        bpy.ops.object.select_all(action = 'DESELECT')
+        brakejOBJ.select = True
+        n2OBJ.select = True
+        bpy.context.scene.objects.active = n2OBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+        elem.blender_object = brakejOBJ.name
+    else:
+        return {'LIBRARY_ERROR'}
+
+    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+                    'library', 'joints.blend', 'Object'), filename = 'brake_caliper')
+    print(app_retval)
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        brakejOBJ = bpy.context.selected_objects[0]
+        brakejOBJ.name = elem.name + '_caliper'
+
+        # automatic scaling
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+        n2OBJ.scale.magnitude)*elem.scale_factor
+        brakejOBJ.scale = Vector(( s, s, s ))
     
         # place the joint object in the position defined relative to node 2
         brakejOBJ.location = p1
