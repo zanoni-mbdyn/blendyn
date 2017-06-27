@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------
-# Blendyn -- file distancejlib.py
+# Blendyn -- file brakejlib.py
 # Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
@@ -34,56 +34,74 @@ from bpy.props import *
 
 from .utilslib import parse_rotmat
 
-# helper function to parse distance joints
-def parse_distance(rw, ed):
+# helper function to parse brake joints
+def parse_brake(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_distance(): Parsing distance joint " + rw[1])
+    print("parse_brake(): Parsing brake joint " + rw[1])
     try:
-        el = ed['distance_' + str(rw[1])]
+        el = ed['brake_' + str(rw[1])]
 
-        print("parse_distance(): found existing entry in elements dictionary. Updating it.")
+        print("parse_brake(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
-        el.nodes[1].int_label = int(rw[6])
+        el.nodes[1].int_label = int(rw[15])
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
-        el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        R1 = Matrix()
+        parse_rotmat(rw, 6, R1)
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        
+        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+
+        R2 = Matrix()
+        parse_rotmat(rw, 19, R2) 
+        el.rotoffsets[1].value = R2.to_quaternion(); 
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_distance(): didn't find an entry in elements dictionary. Creating one.")
+        print("parse_brake(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
-        el.type = 'distance'
+        el.type = 'brake'
         el.int_label = int(rw[1])
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
         el.nodes.add()
-        el.nodes[1].int_label = int(rw[6])
+        el.nodes[1].int_label = int(rw[15])
 
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        el.offsets.add()
-        el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        el.rotoffsets.add()
+        R1 = Matrix()
+        parse_rotmat(rw, 6, R1)
+        el.rotoffsets[0].value = R1.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_distance"
-        el.info_draw = "distance_info_draw"
+        el.offsets.add()
+        el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
+
+        el.rotoffsets.add()
+        R2 = Matrix()
+        parse_rotmat(rw, 19, R2)
+        el.rotoffsets[1].value = R2.to_quaternion();
+
+        el.import_function = "add.mbdyn_elem_brake"
+        el.info_draw = "brake_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
         pass
     return ret_val
 # -------------------------------------------------------------------------- 
-# end of parse_distance(rw, ed) function
+# end of parse_brake(rw, ed) function
 
-# function that displays distance info in panel -- [ optional ]
-def distance_info_draw(elem, layout):
+# function that displays brake info in panel -- [ optional ]
+def brake_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -124,18 +142,18 @@ def distance_info_draw(elem, layout):
         return {'NODE_NOTFOUND'}
 
 # -----------------------------------------------------------
-# end of distance_info_draw(elem, layout) function
+# end of brake_info_draw(elem, layout) function
 
-# Creates the object representing a distance joint element
-def spawn_distance_element(elem, context):
-    """ Draws a distance joint element, loading a wireframe
+# Creates the object representing a brake joint element
+def spawn_brake_element(elem, context):
+    """ Draws a brake joint element, loading a wireframe
         object from the addon library """
     mbs = context.scene.mbdyn
     nd = mbs.nodes
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_distance_element(): Element is already imported. \
+        print("spawn_brake_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -143,7 +161,7 @@ def spawn_distance_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_distance_element(): Could not find a Blender \
+        print("spawn_brake_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -151,7 +169,7 @@ def spawn_distance_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_distance_element(): Could not find a Blender \
+        print("spawn_brake_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -160,131 +178,85 @@ def spawn_distance_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # creation of line representing the dist
-    distobj_id = 'dist_' + str(elem.int_label)
-    distcv_id = distobj_id + '_cvdata'
-
-    # check if the object is already present. If it is, remove it.
-    if distobj_id in bpy.data.objects.keys():
-        bpy.data.objects.remove(bpy.data.objects[distobj_id])
-
-    # check if the curve is already present. If it is, remove it.
-    if distcv_id in bpy.data.curves.keys():
-        bpy.data.curves.remove(bpy.data.curves[distcv_id])
-
-    # create a new curve
-    cvdata = bpy.data.curves.new(distcv_id, type = 'CURVE')
-    cvdata.dimensions = '3D'
-    polydata = cvdata.splines.new('POLY')
-    polydata.points.add(1)
-
-    # get offsets
+    # joint offsets with respect to nodes
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
+    q1 = elem.rotoffsets[0].value
+    q2 = elem.rotoffsets[1].value
 
-    # assign coordinates of knots in global frame
+    # project offsets in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
     p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
     p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
 
-    polydata.points[0].co = p1.to_4d()
-    polydata.points[1].co = p2.to_4d()
+    # load the wireframe brake joint object from the library
+    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'library', 'joints.blend', 'Object'), filename = 'brake_disc')
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        brakejOBJ = bpy.context.selected_objects[0]
+        brakejOBJ.name = elem.name
 
-
-    distOBJ = bpy.data.objects.new(distobj_id, cvdata)
-    distOBJ.mbdyn.type = 'elem.joint'
-    distOBJ.mbdyn.dkey = elem.name
-    distOBJ.mbdyn.int_label= elem.int_label
-    bpy.context.scene.objects.link(distOBJ)
-    elem.blender_object = distOBJ.name
-
-    # Finishing up
-    cvdata.fill_mode = 'FULL'
-    length = (n2OBJ.location - n1OBJ.location).length
-    radius = 0.02 * length
-    cvdata.bevel_depth = radius
-    cvdata.bevel_resolution = 10
-
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
-    bpy.context.active_object.name = distOBJ.name + '_child1'
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[distOBJ.name + '_child1'].select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
-
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
-    bpy.context.active_object.name = distOBJ.name + '_child2'
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[distOBJ.name + '_child2'].select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
-
-    #hooking of the line ends to the Blender objects
+        # automatic scaling
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+        n2OBJ.scale.magnitude)*elem.scale_factor
+        brakejOBJ.scale = Vector(( s, s, s ))
     
-    # P1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[0].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+        # place the joint object in the position defined relative to node 2
+        brakejOBJ.location = p1
+        brakejOBJ.rotation_mode = 'QUATERNION'
+        brakejOBJ.rotation_quaternion = \
+                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        # set parenting of wireframe obj
+        bpy.ops.object.select_all(action = 'DESELECT')
+        brakejOBJ.select = True
+        n2OBJ.select = True
+        bpy.context.scene.objects.active = n2OBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-    # P2 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[1].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+        elem.blender_object = brakejOBJ.name
+    else:
+        return {'LIBRARY_ERROR'}
 
-    bpy.ops.object.select_all(action = 'DESELECT')
+    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+                    'library', 'joints.blend', 'Object'), filename = 'brake_caliper')
+    print(app_retval)
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        brakejOBJ = bpy.context.selected_objects[0]
+        brakejOBJ.name = elem.name + '_caliper'
 
-    # P1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    bpy.data.objects[distOBJ.name + '_child1'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child1']
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+        # automatic scaling
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+        n2OBJ.scale.magnitude)*elem.scale_factor
+        brakejOBJ.scale = Vector(( s, s, s ))
+    
+        # place the joint object in the position defined relative to node 2
+        brakejOBJ.location = p1
+        brakejOBJ.rotation_mode = 'QUATERNION'
+        brakejOBJ.rotation_quaternion = \
+                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
-    # P2 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    bpy.data.objects[distOBJ.name + '_child2'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child2']
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+        # set parenting of wireframe obj
+        bpy.ops.object.select_all(action = 'DESELECT')
+        brakejOBJ.select = True
+        n1OBJ.select = True
+        bpy.context.scene.objects.active = n1OBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-    distOBJ.draw_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child1'].draw_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child2'].draw_type = 'WIRE'
+        elem.blender_object = brakejOBJ.name
 
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
-
-    elem.is_imported = True
-    return{'FINISHED'}
+        return {'FINISHED'}
+    else:
+        return {'LIBRARY_ERROR'}
 # -----------------------------------------------------------
-# end of spawn_distance_element(elem, context) function
+# end of spawn_brake_element(elem, context) function
 
-# Imports a distance Joint in the scene
-class Scene_OT_MBDyn_Import_distance_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_distance"
-    bl_label = "MBDyn distance joint element importer"
+# Imports a brake Joint in the scene
+class Scene_OT_MBDyn_Import_brake_Joint_Element(bpy.types.Operator):
+    bl_idname = "add.mbdyn_elem_brake"
+    bl_label = "MBDyn brake joint element importer"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -296,8 +268,8 @@ class Scene_OT_MBDyn_Import_distance_Joint_Element(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn.nodes
     
         try:
-            elem = ed['distance_' + str(self.int_label)]
-            retval = spawn_distance_element(elem, context)
+            elem = ed['brake_' + str(self.int_label)]
+            retval = spawn_brake_element(elem, context)
             if retval == 'OBJECT_EXISTS':
                 message = "Found the Object " + elem.blender_object + \
                     " remove or rename it to re-import the element!"
@@ -326,9 +298,9 @@ class Scene_OT_MBDyn_Import_distance_Joint_Element(bpy.types.Operator):
             else:
                 return retval
         except KeyError:
-            message = "Element distance_" + str(elem.int_label) + "not found"
+            message = "Element brake_" + str(elem.int_label) + "not found"
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_distance_Joint_Element class. Creates the object representing a distance joint element
+# end of Scene_OT_MBDyn_Import_brake_Joint_Element class. Creates the object representing a brake joint element
