@@ -61,7 +61,7 @@ def parse_deformable_displacement(rw, ed):
             el.blender_object = el.name
         el.is_imported = True 
     except KeyError:
-        print("parse_deformable_displacement(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_deformable_displacement(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'deformable_displacement'
         el.int_label = int(rw[1])
