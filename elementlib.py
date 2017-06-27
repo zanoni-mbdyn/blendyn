@@ -43,8 +43,14 @@ from .rodjlib import *
 from .shell4lib import *
 from .sphjlib import *
 from .prismjlib import *
+from .inplanejlib import *
+from .inlinejlib import *
 from .totjlib import *
 from .utilslib import *
+from .axialrotjlib import *
+from .distjlib import *
+from .gimbaljlib import *
+from .brakejlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems
@@ -62,6 +68,7 @@ def parse_elements(context, jnt_type, rw):
             "deformabledisplacementjoint": parse_defdisp,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
+            "revoluterotation": parse_revolute_rot,
             "rod": parse_rod,
             "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
@@ -73,7 +80,13 @@ def parse_elements(context, jnt_type, rw):
             "structural follower couple": parse_structural_follower_couple,
             "totaljoint": parse_total,
             "totalpinjoint": parse_total_pin,
-            "prismatic": parse_prismatic
+            "prismatic": parse_prismatic,
+            "inplane": parse_inplane,
+            "inline": parse_inline,
+            "axialrotation": parse_axialrot,
+            "distance": parse_distance,
+            "gimbalrotation": parse_gimbal,
+            "brake": parse_brake
             }
  
     try:

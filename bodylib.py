@@ -58,7 +58,7 @@ def parse_body(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_body(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_body(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'body'
         el.int_label = int(rw[1])

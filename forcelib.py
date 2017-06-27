@@ -61,7 +61,7 @@ def parse_structural_absolute_force(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_absolute_force(): didn't found en entry in \
+        print("parse_structural_absolute_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_absolute_force'
@@ -104,7 +104,7 @@ def parse_structural_follower_force(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_follower_force(): didn't found en entry in \
+        print("parse_structural_follower_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_follower_force'
@@ -147,7 +147,7 @@ def parse_structural_absolute_couple(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_absolute_couple(): didn't found en entry in \
+        print("parse_structural_absolute_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_absolute_couple'
@@ -190,7 +190,7 @@ def parse_structural_follower_couple(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_follower_couple(): didn't found en entry in \
+        print("parse_structural_follower_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_follower_couple'

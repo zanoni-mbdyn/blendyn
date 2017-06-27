@@ -63,7 +63,7 @@ def parse_spherical_hinge(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_spherical_hinge(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_spherical_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'spherical_hinge'
         el.int_label = int(rw[1])
@@ -121,7 +121,7 @@ def parse_spherical_pin(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_spherical_pin(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_spherical_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'spherical_pin'
         el.int_label = int(rw[1])
