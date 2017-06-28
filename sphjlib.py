@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 ## Parses spherical hinge joint .log file entry
 def parse_spherical_hinge(rw, ed):
@@ -220,17 +220,11 @@ def spawn_spherical_hinge_element(elem, context):
                 n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
         RF2.scale = .33*sphjOBJ.scale
         RF2.name = sphjOBJ.name + '_RF2'
-        RF2.select = True
-        bpy.context.scene.objects.active = sphjOBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(RF2, sphjOBJ)
         RF2.hide = True
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        sphjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(sphjOBJ, n1OBJ)
 
         elem.blender_object = sphjOBJ.name 
 
@@ -295,11 +289,7 @@ def spawn_spherical_pin_element(elem, context):
                 n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        sphjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(sphjOBJ, n1OBJ)
 
         elem.blender_object = sphjOBJ.name
 

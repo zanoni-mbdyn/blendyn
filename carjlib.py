@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 ## Parses cardano hinge joint entry in the .log file
 def parse_cardano_hinge(rw, ed):
@@ -221,17 +221,11 @@ def spawn_cardano_hinge_element(elem, context):
                 n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
         RF2.scale = .33*carjOBJ.scale
         RF2.name = carjOBJ.name + '_RF2'
-        RF2.select = True
-        bpy.context.scene.objects.active = carjOBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(RF2, carjOBJ)
         RF2.hide = True
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        carjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(carjOBJ, n1OBJ)
 
         elem.blender_object = carjOBJ.name
 
@@ -294,11 +288,7 @@ def spawn_cardano_pin_elem(elem, context):
                 n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        carjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(carjOBJ, n1OBJ)
 
         return {'FINISHED'}
     else:

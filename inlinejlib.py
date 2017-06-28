@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 # helper function to parse inline joints
 def parse_inline(rw, ed):
@@ -210,11 +210,7 @@ def spawn_inline_element(elem, context):
                 n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        inlinejOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(inlinejOBJ, n1OBJ)
 
         elem.blender_object = inlinejOBJ.name
 

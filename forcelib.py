@@ -30,6 +30,7 @@ from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
+from .utilslib import parenting
 
 import os
 import pdb
@@ -257,11 +258,7 @@ def spawn_structural_force_element(elem, context):
         forceOBJ.rotation_mode = 'QUATERNION'
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        forceOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(forceOBJ, n1OBJ)
 
         elem.blender_object = forceOBJ.name
         forceOBJ.mbdyn.int_label = elem.int_label
@@ -324,11 +321,7 @@ def spawn_structural_couple_element(elem, context):
         coupleOBJ.rotation_mode = 'QUATERNION'
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        coupleOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(coupleOBJ, n1OBJ)
 
         elem.blender_object = coupleOBJ.name
         coupleOBJ.mbdyn.int_label = elem.int_label

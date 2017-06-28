@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 ## Parses total joint entry in .log file
 def parse_total(rw, ed):
@@ -295,9 +295,7 @@ def spawn_total_joint_element(elem, context):
             n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
-    RF1p.select = True
-    bpy.context.scene.objects.active = totjOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(RF1p, totjOBJ)
     RF1p.hide = True
 
     # create an object representing the RF used to express the relative
@@ -309,9 +307,7 @@ def spawn_total_joint_element(elem, context):
             n1OBJ.rotation_quaternion * Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
-    RF1r.select = True
-    bpy.context.scene.objects.active = totjOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(RF1r, totjOBJ)
     RF1r.hide = True
 
     # create an object representing the RF used to express the relative
@@ -323,9 +319,7 @@ def spawn_total_joint_element(elem, context):
             n2OBJ.rotation_quaternion * Quaternion(( qp2[0], qp2[1], qp2[2], qp2[3] ))
     RF2p.scale = .33*totjOBJ.scale
     RF2p.name = totjOBJ.name + '_RF2_pos'
-    RF2p.select = True
-    bpy.context.scene.objects.active = totjOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(RF2p, totjOBJ)
     RF2p.hide = True
 
     # create an object representing the RF used to express the relative
@@ -337,17 +331,11 @@ def spawn_total_joint_element(elem, context):
             n2OBJ.rotation_quaternion * Quaternion(( qr2[0], qr2[1], qr2[2], qr2[3] ))
     RF2r.scale = .33*totjOBJ.scale
     RF2r.name = totjOBJ.name + '_RF2_rot'
-    RF2r.select = True
-    bpy.context.scene.objects.active = totjOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(RF2r, totjOBJ)
     RF2r.hide = True
 
     # set parenting of wireframe obj
-    bpy.ops.object.select_all(action = 'DESELECT')
-    totjOBJ.select = True
-    n1OBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(totjOBJ, n1OBJ)
 
     elem.blender_object = totjOBJ.name
 
@@ -828,9 +816,7 @@ def spawn_total_pin_joint_element(elem, context):
             n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
-    RF1p.select = True
-    bpy.context.scene.objects.active = totjOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(RF1p, totjOBJ)
     RF1p.hide = True
 
     # create an object representing the RF used to express the relative
@@ -842,17 +828,11 @@ def spawn_total_pin_joint_element(elem, context):
             n1OBJ.rotation_quaternion * Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
-    RF1r.select = True
-    bpy.context.scene.objects.active = totjOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(RF1r, totjOBJ)
     RF1r.hide = True
 
     # set parenting of wireframe obj
-    bpy.ops.object.select_all(action = 'DESELECT')
-    totjOBJ.select = True
-    n1OBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(totjOBJ, n1OBJ)
 
     elem.blender_object = totjOBJ.name
 

@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 # helper function to parse distance joints
 def parse_distance(rw, ed):
@@ -208,19 +208,11 @@ def spawn_distance_element(elem, context):
 
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
     bpy.context.active_object.name = distOBJ.name + '_child1'
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[distOBJ.name + '_child1'].select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(bpy.data.objects[distOBJ.name + '_child1'], distOBJ)
 
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
     bpy.context.active_object.name = distOBJ.name + '_child2'
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[distOBJ.name + '_child2'].select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(bpy.data.objects[distOBJ.name + '_child2'], distOBJ)
 
     #hooking of the line ends to the Blender objects
     
@@ -270,11 +262,8 @@ def spawn_distance_element(elem, context):
     bpy.data.objects[distOBJ.name + '_child1'].draw_type = 'WIRE'
     bpy.data.objects[distOBJ.name + '_child2'].draw_type = 'WIRE'
 
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    # set parenting
+    parenting(distOBJ, n1OBJ)
 
     elem.is_imported = True
     return{'FINISHED'}

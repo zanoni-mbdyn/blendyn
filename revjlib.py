@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 # helper function to parse revolute hinge joints
 def parse_revolute_hinge(rw, ed):
@@ -285,17 +285,11 @@ def spawn_revolute_hinge_element(elem, context):
                 n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
         RF2.scale = .33*revjOBJ.scale
         RF2.name = revjOBJ.name + '_RF2'
-        RF2.select = True
-        bpy.context.scene.objects.active = revjOBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(RF2, revjOBJ)
         RF2.hide = True
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        revjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(revjOBJ, n1OBJ)
 
         elem.blender_object = revjOBJ.name
 
@@ -409,11 +403,7 @@ def spawn_revolute_pin_element(elem, context):
                 n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        revjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(revjOBJ, n1OBJ)
 
         elem.blender_object = revjOBJ.name
 
@@ -550,17 +540,11 @@ def spawn_revolute_rot_element(elem, context):
                 n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
         RF2.scale = .33*revjOBJ.scale
         RF2.name = revjOBJ.name + '_RF2'
-        RF2.select = True
-        bpy.context.scene.objects.active = revjOBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(RF2, revjOBJ)
         RF2.hide = True
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        revjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(revjOBJ, n1OBJ)
 
         elem.blender_object = revjOBJ.name
 

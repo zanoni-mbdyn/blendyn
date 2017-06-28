@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import parse_rotmat, parenting
 
 # helper function to parse brake joints
 def parse_brake(rw, ed):
@@ -208,12 +208,9 @@ def spawn_brake_element(elem, context):
         brakejOBJ.rotation_mode = 'QUATERNION'
         brakejOBJ.rotation_quaternion = \
                 n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        brakejOBJ.select = True
-        n2OBJ.select = True
-        bpy.context.scene.objects.active = n2OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(brakejOBJ, n2OBJ)
 
         elem.blender_object = brakejOBJ.name
     else:
@@ -239,11 +236,7 @@ def spawn_brake_element(elem, context):
                 n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        brakejOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(brakejOBJ, n1OBJ)
 
         elem.blender_object = brakejOBJ.name
 
