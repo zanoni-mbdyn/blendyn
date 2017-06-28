@@ -200,7 +200,7 @@ def spawn_brake_element(elem, context):
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)*elem.scale_factor
+        n2OBJ.scale.magnitude)
         brakejOBJ.scale = Vector(( s, s, s ))
     
         # place the joint object in the position defined relative to node 2
@@ -229,7 +229,7 @@ def spawn_brake_element(elem, context):
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)*elem.scale_factor
+        n2OBJ.scale.magnitude)
         brakejOBJ.scale = Vector(( s, s, s ))
     
         # place the joint object in the position defined relative to node 2

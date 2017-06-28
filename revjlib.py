@@ -255,7 +255,7 @@ def spawn_revolute_hinge_element(elem, context):
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)*elem.scale_factor
+        n2OBJ.scale.magnitude)
         revjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
@@ -391,7 +391,7 @@ def spawn_revolute_pin_element(elem, context):
         revjOBJ.name = elem.name
 
         # automatic scaling
-        s = n1OBJ.scale.magnitude*(1./sqrt(3.))*elem.scale_factor
+        s = n1OBJ.scale.magnitude*(1./sqrt(3.))
         revjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
@@ -520,7 +520,7 @@ def spawn_revolute_rot_element(elem, context):
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)*elem.scale_factor
+        n2OBJ.scale.magnitude)
         revjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes

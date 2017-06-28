@@ -557,7 +557,7 @@ def update_structural_force(elem, insert_keyframe = False):
         Fl = R0.transposed()*F
 
         obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
-        obj.scale = Vector(( 1, 1, Fl.magnitude ))*elem.scale_factor
+        obj.scale = Vector(( 1, 1, Fl.magnitude ))
     else:
         pass
 # -----------------------------------------------------------
@@ -587,7 +587,7 @@ def update_structural_couple(elem, insert_keyframe = False):
         Ml = R0.transposed()*M
 
         obj.rotation_quaternion = (-Ml).to_track_quat('-Z', 'Y')
-        obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))*elem.scale_factor
+        obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))
     else:
         pass
     pass

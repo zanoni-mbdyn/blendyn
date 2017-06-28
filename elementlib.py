@@ -104,9 +104,7 @@ def parse_elements(context, jnt_type, rw):
 def elem_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     col = layout.column(align=True)
-    
-    col.prop(elem, "scale_factor")
-    
+     
     row = layout.row()
     col = row.column()
 
@@ -212,13 +210,3 @@ class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
             pass
 # -----------------------------------------------------------
 # end of Data_OT_MBDyn_Elems_Beams class
-
-# Update function for scale factor
-def update_scale_factor(self, context):
-    ed = context.scene.mbdyn.elems
-    for elem in ed:
-        if elem.blender_object == self.name:
-            if elem.scale_factor < 0.:
-                elem.scale_factor = 0.
-            s = bpy.data.objects[elem.blender_object].scale
-            bpy.data.objects[elem.blender_object].scale = s*elem.scale_factor

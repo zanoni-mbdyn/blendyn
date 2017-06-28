@@ -123,7 +123,7 @@ def spawn_body_element(elem, context):
 
         # automatic scaling
         s = n1OBJ.scale.magnitude*(1./sqrt(3.))
-        bodyOBJ.scale = Vector(( s, s, s ))*elem.scale_factor
+        bodyOBJ.scale = Vector(( s, s, s ))
 
         # element offset with respect to nodes
         f1 = elem.offsets[0].value
@@ -211,7 +211,6 @@ def body_info_draw(elem, layout):
     
     col = layout.column(align = True)
 
-    col.prop(elem, "scale_factor")
     col.prop(elem, "magnitude", text = "mass")
 
     row = layout.row()

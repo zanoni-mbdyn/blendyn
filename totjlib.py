@@ -274,10 +274,9 @@ def spawn_total_joint_element(elem, context):
 
     # TODO: display also velocity contraints arrows
 
-
     # automatic scaling
     s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-            n2OBJ.scale.magnitude)*elem.scale_factor
+            n2OBJ.scale.magnitude)
     totjOBJ.scale = Vector(( s, s, s ))
 
     # set mbdyn props of object
@@ -362,8 +361,6 @@ def total_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align = True)
 
-    col.prop(elem, "scale_factor")
-
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
 
@@ -423,7 +420,7 @@ def total_info_draw(elem, layout):
 
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./2.)
+            split = box.split(1./3.)
            
             # position
             column = split.column()
@@ -628,8 +625,6 @@ def total_pin_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align=True)
 
-    col.prop(elem, "scale_factor")
-
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
 
@@ -661,7 +656,7 @@ def total_pin_info_draw(elem, layout):
             
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./2.)
+            split = box.split(1./3.)
            
             # position
             column = split.column()
@@ -821,7 +816,7 @@ def spawn_total_pin_joint_element(elem, context):
     # TODO: display also velocity contraints arrows
 
     # automatic scaling
-    s = (1./sqrt(3.))*n1OBJ.scale.magnitude*elem.scale_factor
+    s = (1./sqrt(3.))*n1OBJ.scale.magnitude
     totjOBJ.scale = Vector(( s, s, s ))
 
     # create an object representing the RF used to express the relative

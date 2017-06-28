@@ -188,7 +188,7 @@ def spawn_inline_element(elem, context):
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)*elem.scale_factor
+        n2OBJ.scale.magnitude)
         inlinejOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes

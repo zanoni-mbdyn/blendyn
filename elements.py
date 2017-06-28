@@ -120,13 +120,6 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
         description = "Collector of rotational offsets of element attach R.Fs."
         )
 
-    scale_factor = FloatProperty(
-        name = "Scale",
-        description = "Scale factor for element visualization",
-        default = 1.0,
-        update = update_scale_factor
-        )
-
     import_function = StringProperty(
         name = "Import operator",
         description = "Id name of the class defining the import operator for the element"
