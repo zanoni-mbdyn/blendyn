@@ -37,6 +37,7 @@ from .bodylib import *
 from .carjlib import *
 from .clampjlib import *
 from .defdispjlib import *
+from .defhingejlib import *
 from .forcelib import *
 from .revjlib import *
 from .rodjlib import *
@@ -66,6 +67,7 @@ def parse_elements(context, jnt_type, rw):
             "cardanopin": parse_cardano_pin,
             "clamp": parse_clamp,
             "deformabledisplacementjoint": parse_defdisp,
+            "deformablehinge": parse_defhinge,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
             "revoluterotation": parse_revolute_rot,

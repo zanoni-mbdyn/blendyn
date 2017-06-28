@@ -192,7 +192,7 @@ def spawn_defdispj_element(elem, context):
     defdispOBJ = bpy.context.scene.objects.active
     defdispOBJ.location = (0, 0, 0)
     defdispOBJ.rotation_mode = 'QUATERNION'
-    defdispOBJ.rotation_quaternion = n2OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+    defdispOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
     elem.blender_object = elem.name
     defdispOBJ.name = elem.name
