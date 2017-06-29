@@ -124,11 +124,10 @@ def update_defdisp(elem, insert_keyframe = False):
 
     def_vector = (p2 - p1)
     def_vector = R1h.transposed() * R1.transposed() * def_vector
-    print(def_vector)
     axes = ['X', 'Y', 'Z']
     for ii in range(3):
         defdispChild = bpy.data.objects[defdispOBJ.name + '.' + axes[ii]]
-        defdispChild.location = def_vector[:ii] + (0, )* (3 - ii)
+        defdispChild.location = Vector(p1) + Vector(def_vector[:ii] + (0, )* (3 - ii))
         defdispChild.dimensions[2] = def_vector[ii]
 
 
@@ -190,7 +189,7 @@ def spawn_defdispj_element(elem, context):
 
     bpy.ops.object.empty_add(type='PLAIN_AXES')
     defdispOBJ = bpy.context.scene.objects.active
-    defdispOBJ.location = (0, 0, 0)
+    defdispOBJ.location = p1
     defdispOBJ.rotation_mode = 'QUATERNION'
     defdispOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
@@ -214,10 +213,11 @@ def spawn_defdispj_element(elem, context):
         bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=len_helix, \
                                         helixWidth=rad_helix, helixEnd=360* turns, helixPoints=1000)
         defdispChild = bpy.context.scene.objects.active
+
         track_axes = axes[:]
         track_axes.remove(track_axes[ii])
         obj_loc = (p2 - p1)
-        defdispChild.location = obj_loc[:ii] + (0, )* (3 - ii)
+        defdispChild.location = Vector(p1) + Vector(obj_loc[:ii] + (0, )* (3 - ii))
         defdispChild.rotation_mode = 'QUATERNION'
         axis_direction = Vector((0, 0, 0))
         axis_direction[ii] = 1
