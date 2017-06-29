@@ -207,8 +207,12 @@ def spawn_defdispj_element(elem, context):
     turns = 20
     axes = ['X', 'Y', 'Z']
     for ii in range(3):
-        bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=length[ii],\
-                                        helixWidth=radius[ii], helixEnd = 360* turns, helixPoints = 1000)
+        rad_helix, len_helix = radius[ii], length[ii]
+        if rad_helix < 0.1:
+            rad_helix = 0.1
+            len_helix = rad_helix/ 0.3
+        bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=len_helix, \
+                                        helixWidth=rad_helix, helixEnd=360* turns, helixPoints=1000)
         defdispChild = bpy.context.scene.objects.active
         track_axes = axes[:]
         track_axes.remove(track_axes[ii])
