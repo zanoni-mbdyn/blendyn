@@ -788,7 +788,7 @@ class MBDynReadLog(bpy.types.Operator):
             hide_or_delete(obj_names, missing)
 
         if len(mbs.disabled_output) > 0:
-            message = "Some nodes have disabled outputs"
+            message = "No output for nodes " + mbs.disabled_output
             baseLogger.warning(message)
 
         if ret_val == {'LOG_NOT_FOUND'}:

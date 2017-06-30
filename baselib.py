@@ -153,11 +153,10 @@ def no_output(context):
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
         list1 = nc.variables.keys()
-        regex = re.compile(r'node.struct.\d$')
+        regex = re.compile(r'node.struct.*\.X$')
         list2 = list(filter(regex.search, list1))
-        result_nodes = list(map(lambda x: x[-1], list2))
+        result_nodes = list(map(lambda x: x.split('.')[2], list2))
         log_nodes = list(map(lambda x: x[5:], nd.keys()))
-
         difference = set(result_nodes) ^ set(log_nodes)
         difference = ' '.join(difference)
         print(difference)
@@ -805,7 +804,7 @@ def log_messages(mbs, baseLogger, saved_blend):
                     else 'untitled.blend'
         blendFile = os.path.splitext(blendFile)[0]
 
-        formatter = '%(asctime)s - %(levelname)s - %(message)s'
+        formatter = '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
         datefmt = '%m/%d/%Y %I:%M:%S %p'
         global logFile
         logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
