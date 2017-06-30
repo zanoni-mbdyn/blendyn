@@ -38,6 +38,7 @@ from .carjlib import *
 from .clampjlib import *
 from .defdispjlib import *
 from .defhingejlib import *
+from .defjointjlib import *
 from .forcelib import *
 from .revjlib import *
 from .rodjlib import *
@@ -68,6 +69,7 @@ def parse_elements(context, jnt_type, rw):
             "clamp": parse_clamp,
             "deformabledisplacementjoint": parse_defdisp,
             "deformablehinge": parse_defhinge,
+            "deformablejoint": parse_defjoint,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
             "revoluterotation": parse_revolute_rot,
