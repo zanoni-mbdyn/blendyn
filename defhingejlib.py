@@ -108,32 +108,21 @@ def update_defhinge(elem, insert_keyframe = False):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # get offsets
-    f1 = elem.offsets[0].value
-    f2 = elem.offsets[1].value
-    q1 = elem.rotoffsets[0].value
-    q2 = elem.rotoffsets[1].value
+    q1h_tilde = Quaternion((elem.rotoffsets[0].value))
+    q1 = n1OBJ.matrix_world.to_quaternion()
+    q2h_tilde = Quaternion((elem.rotoffsets[0].value))
+    q2 = n2OBJ.matrix_world.to_quaternion()
 
-    # assign coordinates of knots in global frame
-    R1 = n1OBJ.rotation_quaternion.to_matrix()
-    R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1 * Vector((f1[0], f1[1], f1[2]))
-    p2 = n2OBJ.location + R2 * Vector((f2[0], f2[1], f2[2]))
+    q1h = q1h_tilde*q1
+    q2h = q2h_tilde*q2
+    qrel = q2h*q1h.conjugated()
+    n, theta = qrel.to_axis_angle()
+    phi = n*theta
 
-    R1h =  Quaternion(( q1[0], q1[1], q1[2], q1[3] )).to_matrix()
-
-    rotation1 = n1OBJ.rotation_euler #* Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
-    rotation2 = n2OBJ.rotation_euler #* Quaternion(( q2[0], q2[1], q2[2], q2[3] ))    
-    
     axes = ['X', 'Y', 'Z']
-    rotation = [rotation2.x - rotation1.x, rotation2.y - rotation1.y, rotation2.z - rotation1.z]
-    rotation = list(map(lambda x: x * 180/pi, rotation))
-    print('Janga')
     for ii in range(3):
-        print(rotation)
         defhingeChild = bpy.data.objects[defhingeOBJ.name + '.' + axes[ii]]
-        defhingeChild.modifiers['SimpleDeform'].angle = rotation[ii]
-
+        defhingeChild.modifiers['SimpleDeform'].angle = phi[ii]
 
 # Creates the object representing a deformable hinge joint element
 def spawn_defhingej_element(elem, context):
@@ -210,6 +199,17 @@ def spawn_defhingej_element(elem, context):
     ude.dkey = elem.name
     ude.name = elem.name
 
+    q1h_tilde = Quaternion((q1))
+    rotation1 = n1OBJ.matrix_world.to_quaternion()
+    q2h_tilde = Quaternion((q1))
+    rotation2 = n2OBJ.matrix_world.to_quaternion()
+
+    q1h = q1h_tilde*rotation1
+    q2h = q2h_tilde*rotation2
+    qrel = q2h*q1h.conjugated()
+    n, theta = qrel.to_axis_angle()
+    phi = n*theta
+
     length = 1
     radius = 0.3 * length
     print(length, radius)
@@ -222,7 +222,7 @@ def spawn_defhingej_element(elem, context):
         bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
         track_axes = axes[:]
         track_axes.remove(track_axes[ii])
-        defhingeChild.location = (0, 0, 0)
+        defhingeChild.location = p1
         defhingeChild.rotation_mode = 'QUATERNION'
         axis_direction = Vector((0, 0, 0))
         axis_direction[ii] = 1
@@ -232,6 +232,8 @@ def spawn_defhingej_element(elem, context):
         bpy.context.scene.objects.active = defhingeChild
         bpy.ops.object.modifier_add(type='SIMPLE_DEFORM')
         defhingeChild.modifiers['SimpleDeform'].deform_method = 'TWIST'
+
+        defhingeChild.modifiers['SimpleDeform'].angle = phi[ii]
 
         #Set parent to defhingeOBJ
         bpy.ops.object.select_all(action='DESELECT')
