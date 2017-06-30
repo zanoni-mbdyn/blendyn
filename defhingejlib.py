@@ -191,7 +191,7 @@ def spawn_defhingej_element(elem, context):
     n1OBJ.select = True
     bpy.context.scene.objects.active = n1OBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
-    defhingeOBJ.location = (0, 0, 0)
+    defhingeOBJ.location = p1
 
     elem.blender_object = elem.name
     defhingeOBJ.name = elem.name

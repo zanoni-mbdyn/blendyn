@@ -216,7 +216,7 @@ def spawn_defjointj_element(elem, context):
     n1OBJ.select = True
     bpy.context.scene.objects.active = n1OBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
-    defjointOBJ.location = (0, 0, 0)
+    defjointOBJ.location = p1
 
     elem.blender_object = elem.name
     defjointOBJ.name = elem.name
