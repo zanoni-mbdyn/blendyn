@@ -39,7 +39,7 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import ntpath, os, csv, math, time, shutil
+import ntpath, os, csv, math, time, shutil, sys
 
 from collections import namedtuple
 import subprocess
@@ -343,6 +343,12 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     env_value = StringProperty(
             name = "Values of MBDyn environment values",
             description = "Values of the environment variables used in MBDyn simulation"
+        )
+
+    install_packages = StringProperty(
+            name = 'Packages to be imported',
+            description = 'Location of Python site-packages to import modules from',
+            subtype = 'DIR_PATH'
         )
 
     # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
@@ -744,6 +750,18 @@ def set_mbdyn_path_startup(scene):
 bpy.app.handlers.load_post.append(set_mbdyn_path_startup)
 
 @persistent
+def load_python_modules(scene):
+    mbs = bpy.context.scene.mbdyn
+    try:
+        with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+            mbs.install_packages = json.load(f)['python_path']
+            sys.path.append(mbs.install_packages)
+    except FileNotFoundError:
+        pass
+
+bpy.app.handlers.load_post.append(load_python_modules)
+
+@persistent
 def blend_log(scene):
 
     mbs = bpy.context.scene.mbdyn
@@ -832,6 +850,36 @@ class MBDynReadLog(bpy.types.Operator):
 bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
+
+class MBDynInstallPackages(bpy.types.Operator):
+    bl_idname = "set.install_packages"
+    bl_label = "Install the requires packages"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        sys.path.append(mbs.install_packages)
+
+        data = {}
+        try:
+            with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            pass
+
+        data['python_path'] = mbs.install_packages
+
+        with open(os.path.join(mbs.addon_path, 'config.json'), 'w') as f:
+            json.dump(data, f)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynInstallPackages)
+# -----------------------------------------------------------
+# end of MBDynInstallPackages class
 
 class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
     """ Sets MBDyn's output files path and basename """
@@ -932,10 +980,17 @@ class MBDynSetInstallPath(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         mbdyn_path = mbs.install_path
-        config = {'mbdyn_path': mbdyn_path}
+        data = {}
+        try:
+            with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            pass
+
+        data['mbdyn_path'] = mbs.install_path
 
         with open(os.path.join(mbs.addon_path, 'config.json'), 'w') as f:
-            json.dump(config, f)
+            json.dump(data, f)
 
         return {'FINISHED'}
 
@@ -1271,6 +1326,10 @@ class MBDynImportPanel(bpy.types.Panel):
         # MBDyn output file selection
         row = layout.row()
         row.label(text = "MBDyn simulation results")
+
+        col = layout.column(align = True)
+        col.prop(mbs, "install_packages", text = "Python Directory")
+        col.operator(MBDynInstallPackages.bl_idname, text = "Install Packages")
 
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
