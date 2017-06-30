@@ -771,7 +771,6 @@ def render_variables(scene):
         for var in mbs.render_vars ]
         string = '\n'.join(string)
         if len(mbs.render_vars):
-            print(str(scene.frame_current) + 'Janga_Reddy')
             bpy.data.scenes['Scene'].render.stamp_note_text = string
     except IndexError:
         pass
@@ -1321,12 +1320,12 @@ class MBDynSetRenderVariables(bpy.types.Operator):
 
         try:
             index = exist_render_vars.index(mbs.render_var_name)
-            mbs.render_vars[index].value = mbs.render_nc_vars
+            mbs.render_vars[index].value = mbs.plot_vars[mbs.plot_var_index].name
 
         except ValueError:
             rend = mbs.render_vars.add()
             rend.variable = mbs.render_var_name
-            rend.value = mbs.render_nc_vars
+            rend.value = mbs.plot_vars[mbs.plot_var_index].name
 
         return {'FINISHED'}
 
@@ -1854,11 +1853,13 @@ class MBDynTextOverlayPanel(bpy.types.Panel):
         row = layout.row()
         if mbs.use_netcdf:
             row = layout.row()
+            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
+                    mbs, "plot_var_index")
+            row = layout.row()
             row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
                     mbs, "render_index")
             row = layout.row()
             row.prop(mbs, "render_var_name")
-            row.prop(mbs, "render_nc_vars")
 
             row = layout.row()
             row.operator(MBDynSetRenderVariables.bl_idname, text = 'Add Render Var')
