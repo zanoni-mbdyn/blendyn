@@ -137,6 +137,7 @@ def setup_import(filepath, context):
         except NameError:
             return {'NETCDF_ERROR'}
     else:
+        mbs.use_netcdf = False
         mbs.num_rows = file_len(filepath)
     return {'FINISHED'}
 
@@ -616,6 +617,51 @@ def set_motion_paths_mov(context):
 # -----------------------------------------------------------
 # end of set_motion_paths_mov() function
 
+def active_object_rel(bool1, bool2):
+    if not bool1:
+        return True
+    if bool1:
+        if bool2:
+            return True
+        else:
+            return False
+
+def get_render_vars(self, context):
+    mbs = context.scene.mbdyn
+    ed = mbs.elems
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    units = ['m/s', 's', 'm', 'N', 'Nm']
+    render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
+    render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
+
+    scene_objs = [ str(var.int_label) for var in ed if bpy.data.objects[var.blender_object].select ]
+    render_vars = list(filter( lambda x: active_object_rel('elem' in x, \
+                   any(i in scene_objs for i in x.split('.'))), render_vars))
+    return [(var, var, "") for var in render_vars]
+# -----------------------------------------------------------
+# end of get_render_vars() function
+
+def netcdf_helper(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current * freq
+    frac = np.ceil(tdx) - tdx
+
+    first = nc.variables[key][int(tdx)]
+    second = nc.variables[key][int(np.ceil(tdx))]
+    answer = first * frac + second * (1-frac)
+
+    return answer
+
+def parse_render_string(var):
+    if hasattr(var, '__iter__'):
+        return ', '.join(['{:.2f}'.format(item) for item in var])
+
+    else:
+        return '{:.2f}'.format(var)
+
 def set_motion_paths_netcdf(context):
 
     scene = context.scene
@@ -669,20 +715,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'X')
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = math.radians(1.0)*(nc.variables[node_var + 'E'][int(tdx), :])
-                second = math.radians(1.0)*(nc.variables[node_var + 'E'][int(np.ceil(tdx)), :])
-                answer = first * frac + second * (1-frac)
-
+                answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
                 obj.rotation_euler = \
                         Euler( Vector((answer)),
                                 axes[obj.mbdyn.parametrization[7]] +\
@@ -693,20 +730,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                answer = netcdf_helper(nc, scene, node_var + 'X')
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = nc.variables[node_var + 'Phi'][int(tdx), :]
-                second = nc.variables[node_var + 'Phi'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'Phi')
                 rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
@@ -716,20 +744,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'X')
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = nc.variables[node_var + 'R'][int(tdx), :]
-                second = nc.variables[node_var + 'R'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'R')
                 R = Matrix((answer))
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")

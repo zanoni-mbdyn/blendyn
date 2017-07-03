@@ -40,6 +40,7 @@ from mathutils import *
 from math import *
 
 import ntpath, os, csv, math, time, shutil
+import numpy as np
 
 from collections import namedtuple
 import subprocess
@@ -196,6 +197,20 @@ bpy.utils.register_class(MBDynTime)
 # -----------------------------------------------------------
 # end of MBDynTime class
 
+## PropertyGroup of Render Variables
+class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
+    variable = StringProperty(
+        name = "Render Variables",
+        description = 'Variables to be set'
+    )
+    value = StringProperty(
+        name = "Values of Render Variables",
+        description = "Values of variables to be set"
+    )
+bpy.utils.register_class(MBDynRenderVarsDictionary)
+# -----------------------------------------------------------
+# end of MBDynRenderVarsDictionary class
+
 ## PropertyGroup of Environment Variables
 class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
     variable = StringProperty(
@@ -321,6 +336,22 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             description = "True if the user wants to delete log files on exit",
             default = False
             )
+
+    render_nc_vars = EnumProperty(
+        items = get_render_vars,
+        name = 'Text overlay variables',
+    )
+
+    render_var_name = StringProperty(
+        name = 'Name of render variable',
+        default = ''
+    )
+
+    render_vars = CollectionProperty(
+        name = "MBDyn render variables collection",
+        type = MBDynRenderVarsDictionary
+    )
+
     # Collection of Environment variables and corresponding values
     env_vars = CollectionProperty(
             name = "MBDyn environment variables collection",
@@ -332,6 +363,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "MBDyn Environment variables collection index",
             default = 0
         )
+
+    render_index = IntProperty(
+        name = "MBDyn Render Variables collection index",
+        default = 0
+    )
 
     # Name of the Environment Variable
     env_variable = StringProperty(
@@ -724,6 +760,23 @@ def update_time(scene):
 bpy.app.handlers.frame_change_pre.append(update_time)
 
 @persistent
+def render_variables(scene):
+    try:
+        mbs = scene.mbdyn
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r", format="NETCDF3")
+        string = [ '{0} : {1}'.format(var.variable, \
+        parse_render_string(netcdf_helper(nc, scene, var.value))) \
+        for var in mbs.render_vars ]
+        string = '\n'.join(string)
+        if len(mbs.render_vars):
+            bpy.data.scenes['Scene'].render.stamp_note_text = string
+    except IndexError:
+        pass
+bpy.app.handlers.frame_change_pre.append(render_variables)
+
+@persistent
 def close_log(scene):
     baseLogger.handlers = []
 
@@ -821,6 +874,8 @@ class MBDynReadLog(bpy.types.Operator):
 
         elif ret_val == {'FINISHED'}:
             message = "MBDyn entities imported successfully"
+            bpy.data.scenes['Scene'].render.use_stamp = True
+            bpy.data.scenes['Scene'].render.use_stamp_note = True
             self.report({'INFO'}, message) 
             baseLogger.info(message)
 
@@ -1250,6 +1305,55 @@ class MBDynSetImportFreqAuto(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+
+class MBDynSetRenderVariables(bpy.types.Operator):
+    """Sets the Render variables to be\
+        used in a Blender Render"""
+
+    bl_idname = "sel.set_render_variable"
+    bl_label = "Set Render Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        exist_render_vars = [mbs.render_vars[var].variable for var in range(len(mbs.env_vars))]
+
+        try:
+            index = exist_render_vars.index(mbs.render_var_name)
+            mbs.render_vars[index].value = mbs.plot_vars[mbs.plot_var_index].name
+
+        except ValueError:
+            rend = mbs.render_vars.add()
+            rend.variable = mbs.render_var_name
+            rend.value = mbs.plot_vars[mbs.plot_var_index].name
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynSetRenderVariables)
+# -----------------------------------------------------------
+# end of MBDynSetRenderVariables class
+
+class MBDynDeleteRenderVariables(bpy.types.Operator):
+    """Delete Render variables"""
+    bl_idname = "sel.delete_render_variable"
+    bl_label = "Delete Render Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.render_vars.remove(mbs.render_index)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynDeleteRenderVariables)
+# -----------------------------------------------------------
+# end of MBDynDeleteRenderVariables class
+
+
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath"
@@ -1606,6 +1710,13 @@ class MBDynPlotVar_UL_List(bpy.types.UIList):
 # -----------------------------------------------------------
 # end of MBDynPLotVar_UL_List class
 
+class MBDynRenderVar_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.variable)
+        layout.label(item.value)
+# -----------------------------------------------------------
+# end of MBDynRenderVar_UL_List class
+
 class MBDynEnvVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.label(item.variable)
@@ -1726,6 +1837,35 @@ class MBDynElemsScenePanel(bpy.types.Panel):
             col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
+
+class MBDynTextOverlayPanel(bpy.types.Panel):
+    """ Text overlay over rendered images """
+    bl_label = "MBDyn Text Overlay"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'render'
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        rd = mbs.references
+        layout = self.layout
+
+        row = layout.row()
+        if mbs.use_netcdf:
+            row = layout.row()
+            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
+                    mbs, "plot_var_index")
+            row = layout.row()
+            row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
+                    mbs, "render_index")
+            row = layout.row()
+            row.prop(mbs, "render_var_name")
+
+            row = layout.row()
+            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Add Render Var')
+
+            row = layout.row()
+            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Render Value')
 
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
