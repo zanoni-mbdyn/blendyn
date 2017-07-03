@@ -1329,7 +1329,7 @@ class MBDynImportPanel(bpy.types.Panel):
 
         col = layout.column(align = True)
         col.prop(mbs, "install_packages", text = "Python Directory")
-        col.operator(MBDynInstallPackages.bl_idname, text = "Install Packages")
+        col.operator(MBDynInstallPackages.bl_idname, text = "Set Packages Path")
 
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
