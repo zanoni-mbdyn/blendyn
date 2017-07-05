@@ -651,9 +651,9 @@ def netcdf_helper(nc, scene, key):
 
     return answer
 
-def parse_render_string(var):
+def parse_render_string(var, components):
     if hasattr(var, '__iter__'):
-        return ', '.join(['{:.2f}'.format(item) for item in var])
+        return ', '.join(['{:.2f}'.format(item) if components[idx] else ' ' for idx, item in enumerate(var)])
 
     else:
         return '{:.2f}'.format(var)
