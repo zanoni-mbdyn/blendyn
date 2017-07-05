@@ -45,15 +45,6 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
-try:
-    import pygal
-    from .plotlib import get_plot_vars_glob
-    HAVE_PLOT = True
-except ImportError:
-    print("blendyn: could not find pygal module. Plotting  "\
-        + "will be disabled.")
-    pass
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -107,6 +98,21 @@ if HAVE_PSUTIL:
         if mbdynProc:
             mbdynProc[0].kill()
 
+def get_plot_vars_glob(context):
+    mbs = context.scene.mbdyn
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        N = len(nc.variables["time"])
+
+        var_list = list()
+        for var in nc.variables:
+            m = nc.variables[var].shape
+            if (m[0] == N) and (var not in mbs.plot_vars.keys()):
+                plotvar = mbs.plot_vars.add()
+                plotvar.name = var
+
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
     mbs = context.scene.mbdyn
@@ -130,8 +136,8 @@ def setup_import(filepath, context):
             except KeyError:
                 print('MBDynSelectOutputFile: no eigenanalysis results found')
                 pass
-            if HAVE_PLOT:
-                get_plot_vars_glob(context)
+
+            get_plot_vars_glob(context)
 
 
         except NameError:
