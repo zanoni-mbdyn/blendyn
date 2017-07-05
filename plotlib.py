@@ -341,19 +341,6 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        # get requested netCDF variable
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
-
-        # get its dimensions
-        varname = mbs.plot_vars[mbs.plot_var_index].name
-        var = nc.variables[varname]
-        dim = len(var.shape)
-        
-        # get time vector
-        time = nc.variables["time"]
-        
         # set up pygal
         config = pygal.Config()
         config.show_dots = False
@@ -361,33 +348,50 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         config.truncate_legend = -1
         chart = pygal.XY(config)
 
-        # create plot
-        if dim == 2:
-            n,m = var.shape
-            for mdx in range(m):
-                if mbs.plot_comps[mdx]:
-                    chart.add(varname + "." + str(mdx + 1), \
-                            [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
-        elif dim == 3:
-            n,m,k = var.shape
-            if mbs.plot_var[-1] == 'R':
-                dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
-                dims1 = [0, 0, 0, 1, 1, 2]
-                dims2 = [0, 1, 2, 1, 2, 2]
+
+        for variable in mbs.render_vars:
+
+            # get requested netCDF variable
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+            nc = Dataset(ncfile, 'r', format='NETCDF3')
+
+            # get its dimensions
+            varname = variable.value
+            var = nc.variables[varname]
+            dim = len(var.shape)
+
+            # get time vector
+            time = nc.variables["time"]
+
+            # create plot
+            if dim == 2:
+                n,m = var.shape
+                for mdx in range(m):
+                    if variable.components[mdx]:
+                        chart.add(varname + "." + str(mdx + 1), \
+                                [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
+            elif dim == 3:
+                n,m,k = var.shape
+                if mbs.plot_var[-1] == 'R':
+                    dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
+                    dims1 = [0, 0, 0, 1, 1, 2]
+                    dims2 = [0, 1, 2, 1, 2, 2]
+                else:
+                    dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                                  "(2,1)", "(2,2)", "(2,3)",\
+                                  "(3,1)", "(3,2)", "(3,3)"]
+                    dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+                    dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
+                for mdx in range(len(dims_names)):
+                    if variable.components[mdx]:
+                        chart.add(varname + dims_names[mdx], \
+                                [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
+                                for idx in range(0, n, mbs.plot_frequency)])
             else:
-                dims_names = ["(1,1)", "(1,2)", "(1,3)",\
-                              "(2,1)", "(2,2)", "(2,3)",\
-                              "(3,1)", "(3,2)", "(3,3)"]
-                dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
-                dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
-            for mdx in range(len(dims_names)):
-                if mbs.plot_comps[mdx]:
-                    chart.add(varname + dims_names[mdx], \
-                            [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
-                            for idx in range(0, n, mbs.plot_frequency)])
-        else:
-            chart.add(varname, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), mbs.plot_frequency)])
+                chart.add(varname, [(time[idx], var[idx]) \
+                        for idx in range(0, len(time), mbs.plot_frequency)])
+
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):

@@ -207,6 +207,10 @@ class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
         name = "Values of Render Variables",
         description = "Values of variables to be set"
     )
+    components = BoolVectorProperty(
+        name = "Components of the Variable",
+        size = 9
+        )
 bpy.utils.register_class(MBDynRenderVarsDictionary)
 # -----------------------------------------------------------
 # end of MBDynRenderVarsDictionary class
@@ -759,22 +763,23 @@ def update_time(scene):
         pass
 bpy.app.handlers.frame_change_pre.append(update_time)
 
-@persistent
-def render_variables(scene):
-    try:
-        mbs = scene.mbdyn
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
-        string = [ '{0} : {1}'.format(var.variable, \
-        parse_render_string(netcdf_helper(nc, scene, var.value))) \
-        for var in mbs.render_vars ]
-        string = '\n'.join(string)
-        if len(mbs.render_vars):
-            bpy.data.scenes['Scene'].render.stamp_note_text = string
-    except IndexError:
-        pass
-bpy.app.handlers.frame_change_pre.append(render_variables)
+# @persistent
+# def render_variables(scene):
+#     try:
+#         mbs = scene.mbdyn
+#         print(scene.frame_current)
+#         # ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+#         #         mbs.file_basename + '.nc')
+#         # nc = Dataset(ncfile, "r", format="NETCDF3")
+#         # string = [ '{0} : {1}'.format(var.variable, \
+#         # parse_render_string(netcdf_helper(nc, scene, var.value))) \
+#         # for var in mbs.render_vars ]
+#         # string = '\n'.join(string)
+#         # if len(mbs.render_vars):
+#         #     bpy.data.scenes['Scene'].render.stamp_note_text = string
+#     except IndexError:
+#         pass
+# bpy.app.handlers.frame_change_pre.append(render_variables)
 
 @persistent
 def close_log(scene):
@@ -1319,16 +1324,18 @@ class MBDynSetRenderVariables(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        exist_render_vars = [mbs.render_vars[var].variable for var in range(len(mbs.env_vars))]
+        exist_render_vars = [mbs.render_vars[var].value for var in range(len(mbs.render_vars))]
 
         try:
-            index = exist_render_vars.index(mbs.render_var_name)
-            mbs.render_vars[index].value = mbs.plot_vars[mbs.plot_var_index].name
+            index = exist_render_vars.index(mbs.plot_vars[mbs.plot_var_index].name)
+            mbs.render_vars[index].variable = mbs.render_var_name
+            mbs.render_vars[index].components = mbs.plot_comps
 
         except ValueError:
             rend = mbs.render_vars.add()
             rend.variable = mbs.render_var_name
             rend.value = mbs.plot_vars[mbs.plot_var_index].name
+            rend.components = mbs.plot_comps
 
         return {'FINISHED'}
 
@@ -1940,36 +1947,6 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             row = layout.row()
             row.label(text="Plotting from text output")
             row.label(text="is not supported yet.")
-
-
-class MBDynTextOverlayPanel(bpy.types.Panel):
-    """ Text overlay over rendered images """
-    bl_label = "MBDyn Text Overlay"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'render'
-
-    def draw(self, context):
-        mbs = context.scene.mbdyn
-        rd = mbs.references
-        layout = self.layout
-
-        row = layout.row()
-        if mbs.use_netcdf:
-            row = layout.row()
-            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
-                    mbs, "plot_var_index")
-            row = layout.row()
-            row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
-                    mbs, "render_index")
-            row = layout.row()
-            row.prop(mbs, "render_var_name")
-
-            row = layout.row()
-            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Add Render Var')
-
-            row = layout.row()
-            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Render Value')
 
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
