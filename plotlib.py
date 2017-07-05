@@ -46,21 +46,6 @@ except ImportError:
 
 import pdb
 
-def get_plot_vars_glob(context):
-    mbs = context.scene.mbdyn
-    if mbs.use_netcdf:
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
-        N = len(nc.variables["time"])
-
-        var_list = list()
-        for var in nc.variables:
-            m = nc.variables[var].shape
-            if (m[0] == N) and (var not in mbs.plot_vars.keys()):
-                plotvar = mbs.plot_vars.add()
-                plotvar.name = var 
-
 def get_plot_vars(self, context):
     mbs = context.scene.mbdyn
     mbo = context.active_object.mbdyn
@@ -356,19 +341,6 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        # get requested netCDF variable
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
-
-        # get its dimensions
-        varname = mbs.plot_vars[mbs.plot_var_index].name
-        var = nc.variables[varname]
-        dim = len(var.shape)
-        
-        # get time vector
-        time = nc.variables["time"]
-        
         # set up pygal
         config = pygal.Config()
         config.show_dots = False
@@ -376,33 +348,50 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         config.truncate_legend = -1
         chart = pygal.XY(config)
 
-        # create plot
-        if dim == 2:
-            n,m = var.shape
-            for mdx in range(m):
-                if mbs.plot_comps[mdx]:
-                    chart.add(varname + "." + str(mdx + 1), \
-                            [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
-        elif dim == 3:
-            n,m,k = var.shape
-            if mbs.plot_var[-1] == 'R':
-                dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
-                dims1 = [0, 0, 0, 1, 1, 2]
-                dims2 = [0, 1, 2, 1, 2, 2]
+
+        for variable in mbs.render_vars:
+
+            # get requested netCDF variable
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+            nc = Dataset(ncfile, 'r', format='NETCDF3')
+
+            # get its dimensions
+            varname = variable.value
+            var = nc.variables[varname]
+            dim = len(var.shape)
+
+            # get time vector
+            time = nc.variables["time"]
+
+            # create plot
+            if dim == 2:
+                n,m = var.shape
+                for mdx in range(m):
+                    if variable.components[mdx]:
+                        chart.add(varname + "." + str(mdx + 1), \
+                                [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
+            elif dim == 3:
+                n,m,k = var.shape
+                if mbs.plot_var[-1] == 'R':
+                    dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
+                    dims1 = [0, 0, 0, 1, 1, 2]
+                    dims2 = [0, 1, 2, 1, 2, 2]
+                else:
+                    dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                                  "(2,1)", "(2,2)", "(2,3)",\
+                                  "(3,1)", "(3,2)", "(3,3)"]
+                    dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+                    dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
+                for mdx in range(len(dims_names)):
+                    if variable.components[mdx]:
+                        chart.add(varname + dims_names[mdx], \
+                                [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
+                                for idx in range(0, n, mbs.plot_frequency)])
             else:
-                dims_names = ["(1,1)", "(1,2)", "(1,3)",\
-                              "(2,1)", "(2,2)", "(2,3)",\
-                              "(3,1)", "(3,2)", "(3,3)"]
-                dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
-                dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
-            for mdx in range(len(dims_names)):
-                if mbs.plot_comps[mdx]:
-                    chart.add(varname + dims_names[mdx], \
-                            [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
-                            for idx in range(0, n, mbs.plot_frequency)])
-        else:
-            chart.add(varname, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), mbs.plot_frequency)])
+                chart.add(varname, [(time[idx], var[idx]) \
+                        for idx in range(0, len(time), mbs.plot_frequency)])
+
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
@@ -628,88 +617,3 @@ class MBDynPlotPanelObject(bpy.types.Panel):
             row.label(text="Plotting from text output")
             row.label(text="is not supported yet.")
 
-## Panel in object properties toolbar
-class MBDynPlotPanelScene(bpy.types.Panel):
-    """ Plotting of MBDyn entities private data """
-    bl_label = "MBDyn data plot"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'scene'
-
-    def draw(self, context):
-        mbs = context.scene.mbdyn
-        layout = self.layout
-        row = layout.row()
-
-        if mbs.use_netcdf:
-            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                    mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r', format='NETCDF3')
-            # row.prop(mbs, 'plot_var')
-            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
-                    mbs, "plot_var_index")
-            try:
-                dim = len(nc.variables[mbs.plot_vars[mbs.plot_var_index].name].shape)
-                if dim == 2:     # Vec3: FIXME check if other possibilities exist
-                    box = layout.box()
-                    split = box.split(1./3.)
-                    column = split.column()
-                    column.prop(mbs, "plot_comps", index = 0, text = "x")
-                    column = split.column()
-                    column.prop(mbs, "plot_comps", index = 1, text = "y")
-                    column = split.column()
-                    column.prop(mbs, "plot_comps", index = 2, text = "z")
-                elif dim == 3:
-                    if mbs.plot_var[-1] == 'R':
-                        box = layout.box()
-                        split = box.split(1./3.)
-                        column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
-                        column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
-                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,2)")
-                        column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
-                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,3)")
-                        column.row().prop(mbs, "plot_comps", index = 5, text = "(3,3)")
-                    else:
-                        box = layout.box()
-                        split = box.split(1./3.)
-                        column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
-                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,1)")
-                        column.row().prop(mbs, "plot_comps", index = 6, text = "(3,1)")
-                        column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
-                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,2)")
-                        column.row().prop(mbs, "plot_comps", index = 7, text = "(3,2)")
-                        column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
-                        column.row().prop(mbs, "plot_comps", index = 5, text = "(2,3)")
-                        column.row().prop(mbs, "plot_comps", index = 8, text = "(3,3)")
-                row = layout.row()
-                col = layout.column()
-                col.prop(mbs, "plot_frequency")
-                col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import freq")
-                row = layout.row()
-                row.prop(mbs, "plot_type")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_min")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_max")
-                row = layout.row()
-                if mbs.plot_type == "TIME HISTORY":
-                    row.operator(Scene_OT_MBDyn_plot_var.bl_idname, 
-                            text="Plot variable")
-                elif mbs.plot_type == "AUTOSPECTRUM":
-                    row = layout.row()
-                    row.prop(mbs, "fft_remove_mean")
-                    row = layout.row()
-                    row.operator(Scene_OT_MBDyn_plot_var_Sxx.bl_idname,
-                            text="Plot variable Autospectrum")
-            except IndexError:
-                pass
-        else:
-            row = layout.row()
-            row.label(text="Plotting from text output")
-            row.label(text="is not supported yet.")

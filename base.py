@@ -207,6 +207,10 @@ class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
         name = "Values of Render Variables",
         description = "Values of variables to be set"
     )
+    components = BoolVectorProperty(
+        name = "Components of the Variable",
+        size = 9
+        )
 bpy.utils.register_class(MBDynRenderVarsDictionary)
 # -----------------------------------------------------------
 # end of MBDynRenderVarsDictionary class
@@ -584,17 +588,24 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             update = update_curr_eigsol
             )
 
-    if HAVE_PLOT:
-        plot_vars = CollectionProperty(
-                name = "MBDyn variables available for plotting",
-                type = MBDynPlotVars
-                )
+    plot_vars = CollectionProperty(
+            name = "MBDyn variables available for plotting",
+            type = MBDynPlotVars
+            )
 
-        plot_var_index = IntProperty(
-                name = "variable index",
-                description = "index of the current variable to be plotted",
-                default = 0
-                )
+    plot_var_index = IntProperty(
+            name = "variable index",
+            description = "index of the current variable to be plotted",
+            default = 0
+            )
+    plot_comps = BoolVectorProperty(
+        name = "components",
+        description = "Components of property to plot",
+        default = [True for i in range(9)],
+        size = 9
+        )
+
+    if HAVE_PLOT:
 
         plot_sxy_varX = StringProperty(
                 name = "Cross-spectrum X variable",
@@ -606,13 +617,6 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                 name = "Cross-spectrum Y variable",
                 description = "variable to be used as output in cross-spectrum",
                 default = "none"
-                )
-
-        plot_comps = BoolVectorProperty(
-                name = "components",
-                description = "Components of property to plot",
-                default = [True for i in range(9)],
-                size = 9
                 )
 
         plot_frequency = IntProperty(
@@ -767,7 +771,7 @@ def render_variables(scene):
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
         string = [ '{0} : {1}'.format(var.variable, \
-        parse_render_string(netcdf_helper(nc, scene, var.value))) \
+        parse_render_string(netcdf_helper(nc, scene, var.value), var.components)) \
         for var in mbs.render_vars ]
         string = '\n'.join(string)
         if len(mbs.render_vars):
@@ -965,8 +969,11 @@ class MBDynClearData(bpy.types.Operator):
     bl_label = "Clear MBDyn Data"
 
     def execute(self, context):
-        context.scene.mbdyn.nodes.clear()
-        context.scene.mbdyn.elems.clear()
+        mbs = context.scene.mbdyn
+        mbs.nodes.clear()
+        mbs.elems.clear()
+        mbs.plot_vars.clear()
+
         message = "Scene MBDyn data cleared."
         self.report({'INFO'}, message)
         baseLogger.info(message)
@@ -1316,16 +1323,18 @@ class MBDynSetRenderVariables(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        exist_render_vars = [mbs.render_vars[var].variable for var in range(len(mbs.env_vars))]
+        exist_render_vars = [mbs.render_vars[var].value for var in range(len(mbs.render_vars))]
 
         try:
-            index = exist_render_vars.index(mbs.render_var_name)
-            mbs.render_vars[index].value = mbs.plot_vars[mbs.plot_var_index].name
+            index = exist_render_vars.index(mbs.plot_vars[mbs.plot_var_index].name)
+            mbs.render_vars[index].variable = mbs.render_var_name
+            mbs.render_vars[index].components = mbs.plot_comps
 
         except ValueError:
             rend = mbs.render_vars.add()
             rend.variable = mbs.render_var_name
             rend.value = mbs.plot_vars[mbs.plot_var_index].name
+            rend.components = mbs.plot_comps
 
         return {'FINISHED'}
 
@@ -1838,23 +1847,89 @@ class MBDynElemsScenePanel(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
-class MBDynTextOverlayPanel(bpy.types.Panel):
-    """ Text overlay over rendered images """
-    bl_label = "MBDyn Text Overlay"
+## Panel in Scene toolbar
+class MBDynPlotPanelScene(bpy.types.Panel):
+    """ Plotting of MBDyn entities private data """
+    bl_label = "MBDyn data plot"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = 'render'
+    bl_context = 'scene'
 
     def draw(self, context):
         mbs = context.scene.mbdyn
-        rd = mbs.references
         layout = self.layout
-
         row = layout.row()
+
         if mbs.use_netcdf:
-            row = layout.row()
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+            nc = Dataset(ncfile, 'r', format='NETCDF3')
+            # row.prop(mbs, 'plot_var')
             row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
                     mbs, "plot_var_index")
+            try:
+                dim = len(nc.variables[mbs.plot_vars[mbs.plot_var_index].name].shape)
+                if dim == 2:     # Vec3: FIXME check if other possibilities exist
+                    box = layout.box()
+                    split = box.split(1./3.)
+                    column = split.column()
+                    column.prop(mbs, "plot_comps", index = 0, text = "x")
+                    column = split.column()
+                    column.prop(mbs, "plot_comps", index = 1, text = "y")
+                    column = split.column()
+                    column.prop(mbs, "plot_comps", index = 2, text = "z")
+                elif dim == 3:
+                    if mbs.plot_var[-1] == 'R':
+                        box = layout.box()
+                        split = box.split(1./3.)
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,2)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,3)")
+                        column.row().prop(mbs, "plot_comps", index = 5, text = "(3,3)")
+                    else:
+                        box = layout.box()
+                        split = box.split(1./3.)
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,1)")
+                        column.row().prop(mbs, "plot_comps", index = 6, text = "(3,1)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,2)")
+                        column.row().prop(mbs, "plot_comps", index = 7, text = "(3,2)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbs, "plot_comps", index = 5, text = "(2,3)")
+                        column.row().prop(mbs, "plot_comps", index = 8, text = "(3,3)")
+                if HAVE_PLOT:
+                    row = layout.row()
+                    col = layout.column()
+                    col.prop(mbs, "plot_frequency")
+                    col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import freq")
+                    row = layout.row()
+                    row.prop(mbs, "plot_type")
+                    row = layout.row()
+                    row.prop(mbs, "plot_xrange_min")
+                    row = layout.row()
+                    row.prop(mbs, "plot_xrange_max")
+                    row = layout.row()
+                    if mbs.plot_type == "TIME HISTORY":
+                        row.operator(Scene_OT_MBDyn_plot_var.bl_idname, 
+                                text="Plot variable")
+                    elif mbs.plot_type == "AUTOSPECTRUM":
+                        row = layout.row()
+                        row.prop(mbs, "fft_remove_mean")
+                        row = layout.row()
+                        row.operator(Scene_OT_MBDyn_plot_var_Sxx.bl_idname,
+                                text="Plot variable Autospectrum")
+            except IndexError:
+                pass
+
             row = layout.row()
             row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
                     mbs, "render_index")
@@ -1866,6 +1941,11 @@ class MBDynTextOverlayPanel(bpy.types.Panel):
 
             row = layout.row()
             row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Render Value')
+
+        else:
+            row = layout.row()
+            row.label(text="Plotting from text output")
+            row.label(text="is not supported yet.")
 
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
