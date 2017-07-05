@@ -347,7 +347,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     )
 
     render_var_name = StringProperty(
-        name = 'Name of render variable',
+        name = 'Name of variable',
         default = ''
     )
 
@@ -970,9 +970,11 @@ class MBDynClearData(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        mbs.nodes.clear()
-        mbs.elems.clear()
-        mbs.plot_vars.clear()
+
+        for var in mbs.keys():
+            dummy = getattr(mbs, var)
+            if isinstance(dummy, bpy.types.bpy_prop_collection):
+                dummy.clear()
 
         message = "Scene MBDyn data cleared."
         self.report({'INFO'}, message)
@@ -1722,7 +1724,7 @@ class MBDynPlotVar_UL_List(bpy.types.UIList):
 class MBDynRenderVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.label(item.variable)
-        layout.label(item.value)
+        layout.label(item.value + comp_repr(item.components, item.value, context))
 # -----------------------------------------------------------
 # end of MBDynRenderVar_UL_List class
 
@@ -1930,6 +1932,9 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             except IndexError:
                 pass
 
+            layout.separator()
+            layout.separator()
+
             row = layout.row()
             row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
                     mbs, "render_index")
@@ -1937,10 +1942,14 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             row.prop(mbs, "render_var_name")
 
             row = layout.row()
-            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Add Render Var')
+            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Set Display Variable')
 
             row = layout.row()
-            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Render Value')
+            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Display Value')
+
+            if HAVE_PLOT:
+                row = layout.row()
+                row.operator(Scene_OT_MBDyn_plot_variables_list.bl_idname, text="Plot variables in List")
 
         else:
             row = layout.row()
