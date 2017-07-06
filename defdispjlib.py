@@ -187,6 +187,8 @@ def spawn_defdispj_element(elem, context):
     p1 = n1OBJ.location + R1 * Vector((f1[0], f1[1], f1[2]))
     p2 = n2OBJ.location + R2 * Vector((f2[0], f2[1], f2[2]))
 
+    R1h =  Quaternion(( q1[0], q1[1], q1[2], q1[3] )).to_matrix()
+
     bpy.ops.object.empty_add(type='PLAIN_AXES')
     defdispOBJ = bpy.context.scene.objects.active
     defdispOBJ.location = p1
@@ -200,6 +202,7 @@ def spawn_defdispj_element(elem, context):
     ude.name = elem.name
 
     length = (p2 - p1)
+    length = R1h.transposed() * R1.transposed() * length
     length = Vector(map(abs, length))
     radius = 0.3 * length
     print(length, radius)
@@ -214,22 +217,25 @@ def spawn_defdispj_element(elem, context):
                                         helixWidth=rad_helix, helixEnd=360* turns, helixPoints=1000)
         defdispChild = bpy.context.scene.objects.active
 
-        track_axes = axes[:]
-        track_axes.remove(track_axes[ii])
-        obj_loc = (p2 - p1)
-        defdispChild.location = Vector(p1) + Vector(obj_loc[:ii] + (0, )* (3 - ii))
-        defdispChild.rotation_mode = 'QUATERNION'
-        axis_direction = Vector((0, 0, 0))
-        axis_direction[ii] = 1
-        defdispChild.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        defdispChild.name = defdispOBJ.name + '.' + axes[ii]
-
+        defdispChild.location = Vector((0, 0, 0))
         #Set parent to defdispOBJ
         bpy.ops.object.select_all(action='DESELECT')
         defdispChild.select = True
         defdispOBJ.select = True
         bpy.context.scene.objects.active = defdispOBJ
         bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+        track_axes = axes[:]
+        track_axes.remove(track_axes[ii])
+        obj_loc = (p2 - p1)
+        defdispChild.location = defdispOBJ.rotation_quaternion * (Vector(obj_loc[:ii] + (0, )* (3 - ii)))
+        defdispChild.rotation_mode = 'QUATERNION'
+        axis_direction = Vector((0, 0, 0))
+        axis_direction[ii] = 1
+        defdispChild.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
+        defdispChild.rotation_quaternion = defdispOBJ.rotation_quaternion *\
+        									defdispChild.rotation_quaternion
+        defdispChild.name = defdispOBJ.name + '.' + axes[ii]
 
     # Set parent to n1OBJ
     bpy.ops.object.select_all(action='DESELECT')
