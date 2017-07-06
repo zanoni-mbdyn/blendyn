@@ -43,6 +43,7 @@ from .forcelib import *
 from .revjlib import *
 from .rodjlib import *
 from .shell4lib import *
+from .membrane4lib import *
 from .sphjlib import *
 from .prismjlib import *
 from .inplanejlib import *
@@ -76,6 +77,7 @@ def parse_elements(context, jnt_type, rw):
             "rod": parse_rod,
             "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
+            "membrane4": parse_membrane4,
             "sphericalhinge": parse_spherical_hinge,
             "spericalpin": parse_spherical_pin,
             "structural absolute force": parse_structural_absolute_force,
