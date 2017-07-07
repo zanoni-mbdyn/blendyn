@@ -125,9 +125,12 @@ def update_defdisp(elem, insert_keyframe = False):
     def_vector = (p2 - p1)
     def_vector = R1h.transposed() * R1.transposed() * def_vector
     axes = ['X', 'Y', 'Z']
+    previous = Vector((0, 0, 0))
+    obj_loc = def_vector / 2
     for ii in range(3):
         defdispChild = bpy.data.objects[defdispOBJ.name + '.' + axes[ii]]
-        defdispChild.location = Vector(p1) + Vector(def_vector[:ii] + (0, )* (3 - ii))
+        defdispChild.location = defdispOBJ.rotation_quaternion * (Vector(obj_loc[:ii+1] + (0, )* (2 - ii)) + previous)
+        previous = Vector(obj_loc[:ii + 1] + (0, )* (2 - ii))
         defdispChild.dimensions[2] = def_vector[ii]
 
 
@@ -205,9 +208,9 @@ def spawn_defdispj_element(elem, context):
     length = R1h.transposed() * R1.transposed() * length
     length = Vector(map(abs, length))
     radius = 0.3 * length
-    print(length, radius)
     turns = 20
     axes = ['X', 'Y', 'Z']
+    previous = Vector((0, 0, 0))
     for ii in range(3):
         rad_helix, len_helix = radius[ii], length[ii]
         if rad_helix < 0.1:
@@ -215,9 +218,11 @@ def spawn_defdispj_element(elem, context):
             len_helix = rad_helix/ 0.3
         bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=len_helix, \
                                         helixWidth=rad_helix, helixEnd=360* turns, helixPoints=1000)
+        bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
         defdispChild = bpy.context.scene.objects.active
 
         defdispChild.location = Vector((0, 0, 0))
+
         #Set parent to defdispOBJ
         bpy.ops.object.select_all(action='DESELECT')
         defdispChild.select = True
@@ -228,12 +233,15 @@ def spawn_defdispj_element(elem, context):
         track_axes = axes[:]
         track_axes.remove(track_axes[ii])
         obj_loc = (p2 - p1)
-        defdispChild.location = defdispOBJ.rotation_quaternion * (Vector(obj_loc[:ii] + (0, )* (3 - ii)))
+        obj_loc = R1h.transposed() * R1.transposed() * obj_loc
+        obj_loc = obj_loc / 2
+        defdispChild.location = defdispOBJ.rotation_quaternion * (Vector(obj_loc[:ii+1] + (0, )* (2 - ii)) + previous)
+        previous = Vector(obj_loc[:ii + 1] + (0, )* (2 - ii))
         defdispChild.rotation_mode = 'QUATERNION'
         axis_direction = Vector((0, 0, 0))
         axis_direction[ii] = 1
         defdispChild.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        defdispChild.rotation_quaternion = defdispOBJ.rotation_quaternion *\
+        defdispChild.rotation_quaternion =  defdispOBJ.rotation_quaternion *\
         									defdispChild.rotation_quaternion
         defdispChild.name = defdispOBJ.name + '.' + axes[ii]
 
