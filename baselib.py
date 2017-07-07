@@ -267,9 +267,11 @@ def parse_log_file(context):
     try:
         with open(out_file) as of:
             reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
-            for ii in range(4):
-                next(reader)
-            mbs.time_step = float(next(reader)[3])
+            while True:
+                rw = next(reader)
+                if ' '.join(rw[:2]) == 'Step 1':
+                    break
+            mbs.time_step = float(rw[3])
     except FileNotFoundError:
         print("Could not locate the file " + out_file)
         ret_val = {'OUT_NOT_FOUND'}
