@@ -32,6 +32,7 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 from .utilslib import parse_rotmat
+from .nurbsPoints import calc_nurbs
 
 # helper function to parse deformable hinge joints
 def parse_defhinge(rw, ed):
@@ -108,6 +109,14 @@ def update_defhinge(elem, insert_keyframe = False):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
+    # get offsets
+    f1 = elem.offsets[0].value
+    q1 = elem.rotoffsets[0].value
+
+    # assign coordinates of knots in global frame
+    R1 = n1OBJ.rotation_quaternion.to_matrix()
+    p1 = n1OBJ.location + R1 * Vector((f1[0], f1[1], f1[2]))
+
     q1h_tilde = Quaternion((elem.rotoffsets[0].value))
     q1 = n1OBJ.matrix_world.to_quaternion()
     q2h_tilde = Quaternion((elem.rotoffsets[0].value))
@@ -118,11 +127,26 @@ def update_defhinge(elem, insert_keyframe = False):
     qrel = q2h*q1h.conjugated()
     n, theta = qrel.to_axis_angle()
     phi = n*theta
-
     axes = ['X', 'Y', 'Z']
+
     for ii in range(3):
-        defhingeChild = bpy.data.objects[defhingeOBJ.name + '.' + axes[ii]]
-        defhingeChild.modifiers['SimpleDeform'].angle = phi[ii]
+        beamobj_id = 'defhinge_' + str(elem.int_label) + axes[ii]
+        bpy.context.scene.objects.active = bpy.data.objects[beamobj_id]
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        beamcv_id = beamobj_id + '_cvdata'
+
+        cvdata = bpy.data.curves[beamcv_id]
+        polydata = cvdata.splines[0]
+
+        angle = degrees(phi[ii])
+        nurbsPoints = calc_nurbs(angle, 1, ii)
+
+        for jj in range(9):
+            polydata.points[jj].co = (p1 + nurbsPoints[jj][0]).to_4d()
+            polydata.points[jj].co[3] = nurbsPoints[jj][1]
+
+        bpy.ops.object.mode_set(mode='OBJECT')
 
 # Creates the object representing a deformable hinge joint element
 def spawn_defhingej_element(elem, context):
@@ -156,18 +180,6 @@ def spawn_defhingej_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # creation of line representing the dist
-    defhingeobj_id = 'dist_' + str(elem.int_label)
-    defhingecv_id = defhingeobj_id + '_cvdata'
-
-    # check if the object is already present. If it is, remove it.
-    if defhingeobj_id in bpy.data.objects.keys():
-        bpy.data.objects.remove(bpy.data.objects[defhingeobj_id])
-
-    # check if the curve is already present. If it is, remove it.
-    if defhingecv_id in bpy.data.curves.keys():
-        bpy.data.curves.remove(bpy.data.curves[defhingecv_id])
-
     # get offsets
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
@@ -185,7 +197,7 @@ def spawn_defhingej_element(elem, context):
     defhingeOBJ.rotation_mode = 'QUATERNION'
     defhingeOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
-    # Set parent to n1OBJ
+    #Set parent to n1OBJ
     bpy.ops.object.select_all(action='DESELECT')
     defhingeOBJ.select = True
     n1OBJ.select = True
@@ -210,30 +222,71 @@ def spawn_defhingej_element(elem, context):
     n, theta = qrel.to_axis_angle()
     phi = n*theta
 
-    length = 1
-    radius = 0.3 * length
-    print(length, radius)
-    turns = 7
     axes = ['X', 'Y', 'Z']
+
     for ii in range(3):
+
+        # Create the NURBS order 3 curve
+        beamobj_id = defhingeOBJ.name + '.curve.' + axes[ii]
+        beamcv_id = beamobj_id + '_cvdata'
+
+        # Check if the object is already present. If it is, remove it.
+        if beamobj_id in bpy.data.objects.keys():
+            bpy.data.objects.remove(bpy.data.objects[beamobj_id])
+
+        # check if the curve is already present. If it is, remove it.
+        if beamcv_id in bpy.data.curves.keys():
+            bpy.data.curves.remove(bpy.data.curves[beamcv_id])
+
+        # create a new curve
+        cvdata = bpy.data.curves.new(beamcv_id, type = 'CURVE')
+        cvdata.dimensions = '3D'
+        cvdata.use_stretch = True
+        cvdata.use_deform_bounds = True
+        polydata = cvdata.splines.new('NURBS')
+        polydata.points.add(8)
+
+        angle = degrees(phi[ii])
+        nurbsPoints = calc_nurbs(angle, 1, ii)
+
+
+        for jj in range(9):
+            pointLoc = defhingeOBJ.rotation_quaternion * (p1 + nurbsPoints[jj][0])
+            polydata.points[jj].co = (pointLoc).to_4d()
+            polydata.points[jj].co[3] = nurbsPoints[jj][1]
+
+        defhingeCurveOBJ = bpy.data.objects.new(beamobj_id, cvdata)
+        cvdata.splines[0].use_endpoint_u = True
+        bpy.context.scene.objects.link(defhingeCurveOBJ)
+
+        bpy.context.scene.objects.active = defhingeCurveOBJ
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
+        bpy.ops.object.select_all(action='DESELECT')
+        defhingeCurveOBJ.select = True
+        defhingeOBJ.select = True
+        bpy.context.scene.objects.active = defhingeOBJ
+        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+    for ii in range(3):
+
+        length = 2*pi*1
+        radius = 0.05*length
+        turns = 5*length
         bpy.ops.mesh.curveaceous_galore(ProfileType='Helix', helixHeight=length,\
-                                        helixWidth=radius, helixEnd = 360* turns, helixPoints = 1000)
+                                        helixWidth=radius, helixEnd = 360 * turns, helixPoints = 1000)
         defhingeChild = bpy.context.scene.objects.active
-        bpy.ops.object.origin_set(type = 'ORIGIN_CENTER_OF_MASS')
-        track_axes = axes[:]
-        track_axes.remove(track_axes[ii])
+
         defhingeChild.location = p1
-        defhingeChild.rotation_mode = 'QUATERNION'
-        axis_direction = Vector((0, 0, 0))
-        axis_direction[ii] = 1
-        defhingeChild.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        defhingeChild.name = defhingeOBJ.name + '.' + axes[ii]
+
+        defhingeChild.name = defhingeOBJ.name + '.rot.' + axes[ii]
 
         bpy.context.scene.objects.active = defhingeChild
-        bpy.ops.object.modifier_add(type='SIMPLE_DEFORM')
-        defhingeChild.modifiers['SimpleDeform'].deform_method = 'TWIST'
-
-        defhingeChild.modifiers['SimpleDeform'].angle = phi[ii]
+        bpy.ops.object.modifier_add(type='CURVE')
+        defhingeChild.modifiers['Curve'].object = bpy.data.objects[defhingeOBJ.name + '.curve.' + axes[ii]]
+        defhingeChild.modifiers['Curve'].deform_axis = 'POS_Z'
 
         #Set parent to defhingeOBJ
         bpy.ops.object.select_all(action='DESELECT')
