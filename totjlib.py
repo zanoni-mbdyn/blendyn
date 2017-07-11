@@ -88,7 +88,7 @@ def parse_total(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_total(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_total(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_joint'
         el.int_label = int(rw[1])
@@ -274,10 +274,9 @@ def spawn_total_joint_element(elem, context):
 
     # TODO: display also velocity contraints arrows
 
-
     # automatic scaling
     s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-            n2OBJ.scale.magnitude)*elem.scale_factor
+            n2OBJ.scale.magnitude)
     totjOBJ.scale = Vector(( s, s, s ))
 
     # set mbdyn props of object
@@ -362,8 +361,6 @@ def total_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align = True)
 
-    col.prop(elem, "scale_factor")
-
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
 
@@ -423,7 +420,7 @@ def total_info_draw(elem, layout):
 
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./2.)
+            split = box.split(1./3.)
            
             # position
             column = split.column()
@@ -571,7 +568,7 @@ def parse_total_pin(rw, ed):
 
         pass
     except KeyError:
-        print("parse_total_pin(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
@@ -628,8 +625,6 @@ def total_pin_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align=True)
 
-    col.prop(elem, "scale_factor")
-
     for node in nd:
         if node.int_label == elem.nodes[0].int_label:
 
@@ -661,7 +656,7 @@ def total_pin_info_draw(elem, layout):
             
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./2.)
+            split = box.split(1./3.)
            
             # position
             column = split.column()
@@ -821,7 +816,7 @@ def spawn_total_pin_joint_element(elem, context):
     # TODO: display also velocity contraints arrows
 
     # automatic scaling
-    s = (1./sqrt(3.))*n1OBJ.scale.magnitude*elem.scale_factor
+    s = (1./sqrt(3.))*n1OBJ.scale.magnitude
     totjOBJ.scale = Vector(( s, s, s ))
 
     # create an object representing the RF used to express the relative

@@ -36,7 +36,7 @@ import logging
 
 import numpy as np
 
-import ntpath, os, csv, math, atexit
+import ntpath, os, csv, math, atexit, re
 
 from collections import namedtuple
 
@@ -150,9 +150,51 @@ def setup_import(filepath, context):
 # -----------------------------------------------------------
 # end of setup_import() function
 
+def no_output(context):
+    """Check for nodes with no output"""
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r", format="NETCDF3")
+        list1 = nc.variables.keys()
+        regex = re.compile(r'node.struct.*\.X$')
+        list2 = list(filter(regex.search, list1))
+        result_nodes = list(map(lambda x: x.split('.')[2], list2))
+        log_nodes = list(map(lambda x: x[5:], nd.keys()))
+        difference = set(result_nodes) ^ set(log_nodes)
+        difference = ' '.join(difference)
+        print(difference)
+        mbs.disabled_output = difference
+
+    else:
+        # .mov filename
+        mov_file = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.mov')
+        try:
+            with open(mov_file) as mf:
+                reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
+                list1 = []
+                for ii in range(len(nd)):
+                    rw = next(reader)
+                    list1.append(rw[0])
+
+                result_nodes = list1
+                log_nodes = list(map(lambda x: x[5:], nd.keys()))
+                difference = set(result_nodes) ^ set(log_nodes)
+                difference = ' '.join(difference)
+                print(difference)
+                mbs.disabled_output = difference
+        except FileNotFoundError:
+            pass
+# -----------------------------------------------------------
+# end of no_output() function
+
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
-# TODO: support more joint types
+# TODO:support more joint types
 def parse_log_file(context):
 
     # utility rename
@@ -239,6 +281,12 @@ def parse_log_file(context):
     obj_names = list(filter(None, obj_names))
 
     nn = len(nd)
+
+    # Account for nodes with no output
+
+    if nn:
+        no_output(context)
+
     if nn:
         mbs.num_nodes = nn
         mbs.min_node_import = nd[0].int_label
@@ -254,13 +302,24 @@ def parse_log_file(context):
             nc = Dataset(ncfile, "r", format="NETCDF3")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
-            mbs.num_timesteps = mbs.num_rows/nn
+            disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
+            mbs.num_timesteps = mbs.num_rows/(nn - disabled_nodes)
         mbs.is_ready = True
         ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
-    pass 
-   
+    pass
+
+    en = len(ed)
+    if en:
+        mbs.min_elem_import = ed[0].int_label
+        mbs.max_elem_import = ed[0].int_label
+        for edx in range(1, len(ed)):
+            if ed[edx].int_label < mbs.min_elem_import:
+                mbs.min_elem_import = ed[edx].int_label
+            elif ed[edx].int_label > mbs.max_elem_import:
+                mbs.max_elem_import = ed[edx].int_label
+
     try:
         with open(out_file) as of:
             reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
@@ -541,12 +600,15 @@ def set_motion_paths_mov(context):
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
 
-            for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
+            disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
+            nodes_iterate = mbs.num_nodes - disabled_nodes
+
+            for ndx in range(int(mbs.start_time * nodes_iterate / mbs.time_step)):
                 next(reader)
 
             first = []
             second = []
-            for ndx in range(mbs.num_nodes):
+            for ndx in range(nodes_iterate):
                 rw = np.array(next(reader)).astype(np.float)
                 first.append(rw)
                 second.append(rw)
@@ -562,7 +624,7 @@ def set_motion_paths_mov(context):
             freq = mbs.load_frequency
             Nskip = 0
             if freq > 1:
-                Nskip = (np.ceil(freq) - 1)*mbs.num_nodes
+                Nskip = (np.ceil(freq) - 1)*nodes_iterate
 
             for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                 scene.frame_current += 1
@@ -571,14 +633,14 @@ def set_motion_paths_mov(context):
                 print(frame, frac)
 
                 # skip (freq - 1)*N lines
-                for ii in range(int(Nskip) - (idx%2)*mbs.num_nodes):
-                    first[ii % mbs.num_nodes] = np.array(next(reader)).astype(np.float)
+                for ii in range(int(Nskip) - (idx%2)*nodes_iterate):
+                    first[ii % nodes_iterate] = np.array(next(reader)).astype(np.float)
 
-                for ndx in range(mbs.num_nodes):
+                for ndx in range(nodes_iterate):
                     rw = np.array(next(reader)).astype(np.float)
                     second[ndx] = rw
 
-                for ndx in range(mbs.num_nodes):
+                for ndx in range(nodes_iterate):
                     try:
                         answer = frac*first[ndx] + (1-frac)*second[ndx]
                         obj = bpy.data.objects[anim_objs[round(answer[0])]]
@@ -738,6 +800,10 @@ def set_motion_paths_netcdf(context):
 
     kk = 0
     for ndx in anim_nodes:
+
+        if str(nd[ndx].int_label) in mbs.disabled_output.split(' '):
+            continue
+
         obj = bpy.data.objects[nd[ndx].blender_object]
         obj.select = True
         node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
@@ -807,7 +873,7 @@ def log_messages(mbs, baseLogger, saved_blend):
                     else 'untitled.blend'
         blendFile = os.path.splitext(blendFile)[0]
 
-        formatter = '%(asctime)s - %(levelname)s - %(message)s'
+        formatter = '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
         datefmt = '%m/%d/%Y %I:%M:%S %p'
         global logFile
         logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)

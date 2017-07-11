@@ -58,7 +58,7 @@ def parse_body(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_body(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_body(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'body'
         el.int_label = int(rw[1])
@@ -123,7 +123,7 @@ def spawn_body_element(elem, context):
 
         # automatic scaling
         s = n1OBJ.scale.magnitude*(1./sqrt(3.))
-        bodyOBJ.scale = Vector(( s, s, s ))*elem.scale_factor
+        bodyOBJ.scale = Vector(( s, s, s ))
 
         # element offset with respect to nodes
         f1 = elem.offsets[0].value
@@ -140,7 +140,7 @@ def spawn_body_element(elem, context):
         bodyOBJ.mbdyn.int_label = elem.int_label
         bodyOBJ.mbdyn.string_label = elem.string_label
         bodyOBJ.mbdyn.dkey = elem.name
-        bodyOBJ.mbdyn.type = 'body'
+        bodyOBJ.mbdyn.type = elem.type
 
         # set parenting of wireframe obj
         bpy.ops.object.select_all(action = 'DESELECT')
@@ -211,7 +211,6 @@ def body_info_draw(elem, layout):
     
     col = layout.column(align = True)
 
-    col.prop(elem, "scale_factor")
     col.prop(elem, "magnitude", text = "mass")
 
     row = layout.row()

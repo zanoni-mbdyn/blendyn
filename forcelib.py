@@ -61,7 +61,7 @@ def parse_structural_absolute_force(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_absolute_force(): didn't found en entry in \
+        print("parse_structural_absolute_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_absolute_force'
@@ -104,7 +104,7 @@ def parse_structural_follower_force(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_follower_force(): didn't found en entry in \
+        print("parse_structural_follower_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_follower_force'
@@ -147,7 +147,7 @@ def parse_structural_absolute_couple(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_absolute_couple(): didn't found en entry in \
+        print("parse_structural_absolute_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_absolute_couple'
@@ -190,7 +190,7 @@ def parse_structural_follower_couple(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_follower_couple(): didn't found en entry in \
+        print("parse_structural_follower_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_follower_couple'
@@ -557,7 +557,7 @@ def update_structural_force(elem, insert_keyframe = False):
         Fl = R0.transposed()*F
 
         obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
-        obj.scale = Vector(( 1, 1, Fl.magnitude ))*elem.scale_factor
+        obj.scale = Vector(( 1, 1, Fl.magnitude ))
     else:
         pass
 # -----------------------------------------------------------
@@ -587,7 +587,7 @@ def update_structural_couple(elem, insert_keyframe = False):
         Ml = R0.transposed()*M
 
         obj.rotation_quaternion = (-Ml).to_track_quat('-Z', 'Y')
-        obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))*elem.scale_factor
+        obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))
     else:
         pass
     pass

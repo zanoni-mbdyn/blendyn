@@ -63,7 +63,7 @@ def parse_cardano_hinge(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_cardano_hinge(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_cardano_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'cardano_hinge'
         el.int_label = int(rw[1])
@@ -122,7 +122,7 @@ def parse_cardano_pin(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_cardano_pin(): didn't found en entry in elements dictionary. Creating one.")
+        print("parse_cardano_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'cardano_pin'
         el.int_label = int(rw[1])
@@ -190,7 +190,7 @@ def spawn_cardano_hinge_element(elem, context):
         carjOBJ.name = elem.name
 
         # automatic scaling
-        s = (.5/sqrt(3.))*elem.scale_factor*(n1OBJ.scale.magnitude + \
+        s = (.5/sqrt(3.))(n1OBJ.scale.magnitude + \
                 n2OBJ.scale.magnitude)
         carjOBJ.scale = Vector(( s, s, s ))
 
@@ -276,7 +276,7 @@ def spawn_cardano_pin_elem(elem, context):
         carjOBJ.name = elem.name
 
         # automatic scaling
-        s = .5*(n2OBJ.scale.magnitude*(1./sqrt(3.)))*elem.scale_factor
+        s = .5*(n2OBJ.scale.magnitude*(1./sqrt(3.)))
         carjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to node 1

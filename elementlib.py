@@ -43,8 +43,14 @@ from .rodjlib import *
 from .shell4lib import *
 from .sphjlib import *
 from .prismjlib import *
+from .inplanejlib import *
+from .inlinejlib import *
 from .totjlib import *
 from .utilslib import *
+from .axialrotjlib import *
+from .distjlib import *
+from .gimbaljlib import *
+from .brakejlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems
@@ -62,6 +68,7 @@ def parse_elements(context, jnt_type, rw):
             "deformabledisplacementjoint": parse_deformable_displacement,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
+            "revoluterotation": parse_revolute_rot,
             "rod": parse_rod,
             "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
@@ -73,7 +80,13 @@ def parse_elements(context, jnt_type, rw):
             "structural follower couple": parse_structural_follower_couple,
             "totaljoint": parse_total,
             "totalpinjoint": parse_total_pin,
-            "prismatic": parse_prismatic
+            "prismatic": parse_prismatic,
+            "inplane": parse_inplane,
+            "inline": parse_inline,
+            "axialrotation": parse_axialrot,
+            "distance": parse_distance,
+            "gimbalrotation": parse_gimbal,
+            "brake": parse_brake
             }
  
     try:
@@ -91,9 +104,7 @@ def parse_elements(context, jnt_type, rw):
 def elem_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     col = layout.column(align=True)
-    
-    col.prop(elem, "scale_factor")
-    
+     
     row = layout.row()
     col = row.column()
 
@@ -199,13 +210,3 @@ class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
             pass
 # -----------------------------------------------------------
 # end of Data_OT_MBDyn_Elems_Beams class
-
-# Update function for scale factor
-def update_scale_factor(self, context):
-    ed = context.scene.mbdyn.elems
-    for elem in ed:
-        if elem.blender_object == self.name:
-            if elem.scale_factor < 0.:
-                elem.scale_factor = 0.
-            s = bpy.data.objects[elem.blender_object].scale
-            bpy.data.objects[elem.blender_object].scale = s*elem.scale_factor
