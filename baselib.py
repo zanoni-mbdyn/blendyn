@@ -668,6 +668,40 @@ def parse_render_string(var, components):
     else:
         return '{:.2f}'.format(var)
 
+def comp_repr(components, value, context):
+    mbs = context.scene.mbdyn
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    var = nc.variables[value]
+    dim = len(var.shape)
+
+    comps = ''
+
+    if dim == 2:
+        n,m = var.shape
+        comps = [str(mdx + 1) for mdx in range(m) if components[mdx] is True]
+        comps = ','.join(comps)
+
+    elif dim == 3:
+        n,m,k = var.shape
+        if mbs.plot_var[-1] == 'R':
+            dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
+
+        else:
+            dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                          "(2,1)", "(2,2)", "(2,3)",\
+                          "(3,1)", "(3,2)", "(3,3)"]
+
+        comps = [ dims_names[mdx] for mdx in range(len(dims_names)) if components[mdx] is True]
+
+    else:
+        pass
+
+    comps = '[' + comps+']' if comps else comps
+
+    return comps
+
 def set_motion_paths_netcdf(context):
 
     scene = context.scene

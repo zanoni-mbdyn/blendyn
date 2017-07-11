@@ -328,18 +328,19 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         logging.info(message)
         return {'FINISHED'}
 
-class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
-    """ Plots the selected variable in the image editor 
-        and optionally save it as .svg in the 'plots' directory.
-        The user can choose among all the variables of all the 
-        MBDyn entitites found in the output NetCDF fila."""
-    bl_idname = "ops.mbdyn_plot_var_scene"
-    bl_label = "Plot the selected MBDyn var"
-
-    var_index = bpy.props.IntProperty()
+class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
+    """Plot all the variables in the Variables List"""
+    bl_idname = "ops.mbdyn_plot_var_variables"
+    bl_label = "Plot all the variables in Variables List"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+
+        if not(bpy.data.is_saved):
+            message = "Please save current Blender file first"
+            self.report({'ERROR'}, message)
+            logging.error(message)
+            return {'CANCELLED'}
 
         # set up pygal
         config = pygal.Config()
@@ -364,12 +365,14 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
             # get time vector
             time = nc.variables["time"]
 
+            units = '[{}]'.format(var.units) if 'units' in dir(var) else ''
+
             # create plot
             if dim == 2:
                 n,m = var.shape
                 for mdx in range(m):
                     if variable.components[mdx]:
-                        chart.add(varname + "." + str(mdx + 1), \
+                        chart.add('{0}.{1}  {2}'.format(varname, mdx+1, units), \
                                 [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
             elif dim == 3:
                 n,m,k = var.shape
@@ -385,21 +388,110 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
                     dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
                 for mdx in range(len(dims_names)):
                     if variable.components[mdx]:
-                        chart.add(varname + dims_names[mdx], \
+                        chart.add('{0}.{1}  {2}'.format(varname, dims_names[mdx], units), \
                                 [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
                                 for idx in range(0, n, mbs.plot_frequency)])
             else:
-                chart.add(varname, [(time[idx], var[idx]) \
+                chart.add('{0}  {1}'.format(varname, units), [(time[idx], var[idx]) \
                         for idx in range(0, len(time), mbs.plot_frequency)])
 
         chart.x_title = "time [s]"
+ 
+        plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
+        if not os.path.exists(plot_dir):
+           os.makedirs(plot_dir)
+
+        basename = mbs.file_basename
+        outfname = os.path.join(plot_dir, basename)
+        if os.path.exists(outfname + ".svg"):
+            kk = 1
+            while os.path.exists(outfname + ".00" + str(kk) + ".svg"):
+                kk = kk + 1
+            basename = basename + ".00" + str(kk)
+
+        outfname = os.path.join(plot_dir, basename)
+        chart.render_to_file(outfname + ".svg")
+        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        bpy.ops.image.open(filepath = outfname + ".png")
+
+
+        message = "Variable " + varname + " plotted"
+        self.report({'INFO'}, message)
+        logging.info(message)
+        return {'FINISHED'}
+
+
+class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
+    """ Plots the selected variable in the image editor
+        and optionally save it as .svg in the 'plots' directory.
+        The user can choose among all the variables of all the
+        MBDyn entitites found in the output NetCDF fila."""
+    bl_idname = "ops.mbdyn_plot_var_scene"
+    bl_label = "Plot the selected MBDyn var"
+
+    var_index = bpy.props.IntProperty()
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
 
         if not(bpy.data.is_saved):
             message = "Please save current Blender file first"
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
- 
+
+        # get requested netCDF variable
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, 'r', format='NETCDF3')
+
+        # get its dimensions
+        varname = mbs.plot_vars[mbs.plot_var_index].name
+        var = nc.variables[varname]
+        dim = len(var.shape)
+        units = '[{}]'.format(var.units) if 'units' in dir(var) else ''
+
+
+        # get time vector
+        time = nc.variables["time"]
+
+        # set up pygal
+        config = pygal.Config()
+        config.show_dots = False
+        config.legend_at_bottom = True
+        config.truncate_legend = -1
+        chart = pygal.XY(config)
+
+        # create plot
+        if dim == 2:
+            n,m = var.shape
+            for mdx in range(m):
+                if mbs.plot_comps[mdx]:
+                    chart.add('{0}.{1}  {2}'.format(varname, mdx+1, units), \
+                            [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
+        elif dim == 3:
+            n,m,k = var.shape
+            if mbs.plot_var[-1] == 'R':
+                dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
+                dims1 = [0, 0, 0, 1, 1, 2]
+                dims2 = [0, 1, 2, 1, 2, 2]
+            else:
+                dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                              "(2,1)", "(2,2)", "(2,3)",\
+                              "(3,1)", "(3,2)", "(3,3)"]
+                dims1 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+                dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
+            for mdx in range(len(dims_names)):
+                if mbs.plot_comps[mdx]:
+                    chart.add('{0}.{1}  {2}'.format(varname, dims_names[mdx], units), \
+                            [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
+                            for idx in range(0, n, mbs.plot_frequency)])
+        else:
+            chart.add('{0}  {1}'.format(varname, units), [(time[idx], var[idx]) \
+                    for idx in range(0, len(time), mbs.plot_frequency)])
+
+        chart.x_title = "time [s]"
+
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
            os.makedirs(plot_dir)
@@ -422,7 +514,7 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
         self.report({'INFO'}, message)
         logging.info(message)
         return {'FINISHED'}
-        
+
 
 class Object_OT_MBDyn_plot_var(bpy.types.Operator):
     """ Plots the object's selected variable in the image editor 
