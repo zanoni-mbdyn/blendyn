@@ -347,6 +347,10 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
         config.show_dots = False
         config.legend_at_bottom = True
         config.truncate_legend = -1
+
+        if mbs.plot_group:
+            config.title = mbs.display_enum_group
+
         chart = pygal.XY(config)
 
 
@@ -402,6 +406,10 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
            os.makedirs(plot_dir)
 
         basename = mbs.file_basename
+
+        if mbs.plot_group:
+            basename += '..' + mbs.display_enum_group
+
         outfname = os.path.join(plot_dir, basename)
         if os.path.exists(outfname + ".svg"):
             kk = 1

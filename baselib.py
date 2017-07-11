@@ -701,6 +701,13 @@ def get_render_vars(self, context):
 # -----------------------------------------------------------
 # end of get_render_vars() function
 
+def get_display_group(self, context):
+    mbs = context.scene.mbdyn
+
+    dg = mbs.display_vars_group
+
+    return [(group_name, group_name, "") for group_name in dg.keys()]
+
 def netcdf_helper(nc, scene, key):
     mbs = scene.mbdyn
     freq = mbs.load_frequency

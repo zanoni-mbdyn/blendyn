@@ -210,10 +210,22 @@ class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
     components = BoolVectorProperty(
         name = "Components of the Variable",
         size = 9
-        )
+    )
 bpy.utils.register_class(MBDynRenderVarsDictionary)
 # -----------------------------------------------------------
 # end of MBDynRenderVarsDictionary class
+
+class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
+	name = StringProperty(
+		name = 'Group of Display Variables',
+		description = 'Janga Reddy'
+	)
+
+	group = CollectionProperty(
+		name = 'Actual collection group',
+		type = MBDynRenderVarsDictionary
+	)
+bpy.utils.register_class(MBDynDisplayVarsDictionary)
 
 ## PropertyGroup of Environment Variables
 class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
@@ -355,6 +367,25 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         name = "MBDyn render variables collection",
         type = MBDynRenderVarsDictionary
     )
+
+    display_vars_group = CollectionProperty(
+        name = "MBDyn Display variables group collection",
+        type = MBDynDisplayVarsDictionary
+    )
+
+    display_enum_group = EnumProperty(
+        items = get_display_group,
+        name = 'Display Enum Group'
+    )
+
+    group_name = StringProperty(
+        name = "Name of Display Variables Group"
+    )
+
+    plot_group = BoolProperty(
+        name = "Plot List of variables as group",
+        default = False
+        )
 
     # Collection of Environment variables and corresponding values
     env_vars = CollectionProperty(
@@ -1367,6 +1398,91 @@ bpy.utils.register_class(MBDynDeleteRenderVariables)
 # -----------------------------------------------------------
 # end of MBDynDeleteRenderVariables class
 
+class MBDynDeleteAllRenderVariables(bpy.types.Operator):
+    bl_idname = "sel.delete_all_render_variables"
+    bl_label = "Delete all Render variables"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.render_vars.clear()
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynDeleteAllRenderVariables)
+
+
+class MBDynShowDisplayGroup(bpy.types.Operator):
+    bl_idname = "ops.show_plot_group"
+    bl_label = "show display group"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        if mbs.display_enum_group is '':
+            message = 'No Groups set'
+            self.report({'ERROR'}, message)
+            logging.error(message)
+
+        mbs.render_vars.clear()
+
+        for var in mbs.display_vars_group[mbs.display_enum_group].group:
+            rend = mbs.render_vars.add()
+            rend.variable = var.variable
+            rend.value = var.value
+            rend.components = var.components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynShowDisplayGroup)
+
+
+class MBDynSetDisplayGroup(bpy.types.Operator):
+    """Delete Render variables"""
+    bl_idname = "sel.set_display_group"
+    bl_label = "Set Display Group"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        exist_display_groups = [mbs.display_vars_group[var].name for var in range(len(mbs.display_vars_group))]
+
+        try:
+            index = exist_display_groups.index(mbs.group_name)
+            mbs.display_vars_group[index].group.clear()
+
+            janga = mbs.display_vars_group[mbs.group_name]
+
+            for ii in list(range(len(mbs.render_vars))):
+                rend = janga.group.add()
+                rend.variable = mbs.render_vars[ii].variable
+                rend.value = mbs.render_vars[ii].value
+                rend.components = mbs.render_vars[ii].components
+
+
+        except ValueError:
+            janga = mbs.display_vars_group.add()
+            janga.name = mbs.group_name
+
+            for ii in list(range(len(mbs.render_vars))):
+                rend = janga.group.add()
+                rend.variable = mbs.render_vars[ii].variable
+                rend.value = mbs.render_vars[ii].value
+                rend.components = mbs.render_vars[ii].components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynSetDisplayGroup)
+# -----------------------------------------------------------
+# end of MBDynDeleteRenderVariables class
 
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
@@ -1948,11 +2064,24 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             row.operator(MBDynSetRenderVariables.bl_idname, text = 'Set Display Variable')
 
             row = layout.row()
-            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Display Value')
+            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Display Variable')
+            row.operator(MBDynDeleteAllRenderVariables.bl_idname, text = 'Clear')
 
             if HAVE_PLOT:
                 row = layout.row()
                 row.operator(Scene_OT_MBDyn_plot_variables_list.bl_idname, text="Plot variables in List")
+
+                row.prop(mbs, "plot_group", text = "Plot Group")
+                layout.separator()
+                layout.separator()
+
+                row = layout.row()
+                row.prop(mbs, "group_name")
+                row.operator(MBDynSetDisplayGroup.bl_idname, text="Set Display Group")
+
+                row = layout.row()
+                row.prop(mbs, "display_enum_group")
+                row.operator(MBDynShowDisplayGroup.bl_idname, text = "Show Display Group")
 
         else:
             row = layout.row()
