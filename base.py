@@ -682,12 +682,7 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
                 default = [True for i in range(9)],
                 size = 9
                 )
-        plot_frequency = IntProperty(
-                name = "frequency",
-                description = "Frequency in plotting",
-                default = 1
-                )
-
+        
         plot_type = EnumProperty(
             items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
                      ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)],

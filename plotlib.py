@@ -270,7 +270,7 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
                     Gxx[0] = Sxx[0]
                     Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
                     chart.add(mbo.plot_var + ".Sxx." + str(mdx + 1), \
-                            [(freq[idx], Gxx[idx]) for idx in range(0, int(nfft/2), mbo.plot_frequency)])
+                            [(freq[idx], Gxx[idx]) for idx in range(0, int(nfft/2), mbs.plot_frequency)])
         elif dim == 3:
             n,m,k = var.shape
             nfft = int(np.power(2, np.round(np.log2(n) + .5)))
@@ -299,7 +299,7 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
                     Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
                     chart.add(mbo.plot_var + ".Sxx." + dims_names[mdx], \
                             [(freq[idx], Gxx[idx]) \
-                            for idx in range(0, int(nfft/2), mbo.plot_frequency)])
+                            for idx in range(0, int(nfft/2), mbs.plot_frequency)])
         else:
             if mbo.fft_remove_mean:
                 var_fft = np.fft.fft(var - np.mean(var))
@@ -310,9 +310,9 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
                 Gxx[0] = Sxx[0]
                 Gxx[1:(nfft/2 - 1)] = 2*Sxx[1:(nfft/2 - 1)]
                 chart.add(varname + ".Sxx", [(freq[idx], Gxx[idx]) \
-                        for idx in range(0, int(nfft/2), mbo.plot_frequency)])
+                        for idx in range(0, int(nfft/2), mbs.plot_frequency)])
             chart.add(mbo.plot_var, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), mbo.plot_frequency)]) 
+                    for idx in range(0, len(time), mbs.plot_frequency)]) 
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
@@ -470,7 +470,7 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
             for mdx in range(m):
                 if mbo.plot_comps[mdx]:
                     chart.add(mbo.plot_var + "." + str(mdx + 1), \
-                            [(time[idx], var[idx,mdx]) for idx in range(0, n, mbo.plot_frequency)])
+                            [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
         elif dim == 3:
             n,m,k = var.shape
             if mbo.plot_var[-1] == 'R':
@@ -487,10 +487,10 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
                 if mbo.plot_comps[mdx]:
                     chart.add(mbo.plot_var + dims_names[mdx], \
                             [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
-                            for idx in range(0, n, mbo.plot_frequency)])
+                            for idx in range(0, n, mbs.plot_frequency)])
         else:
             chart.add(mbo.plot_var, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), mbo.plot_frequency)])
+                    for idx in range(0, len(time), mbs.plot_frequency)])
         
         chart.x_title = "time [s]"
 
@@ -522,18 +522,7 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         logging.info(message)
         return {'FINISHED'}
 
-## Simple operator to set plot frequency for object
-class Object_OT_MBDyn_plot_freq(bpy.types.Operator):
-    """ Sets the plot frequency for the current Object equal
-        to the import frequency of the MBDyn results """
-    bl_idname = "ops.mbdyn_set_plot_freq_obj"
-    bl_label = "Sets the plot frequency for the object equal to the load frequency"
-
-    def execute(self, context):
-        context.object.mbdyn.plot_frequency = context.scene.mbdyn.load_frequency
-        return {'FINISHED'}
-
-## Simple operator to set plot frequency for scene
+## Simple operator to set plot frequency for
 class Scene_OT_MBDyn_plot_freq(bpy.types.Operator):
     """ Sets the plot frequency for the current Object equal
         to the import frequency of the MBDyn results """
@@ -604,8 +593,8 @@ class MBDynPlotPanelObject(bpy.types.Panel):
                         column.row().prop(mbo, "plot_comps", index = 8, text = "(3,3)")
                 row = layout.row()
                 col = layout.column()
-                col.prop(mbo, "plot_frequency")
-                col.operator(Object_OT_MBDyn_plot_freq.bl_idname, text="Use Import freq")
+                col.prop(mbs, "plot_frequency")
+                col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import frequency")
                 row = layout.row()
                 row.prop(mbo, "plot_type", text="Plot type:")
                 row = layout.row()
@@ -690,7 +679,7 @@ class MBDynPlotPanelScene(bpy.types.Panel):
                 row = layout.row()
                 col = layout.column()
                 col.prop(mbs, "plot_frequency")
-                col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import freq")
+                col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import frequency")
                 row = layout.row()
                 row.prop(mbs, "plot_type")
                 row = layout.row()
