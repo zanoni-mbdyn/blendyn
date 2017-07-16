@@ -1257,7 +1257,6 @@ class MBDynLiveAnimation(bpy.types.Operator):
 
         if hasattr(self, "receiver"):
             data = self.receiver.get_data()
-            print(data)
             for i, node in enumerate(mbs.nodes):
                 # context.scene.frame_current += 1
                 # bpy.ops.object.select_all(action = 'DESELECT')
