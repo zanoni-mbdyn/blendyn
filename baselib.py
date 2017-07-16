@@ -149,7 +149,7 @@ def no_output(context):
     nd = mbs.nodes
 
     if mbs.use_netcdf:
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+        ncfile = os.path.join(mbs.file_path, \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
         list1 = nc.variables.keys()
@@ -164,7 +164,7 @@ def no_output(context):
 
     else:
         # .mov filename
-        mov_file = os.path.join(os.path.dirname(mbs.file_path), \
+        mov_file = os.path.join(mbs.file_path, \
                 mbs.file_basename + '.mov')
         try:
             with open(mov_file) as mf:
@@ -205,13 +205,13 @@ def parse_log_file(context):
     for elem_name in ed.keys():
         ed[elem_name].is_imported = False
 
-    log_file = os.path.join(os.path.dirname(mbs.file_path), \
+    log_file = os.path.join(mbs.file_path, \
             mbs.file_basename + '.log')
     
-    out_file = os.path.join(os.path.dirname(mbs.file_path), \
+    out_file = os.path.join(mbs.file_path, \
             mbs.file_basename + '.out')
     
-    rfm_file = os.path.join(os.path.dirname(mbs.file_path), \
+    rfm_file = os.path.join(mbs.file_path, \
             mbs.file_basename + '.rfm')
     
     # Debug message to console
@@ -290,7 +290,7 @@ def parse_log_file(context):
             elif nd[ndx].int_label > mbs.max_node_import:
                 mbs.max_node_import = nd[ndx].int_label
         if mbs.use_netcdf:
-            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            ncfile = os.path.join(mbs.file_path, \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, "r", format="NETCDF3")
             mbs.num_timesteps = len(nc.variables["time"])
@@ -383,7 +383,7 @@ def assign_labels(context):
 
     labels_changed = False
 
-    log_file = os.path.join(os.path.dirname(mbs.file_path), \
+    log_file = os.path.join(mbs.file_path, \
             mbs.file_basename + '.log')
 
     set_strings_node = ["  const integer Node_", \
@@ -567,7 +567,7 @@ def set_motion_paths_mov(context):
         return {'CANCELLED'}
 
     # .mov filename
-    mov_file = os.path.join(os.path.dirname(mbs.file_path), \
+    mov_file = os.path.join(mbs.file_path, \
             mbs.file_basename + '.mov')
 
     # Debug message
@@ -676,7 +676,7 @@ def set_motion_paths_netcdf(context):
     ed = mbs.elems
     wm = context.window_manager
 
-    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+    ncfile = os.path.join(mbs.file_path, \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r", format="NETCDF3")
     nctime = nc.variables["time"]

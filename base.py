@@ -77,6 +77,8 @@ from .elements import *
 from .eigenlib import *
 from .rfmlib import *
 from .logwatcher import *
+from .liveanim import *
+from .nodelib import set_obj_locrot_mov
 
 import pdb
 
@@ -552,6 +554,20 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0,
             update = update_curr_eigsol
             )
+
+    # Live Animation
+    host_name = StringProperty(
+        name = "Host Name",
+        description = "Host Name of MBDyn Stream",
+        default = "127.0.0.1"
+    )
+
+    port_address = IntProperty(
+        name = "Port Address",
+        description = "Port Address of MBDyn Stream",
+        default = 9011
+    )
+
 
     if HAVE_PLOT:
         plot_vars = CollectionProperty(
@@ -1150,6 +1166,8 @@ class MBDynRunSimulation(bpy.types.Operator):
         if percent >= 100:
             context.window_manager.event_timer_remove(self.timer)
 
+            mbs.mbdyn_running = False
+
             si_retval = {'FINISHED'}
             if ( os.path.isfile(os.path.join(mbs.file_path, \
                     mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
@@ -1203,6 +1221,109 @@ class MBDynStopSimulation(bpy.types.Operator):
 bpy.utils.register_class(MBDynStopSimulation)
 # -----------------------------------------------------------
 # end of MBDynStopSimulation class
+
+class MBDynLiveAnimation(bpy.types.Operator):
+    bl_idname = "animation.start_sockets"
+    bl_label = "MBDyn Start sockets"
+
+    def modal(self, context, event):
+        mbs = context.scene.mbdyn
+
+        if not mbs.mbdyn_running:
+            return self.close(context)
+
+        if not (event.type in ['ESC', 'TIMER'] or (hasattr(self, "channels") and event.type in self.channels)):
+            return {'PASS_THROUGH'}
+
+        if event.type == 'ESC':
+            print(event.type)
+
+            kill_mbdyn()
+
+            mbs.mbdyn_running = False
+
+            self.report({'INFO'}, "The MBDyn simulation was interrupted")
+
+            return self.close(context)
+        #self.report({'INFO'}, self.process.stdout.read().decode())
+
+        # if hasattr(self, "sender") and event.type in self.channels:
+        #     i, dv = self.channels[event.type]
+        #     self.values[i] += dv
+        #     try:
+        #         self.sender.send(self.values)
+        #     except BrokenPipeError:
+        #         return self.close(context)
+
+        if hasattr(self, "receiver"):
+            data = self.receiver.get_data()
+            print(data)
+            for i, node in enumerate(mbs.nodes):
+                # context.scene.frame_current += 1
+                # bpy.ops.object.select_all(action = 'DESELECT')
+                node_obj = bpy.data.objects[node.blender_object]
+                # node_obj.select = True
+                # set_obj_locrot_mov(node_obj, [node.int_label] + list(data[12*i: 12 + 12*i]))
+                node_obj.location = Vector(data[12*i : 12*i+3])
+                # node_obj.keyframe_insert(data_path = "location")
+
+                node_obj.rotation_euler = Matrix([data[12*i+3 : 12*i+6], data[12*i+6 : 12*i+9], data[12*i+9 : 12*i+12]]).to_euler(node_obj.rotation_euler.order)
+                # node_obj.keyframe_insert(data_path = "rotation_euler")
+
+        return {'PASS_THROUGH'}
+
+    def close(self, context):
+        wm = context.window_manager
+        wm.event_timer_remove(self.timer)
+        # if hasattr(self, "nodes"):
+        #     for preserved, node in zip(self.preserve, self.nodes):
+        #         node.location, node.rotation_euler = preserved
+        #     del self.nodes
+        # try:
+        #     stdout, stderr = self.process.communicate(timeout=1)
+        # except subprocess.TimeoutExpired:
+        #     self.process.terminate()
+        #     stdout, stderr = self.process.communicate()
+        # del self.process
+        # if stdout:
+        #     self.report({'INFO'}, stdout.decode())
+        # if stderr:
+        #     self.report({'INFO'}, stderr.decode())
+
+        if hasattr(self, "receiver"):
+            self.receiver.close()
+
+        # if hasattr(self, "sender"):
+        #     self.sender.close()
+
+        wm.progress_end()
+        return {'FINISHED'}
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        # context.scene.frame_current = 0
+
+        host_name, port_number = mbs.host_name, mbs.port_address
+
+        self.receiver = StreamReceiver('d'*12*len(mbs.nodes), [0]*12*len(mbs.nodes), host_name=host_name, port_number=port_number)
+        if self.receiver.socket:
+            self.receiver.start()
+        else:
+            self.report({'INFO'}, "Animation stream socket failed to connect")
+            del self.receiver
+
+        self.out_file = os.path.join(mbs.file_path, mbs.file_basename + '.out')
+
+        with open(self.out_file) as f:
+            pass
+        wm = context.window_manager
+        wm.progress_begin(0., 100.)
+        self.timer = wm.event_timer_add(1./24., context.window)
+        wm.modal_handler_add(self)
+
+        return{'RUNNING_MODAL'}
+
+bpy.utils.register_class(MBDynLiveAnimation)
 
 class MBDynSetMotionPaths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
@@ -1450,6 +1571,40 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of MBDynSimulationPanel class
+
+class MBDynLiveAnimPanel(bpy.types.Panel):
+    """Live Animation Panel"""
+    bl_idname = "VIEW3D_TL_MBDyn_Live"
+    bl_label = "LiveAnimation"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = 'objectmode'
+    bl_category = 'MBDyn'
+
+    def draw(self, context):
+
+     # utility renaming
+        layout = self.layout
+        obj = context.object
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
+
+        row = layout.row()
+        row.prop(mbs, "port_address")
+        row.prop(mbs, "host_name")
+
+        layout.separator()
+
+        row = layout.row()
+        row.operator(MBDynReadLog.bl_idname, text = "Load .log file")
+
+        layout.separator()
+
+        row = layout.row()
+        row.operator(MBDynLiveAnimation.bl_idname, text = "Start Sockets")
+
+
 
 class MBDynEigenanalysisPanel(bpy.types.Panel):
     """ Visualizes the results of an eigenanalysis - Toolbar Panel """
