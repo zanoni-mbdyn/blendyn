@@ -555,6 +555,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             update = update_curr_eigsol
             )
 
+    pause_live = BoolProperty(
+        name = "Pause MBDyn Live Simulation",
+        default = True
+        )
+
     # Live Animation
     host_name = StringProperty(
         name = "Host Name",
@@ -1232,10 +1237,14 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if not mbs.mbdyn_running:
             return self.close(context)
 
-        if not (event.type in ['ESC', 'TIMER'] or (hasattr(self, "channels") and event.type in self.channels)):
+        if not (event.type in ['ESC', 'P','TIMER'] or (hasattr(self, "channels") and event.type in self.channels)):
             return {'PASS_THROUGH'}
 
-        if event.type == 'ESC':
+        if event.type == 'P' and event.value == 'PRESS':
+            mbs.pause_live = not mbs.pause_live
+            print('Janga Reddy')
+
+        elif event.type == 'ESC':
             print(event.type)
 
             kill_mbdyn()
@@ -1245,66 +1254,55 @@ class MBDynLiveAnimation(bpy.types.Operator):
             self.report({'INFO'}, "The MBDyn simulation was interrupted")
 
             return self.close(context)
-        #self.report({'INFO'}, self.process.stdout.read().decode())
 
-        # if hasattr(self, "sender") and event.type in self.channels:
-        #     i, dv = self.channels[event.type]
-        #     self.values[i] += dv
-        #     try:
-        #         self.sender.send(self.values)
-        #     except BrokenPipeError:
-        #         return self.close(context)
+        if hasattr(self, "sender") and not mbs.pause_live:
+            try:
+                self.sender.send([1])
+            except BrokenPipeError:
+                return self.close(context)
 
-        if hasattr(self, "receiver"):
+        if hasattr(self, "receiver") and not mbs.pause_live:
             data = self.receiver.get_data()
             for i, node in enumerate(mbs.nodes):
-                # context.scene.frame_current += 1
-                # bpy.ops.object.select_all(action = 'DESELECT')
+                context.scene.frame_current += 1
+                bpy.ops.object.select_all(action = 'DESELECT')
                 node_obj = bpy.data.objects[node.blender_object]
-                # node_obj.select = True
+                node_obj.select = True
                 # set_obj_locrot_mov(node_obj, [node.int_label] + list(data[12*i: 12 + 12*i]))
                 node_obj.location = Vector(data[12*i : 12*i+3])
-                # node_obj.keyframe_insert(data_path = "location")
+                node_obj.keyframe_insert(data_path = "location")
 
                 node_obj.rotation_euler = Matrix([data[12*i+3 : 12*i+6], data[12*i+6 : 12*i+9], data[12*i+9 : 12*i+12]]).to_euler(node_obj.rotation_euler.order)
-                # node_obj.keyframe_insert(data_path = "rotation_euler")
+                node_obj.keyframe_insert(data_path = "rotation_euler")
 
         return {'PASS_THROUGH'}
 
     def close(self, context):
+        context.scene.frame_end = context.scene.frame_current
         wm = context.window_manager
         wm.event_timer_remove(self.timer)
-        # if hasattr(self, "nodes"):
-        #     for preserved, node in zip(self.preserve, self.nodes):
-        #         node.location, node.rotation_euler = preserved
-        #     del self.nodes
-        # try:
-        #     stdout, stderr = self.process.communicate(timeout=1)
-        # except subprocess.TimeoutExpired:
-        #     self.process.terminate()
-        #     stdout, stderr = self.process.communicate()
-        # del self.process
-        # if stdout:
-        #     self.report({'INFO'}, stdout.decode())
-        # if stderr:
-        #     self.report({'INFO'}, stderr.decode())
 
         if hasattr(self, "receiver"):
             self.receiver.close()
 
-        # if hasattr(self, "sender"):
-        #     self.sender.close()
+        if hasattr(self, "sender"):
+            self.sender.close()
 
         wm.progress_end()
         return {'FINISHED'}
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        # context.scene.frame_current = 0
+        context.scene.frame_start = context.scene.frame_current = 0
 
         host_name, port_number = mbs.host_name, mbs.port_address
 
+        mbs.pause_live = True
+
+        self.sender = StreamSender(host_name=None, port_number=None)
+        self.sender.send([1])
         self.receiver = StreamReceiver('d'*12*len(mbs.nodes), [0]*12*len(mbs.nodes), host_name=host_name, port_number=port_number)
+
         if self.receiver.socket:
             self.receiver.start()
         else:
@@ -1317,7 +1315,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
             pass
         wm = context.window_manager
         wm.progress_begin(0., 100.)
-        self.timer = wm.event_timer_add(1./24., context.window)
+        self.timer = wm.event_timer_add(0.001, context.window)
         wm.modal_handler_add(self)
 
         return{'RUNNING_MODAL'}
