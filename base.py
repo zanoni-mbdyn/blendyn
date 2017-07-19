@@ -561,18 +561,29 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         )
 
     # Live Animation
-    host_name = StringProperty(
-        name = "Host Name",
-        description = "Host Name of MBDyn Stream",
+    host_receiver = StringProperty(
+        name = "Host Name of Receiver",
+        description = "Host Name of Receiver Stream",
         default = "127.0.0.1"
     )
 
-    port_address = IntProperty(
-        name = "Port Address",
+    port_receiver = IntProperty(
+        name = "Port Receiver",
         description = "Port Address of MBDyn Stream",
         default = 9011
     )
 
+    host_sender = StringProperty(
+        name = "Host Name of Sender",
+        description = "Host Name of Sender Stream",
+        default = "127.0.0.1"
+    )
+
+    port_sender = IntProperty(
+        name = "Port Sender",
+        description = "",
+        default = 9012
+    )
 
     if HAVE_PLOT:
         plot_vars = CollectionProperty(
@@ -1295,12 +1306,13 @@ class MBDynLiveAnimation(bpy.types.Operator):
 
         context.scene.frame_start = context.scene.frame_current = 0
 
-        host_name, port_number = mbs.host_name, mbs.port_address
-
         mbs.pause_live = True
 
-        self.sender = StreamSender(host_name=None, port_number=None)
+        host_name, port_number = mbs.host_sender, mbs.port_sender
+        self.sender = StreamSender(host_name=host_name, port_number=port_number)
         self.sender.send([1])
+
+        host_name, port_number = mbs.host_receiver, mbs.port_receiver
         self.receiver = StreamReceiver('d'*12*len(mbs.nodes), [0]*12*len(mbs.nodes), host_name=host_name, port_number=port_number)
 
         if self.receiver.socket:
@@ -1315,7 +1327,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
             pass
         wm = context.window_manager
         wm.progress_begin(0., 100.)
-        self.timer = wm.event_timer_add(0.001, context.window)
+        self.timer = wm.event_timer_add(0.00000001, context.window)
         wm.modal_handler_add(self)
 
         return{'RUNNING_MODAL'}
@@ -1588,8 +1600,12 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         ed = mbs.elems
 
         row = layout.row()
-        row.prop(mbs, "port_address")
-        row.prop(mbs, "host_name")
+        row.prop(mbs, "port_sender")
+        row.prop(mbs, "host_sender")
+
+        row = layout.row()
+        row.prop(mbs, "port_receiver")
+        row.prop(mbs, "host_receiver")
 
         layout.separator()
 
