@@ -591,12 +591,26 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
+    node_scale_slider = FloatProperty(
+            name = "Value of Scaling",
+            default = 1.0
+    )
+
     # Type filter for elements import
     elem_type_import = EnumProperty(
             items  = get_elems_types,
             name = "Elements to import",
             )
 
+    elem_scale_slider = FloatProperty(
+            name = 'Value of scaling',
+            default = 1.0
+    )
+
+    elem_type_scale = EnumProperty(
+            items = get_elems_types,
+            name = "Elements to scale",
+    )
     # Lower limit of range import for elemens
     min_elem_import = IntProperty(
             name = "first element to import",
@@ -854,6 +868,32 @@ def rename_log(scene):
     log_messages(mbs, baseLogger, True)
 
 bpy.app.handlers.save_post.append(rename_log)
+
+class MBDynStandardImport(bpy.types.Operator):
+    """ Standard Import Process """
+    bl_idname = "animate.standard_import"
+    bl_label = "MBDyn Standard Import"
+
+    def execute(self, context):
+        try:
+            bpy.ops.animate.read_mbdyn_log_file('EXEC_DEFAULT')
+            bpy.ops.add.mbdynnode_all('EXEC_DEFAULT')
+            bpy.ops.add.mbdyn_elems_all('EXEC_DEFAULT')
+        except RuntimeError as re:
+            message = "StandardImport: something went wrong during the automatic import. "\
+                + " See the .bylog file for details"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynStandardImport)
+# -----------------------------------------------------------
+# end of MBDynStandardImport class
+
 
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
@@ -1509,6 +1549,10 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
+        row = layout.row()
+        row.label(text = "MBDyn Standard Import")
+        col = layout.column(align = True)
+        col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
         # Display MBDyn file basename and info
         row = layout.row()
 
@@ -1968,6 +2012,37 @@ class MBDynElemsScenePanel(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
 
+class MBDynScalingPanel(bpy.types.Panel):
+    """ List of MBDyn elements: use import button to add \
+            them to the scene  """
+    bl_label = "Scale MBDyn Entities"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        layout = self.layout
+        
+        box = layout.box()
+        row = box.row()
+        row.template_list('MBDynNodes_UL_List', "MBDyn nodes list", mbs, "nodes",\
+                mbs, "nd_index")
+        row = box.row()
+        row.prop(mbs, "node_scale_slider")
+        row = box.row()
+        row.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = 'Select all Nodes')
+        row.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = 'Scale Node')
+
+        box = layout.box()
+        row = box.row()
+        row.prop(mbs, "elem_type_scale")
+        row = box.row()
+        row.prop(mbs, "elem_scale_slider")
+        row = box.row()
+        row.operator(Scene_OT_MBDyn_Select_Elements_by_Type.bl_idname, text = 'Select Elements')
+        row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
+
 ## Panel in Scene toolbar
 class MBDynPlotPanelScene(bpy.types.Panel):
     """ Plotting of MBDyn entities private data """
@@ -1975,7 +2050,7 @@ class MBDynPlotPanelScene(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
-
+    
     def draw(self, context):
         mbs = context.scene.mbdyn
         layout = self.layout
@@ -2308,6 +2383,60 @@ class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_References_Import_Single class
 
+class Scene_OT_MBDyn_Select_all_Nodes(bpy.types.Operator):
+    bl_idname = "sel.select_all_nodes"
+    bl_label = "Select all MBDyn Node Objects"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for var in nd.keys():
+            obj = bpy.data.objects[var]
+            obj.select = True
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Select_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "sel.select_all_elements"
+    bl_label = "Select all MBDyn objects"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for var in ed.keys():
+            if mbs.elem_type_scale in var:
+                obj = bpy.data.objects[var]
+                obj.select = True
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Scale_Node(bpy.types.Operator):
+    bl_idname = "add.mbdyn_scale_node"
+    bl_label = "Scale selected node"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        s = mbs.node_scale_slider
+        scaleOBJ = bpy.data.objects[nd[mbs.nd_index].blender_object]
+        scaleOBJ.scale = Vector((s, s, s))
+
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "add.mbdyn_scale_elems"
+    bl_label = "Scale all elements of selected type"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        s = mbs.elem_scale_slider
+        for elem in ed:
+            if elem.type == mbs.elem_type_scale:
+                scaleOBJ = bpy.data.objects[elem.name]
+                scaleOBJ.scale = Vector((s, s, s))
+
+        return {'FINISHED'}
 
 class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_type"
