@@ -1177,7 +1177,6 @@ class MBDynRunSimulation(bpy.types.Operator):
                 except ValueError:
                     pass
             mbs.sim_status = percent
-            print(str(round(percent)) + '% completed')
 
         if percent >= 100:
             context.window_manager.event_timer_remove(self.timer)
@@ -1253,10 +1252,8 @@ class MBDynLiveAnimation(bpy.types.Operator):
 
         if event.type == 'P' and event.value == 'PRESS':
             mbs.pause_live = not mbs.pause_live
-            print('Janga Reddy')
 
         elif event.type == 'ESC':
-            print(event.type)
 
             kill_mbdyn()
 
