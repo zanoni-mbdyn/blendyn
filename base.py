@@ -560,6 +560,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         default = True
         )
 
+    live_keyframes = BoolProperty(
+        name = "Set Keyframes during live simulation",
+        default = True
+        )
+
     # Live Animation
     host_receiver = StringProperty(
         name = "Host Name of Receiver",
@@ -1272,16 +1277,22 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if hasattr(self, "receiver") and not mbs.pause_live:
             data = self.receiver.get_data()
             for i, node in enumerate(mbs.nodes):
-                context.scene.frame_current += 1
-                bpy.ops.object.select_all(action = 'DESELECT')
+                self.frame += 1
+
                 node_obj = bpy.data.objects[node.blender_object]
-                node_obj.select = True
+
+
                 # set_obj_locrot_mov(node_obj, [node.int_label] + list(data[12*i: 12 + 12*i]))
                 node_obj.location = Vector(data[12*i : 12*i+3])
-                node_obj.keyframe_insert(data_path = "location")
-
                 node_obj.rotation_euler = Matrix([data[12*i+3 : 12*i+6], data[12*i+6 : 12*i+9], data[12*i+9 : 12*i+12]]).to_euler(node_obj.rotation_euler.order)
-                node_obj.keyframe_insert(data_path = "rotation_euler")
+
+                if mbs.live_keyframes:
+                    context.scene.frame_current = self.frame                    
+                    bpy.ops.object.select_all(action = 'DESELECT')
+                    node_obj.select = True
+
+                    node_obj.keyframe_insert(data_path = "location")
+                    node_obj.keyframe_insert(data_path = "rotation_euler")
 
         return {'PASS_THROUGH'}
 
@@ -1301,7 +1312,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        context.scene.frame_start = context.scene.frame_current = 0
+        self.frame = context.scene.frame_start = context.scene.frame_current = 0
 
         mbs.pause_live = True
 
@@ -1610,6 +1621,9 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         row.operator(MBDynReadLog.bl_idname, text = "Load .log file")
 
         layout.separator()
+
+        row = layout.row()
+        row.prop(mbs, "live_keyframes")
 
         row = layout.row()
         row.operator(MBDynLiveAnimation.bl_idname, text = "Start Sockets")
