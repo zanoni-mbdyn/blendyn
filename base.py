@@ -40,6 +40,7 @@ from mathutils import *
 from math import *
 
 import ntpath, os, csv, math, time, shutil
+import numpy as np
 
 from collections import namedtuple
 import subprocess
@@ -198,6 +199,36 @@ bpy.utils.register_class(MBDynTime)
 # -----------------------------------------------------------
 # end of MBDynTime class
 
+## PropertyGroup of Render Variables
+class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
+    variable = StringProperty(
+        name = "Render Variables",
+        description = 'Variables to be set'
+    )
+    value = StringProperty(
+        name = "Values of Render Variables",
+        description = "Values of variables to be set"
+    )
+    components = BoolVectorProperty(
+        name = "Components of the Variable",
+        size = 9
+    )
+bpy.utils.register_class(MBDynRenderVarsDictionary)
+# -----------------------------------------------------------
+# end of MBDynRenderVarsDictionary class
+
+class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
+	name = StringProperty(
+		name = 'Group of Display Variables',
+		description = 'Janga Reddy'
+	)
+
+	group = CollectionProperty(
+		name = 'Actual collection group',
+		type = MBDynRenderVarsDictionary
+	)
+bpy.utils.register_class(MBDynDisplayVarsDictionary)
+
 ## PropertyGroup of Environment Variables
 class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
     variable = StringProperty(
@@ -323,6 +354,41 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             description = "True if the user wants to delete log files on exit",
             default = False
             )
+
+    render_nc_vars = EnumProperty(
+        items = get_render_vars,
+        name = 'Text overlay variables',
+    )
+
+    render_var_name = StringProperty(
+        name = 'Name of variable',
+        default = ''
+    )
+
+    render_vars = CollectionProperty(
+        name = "MBDyn render variables collection",
+        type = MBDynRenderVarsDictionary
+    )
+
+    display_vars_group = CollectionProperty(
+        name = "MBDyn Display variables group collection",
+        type = MBDynDisplayVarsDictionary
+    )
+
+    display_enum_group = EnumProperty(
+        items = get_display_group,
+        name = 'Display Enum Group'
+    )
+
+    group_name = StringProperty(
+        name = "Name of Display Variables Group"
+    )
+
+    plot_group = BoolProperty(
+        name = "Plot List of variables as group",
+        default = False
+        )
+
     # Collection of Environment variables and corresponding values
     env_vars = CollectionProperty(
             name = "MBDyn environment variables collection",
@@ -334,6 +400,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "MBDyn Environment variables collection index",
             default = 0
         )
+
+    render_index = IntProperty(
+        name = "MBDyn Render Variables collection index",
+        default = 0
+    )
 
     # Name of the Environment Variable
     env_variable = StringProperty(
@@ -522,12 +593,26 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = 0
             )
 
+    node_scale_slider = FloatProperty(
+            name = "Value of Scaling",
+            default = 1.0
+    )
+
     # Type filter for elements import
     elem_type_import = EnumProperty(
             items  = get_elems_types,
             name = "Elements to import",
             )
 
+    elem_scale_slider = FloatProperty(
+            name = 'Value of scaling',
+            default = 1.0
+    )
+
+    elem_type_scale = EnumProperty(
+            items = get_elems_types,
+            name = "Elements to scale",
+    )
     # Lower limit of range import for elemens
     min_elem_import = IntProperty(
             name = "first element to import",
@@ -590,17 +675,24 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         default = 9012
     )
 
-    if HAVE_PLOT:
-        plot_vars = CollectionProperty(
-                name = "MBDyn variables available for plotting",
-                type = MBDynPlotVars
-                )
+    plot_vars = CollectionProperty(
+            name = "MBDyn variables available for plotting",
+            type = MBDynPlotVars
+            )
 
-        plot_var_index = IntProperty(
-                name = "variable index",
-                description = "index of the current variable to be plotted",
-                default = 0
-                )
+    plot_var_index = IntProperty(
+            name = "variable index",
+            description = "index of the current variable to be plotted",
+            default = 0
+            )
+    plot_comps = BoolVectorProperty(
+        name = "components",
+        description = "Components of property to plot",
+        default = [True for i in range(9)],
+        size = 9
+        )
+
+    if HAVE_PLOT:
 
         plot_sxy_varX = StringProperty(
                 name = "Cross-spectrum X variable",
@@ -612,13 +704,6 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                 name = "Cross-spectrum Y variable",
                 description = "variable to be used as output in cross-spectrum",
                 default = "none"
-                )
-
-        plot_comps = BoolVectorProperty(
-                name = "components",
-                description = "Components of property to plot",
-                default = [True for i in range(9)],
-                size = 9
                 )
 
         plot_frequency = IntProperty(
@@ -761,6 +846,23 @@ def update_time(scene):
 bpy.app.handlers.frame_change_pre.append(update_time)
 
 @persistent
+def render_variables(scene):
+    try:
+        mbs = scene.mbdyn
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r", format="NETCDF3")
+        string = [ '{0} : {1}'.format(var.variable, \
+        parse_render_string(netcdf_helper(nc, scene, var.value), var.components)) \
+        for var in mbs.render_vars ]
+        string = '\n'.join(string)
+        if len(mbs.render_vars):
+            bpy.data.scenes['Scene'].render.stamp_note_text = string
+    except IndexError:
+        pass
+bpy.app.handlers.frame_change_pre.append(render_variables)
+
+@persistent
 def close_log(scene):
     baseLogger.handlers = []
 
@@ -803,6 +905,32 @@ def rename_log(scene):
     log_messages(mbs, baseLogger, True)
 
 bpy.app.handlers.save_post.append(rename_log)
+
+class MBDynStandardImport(bpy.types.Operator):
+    """ Standard Import Process """
+    bl_idname = "animate.standard_import"
+    bl_label = "MBDyn Standard Import"
+
+    def execute(self, context):
+        try:
+            bpy.ops.animate.read_mbdyn_log_file('EXEC_DEFAULT')
+            bpy.ops.add.mbdynnode_all('EXEC_DEFAULT')
+            bpy.ops.add.mbdyn_elems_all('EXEC_DEFAULT')
+        except RuntimeError as re:
+            message = "StandardImport: something went wrong during the automatic import. "\
+                + " See the .bylog file for details"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynStandardImport)
+# -----------------------------------------------------------
+# end of MBDynStandardImport class
+
 
 class MBDynReadLog(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
@@ -861,6 +989,8 @@ class MBDynReadLog(bpy.types.Operator):
 
         elif ret_val == {'FINISHED'}:
             message = "MBDyn entities imported successfully"
+            bpy.data.scenes['Scene'].render.use_stamp = True
+            bpy.data.scenes['Scene'].render.use_stamp_note = True
             self.report({'INFO'}, message) 
             baseLogger.info(message)
 
@@ -950,8 +1080,13 @@ class MBDynClearData(bpy.types.Operator):
     bl_label = "Clear MBDyn Data"
 
     def execute(self, context):
-        context.scene.mbdyn.nodes.clear()
-        context.scene.mbdyn.elems.clear()
+        mbs = context.scene.mbdyn
+
+        for var in mbs.keys():
+            dummy = getattr(mbs, var)
+            if isinstance(dummy, bpy.types.bpy_prop_collection):
+                dummy.clear()
+
         message = "Scene MBDyn data cleared."
         self.report({'INFO'}, message)
         baseLogger.info(message)
@@ -1398,6 +1533,142 @@ class MBDynSetImportFreqAuto(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+
+class MBDynSetRenderVariables(bpy.types.Operator):
+    """Sets the Render variables to be\
+        used in a Blender Render"""
+
+    bl_idname = "sel.set_render_variable"
+    bl_label = "Set Render Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        exist_render_vars = [mbs.render_vars[var].value for var in range(len(mbs.render_vars))]
+
+        try:
+            index = exist_render_vars.index(mbs.plot_vars[mbs.plot_var_index].name)
+            mbs.render_vars[index].variable = mbs.render_var_name
+            mbs.render_vars[index].components = mbs.plot_comps
+
+        except ValueError:
+            rend = mbs.render_vars.add()
+            rend.variable = mbs.render_var_name
+            rend.value = mbs.plot_vars[mbs.plot_var_index].name
+            rend.components = mbs.plot_comps
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynSetRenderVariables)
+# -----------------------------------------------------------
+# end of MBDynSetRenderVariables class
+
+class MBDynDeleteRenderVariables(bpy.types.Operator):
+    """Delete Render variables"""
+    bl_idname = "sel.delete_render_variable"
+    bl_label = "Delete Render Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.render_vars.remove(mbs.render_index)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynDeleteRenderVariables)
+# -----------------------------------------------------------
+# end of MBDynDeleteRenderVariables class
+
+class MBDynDeleteAllRenderVariables(bpy.types.Operator):
+    bl_idname = "sel.delete_all_render_variables"
+    bl_label = "Delete all Render variables"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.render_vars.clear()
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynDeleteAllRenderVariables)
+
+
+class MBDynShowDisplayGroup(bpy.types.Operator):
+    bl_idname = "ops.show_plot_group"
+    bl_label = "show display group"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        if mbs.display_enum_group is '':
+            message = 'No Groups set'
+            self.report({'ERROR'}, message)
+            logging.error(message)
+
+        mbs.render_vars.clear()
+
+        for var in mbs.display_vars_group[mbs.display_enum_group].group:
+            rend = mbs.render_vars.add()
+            rend.variable = var.variable
+            rend.value = var.value
+            rend.components = var.components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+bpy.utils.register_class(MBDynShowDisplayGroup)
+
+
+class MBDynSetDisplayGroup(bpy.types.Operator):
+    """Delete Render variables"""
+    bl_idname = "sel.set_display_group"
+    bl_label = "Set Display Group"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        exist_display_groups = [mbs.display_vars_group[var].name for var in range(len(mbs.display_vars_group))]
+
+        try:
+            index = exist_display_groups.index(mbs.group_name)
+            mbs.display_vars_group[index].group.clear()
+
+            janga = mbs.display_vars_group[mbs.group_name]
+
+            for ii in list(range(len(mbs.render_vars))):
+                rend = janga.group.add()
+                rend.variable = mbs.render_vars[ii].variable
+                rend.value = mbs.render_vars[ii].value
+                rend.components = mbs.render_vars[ii].components
+
+
+        except ValueError:
+            janga = mbs.display_vars_group.add()
+            janga.name = mbs.group_name
+
+            for ii in list(range(len(mbs.render_vars))):
+                rend = janga.group.add()
+                rend.variable = mbs.render_vars[ii].variable
+                rend.value = mbs.render_vars[ii].value
+                rend.components = mbs.render_vars[ii].components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+bpy.utils.register_class(MBDynSetDisplayGroup)
+# -----------------------------------------------------------
+# end of MBDynDeleteRenderVariables class
+
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "VIEW3D_TL_MBDyn_ImportPath"
@@ -1423,6 +1694,10 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
+        row = layout.row()
+        row.label(text = "MBDyn Standard Import")
+        col = layout.column(align = True)
+        col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
         # Display MBDyn file basename and info
         row = layout.row()
 
@@ -1798,6 +2073,13 @@ class MBDynPlotVar_UL_List(bpy.types.UIList):
 # -----------------------------------------------------------
 # end of MBDynPLotVar_UL_List class
 
+class MBDynRenderVar_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.variable)
+        layout.label(item.value + comp_repr(item.components, item.value, context))
+# -----------------------------------------------------------
+# end of MBDynRenderVar_UL_List class
+
 class MBDynEnvVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.label(item.variable)
@@ -1918,6 +2200,157 @@ class MBDynElemsScenePanel(bpy.types.Panel):
             col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
+
+class MBDynScalingPanel(bpy.types.Panel):
+    """ List of MBDyn elements: use import button to add \
+            them to the scene  """
+    bl_label = "Scale MBDyn Entities"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        layout = self.layout
+        
+        box = layout.box()
+        row = box.row()
+        row.template_list('MBDynNodes_UL_List', "MBDyn nodes list", mbs, "nodes",\
+                mbs, "nd_index")
+        row = box.row()
+        row.prop(mbs, "node_scale_slider")
+        row = box.row()
+        row.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = 'Select all Nodes')
+        row.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = 'Scale Node')
+
+        box = layout.box()
+        row = box.row()
+        row.prop(mbs, "elem_type_scale")
+        row = box.row()
+        row.prop(mbs, "elem_scale_slider")
+        row = box.row()
+        row.operator(Scene_OT_MBDyn_Select_Elements_by_Type.bl_idname, text = 'Select Elements')
+        row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
+
+## Panel in Scene toolbar
+class MBDynPlotPanelScene(bpy.types.Panel):
+    """ Plotting of MBDyn entities private data """
+    bl_label = "MBDyn data plot"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+    
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        layout = self.layout
+        row = layout.row()
+
+        if mbs.use_netcdf:
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+            nc = Dataset(ncfile, 'r', format='NETCDF3')
+            # row.prop(mbs, 'plot_var')
+            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
+                    mbs, "plot_var_index")
+            try:
+                dim = len(nc.variables[mbs.plot_vars[mbs.plot_var_index].name].shape)
+                if dim == 2:     # Vec3: FIXME check if other possibilities exist
+                    box = layout.box()
+                    split = box.split(1./3.)
+                    column = split.column()
+                    column.prop(mbs, "plot_comps", index = 0, text = "x")
+                    column = split.column()
+                    column.prop(mbs, "plot_comps", index = 1, text = "y")
+                    column = split.column()
+                    column.prop(mbs, "plot_comps", index = 2, text = "z")
+                elif dim == 3:
+                    if mbs.plot_var[-1] == 'R':
+                        box = layout.box()
+                        split = box.split(1./3.)
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,2)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,3)")
+                        column.row().prop(mbs, "plot_comps", index = 5, text = "(3,3)")
+                    else:
+                        box = layout.box()
+                        split = box.split(1./3.)
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,1)")
+                        column.row().prop(mbs, "plot_comps", index = 6, text = "(3,1)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,2)")
+                        column.row().prop(mbs, "plot_comps", index = 7, text = "(3,2)")
+                        column = split.column()
+                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(mbs, "plot_comps", index = 5, text = "(2,3)")
+                        column.row().prop(mbs, "plot_comps", index = 8, text = "(3,3)")
+                if HAVE_PLOT:
+                    row = layout.row()
+                    col = layout.column()
+                    col.prop(mbs, "plot_frequency")
+                    col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import freq")
+                    row = layout.row()
+                    row.prop(mbs, "plot_type")
+                    row = layout.row()
+                    row.prop(mbs, "plot_xrange_min")
+                    row = layout.row()
+                    row.prop(mbs, "plot_xrange_max")
+                    row = layout.row()
+                    if mbs.plot_type == "TIME HISTORY":
+                        row.operator(Scene_OT_MBDyn_plot_var.bl_idname, 
+                                text="Plot variable")
+                    elif mbs.plot_type == "AUTOSPECTRUM":
+                        row = layout.row()
+                        row.prop(mbs, "fft_remove_mean")
+                        row = layout.row()
+                        row.operator(Scene_OT_MBDyn_plot_var_Sxx.bl_idname,
+                                text="Plot variable Autospectrum")
+            except IndexError:
+                pass
+
+            layout.separator()
+            layout.separator()
+
+            row = layout.row()
+            row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
+                    mbs, "render_index")
+            row = layout.row()
+            row.prop(mbs, "render_var_name")
+
+            row = layout.row()
+            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Set Display Variable')
+
+            row = layout.row()
+            row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Display Variable')
+            row.operator(MBDynDeleteAllRenderVariables.bl_idname, text = 'Clear')
+
+            if HAVE_PLOT:
+                row = layout.row()
+                row.operator(Scene_OT_MBDyn_plot_variables_list.bl_idname, text="Plot variables in List")
+
+                row.prop(mbs, "plot_group", text = "Plot Group")
+                layout.separator()
+                layout.separator()
+
+                row = layout.row()
+                row.prop(mbs, "group_name")
+                row.operator(MBDynSetDisplayGroup.bl_idname, text="Set Display Group")
+
+                row = layout.row()
+                row.prop(mbs, "display_enum_group")
+                row.operator(MBDynShowDisplayGroup.bl_idname, text = "Show Display Group")
+
+        else:
+            row = layout.row()
+            row.label(text="Plotting from text output")
+            row.label(text="is not supported yet.")
 
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
@@ -2139,6 +2572,60 @@ class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_References_Import_Single class
 
+class Scene_OT_MBDyn_Select_all_Nodes(bpy.types.Operator):
+    bl_idname = "sel.select_all_nodes"
+    bl_label = "Select all MBDyn Node Objects"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for var in nd.keys():
+            obj = bpy.data.objects[var]
+            obj.select = True
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Select_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "sel.select_all_elements"
+    bl_label = "Select all MBDyn objects"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for var in ed.keys():
+            if mbs.elem_type_scale in var:
+                obj = bpy.data.objects[var]
+                obj.select = True
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Scale_Node(bpy.types.Operator):
+    bl_idname = "add.mbdyn_scale_node"
+    bl_label = "Scale selected node"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        s = mbs.node_scale_slider
+        scaleOBJ = bpy.data.objects[nd[mbs.nd_index].blender_object]
+        scaleOBJ.scale = Vector((s, s, s))
+
+        return {'FINISHED'}
+
+class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
+    bl_idname = "add.mbdyn_scale_elems"
+    bl_label = "Scale all elements of selected type"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        s = mbs.elem_scale_slider
+        for elem in ed:
+            if elem.type == mbs.elem_type_scale:
+                scaleOBJ = bpy.data.objects[elem.name]
+                scaleOBJ.scale = Vector((s, s, s))
+
+        return {'FINISHED'}
 
 class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_type"

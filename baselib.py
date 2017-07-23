@@ -45,15 +45,6 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
-try:
-    import pygal
-    from .plotlib import get_plot_vars_glob
-    HAVE_PLOT = True
-except ImportError:
-    print("blendyn: could not find pygal module. Plotting  "\
-        + "will be disabled.")
-    pass
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -107,6 +98,21 @@ if HAVE_PSUTIL:
         if mbdynProc:
             mbdynProc[0].kill()
 
+def get_plot_vars_glob(context):
+    mbs = context.scene.mbdyn
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        N = len(nc.variables["time"])
+
+        var_list = list()
+        for var in nc.variables:
+            m = nc.variables[var].shape
+            if (m[0] == N) and (var not in mbs.plot_vars.keys()):
+                plotvar = mbs.plot_vars.add()
+                plotvar.name = var
+
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
     mbs = context.scene.mbdyn
@@ -130,13 +136,14 @@ def setup_import(filepath, context):
             except KeyError:
                 print('MBDynSelectOutputFile: no eigenanalysis results found')
                 pass
-            if HAVE_PLOT:
-                get_plot_vars_glob(context)
+
+            get_plot_vars_glob(context)
 
 
         except NameError:
             return {'NETCDF_ERROR'}
     else:
+        mbs.use_netcdf = False
         mbs.num_rows = file_len(filepath)
     return {'FINISHED'}
 
@@ -668,6 +675,92 @@ def set_motion_paths_mov(context):
 # -----------------------------------------------------------
 # end of set_motion_paths_mov() function
 
+def active_object_rel(bool1, bool2):
+    if not bool1:
+        return True
+    if bool1:
+        if bool2:
+            return True
+        else:
+            return False
+
+def get_render_vars(self, context):
+    mbs = context.scene.mbdyn
+    ed = mbs.elems
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    units = ['m/s', 's', 'm', 'N', 'Nm']
+    render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
+    render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
+
+    scene_objs = [ str(var.int_label) for var in ed if bpy.data.objects[var.blender_object].select ]
+    render_vars = list(filter( lambda x: active_object_rel('elem' in x, \
+                   any(i in scene_objs for i in x.split('.'))), render_vars))
+    return [(var, var, "") for var in render_vars]
+# -----------------------------------------------------------
+# end of get_render_vars() function
+
+def get_display_group(self, context):
+    mbs = context.scene.mbdyn
+
+    dg = mbs.display_vars_group
+
+    return [(group_name, group_name, "") for group_name in dg.keys()]
+
+def netcdf_helper(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current * freq
+    frac = np.ceil(tdx) - tdx
+
+    first = nc.variables[key][int(tdx)]
+    second = nc.variables[key][int(np.ceil(tdx))]
+    answer = first * frac + second * (1-frac)
+
+    return answer
+
+def parse_render_string(var, components):
+    if hasattr(var, '__iter__'):
+        return ', '.join(['{:.2f}'.format(item) if components[idx] else ' ' for idx, item in enumerate(var)])
+
+    else:
+        return '{:.2f}'.format(var)
+
+def comp_repr(components, value, context):
+    mbs = context.scene.mbdyn
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    var = nc.variables[value]
+    dim = len(var.shape)
+
+    comps = ''
+
+    if dim == 2:
+        n,m = var.shape
+        comps = [str(mdx + 1) for mdx in range(m) if components[mdx] is True]
+        comps = ','.join(comps)
+
+    elif dim == 3:
+        n,m,k = var.shape
+        if mbs.plot_var[-1] == 'R':
+            dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
+
+        else:
+            dims_names = ["(1,1)", "(1,2)", "(1,3)",\
+                          "(2,1)", "(2,2)", "(2,3)",\
+                          "(3,1)", "(3,2)", "(3,3)"]
+
+        comps = [ dims_names[mdx] for mdx in range(len(dims_names)) if components[mdx] is True]
+
+    else:
+        pass
+
+    comps = '[' + comps+']' if comps else comps
+
+    return comps
+
 def set_motion_paths_netcdf(context):
 
     scene = context.scene
@@ -725,20 +818,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'X')
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = math.radians(1.0)*(nc.variables[node_var + 'E'][int(tdx), :])
-                second = math.radians(1.0)*(nc.variables[node_var + 'E'][int(np.ceil(tdx)), :])
-                answer = first * frac + second * (1-frac)
-
+                answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
                 obj.rotation_euler = \
                         Euler( Vector((answer)),
                                 axes[obj.mbdyn.parametrization[7]] +\
@@ -749,20 +833,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
-                obj.location = Vector(( nc.variables[node_var + 'X'][tdx, :] ))
+                answer = netcdf_helper(nc, scene, node_var + 'X')
+                obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = nc.variables[node_var + 'Phi'][int(tdx), :]
-                second = nc.variables[node_var + 'Phi'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'Phi')
                 rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
@@ -772,20 +847,11 @@ def set_motion_paths_netcdf(context):
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
-                tdx = frame*freq
-                frac = np.ceil(tdx) - tdx
-
-                first = nc.variables[node_var + 'X'][int(tdx), :]
-                second = nc.variables[node_var + 'X'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'X')
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                first = nc.variables[node_var + 'R'][int(tdx), :]
-                second = nc.variables[node_var + 'R'][int(np.ceil(tdx)), :]
-                answer = first * frac + second * (1-frac)
-
+                answer = netcdf_helper(nc, scene, node_var + 'R')
                 R = Matrix((answer))
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
