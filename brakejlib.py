@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse brake joints
 def parse_brake(rw, ed):
@@ -239,6 +239,8 @@ def spawn_brake_element(elem, context):
         parenting(brakejOBJ, n1OBJ)
 
         elem.blender_object = brakejOBJ.name
+
+        grouping(context, bpy.data.objects[elem.name], [n1OBJ, n2OBJ, brakejOBJ, bpy.data.objects[elem.name]])
 
         return {'FINISHED'}
     else:

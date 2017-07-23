@@ -155,5 +155,21 @@ def parenting(child, parent):
     child.constraints["Child Of"].use_scale_y = False
     child.constraints["Child Of"].use_scale_z = False
 
+    child.location = child.location - parent.location
+
 # -----------------------------------------------------------
 # end of parenting function
+
+def grouping(context, elem_obj, obj_list):
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+    bpy.ops.object.select_all(action = 'DESELECT')
+
+    elem_obj.select = True
+
+    for obj in obj_list:
+        obj.select = True
+
+    bpy.ops.group.create(name = elem_obj.name)
+
+# -----------------------------------------------------------
+# end of grouping function

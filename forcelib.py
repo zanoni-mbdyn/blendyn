@@ -30,7 +30,7 @@ from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
-from .utilslib import parenting
+from .utilslib import *
 
 import os
 import pdb
@@ -260,6 +260,8 @@ def spawn_structural_force_element(elem, context):
         # set parenting of wireframe obj
         parenting(forceOBJ, n1OBJ)
 
+        grouping(context, forceOBJ, [n1OBJ])
+
         elem.blender_object = forceOBJ.name
         forceOBJ.mbdyn.int_label = elem.int_label
 
@@ -322,6 +324,8 @@ def spawn_structural_couple_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(coupleOBJ, n1OBJ)
+
+        grouping(context, coupleOBJ, [n1OBJ])
 
         elem.blender_object = coupleOBJ.name
         coupleOBJ.mbdyn.int_label = elem.int_label

@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 import pdb
 
@@ -152,6 +152,9 @@ def spawn_clamp_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(clampjOBJ, n1OBJ)
+
+        # set group
+        grouping(context, clampjOBJ, [n1OBJ])
 
         elem.blender_object = clampjOBJ.name
 

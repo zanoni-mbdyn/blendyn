@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse distance joints
 def parse_distance(rw, ed):
@@ -264,6 +264,11 @@ def spawn_distance_element(elem, context):
 
     # set parenting
     parenting(distOBJ, n1OBJ)
+
+    # set group
+    dist_child1 = bpy.data.objects[distOBJ.name + '_child1']
+    dist_child2 = bpy.data.objects[distOBJ.name + '_child2']
+    grouping(context, distOBJ, [n1OBJ, n2OBJ, dist_child2, dist_child1])
 
     elem.is_imported = True
     return{'FINISHED'}

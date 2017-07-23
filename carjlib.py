@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 ## Parses cardano hinge joint entry in the .log file
 def parse_cardano_hinge(rw, ed):
@@ -227,6 +227,9 @@ def spawn_cardano_hinge_element(elem, context):
         # set parenting of wireframe obj
         parenting(carjOBJ, n1OBJ)
 
+        # set group
+        grouping(context, carjOBJ, [n1OBJ])
+
         elem.blender_object = carjOBJ.name
 
         return {'FINISHED'}
@@ -289,6 +292,9 @@ def spawn_cardano_pin_elem(elem, context):
 
         # set parenting of wireframe obj
         parenting(carjOBJ, n1OBJ)
+
+        # set group
+        grouping(context, carjOBJ, [n1OBJ])
 
         return {'FINISHED'}
     else:

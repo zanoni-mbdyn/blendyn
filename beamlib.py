@@ -367,10 +367,7 @@ def spawn_beam2_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     # create group for element
-    beamOBJ.select = True
-    n1OBJ.select = True
-    n2OBJ.select = True
-    bpy.ops.group.create(name = beamOBJ.name)
+    grouping(context, beamOBJ, [n1OBJ, n2OBJ])
 
     elem.is_imported = True
     return {'FINISHED'}
@@ -555,14 +552,8 @@ def spawn_beam3_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
  
     bpy.ops.object.select_all(action = 'DESELECT')
-        
-    beamOBJ.select = True
-    n1OBJ.select = True
-    n2OBJ.select = True
-    n3OBJ.select = True
-    obj2.select = True
-    obj3.select = True
-    bpy.ops.group.create(name = beamOBJ.name)
+
+    grouping(context, beamOBJ, [n1OBJ, n2OBJ, n3OBJ, obj2, obj3])
     elem.is_imported = True
 
     obj2.hide = True

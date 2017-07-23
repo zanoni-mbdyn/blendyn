@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse axialrot joints
 def parse_axialrot(rw, ed):
@@ -211,6 +211,8 @@ def spawn_axialrot_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(axialrotjOBJ, n1OBJ)
+
+        grouping(context, axialrotjOBJ, [n1OBJ])
 
         elem.blender_object = axialrotjOBJ.name
 

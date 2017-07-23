@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # Parses body entry in the .log file (see section E.2.8 of input manual for details)
 def parse_body(rw, ed):
@@ -146,6 +146,9 @@ def spawn_body_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(bodyOBJ, n1OBJ)
+
+        # set group
+        grouping(context, bodyOBJ, [n1OBJ])
 
         elem.blender_object = bodyOBJ.name
 

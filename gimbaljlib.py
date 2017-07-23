@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse gimbal joints
 def parse_gimbal(rw, ed):
@@ -232,6 +232,8 @@ def spawn_gimbal_element(elem, context):
 
     # set parenting of wireframe obj
     parenting(gimbaljOBJ, n1OBJ)
+
+    grouping(context, gimbaljOBJ, [n1OBJ, n2OBJ, gimbal_childobj])
 
     elem.blender_object = gimbaljOBJ.name
 

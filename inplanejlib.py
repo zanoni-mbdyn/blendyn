@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse inplane joints
 def parse_inplane(rw, ed):
@@ -222,6 +222,8 @@ def spawn_inplane_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(inplanejOBJ, n1OBJ)
+
+        grouping(context, inplanejOBJ, [n1OBJ])
 
         elem.blender_object = inplanejOBJ.name
 

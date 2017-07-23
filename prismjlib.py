@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse prismatic joints
 def parse_prismatic(rw, ed):
@@ -213,6 +213,8 @@ def spawn_prismatic_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(prismjOBJ, n1OBJ)
+
+        grouping(context, prismjOBJ, [n1OBJ])
 
         elem.blender_object = prismjOBJ.name
 

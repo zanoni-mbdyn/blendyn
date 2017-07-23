@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 ## Parses total joint entry in .log file
 def parse_total(rw, ed):
@@ -336,6 +336,8 @@ def spawn_total_joint_element(elem, context):
 
     # set parenting of wireframe obj
     parenting(totjOBJ, n1OBJ)
+
+    grouping(context, totjOBJ, [n1OBJ])
 
     elem.blender_object = totjOBJ.name
 
@@ -833,6 +835,8 @@ def spawn_total_pin_joint_element(elem, context):
 
     # set parenting of wireframe obj
     parenting(totjOBJ, n1OBJ)
+
+    grouping(context, totjOBJ, [n1OBJ])
 
     elem.blender_object = totjOBJ.name
 

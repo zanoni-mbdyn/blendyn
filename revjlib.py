@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse revolute hinge joints
 def parse_revolute_hinge(rw, ed):
@@ -291,6 +291,8 @@ def spawn_revolute_hinge_element(elem, context):
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
 
+        grouping(context, revjOBJ, [n1OBJ, n2OBJ])
+
         elem.blender_object = revjOBJ.name
 
         return {'FINISHED'}
@@ -404,6 +406,8 @@ def spawn_revolute_pin_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
+
+        grouping(context, revjOBJ, [n1OBJ, n2OBJ])
 
         elem.blender_object = revjOBJ.name
 
@@ -545,6 +549,8 @@ def spawn_revolute_rot_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
+
+        grouping(context, revjOBJ, [n1OBJ, n2OBJ])
 
         elem.blender_object = revjOBJ.name
 

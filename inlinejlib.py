@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat, parenting
+from .utilslib import *
 
 # helper function to parse inline joints
 def parse_inline(rw, ed):
@@ -211,6 +211,8 @@ def spawn_inline_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(inlinejOBJ, n1OBJ)
+
+        grouping(context, inlinejOBJ, [n1OBJ])
 
         elem.blender_object = inlinejOBJ.name
 
