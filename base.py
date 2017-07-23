@@ -1270,11 +1270,15 @@ class MBDynLiveAnimation(bpy.types.Operator):
 
         if hasattr(self, "sender") and not mbs.pause_live:
             try:
-                self.sender.send([1])
+                for ii in range(int(mbs.load_frequency)):
+                    self.sender.send([1])
+                self.running += 1
             except BrokenPipeError:
                 return self.close(context)
 
-        if hasattr(self, "receiver") and not mbs.pause_live:
+
+
+        if hasattr(self, "receiver") and (not mbs.pause_live):
             data = self.receiver.get_data()
             for i, node in enumerate(mbs.nodes):
                 self.frame += 1
@@ -1312,6 +1316,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
+        self.running = 0
         self.frame = context.scene.frame_start = context.scene.frame_current = 0
 
         mbs.pause_live = True
@@ -1319,6 +1324,8 @@ class MBDynLiveAnimation(bpy.types.Operator):
         host_name, port_number = mbs.host_sender, mbs.port_sender
         self.sender = StreamSender(host_name=host_name, port_number=port_number)
         self.sender.send([1])
+
+        bpy.ops.animate.read_mbdyn_log_file()
 
         host_name, port_number = mbs.host_receiver, mbs.port_receiver
         self.receiver = StreamReceiver('d'*12*len(mbs.nodes), [0]*12*len(mbs.nodes), host_name=host_name, port_number=port_number)
@@ -1624,6 +1631,9 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
 
         row = layout.row()
         row.prop(mbs, "live_keyframes")
+
+        row = layout.row()
+        row.prop(mbs, "load_frequency")
 
         row = layout.row()
         row.operator(MBDynLiveAnimation.bl_idname, text = "Start Sockets")
