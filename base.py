@@ -1387,11 +1387,18 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if not mbs.mbdyn_running:
             return self.close(context)
 
-        if not (event.type in ['ESC', 'P','TIMER'] or (hasattr(self, "channels") and event.type in self.channels)):
+        if not (event.type in ['ESC', 'P','TIMER', 'LEFT_ARROW', 'RIGHT_ARROW'] or (hasattr(self, "channels") and event.type in self.channels)):
             return {'PASS_THROUGH'}
 
         if event.type == 'P' and event.value == 'PRESS':
             mbs.pause_live = not mbs.pause_live
+
+        elif event.type == 'RIGHT_ARROW' and event.value == 'PRESS':
+            mbs.load_frequency += 1
+
+        elif event.type == 'LEFT_ARROW' and event.value == 'PRESS':
+            mbs.load_frequency -= 1
+            mbs.load_frequency = max(1, mbs.load_frequency)
 
         elif event.type == 'ESC':
 
