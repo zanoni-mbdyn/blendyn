@@ -42,6 +42,8 @@ from collections import namedtuple
 
 from .nodelib import *
 from .elementlib import *
+from .driverlib import parse_filedriver
+from .outputlib import parse_output_elem
 from .rfmlib import *
 from .logwatcher import *
 
@@ -251,6 +253,13 @@ def parse_log_file(context):
                 elif entry == "structural node:":
                     print("parse_log_file(): Found a structural node.")
                     b_nodes_consistent = b_nodes_consistent * (parse_node(context, rw))
+                elif entry == "filedriver:":
+                    print("parse_log_file(): Found a file driver.")
+                    #print(rw)
+                    parse_filedriver(context, rw)
+                elif entry == "outputelement:":
+                    print("parse_log_file(): Found an output element.")
+                    parse_output_elem(context, rw)
                 else:
                     print("parse_log_file(): Found " + entry[:-1] + " element.")
                     b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)

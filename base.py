@@ -81,6 +81,9 @@ from .logwatcher import *
 from .liveanim import *
 from .nodelib import set_obj_locrot_mov
 
+from .driverlib import *
+from .outputlib import *
+
 import pdb
 
 ## Nodes Dictionary: contains nodes informations
@@ -469,6 +472,16 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             name = "Nodes for which Output is disabled",
             default = ''
     )
+
+    drivers = CollectionProperty(
+        name = "MBDyn Drivers",
+        type = MBDynFileDriversDictionary
+        )
+
+    output_elems = CollectionProperty(
+        name = "MBDyn Output Elements",
+        type = MBDynOutputElemsDictionary
+        )
 
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes = CollectionProperty(
