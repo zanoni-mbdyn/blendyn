@@ -191,6 +191,9 @@ def no_output(context):
                 mbs.disabled_output = difference
         except FileNotFoundError:
             pass
+        except StopIteration:
+            pass
+
 # -----------------------------------------------------------
 # end of no_output() function
 
@@ -281,6 +284,8 @@ def parse_log_file(context):
     except StopIteration:
         print("Reached the end of .log file")
 
+    nd = mbs.nodes
+
     del_nodes = [var for var in nd.keys() if nd[var].is_imported == False]
     del_elems = [var for var in ed.keys() if ed[var].is_imported == False]
 
@@ -301,10 +306,8 @@ def parse_log_file(context):
         mbs.min_node_import = nd[0].int_label
         mbs.max_node_import = nd[0].int_label
         for ndx in range(1, len(nd)):
-            if nd[ndx].int_label < mbs.min_node_import:
-                mbs.min_node_import = nd[ndx].int_label
-            elif nd[ndx].int_label > mbs.max_node_import:
-                mbs.max_node_import = nd[ndx].int_label
+            mbs.min_node_import = min(mbs.min_node_import, nd[ndx].int_label)
+            mbs.max_node_import = max(mbs.max_node_import, nd[ndx].int_label)
         if mbs.use_netcdf:
             ncfile = os.path.join(mbs.file_path, \
                     mbs.file_basename + '.nc')

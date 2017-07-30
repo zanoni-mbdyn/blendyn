@@ -42,9 +42,13 @@ class MBDynOutputElemsDictionary(bpy.types.PropertyGroup):
         description =""
         )
 
+    path = StringProperty(
+        name = "Path of sock file if UNIX socket used",
+        )
+
     host = StringProperty(
         name = "Hostname of output element",
-        default = "127.0.0.1"
+        default = ""
         )
 
     port = IntProperty(
@@ -66,13 +70,13 @@ class MBDynOutputElemsDictionary(bpy.types.PropertyGroup):
         name = "Output frequency"
         )
 
-    motion_content = BoolVectorProperty(
+    motion_content = IntVectorProperty(
         name = "Output Flags",
         size = 5
         )
 
-    num_nodes = IntProperty(
-        name = "Number of Nodes"
+    nodes = StringProperty(
+        name = "Order of Nodes"
         )
 bpy.utils.register_class(MBDynOutputElemsDictionary)
 # -----------------------------------------------------------
@@ -86,23 +90,28 @@ def parse_output_elem(context, rw):
     def update_output_elem(output_element, rw):
         # output_element.host = rw[5]
         # Change this after Andrea's changes
-        output_element.port = int(rw[5])
+        output_element.type = rw[3]
+
+        if output_element.type == 'UNIX':
+            output_element.path = rw[5]
+        else:
+            output_element.port = int(rw[5])
+
         output_element.protocol = rw[6]
         output_element.create = bool(rw[7])
-        # output_element.num_nodes = rw[?]
-        # output_element.data = list(map(bool, rw[?]))
+        vector1 = list(map(int, rw[14: 14 + 5]))
+        vector2 = [3, 9, 9, 3, 3]
+        output_element.motion_content = [x*y for x, y in zip(vector2, vector1)]
+        print(output_element.motion_content)
+        output_element.nodes = " ".join(rw[19:])
+
     try:
         output_element = out_ed["{0}_{1}".format(rw[4], rw[1])]
         print("parse_output_elem(): found existing entry in output elements dictionary for output " + rw[1]\
         + ". Updating it.")
-        update_filedriver(output_element, rw)
+        update_output_elem(output_element, rw)
     except KeyError:
         output_element = out_ed.add()
         output_element.int_label = int(rw[1])
         output_element.name = "{0}_{1}".format(rw[4], rw[1])
         update_output_elem(output_element, rw)
-
-
-        
-        
-

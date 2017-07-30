@@ -47,9 +47,13 @@ class MBDynFileDriversDictionary(bpy.types.PropertyGroup):
         description =""
         )
 
+    path = StringProperty(
+        name = "Path of sock file if UNIX socket used",
+        )
+
     host = StringProperty(
         name = "Hostname of driver",
-        default = "127.0.0.1"
+        default = ""
         )
 
     port = IntProperty(
@@ -91,11 +95,18 @@ def parse_filedriver(context, rw):
     def update_filedriver(driver, rw):
         # driver.host = rw[5]
         # Change this after Andrea's changes
-        driver.port = int(rw[5])
+
+        driver.type = rw[3]
+
+        if driver.type == 'UNIX':
+            driver.path = rw[5]
+        else:
+            driver.port = int(rw[5])
+
         driver.protocol = rw[6]
+        driver.create = bool(rw[7])
         driver.timeout = float(rw[12])
         driver.columns_number = int(rw[13])
-        driver.create = bool(rw[7])
 
     try:
         driver = drs["{0}_{1}".format(rw[4], rw[1])]

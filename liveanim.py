@@ -25,11 +25,12 @@
 import bpy
 from math import sqrt
 import bmesh
-from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR
+from socket import socket, AF_INET, AF_UNIX, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR
 from struct import pack, unpack
 from threading import Thread
 from collections import OrderedDict
 from time import sleep
+from os import path, remove
 
 class Tree(OrderedDict):
     def get_leaves(self):
@@ -58,9 +59,36 @@ def create_stream_socket(host_name, port_number):
         except OSError as err:
             print(err)
 
+def connect_stream_socket(stream_obj, context):
+    mbs = context.scene.mbdyn
+
+    if stream_obj.type == 'UNIX':
+        sock = socket(AF_UNIX, SOCK_STREAM)
+
+        if path.isabs(stream_obj.path):
+            sock.connect(stream_obj.path)
+        else:
+            sock_path = path.join(mbs.file_path, stream_obj.path)
+            sock.connect(path.abspath(sock_path))
+
+        return sock
+
+    else:
+        sock = socket(AF_INET, SOCK_STREAM)
+        sock.connect((stream_obj.host, stream_obj.port))
+
+        return sock
+
+def remove_unix_stream(stream_obj):
+    mbs = bpy.context.scene.mbdyn
+
+    sock_path = path.join(mbs.file_path, stream_obj.path)
+    remove(path.abspath(sock_path))
+
 class StreamSender:
-    def __init__(self, host_name=None, port_number=None):
-        self.socket = create_stream_socket(host_name if host_name is not None else "127.0.0.1", port_number if port_number is not None else 9012)
+    def __init__(self, stream_obj, context):
+        self.stream_obj = stream_obj
+        self.socket = connect_stream_socket(stream_obj, context)
     def send(self, floats):
         self.socket.send(pack('d'*len(floats), *floats))
     def close(self):
@@ -71,17 +99,27 @@ class StreamSender:
                 print(err)
         self.socket.close()
         print('Socket Closed')
+
+        if self.stream_obj.type == 'UNIX':
+            remove_unix_stream(self.stream_obj)
+
         del self.socket
 
 class StreamReceiver(Thread):
-    def __init__(self, fmt, initial_data=None, host_name=None, port_number=None):
+    def __init__(self, stream_obj, context, initial_data=None):
         Thread.__init__(self)
+        self.stream_obj = stream_obj
         self.daemon = True
-        self.fmt = fmt
+        motion_content = sum(stream_obj.motion_content)
+        num_nodes = len(stream_obj.nodes.split(' '))
+        self.recv_size = num_nodes * motion_content
+        self.fmt = 'd' * self.recv_size
+        self.recv_size *= 8
+        if initial_data == None:
+            initial_data = [0]*len(self.fmt)
         self.packed_data = pack(self.fmt, *initial_data)
-        self.recv_size = len(self.packed_data)
         self.receiving = True
-        self.socket = create_stream_socket(host_name if host_name is not None else "127.0.0.1", port_number if port_number is not None else 9011)
+        self.socket = connect_stream_socket(stream_obj, context)
         print (self.socket)
     def run(self):
         try:
@@ -107,6 +145,9 @@ class StreamReceiver(Thread):
 
     def close(self):
         self.receiving = False
+
+        if self.stream_obj.type == 'UNIX':
+            remove_unix_stream(self.stream_obj)
 
 def write_vector(f, v, prepend=True):
     f.write((", " if prepend else "") + ", ".join([FORMAT(round(x, 6) if round(x, 6) != -0. else 0) for x in v]))

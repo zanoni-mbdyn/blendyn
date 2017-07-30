@@ -1400,16 +1400,16 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if not mbs.mbdyn_running:
             return self.close(context)
 
-        if not (event.type in ['ESC', 'P','TIMER', 'LEFT_ARROW', 'RIGHT_ARROW'] or (hasattr(self, "channels") and event.type in self.channels)):
+        if not (event.type in ['ESC', 'P','TIMER', 'J', 'K'] or (hasattr(self, "channels") and event.type in self.channels)):
             return {'PASS_THROUGH'}
 
         if event.type == 'P' and event.value == 'PRESS':
             mbs.pause_live = not mbs.pause_live
 
-        elif event.type == 'RIGHT_ARROW' and event.value == 'PRESS':
+        elif event.type == 'K' and event.value == 'PRESS':
             mbs.load_frequency += 1
 
-        elif event.type == 'LEFT_ARROW' and event.value == 'PRESS':
+        elif event.type == 'J' and event.value == 'PRESS':
             mbs.load_frequency -= 1
             mbs.load_frequency = max(1, mbs.load_frequency)
 
@@ -1435,9 +1435,10 @@ class MBDynLiveAnimation(bpy.types.Operator):
 
         if hasattr(self, "receiver") and (not mbs.pause_live):
             data = self.receiver.get_data()
-            for i, node in enumerate(mbs.nodes):
+            for i, node in enumerate(self.nodes):
                 self.frame += 1
 
+                node = mbs.nodes['node_' + node]
                 node_obj = bpy.data.objects[node.blender_object]
 
 
@@ -1477,15 +1478,14 @@ class MBDynLiveAnimation(bpy.types.Operator):
         mbs.pause_live = True
 
         host_name, port_number = mbs.host_sender, mbs.port_sender
-        self.sender = StreamSender(host_name=host_name, port_number=port_number)
+        self.sender = StreamSender(mbs.drivers[0], context)
         self.sender.send([1])
 
-        bpy.ops.animate.read_mbdyn_log_file()
-
-        host_name, port_number = mbs.host_receiver, mbs.port_receiver
-        self.receiver = StreamReceiver('d'*12*len(mbs.nodes), [0]*12*len(mbs.nodes), host_name=host_name, port_number=port_number)
+        self.nodes = mbs.output_elems[0].nodes.split(' ')
+        self.receiver = StreamReceiver(mbs.output_elems[0], context)
 
         if self.receiver.socket:
+            print('receiver socket is started')
             self.receiver.start()
         else:
             self.report({'INFO'}, "Animation stream socket failed to connect")
@@ -1497,7 +1497,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
             pass
         wm = context.window_manager
         wm.progress_begin(0., 100.)
-        self.timer = wm.event_timer_add(0.00000001, context.window)
+        self.timer = wm.event_timer_add(0.0001, context.window)
         wm.modal_handler_add(self)
 
         return{'RUNNING_MODAL'}
