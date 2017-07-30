@@ -660,7 +660,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
 
     live_keyframes = BoolProperty(
         name = "Set Keyframes during live simulation",
-        default = True
+        default = False
         )
 
     # Live Animation
@@ -1096,7 +1096,7 @@ class MBDynClearData(bpy.types.Operator):
         mbs = context.scene.mbdyn
 
         for var in mbs.keys():
-            dummy = getattr(mbs, var)
+            dummy = mbs[var]
             if isinstance(dummy, bpy.types.bpy_prop_collection):
                 dummy.clear()
 
@@ -1714,10 +1714,6 @@ class MBDynImportPanel(bpy.types.Panel):
         col = layout.column(align = True)
         col.operator(MBDynSelectOutputFile.bl_idname, text = "Select results file")
 
-        row = layout.row()
-        row.label(text = "MBDyn Standard Import")
-        col = layout.column(align = True)
-        col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
         # Display MBDyn file basename and info
         row = layout.row()
 
@@ -1909,13 +1905,18 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         nd = mbs.nodes
         ed = mbs.elems
 
-        row = layout.row()
-        row.prop(mbs, "port_sender")
-        row.prop(mbs, "host_sender")
+        # row = layout.row()
+        # row.prop(mbs, "port_sender")
+        # row.prop(mbs, "host_sender")
+
+        # row = layout.row()
+        # row.prop(mbs, "port_receiver")
+        # row.prop(mbs, "host_receiver")
 
         row = layout.row()
-        row.prop(mbs, "port_receiver")
-        row.prop(mbs, "host_receiver")
+        row.label(text = "MBDyn Standard Import")
+        col = layout.column(align = True)
+        col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
 
         layout.separator()
 

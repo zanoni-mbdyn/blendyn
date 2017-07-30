@@ -83,7 +83,8 @@ def remove_unix_stream(stream_obj):
     mbs = bpy.context.scene.mbdyn
 
     sock_path = path.join(mbs.file_path, stream_obj.path)
-    remove(path.abspath(sock_path))
+    if path.exists(path.abspath(sock_path)):
+        remove(path.abspath(sock_path))
 
 class StreamSender:
     def __init__(self, stream_obj, context):
