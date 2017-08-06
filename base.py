@@ -1733,6 +1733,9 @@ class MBDynImportPanel(bpy.types.Panel):
             row.label(text = mbs.file_path)
         col.enabled = False
 
+        row = layout.row()
+        row.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
+
         # Import MBDyn data
         row = layout.row()
         # row.label(text="Load MBDyn data")
