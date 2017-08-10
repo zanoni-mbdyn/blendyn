@@ -478,6 +478,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         type = MBDynFileDriversDictionary
         )
 
+    dr_index = IntProperty(
+        name = 'Index of driver',
+        default = 0
+        )
+
     output_elems = CollectionProperty(
         name = "MBDyn Output Elements",
         type = MBDynOutputElemsDictionary
@@ -1097,9 +1102,15 @@ class MBDynClearData(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        for var in mbs.keys():
-            dummy = mbs[var]
+        for var in dir(mbs):
+            try:
+                dummy = getattr(mbs, var)
+
+            except AttributeError:
+                continue
+
             if isinstance(dummy, bpy.types.bpy_prop_collection):
+                print(dummy)
                 dummy.clear()
 
         message = "Scene MBDyn data cleared."
@@ -1402,11 +1413,14 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if not mbs.mbdyn_running:
             return self.close(context)
 
-        if not (event.type in ['ESC', 'P','TIMER', 'J', 'K'] or (hasattr(self, "channels") and event.type in self.channels)):
+        allowed_keys = ['ESC', 'P','TIMER', 'J', 'K', 'EQUAL', 'MINUS', 'LEFT_BRACKET', 'RIGHT_BRACKET']
+
+        if not (event.type in allowed_keys or (hasattr(self, "channels") and event.type in self.channels)):
             return {'PASS_THROUGH'}
 
         if event.type == 'P' and event.value == 'PRESS':
             mbs.pause_live = not mbs.pause_live
+            print(mbs.pause_live)
 
         elif event.type == 'K' and event.value == 'PRESS':
             mbs.load_frequency += 1
@@ -1414,6 +1428,22 @@ class MBDynLiveAnimation(bpy.types.Operator):
         elif event.type == 'J' and event.value == 'PRESS':
             mbs.load_frequency -= 1
             mbs.load_frequency = max(1, mbs.load_frequency)
+
+        elif event.type == 'RIGHT_BRACKET' and event.value == 'PRESS':
+            mbs.dr_index += 1
+            mbs.dr_index %= len(mbs.drivers)
+            print(mbs.dr_index)
+
+        elif event.type == 'LEFT_BRACKET' and event.value == 'PRESS':
+            mbs.dr_index -= 1
+            mbs.dr_index = mbs.dr_index + len(mbs.drivers) if mbs.dr_index < 0 else mbs.dr_index
+            print(mbs.dr_index)
+
+        elif event.type == 'EQUAL' and event.value == 'PRESS':
+            mbs.drivers[mbs.dr_index].value += 1
+
+        elif event.type == 'MINUS' and event.value == 'PRESS':
+            mbs.drivers[mbs.dr_index].value -= 1
 
         elif event.type == 'ESC':
 
@@ -1425,15 +1455,14 @@ class MBDynLiveAnimation(bpy.types.Operator):
 
             return self.close(context)
 
-        if hasattr(self, "sender") and not mbs.pause_live:
+        if hasattr(self, "senders") and (not mbs.pause_live):
             try:
                 for ii in range(int(mbs.load_frequency)):
-                    self.sender.send([1])
+                    for driver in mbs.drivers:
+                        self.senders[driver.name].send([driver.value])
                 self.running += 1
             except BrokenPipeError:
                 return self.close(context)
-
-
 
         if hasattr(self, "receiver") and (not mbs.pause_live):
             data = self.receiver.get_data()
@@ -1480,8 +1509,11 @@ class MBDynLiveAnimation(bpy.types.Operator):
         mbs.pause_live = True
 
         host_name, port_number = mbs.host_sender, mbs.port_sender
-        self.sender = StreamSender(mbs.drivers[0], context)
-        self.sender.send([1])
+        self.senders = [(driver.name, StreamSender(driver, context)) for driver in mbs.drivers]
+        self.senders = dict(self.senders)
+
+        for driver in mbs.drivers:
+            self.senders[driver.name].send([driver.value])
 
         self.nodes = mbs.output_elems[0].nodes.split(' ')
         self.receiver = StreamReceiver(mbs.output_elems[0], context)
@@ -1936,7 +1968,9 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         row = layout.row()
         row.operator(MBDynLiveAnimation.bl_idname, text = "Start Sockets")
 
-
+        row = layout.row()
+        row.template_list('MBDynDriver_UL_List', "MBDyn drivers list", mbs, "drivers",\
+                mbs, "dr_index")
 
 class MBDynEigenanalysisPanel(bpy.types.Panel):
     """ Visualizes the results of an eigenanalysis - Toolbar Panel """
@@ -2089,6 +2123,13 @@ class MBDynElems_UL_List(bpy.types.UIList):
             layout.label('', icon = custom_icon)
 # -----------------------------------------------------------
 # end of MBDynElems_UL_List class
+
+class MBDynDriver_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.name)
+        layout.label(str(item.value))
+# -----------------------------------------------------------
+# end of MBDynDriver_UL_List class
 
 class MBDynPlotVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):

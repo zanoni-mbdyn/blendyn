@@ -83,6 +83,11 @@ class MBDynFileDriversDictionary(bpy.types.PropertyGroup):
         name = "Columns Number"
         )
 
+    value = IntProperty(
+        name = 'Value of Driver',
+        default = 0
+        )
+
 bpy.utils.register_class(MBDynFileDriversDictionary)
 # -----------------------------------------------------------
 # end of MBDynFileDriversDictionary class 
@@ -107,6 +112,11 @@ def parse_filedriver(context, rw):
         driver.create = bool(rw[7])
         driver.timeout = float(rw[12])
         driver.columns_number = int(rw[13])
+
+        try:
+            driver.value = float(rw[14])
+        except IndexError:
+            pass
 
     try:
         driver = drs["{0}_{1}".format(rw[4], rw[1])]
