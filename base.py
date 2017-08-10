@@ -1413,7 +1413,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if not mbs.mbdyn_running:
             return self.close(context)
 
-        allowed_keys = ['ESC', 'P','TIMER', 'J', 'K', 'EQUAL', 'MINUS', 'LEFT_BRACKET', 'RIGHT_BRACKET']
+        allowed_keys = ['ESC', 'P','TIMER', 'J', 'K', 'QUOTE', 'SEMI_COLON', 'PERIOD', 'SLASH']
 
         if not (event.type in allowed_keys or (hasattr(self, "channels") and event.type in self.channels)):
             return {'PASS_THROUGH'}
@@ -1429,20 +1429,20 @@ class MBDynLiveAnimation(bpy.types.Operator):
             mbs.load_frequency -= 1
             mbs.load_frequency = max(1, mbs.load_frequency)
 
-        elif event.type == 'RIGHT_BRACKET' and event.value == 'PRESS':
+        elif event.type == 'SLASH' and event.value == 'PRESS':
             mbs.dr_index += 1
             mbs.dr_index %= len(mbs.drivers)
             print(mbs.dr_index)
 
-        elif event.type == 'LEFT_BRACKET' and event.value == 'PRESS':
+        elif event.type == 'PERIOD' and event.value == 'PRESS':
             mbs.dr_index -= 1
             mbs.dr_index = mbs.dr_index + len(mbs.drivers) if mbs.dr_index < 0 else mbs.dr_index
             print(mbs.dr_index)
 
-        elif event.type == 'EQUAL' and event.value == 'PRESS':
+        elif event.type == 'QUOTE' and event.value == 'PRESS':
             mbs.drivers[mbs.dr_index].value += 1
 
-        elif event.type == 'MINUS' and event.value == 'PRESS':
+        elif event.type == 'SEMI_COLON' and event.value == 'PRESS':
             mbs.drivers[mbs.dr_index].value -= 1
 
         elif event.type == 'ESC':
