@@ -53,6 +53,7 @@ from .gimbaljlib import *
 from .brakejlib import *
 from .linearjlib import *
 from .angularjlib import *
+from .drivejlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems
@@ -92,7 +93,8 @@ def parse_elements(context, jnt_type, rw):
             "linearvelocity": parse_linearvelocity,
             "linearacceleration": parse_linearacceleration,
             "angularvelocity": parse_angularvelocity,
-            "angularacceleration": parse_angularacceleration
+            "angularacceleration": parse_angularacceleration,
+            "drivedisplacement": parse_drive_displacement
             }
  
     try:
