@@ -187,8 +187,8 @@ def spawn_brake_element(elem, context):
     # project offsets in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = Vector(( f1[0], f1[1], f1[2] ))
+    p2 = Vector(( f2[0], f2[1], f2[2] ))
 
     # load the wireframe brake joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
@@ -206,8 +206,7 @@ def spawn_brake_element(elem, context):
         # place the joint object in the position defined relative to node 2
         brakejOBJ.location = p1
         brakejOBJ.rotation_mode = 'QUATERNION'
-        brakejOBJ.rotation_quaternion = \
-                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        brakejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
         parenting(brakejOBJ, n2OBJ)
@@ -232,8 +231,7 @@ def spawn_brake_element(elem, context):
         # place the joint object in the position defined relative to node 2
         brakejOBJ.location = p1
         brakejOBJ.rotation_mode = 'QUATERNION'
-        brakejOBJ.rotation_quaternion = \
-                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        brakejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
         parenting(brakejOBJ, n1OBJ)

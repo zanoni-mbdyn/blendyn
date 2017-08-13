@@ -202,22 +202,20 @@ def spawn_spherical_hinge_element(elem, context):
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-        p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
+        p2 = Vector(( f2[0], f2[1], f2[2] ))
     
         # place the joint object in the position defined relative to node 1
         sphjOBJ.location = p1
         sphjOBJ.rotation_mode = 'QUATERNION'
-        sphjOBJ.rotation_quaternion = \
-                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        sphjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # create an object representing the second RF used by the joint
         # for model debugging
         bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
         RF2 = bpy.context.selected_objects[0]
         RF2.rotation_mode = 'QUATERNION'
-        RF2.rotation_quaternion = \
-                n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+        RF2.rotation_quaternion = Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
         RF2.scale = .33*sphjOBJ.scale
         RF2.name = sphjOBJ.name + '_RF2'
         parenting(RF2, sphjOBJ)
@@ -282,13 +280,12 @@ def spawn_spherical_pin_element(elem, context):
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
     
         # place the joint object in the position defined relative to node 1
         sphjOBJ.location = p1
         sphjOBJ.rotation_mode = 'QUATERNION'
-        sphjOBJ.rotation_quaternion = \
-                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        sphjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
         parenting(sphjOBJ, n1OBJ)

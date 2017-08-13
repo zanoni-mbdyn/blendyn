@@ -223,10 +223,9 @@ def spawn_total_joint_element(elem, context):
     p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
 
     # place the joint object in the position defined relative to node 1
-    totjOBJ.location = p1
+    totjOBJ.location = p1 - n1OBJ.location
     totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = \
-            n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    totjOBJ.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
 
     # display traslation arrows
     pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
@@ -239,7 +238,7 @@ def spawn_total_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
-            obj.location = totjOBJ.location
+            obj.location = p1
 
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
@@ -261,7 +260,7 @@ def spawn_total_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
-            obj.location = totjOBJ.location
+            obj.location = p1
             
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
@@ -755,10 +754,9 @@ def spawn_total_pin_joint_element(elem, context):
     p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
 
     # place the joint object in the position defined relative to node 1
-    totjOBJ.location = p1
+    totjOBJ.location = p1 - n1OBJ.location
     totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = \
-            n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    totjOBJ.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
 
     # display traslation arrows
     pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
@@ -771,7 +769,7 @@ def spawn_total_pin_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
-            obj.location = totjOBJ.location
+            obj.location = p1
             
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
@@ -792,7 +790,7 @@ def spawn_total_pin_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
            
             # position it correctly
-            obj.location = totjOBJ.location
+            obj.location = p1
 
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'

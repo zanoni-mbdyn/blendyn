@@ -132,7 +132,7 @@ def spawn_body_element(elem, context):
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
     
         # place the body object in the position defined relative to node 1
         bodyOBJ.location = p1

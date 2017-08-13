@@ -155,8 +155,6 @@ def parenting(child, parent):
     child.constraints["Child Of"].use_scale_y = False
     child.constraints["Child Of"].use_scale_z = False
 
-    child.location = child.location - parent.location
-
 # -----------------------------------------------------------
 # end of parenting function
 
