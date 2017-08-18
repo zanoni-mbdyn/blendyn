@@ -1429,12 +1429,12 @@ class MBDynLiveAnimation(bpy.types.Operator):
             mbs.load_frequency -= 1
             mbs.load_frequency = max(1, mbs.load_frequency)
 
-        elif event.type == 'UP_ARROW' and event.value == 'PRESS':
+        elif event.type == 'DOWN_ARROW' and event.value == 'PRESS':
             mbs.dr_index += 1
             mbs.dr_index %= len(mbs.drivers)
             print(mbs.dr_index)
 
-        elif event.type == 'DOWN_ARROW' and event.value == 'PRESS':
+        elif event.type == 'UP_ARROW' and event.value == 'PRESS':
             mbs.dr_index -= 1
             mbs.dr_index = mbs.dr_index + len(mbs.drivers) if mbs.dr_index < 0 else mbs.dr_index
             print(mbs.dr_index)
