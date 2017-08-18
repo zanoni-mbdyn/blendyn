@@ -145,3 +145,29 @@ def parse_rotmat(rw, idx, R):
     R[2][1] = float(rw[idx + 7])
     R[2][2] = float(rw[idx + 8])
     pass
+
+def parenting(child, parent):
+    bpy.context.scene.objects.active = child
+    bpy.ops.object.constraint_add(type='CHILD_OF')
+    child.constraints["Child Of"].target = parent
+
+    child.constraints["Child Of"].use_scale_x = False
+    child.constraints["Child Of"].use_scale_y = False
+    child.constraints["Child Of"].use_scale_z = False
+
+# -----------------------------------------------------------
+# end of parenting function
+
+def grouping(context, elem_obj, obj_list):
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+    bpy.ops.object.select_all(action = 'DESELECT')
+
+    elem_obj.select = True
+
+    for obj in obj_list:
+        obj.select = True
+
+    bpy.ops.group.create(name = elem_obj.name)
+
+# -----------------------------------------------------------
+# end of grouping function
