@@ -1,0 +1,202 @@
+# spinning_top.mbd
+
+#-----------------------------------------------------------------------------
+# [Data Block]
+
+begin: data;
+   problem: initial value;
+end: data;
+
+#-----------------------------------------------------------------------------
+# [<Problem> Block]
+
+begin: initial value;
+   initial time:   0.;
+   final time:     12;
+   time step:      1.e-3;
+   max iterations: 10;
+   tolerance:      1.e-7;
+end: initial value;
+
+#-----------------------------------------------------------------------------
+# [Control Data Block]
+
+begin: control data;
+   output frequency: 10;
+   structural nodes: 3;
+   rigid bodies:     1;
+   joints:           2;
+   forces:           3;
+   gravity;
+   output elements: 1;
+   file drivers: 1;
+end: control data;
+
+#-----------------------------------------------------------------------------
+# Design Variables
+set: real m   = 0.1;    #[kg]     Mass of the top
+set: real Ixx = 4.3e-5; #[kg*m^2] Moment of inertia of the top
+set: real Iyy = 4.3e-5; #[kg*m^2] Moment of inertia of the top
+set: real Izz = 8.0e-5; #[kg*m^2] Moment of inertia of the top
+set: real h   = 0.05;   #[m]      Height of the center of mass of the top
+
+set: real Ff = 0.001; #[N] Translational friction
+set: real Mf = 0.001; #[Nm] Rotational friction
+
+set: real phi0 = pi/6.;   #[rad]   Initial tilt angle of the top
+set: real w0   = 2*pi*30; #[rad/s] Initial spin velocity of the top
+
+#-----------------------------------------------------------------------------
+# Reference Labels
+set: integer Ref_TopTip = 1;
+
+# Node Labels
+set: integer NoSta_Ground = 1;
+set: integer NoDyn_Top    = 2;
+set: integer NoDum_TopTip = 3;
+
+# Body Labels
+set: integer Body_Top = 1;
+
+# Joint Labels
+set: integer JoClamp_Ground   = 1;
+set: integer JoInp_Ground_Top = 2;
+
+# Force Labels
+set: integer FoStr_Friction_X = 1;
+set: integer FoStr_Friction_Y = 2;
+set: integer CoStr_Friction_z = 3;
+
+#-----------------------------------------------------------------------------
+# Scalar Functions
+scalar function: "cubsign",
+   cubicspline, do not extrapolate,
+      -1.03, -1.00,
+      -1.02, -1.00,
+      -1.01, -1.00,
+      -1.00, -1.00,
+       1.00,  1.00,
+       1.01,  1.00,
+       1.02,  1.00,
+       1.03,  1.00;
+
+#-----------------------------------------------------------------------------
+# References
+reference: Ref_TopTip,
+   reference, global, null,                # absolute position
+   reference, global, euler, 0., phi0, 0., # absolute orientation
+   reference, global, null,                # absolute velocity
+   reference, global, null;                # absolute angular velocity
+   
+#-----------------------------------------------------------------------------
+# [Nodes Block]
+
+begin: nodes;
+
+   #-----------------------------------------------------------------------------
+   # Nodes
+   structural: NoSta_Ground, static,
+      null, # absolute position
+      eye,  # absolute orientation
+      null, # absolute velocity
+      null; # absolute angular velocity
+      
+   structural: NoDyn_Top, dynamic,
+      reference, Ref_TopTip, 0., 0., h,  # absolute position
+      reference, Ref_TopTip, eye,        # absolute orientation
+      reference, Ref_TopTip, null,       # absolute velocity
+      reference, Ref_TopTip, 0., 0., w0; # absolute angular velocity
+      
+   structural: NoDum_TopTip, dummy, NoDyn_Top,
+      offset,
+         reference, Ref_TopTip, null, # relative offset
+         reference, Ref_TopTip, eye;  # relative orientation
+
+end: nodes;
+
+#-----------------------------------------------------------------------------
+# Plugin Variables
+set: [node, VX_Tip, NoDum_TopTip, structural, string="XP[1]"];
+set: [node, VY_Tip, NoDum_TopTip, structural, string="XP[2]"];
+set: [node, w, NoDyn_Top, structural, string="omega[3]"];
+
+#-----------------------------------------------------------------------------
+# [Elements Block]
+
+
+
+begin: drivers;
+   file: 1, stream,
+                stream drive name, "SPRNGF",
+                create, yes,
+                port, 9012,
+      
+      #nonblocking,
+      timeout, 200,
+      echo, "body-in.echo",
+                1;   # force
+end: drivers;
+
+
+begin: elements;
+
+   #-----------------------------------------------------------------------------
+   # Bodies
+   body: Body_Top, NoDyn_Top,
+      m,                   # mass
+      null,                # relative center of mass
+      diag, Ixx, Iyy, Izz; # inertia matrix
+      
+   #-----------------------------------------------------------------------------
+   # Joints
+   joint: JoClamp_Ground,
+      clamp,
+         NoSta_Ground,
+            null, # absolute position
+            eye;  # absolute orientation
+            
+   joint: JoInp_Ground_Top,
+      in plane,
+         NoSta_Ground,
+            null,       # relative plane position
+            0., 0., 1., # relative normal direction
+         NoDyn_Top,
+            offset, reference, Ref_TopTip, null; # relative offset
+            
+   #-----------------------------------------------------------------------------
+   # Forces      
+   force: FoStr_Friction_X,
+      absolute,
+         NoDyn_Top,
+            position, reference, Ref_TopTip, null, # relative arm
+         single, 1., 0., 0.,
+            string, "-model::sf::cubsign(VX_Tip/0.001)*Ff"; # force value
+            
+   force: FoStr_Friction_Y,
+      absolute,
+         NoDyn_Top,
+            position, reference, Ref_TopTip, null, # relative arm
+         single, 0., 1., 0.,
+            string, "-model::sf::cubsign(VY_Tip/0.001)*Ff"; # force value
+            
+   couple: CoStr_Friction_z,
+      follower,
+         NoDyn_Top,
+         single, reference, node, 0., 0., 1.,
+            string, "-model::sf::cubsign(w/0.001)*Mf"; # couple value
+
+   #-----------------------------------------------------------------------------
+   # Gravity
+   gravity: 0., 0., -1., const, 9.81;
+ 
+
+   stream output: 1,
+      stream name, "MAILBX",
+      create, yes,
+         path, "./mbdyn.output.sock",
+         no signal,
+      motion,
+      output flags, position, orientation matrix, 
+      all;
+
+end: elements;

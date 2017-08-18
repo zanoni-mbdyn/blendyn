@@ -1413,7 +1413,7 @@ class MBDynLiveAnimation(bpy.types.Operator):
         if not mbs.mbdyn_running:
             return self.close(context)
 
-        allowed_keys = ['ESC', 'P','TIMER', 'J', 'K', 'QUOTE', 'SEMI_COLON', 'PERIOD', 'SLASH']
+        allowed_keys = ['ESC', 'P','TIMER', 'J', 'K', 'LEFT_ARROW', 'RIGHT_ARROW', 'UP_ARROW', 'DOWN_ARROW']
 
         if not (event.type in allowed_keys or (hasattr(self, "channels") and event.type in self.channels)):
             return {'PASS_THROUGH'}
@@ -1429,20 +1429,20 @@ class MBDynLiveAnimation(bpy.types.Operator):
             mbs.load_frequency -= 1
             mbs.load_frequency = max(1, mbs.load_frequency)
 
-        elif event.type == 'SLASH' and event.value == 'PRESS':
+        elif event.type == 'UP_ARROW' and event.value == 'PRESS':
             mbs.dr_index += 1
             mbs.dr_index %= len(mbs.drivers)
             print(mbs.dr_index)
 
-        elif event.type == 'PERIOD' and event.value == 'PRESS':
+        elif event.type == 'DOWN_ARROW' and event.value == 'PRESS':
             mbs.dr_index -= 1
             mbs.dr_index = mbs.dr_index + len(mbs.drivers) if mbs.dr_index < 0 else mbs.dr_index
             print(mbs.dr_index)
 
-        elif event.type == 'QUOTE' and event.value == 'PRESS':
+        elif event.type == 'RIGHT_ARROW' and event.value == 'PRESS':
             mbs.drivers[mbs.dr_index].value += 1
 
-        elif event.type == 'SEMI_COLON' and event.value == 'PRESS':
+        elif event.type == 'LEFT_ARROW' and event.value == 'PRESS':
             mbs.drivers[mbs.dr_index].value -= 1
 
         elif event.type == 'ESC':
@@ -1472,18 +1472,9 @@ class MBDynLiveAnimation(bpy.types.Operator):
                 node = mbs.nodes['node_' + node]
                 node_obj = bpy.data.objects[node.blender_object]
 
-
                 # set_obj_locrot_mov(node_obj, [node.int_label] + list(data[12*i: 12 + 12*i]))
                 node_obj.location = Vector(data[12*i : 12*i+3])
                 node_obj.rotation_euler = Matrix([data[12*i+3 : 12*i+6], data[12*i+6 : 12*i+9], data[12*i+9 : 12*i+12]]).to_euler(node_obj.rotation_euler.order)
-
-                if mbs.live_keyframes:
-                    context.scene.frame_current = self.frame                    
-                    bpy.ops.object.select_all(action = 'DESELECT')
-                    node_obj.select = True
-
-                    node_obj.keyframe_insert(data_path = "location")
-                    node_obj.keyframe_insert(data_path = "rotation_euler")
 
         return {'PASS_THROUGH'}
 
@@ -1939,14 +1930,6 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         nd = mbs.nodes
         ed = mbs.elems
 
-        # row = layout.row()
-        # row.prop(mbs, "port_sender")
-        # row.prop(mbs, "host_sender")
-
-        # row = layout.row()
-        # row.prop(mbs, "port_receiver")
-        # row.prop(mbs, "host_receiver")
-
         row = layout.row()
         row.label(text = "MBDyn Standard Import")
         col = layout.column(align = True)
@@ -1958,9 +1941,6 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         row.operator(MBDynReadLog.bl_idname, text = "Load .log file")
 
         layout.separator()
-
-        row = layout.row()
-        row.prop(mbs, "live_keyframes")
 
         row = layout.row()
         row.prop(mbs, "load_frequency")
