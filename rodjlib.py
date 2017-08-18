@@ -642,10 +642,8 @@ def spawn_rod_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     # create group for element
-    rodOBJ.select = True
-    n1OBJ.select = True
-    n2OBJ.select = True
     bpy.ops.group.create(name = rodOBJ.name)
+    grouping(context, rodOBJ, [n1OBJ, n2OBJ])
 
     elem.is_imported = True
     return{'FINISHED'}

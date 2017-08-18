@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import *
 
 # helper function to parse inline joints
 def parse_inline(rw, ed):
@@ -200,21 +200,18 @@ def spawn_inline_element(elem, context):
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-        p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
+        p2 = Vector(( f2[0], f2[1], f2[2] ))
     
         # place the joint object in the position defined relative to node 2
         inlinejOBJ.location = p1
         inlinejOBJ.rotation_mode = 'QUATERNION'
-        inlinejOBJ.rotation_quaternion = \
-                n1OBJ.rotation_quaternion * Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        inlinejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        inlinejOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(inlinejOBJ, n1OBJ)
+
+        grouping(context, inlinejOBJ, [n1OBJ])
 
         elem.blender_object = inlinejOBJ.name
 

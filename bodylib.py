@@ -32,7 +32,9 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-## Parses body entry in the .log file (see section E.2.8 of input manual for details)
+from .utilslib import *
+
+# Parses body entry in the .log file (see section E.2.8 of input manual for details)
 def parse_body(rw, ed):
     ret_val = True
     # Debug message
@@ -130,7 +132,7 @@ def spawn_body_element(elem, context):
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
     
         # place the body object in the position defined relative to node 1
         bodyOBJ.location = p1
@@ -143,11 +145,10 @@ def spawn_body_element(elem, context):
         bodyOBJ.mbdyn.type = elem.type
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        bodyOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(bodyOBJ, n1OBJ)
+
+        # set group
+        grouping(context, bodyOBJ, [n1OBJ])
 
         elem.blender_object = bodyOBJ.name
 

@@ -30,6 +30,7 @@ from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
+from .utilslib import *
 
 import os
 import pdb
@@ -250,18 +251,16 @@ def spawn_structural_force_element(elem, context):
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
     
         # place the joint object in the position defined relative to node 1
         forceOBJ.location = p1
         forceOBJ.rotation_mode = 'QUATERNION'
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        forceOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(forceOBJ, n1OBJ)
+
+        grouping(context, forceOBJ, [n1OBJ])
 
         elem.blender_object = forceOBJ.name
         forceOBJ.mbdyn.int_label = elem.int_label
@@ -317,18 +316,16 @@ def spawn_structural_couple_element(elem, context):
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
     
         # place the joint object in the position defined relative to node 1
         coupleOBJ.location = p1
         coupleOBJ.rotation_mode = 'QUATERNION'
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        coupleOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(coupleOBJ, n1OBJ)
+
+        grouping(context, coupleOBJ, [n1OBJ])
 
         elem.blender_object = coupleOBJ.name
         coupleOBJ.mbdyn.int_label = elem.int_label

@@ -182,12 +182,7 @@ def spawn_shell4_element(elem, context):
 
 
     # create group for element
-    shellOBJ.select = True
-    n1OBJ.select = True
-    n2OBJ.select = True
-    n3OBJ.select = True
-    n4OBJ.select = True
-    bpy.ops.group.create(name = shellOBJ.name)
+    grouping(context, shellOBJ, [n1OBJ, n2OBJ, n3OBJ, n4])
 
     elem.blender_object = shellOBJ.name
     return {'FINISHED'}
