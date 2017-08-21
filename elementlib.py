@@ -51,6 +51,9 @@ from .axialrotjlib import *
 from .distjlib import *
 from .gimbaljlib import *
 from .brakejlib import *
+from .linearjlib import *
+from .angularjlib import *
+from .drivejlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems
@@ -86,7 +89,12 @@ def parse_elements(context, jnt_type, rw):
             "axialrotation": parse_axialrot,
             "distance": parse_distance,
             "gimbalrotation": parse_gimbal,
-            "brake": parse_brake
+            "brake": parse_brake,
+            "linearvelocity": parse_linearvelocity,
+            "linearacceleration": parse_linearacceleration,
+            "angularvelocity": parse_angularvelocity,
+            "angularacceleration": parse_angularacceleration,
+            "drivedisplacement": parse_drive_displacement
             }
  
     try:
