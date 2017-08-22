@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import *
 
 # helper function to parse linearvelocity joints
 def parse_linearvelocity(rw, ed):
@@ -202,18 +202,17 @@ def spawn_linearvelocity_element(elem, context):
         R1 = n1OBJ.rotation_quaternion.to_matrix()
     
         # place the joint object in the position defined relative to node 2
-        linearvelocityjOBJ.location = n1OBJ.location
+        linearvelocityjOBJ.location = (0, 0, 0)
         linearvelocityjOBJ.rotation_mode = 'QUATERNION'
         axis_direction = Vector(elem.offsets[0].value)
         axis_direction.normalize()
         linearvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        linearvelocityjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(linearvelocityjOBJ, n1OBJ)
+
+        # set grouping
+        grouping(context, linearvelocityjOBJ, [n1OBJ])
 
         elem.blender_object = linearvelocityjOBJ.name
 
@@ -267,18 +266,17 @@ def spawn_linearacceleration_element(elem, context):
         R1 = n1OBJ.rotation_quaternion.to_matrix()
     
         # place the joint object in the position defined relative to node 2
-        linearaccelerationjOBJ.location = n1OBJ.location
+        linearaccelerationjOBJ.location = (0, 0, 0)
         linearaccelerationjOBJ.rotation_mode = 'QUATERNION'
         axis_direction = Vector(elem.offsets[0].value)
         axis_direction.normalize()
         linearaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        linearaccelerationjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(linearaccelerationjOBJ, n1OBJ)
+
+        # set groups
+        grouping(context, linearaccelerationjOBJ, [n1OBJ])
 
         elem.blender_object = linearaccelerationjOBJ.name
 

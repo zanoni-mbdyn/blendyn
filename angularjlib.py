@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import *
 
 # helper function to parse angularvelocity joints
 def parse_angularvelocity(rw, ed):
@@ -202,19 +202,17 @@ def spawn_angularvelocity_element(elem, context):
         R1 = n1OBJ.rotation_quaternion.to_matrix()
     
         # place the joint object in the position defined relative to node 2
-        angularvelocityjOBJ.location = n1OBJ.location
+        angularvelocityjOBJ.location = (0, 0, 0)
         angularvelocityjOBJ.rotation_mode = 'QUATERNION'
         axis_direction = Vector(elem.offsets[0].value)
         axis_direction.normalize()
         angularvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        angularvelocityjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularvelocityjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        angularvelocityjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(angularvelocityjOBJ, n1OBJ)
+
+        # set grouping
+        grouping(context, angularvelocityjOBJ, [n1OBJ])
 
         elem.blender_object = angularvelocityjOBJ.name
 
@@ -268,19 +266,17 @@ def spawn_angularacceleration_element(elem, context):
         R1 = n1OBJ.rotation_quaternion.to_matrix()
     
         # place the joint object in the position defined relative to node 2
-        angularaccelerationjOBJ.location = n1OBJ.location
+        angularaccelerationjOBJ.location = (0, 0, 0)
         angularaccelerationjOBJ.rotation_mode = 'QUATERNION'
         axis_direction = Vector(elem.offsets[0].value)
         axis_direction.normalize()
         angularaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        angularaccelerationjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularaccelerationjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        angularaccelerationjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(angularaccelerationjOBJ, n1OBJ)
+
+        # set grouping
+        grouping(context, angularaccelerationjOBJ, [n1OBJ])
 
         elem.blender_object = angularaccelerationjOBJ.name
 

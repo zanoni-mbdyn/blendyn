@@ -32,7 +32,7 @@ from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
 
-from .utilslib import parse_rotmat
+from .utilslib import *
 
 # helper function to parse drive_displacement joints
 def parse_drive_displacement(rw, ed):
@@ -208,19 +208,11 @@ def spawn_drive_displacement_element(elem, context):
 
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
     bpy.context.active_object.name = drvdispOBJ.name + '_child1'
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[drvdispOBJ.name + '_child1'].select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(bpy.data.objects[drvdispOBJ.name + '_child1'], drvdispOBJ)
 
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
     bpy.context.active_object.name = drvdispOBJ.name + '_child2'
-    bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[drvdispOBJ.name + '_child2'].select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    parenting(bpy.data.objects[drvdispOBJ.name + '_child1'], drvdispOBJ)
 
     #hooking of the line ends to the Blender objects
     
@@ -270,11 +262,13 @@ def spawn_drive_displacement_element(elem, context):
     bpy.data.objects[drvdispOBJ.name + '_child1'].draw_type = 'WIRE'
     bpy.data.objects[drvdispOBJ.name + '_child2'].draw_type = 'WIRE'
 
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
-    bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+    # set parenting
+    parenting(drvdispOBJ, n1OBJ)
+
+    # set group
+    drvdisp_child1 = bpy.data.objects[drvdispOBJ.name + '_child1']
+    drvdisp_child2 = bpy.data.objects[drvdispOBJ.name + '_child2']
+    grouping(context, drvdispOBJ, [n1OBJ, n2OBJ, drvdisp_child2, drvdisp_child1])
 
     elem.is_imported = True
     return{'FINISHED'}
