@@ -473,6 +473,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             default = ''
     )
 
+    live_anim = BoolProperty(
+        name = "Check for MBDyn version",
+        default = True
+        )
+
     drivers = CollectionProperty(
         name = "MBDyn Drivers",
         type = MBDynFileDriversDictionary
@@ -1312,6 +1317,15 @@ class MBDynRunSimulation(bpy.types.Operator):
         if mbs.file_path:
             command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
+        # Get version of MBDyn
+        mbdyn_proc = subprocess.Popen('mbdyn -v', shell= True, stdout=subprocess.PIPE)
+        mbdyn_version = mbdyn_proc.stdout.read().splitlines()[1].decode('utf-8').split(' ')[-1]
+        mbdyn_version = sum(list(map(int, mbdyn_version.split('.'))))
+
+        if mbdyn_version < 10:
+            print('Live Animation is not supported in MBDyn < 1.7.2')
+            mbs.live_anim = False
+
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
         self.timer = context.window_manager.event_timer_add(0.5, context.window)
@@ -1930,27 +1944,29 @@ class MBDynLiveAnimPanel(bpy.types.Panel):
         nd = mbs.nodes
         ed = mbs.elems
 
-        row = layout.row()
-        row.label(text = "MBDyn Standard Import")
-        col = layout.column(align = True)
-        col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
+        if mbs.live_anim:
 
-        layout.separator()
+            row = layout.row()
+            row.label(text = "MBDyn Standard Import")
+            col = layout.column(align = True)
+            col.operator(MBDynStandardImport.bl_idname, text = "Standard Import")
 
-        row = layout.row()
-        row.operator(MBDynReadLog.bl_idname, text = "Load .log file")
+            layout.separator()
 
-        layout.separator()
+            row = layout.row()
+            row.operator(MBDynReadLog.bl_idname, text = "Load .log file")
 
-        row = layout.row()
-        row.prop(mbs, "load_frequency")
+            layout.separator()
 
-        row = layout.row()
-        row.operator(MBDynLiveAnimation.bl_idname, text = "Start Sockets")
+            row = layout.row()
+            row.prop(mbs, "load_frequency")
 
-        row = layout.row()
-        row.template_list('MBDynDriver_UL_List', "MBDyn drivers list", mbs, "drivers",\
-                mbs, "dr_index")
+            row = layout.row()
+            row.operator(MBDynLiveAnimation.bl_idname, text = "Start Sockets")
+
+            row = layout.row()
+            row.template_list('MBDynDriver_UL_List', "MBDyn drivers list", mbs, "drivers",\
+                    mbs, "dr_index")
 
 class MBDynEigenanalysisPanel(bpy.types.Panel):
     """ Visualizes the results of an eigenanalysis - Toolbar Panel """

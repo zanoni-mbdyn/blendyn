@@ -74,7 +74,6 @@ def parse_input_file(context):
 
         while True:
             rw = next(reader)
-            print(rw)
             if rw:
                 first = rw[0].strip()
 
