@@ -33,6 +33,7 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 from .utilslib import parse_rotmat
+from .utilslib import parenting
 
 # helper function to parse linearvelocity joints
 def parse_linearvelocity(rw, ed):
@@ -185,39 +186,49 @@ def spawn_linearvelocity_element(elem, context):
 
     # load the wireframe linearvelocity joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'velarrow')
+            'library', 'joints.blend', 'Object'), filename = 'linvel.v')
     if app_retval == {'FINISHED'}:
-        # the append operator leaves just the imported object selected
-        linearvelocityjOBJ = bpy.context.selected_objects[0]
-        linearvelocityjOBJ.name = elem.name
+        libearvelocityjOBJv ) bpy.context.selected_objects[0]
+        app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+                'library', 'joints.blend', 'Object'), filename = 'linvel')
+        if app_retval == {'FINISHED'}:
+            # the append operator leaves just the imported object selected
+            linearvelocityjOBJ = bpy.context.selected_objects[0]
+            linearvelocityjOBJ.name = elem.name
+            linearvelocityjOBJv.name = linearvelocityjOBJ.name + '.v'
 
-        # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude)
-        linearvelocityjOBJ.scale = Vector(( s, s, s ))
+            parenting(linearvelocityjOBJv, linearvelocityjOBJ)
+            bpy.context.scene.objects.active = linearvelocityjOBJ
 
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
+            # automatic scaling
+            s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude)
+            linearvelocityjOBJ.scale = Vector(( s, s, s ))
+
+            # joint offsets with respect to nodes
+            f1 = elem.offsets[0].value
     
-        # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
+            # project offsets in global frame
+            R1 = n1OBJ.rotation_quaternion.to_matrix()
     
-        # place the joint object in the position defined relative to node 2
-        linearvelocityjOBJ.location = n1OBJ.location
-        linearvelocityjOBJ.rotation_mode = 'QUATERNION'
-        axis_direction = Vector(elem.offsets[0].value)
-        axis_direction.normalize()
-        linearvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
+            # place the joint object in the position defined relative to node 2
+            linearvelocityjOBJ.location = n1OBJ.location
+            linearvelocityjOBJ.rotation_mode = 'QUATERNION'
+            axis_direction = Vector(elem.offsets[0].value)
+            axis_direction.normalize()
+            linearvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
 
-        # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        linearvelocityjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+            # set parenting of wireframe obj
+            bpy.ops.object.select_all(action = 'DESELECT')
+            linearvelocityjOBJ.select = True
+            n1OBJ.select = True
+            bpy.context.scene.objects.active = n1OBJ
+            bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-        elem.blender_object = linearvelocityjOBJ.name
+            elem.blender_object = linearvelocityjOBJ.name
 
-        return {'FINISHED'}
+            return {'FINISHED'}
+        else:
+            return {'LIBRARY_ERROR'}
     else:
         return {'LIBRARY_ERROR'}
 # -----------------------------------------------------------
@@ -250,39 +261,49 @@ def spawn_linearacceleration_element(elem, context):
 
     # load the wireframe linearacceleration joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'accarrow')
+            'library', 'joints.blend', 'Object'), filename = 'linacc.a')
     if app_retval == {'FINISHED'}:
-        # the append operator leaves just the imported object selected
-        linearaccelerationjOBJ = bpy.context.selected_objects[0]
-        linearaccelerationjOBJ.name = elem.name
+        linearaccelerationjOBJa = bpy.context.selected_objects[0]
+        app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+                'library', 'joints.blend', 'Object'), filename = 'linacc')
+        if app_retval == {'FINISHED'}:
+            # the append operator leaves just the imported object selected
+            linearaccelerationjOBJ = bpy.context.selected_objects[0]
+            linearaccelerationjOBJ.name = elem.name
+            linearaccelerationjOBJa.name = linearaccelerationjOBJ.name + '.a'
 
-        # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude)
-        linearaccelerationjOBJ.scale = Vector(( s, s, s ))
+            parenting(linearaccelerationjOBJa, linearaccelerationjOBJ)
+            bpy.context.scene.objects.active = linearaccelerationjOBJ
 
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
+            # automatic scaling
+            s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude)
+            linearaccelerationjOBJ.scale = Vector(( s, s, s ))
+
+            # joint offsets with respect to nodes
+            f1 = elem.offsets[0].value
+
+            # project offsets in global frame
+            R1 = n1OBJ.rotation_quaternion.to_matrix()
     
-        # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-    
-        # place the joint object in the position defined relative to node 2
-        linearaccelerationjOBJ.location = n1OBJ.location
-        linearaccelerationjOBJ.rotation_mode = 'QUATERNION'
-        axis_direction = Vector(elem.offsets[0].value)
-        axis_direction.normalize()
-        linearaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
+            # place the joint object in the position defined relative to node 2
+            linearaccelerationjOBJ.location = n1OBJ.location
+            linearaccelerationjOBJ.rotation_mode = 'QUATERNION'
+            axis_direction = Vector(elem.offsets[0].value)
+            axis_direction.normalize()
+            linearaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
 
-        # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        linearaccelerationjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+            # set parenting of wireframe obj
+            bpy.ops.object.select_all(action = 'DESELECT')
+            linearaccelerationjOBJ.select = True
+            n1OBJ.select = True
+            bpy.context.scene.objects.active = n1OBJ
+            bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-        elem.blender_object = linearaccelerationjOBJ.name
+            elem.blender_object = linearaccelerationjOBJ.name
 
-        return {'FINISHED'}
+            return {'FINISHED'}
+        else:
+            return {'LIBRARY_ERROR'}
     else:
         return {'LIBRARY_ERROR'}
 # -----------------------------------------------------------

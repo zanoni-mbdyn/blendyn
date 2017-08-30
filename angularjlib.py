@@ -33,6 +33,9 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 from .utilslib import parse_rotmat
+from .utilslib import parenting
+
+import pdb
 
 # helper function to parse angularvelocity joints
 def parse_angularvelocity(rw, ed):
@@ -185,14 +188,17 @@ def spawn_angularvelocity_element(elem, context):
 
     # load the wireframe angularvelocity joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'angularvel')
+            'library', 'joints.blend', 'Object'), filename = 'angvel.w')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
-        angularvelocityjOBJ = bpy.context.selected_objects[0]
+        angularvelocityjOBJw = bpy.context.selected_objects[0]
+        angularvelocityjOBJ = angularvelocityjOBJw.constraints[0].target
+
         angularvelocityjOBJ.name = elem.name
+        angularvelocityjOBJw.name = elem.name + '.w'
 
         # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude)
+        s = (1.0/sqrt(3.))*(n1OBJ.scale.magnitude)
         angularvelocityjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
@@ -210,11 +216,7 @@ def spawn_angularvelocity_element(elem, context):
         angularvelocityjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularvelocityjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        angularvelocityjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(angularvelocityjOBJ, n1OBJ)
 
         elem.blender_object = angularvelocityjOBJ.name
 
@@ -251,14 +253,18 @@ def spawn_angularacceleration_element(elem, context):
 
     # load the wireframe angularacceleration joint object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'angularvel')
+            'library', 'joints.blend', 'Object'), filename = 'angacc.a')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
-        angularaccelerationjOBJ = bpy.context.selected_objects[0]
+        angularaccelerationjOBJa = bpy.context.selected_objects[0]
+        pdb.set_trace()
+        angularaccelerationjOBJ = angularaccelerationjOBJa.constraints[0].target
+
         angularaccelerationjOBJ.name = elem.name
+        angularaccelerationjOBJa.name = elem.name + '.a'
 
         # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude)
+        s = (1.0/sqrt(3.))*(n1OBJ.scale.magnitude)
         angularaccelerationjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
@@ -276,11 +282,7 @@ def spawn_angularacceleration_element(elem, context):
         angularaccelerationjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularaccelerationjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
-        bpy.ops.object.select_all(action = 'DESELECT')
-        angularaccelerationjOBJ.select = True
-        n1OBJ.select = True
-        bpy.context.scene.objects.active = n1OBJ
-        bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+        parenting(angularaccelerationjOBJ, n1OBJ)
 
         elem.blender_object = angularaccelerationjOBJ.name
 
