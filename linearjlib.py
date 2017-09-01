@@ -39,11 +39,11 @@ from .utilslib import parenting
 def parse_linearvelocity(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_linearvelocity(): Parsing linearvelocity joint " + rw[1])
+    print("Blendyn::parse_linearvelocity(): Parsing linearvelocity joint " + rw[1])
     try:
         el = ed['linearvelocity_' + str(rw[1])]
 
-        print("parse_linearvelocity(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_linearvelocity(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         
@@ -54,7 +54,7 @@ def parse_linearvelocity(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_linearvelocity(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_linearvelocity(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'linearvelocity'
         el.int_label = int(rw[1])
@@ -79,11 +79,11 @@ def parse_linearvelocity(rw, ed):
 def parse_linearacceleration(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_linearacceleration(): Parsing linearacceleration joint " + rw[1])
+    print("Blendyn::parse_linearacceleration(): Parsing linearacceleration joint " + rw[1])
     try:
         el = ed['linearacceleration_' + str(rw[1])]
 
-        print("parse_linearacceleration(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_linearacceleration(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         
@@ -94,7 +94,7 @@ def parse_linearacceleration(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_linearacceleration(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_linearacceleration(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'linearacceleration'
         el.int_label = int(rw[1])
@@ -168,7 +168,7 @@ def spawn_linearvelocity_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_linearvelocity_element(): Element is already imported. \
+        print("Blendyn::spawn_linearvelocity_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -176,7 +176,7 @@ def spawn_linearvelocity_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_linearvelocity_element(): Could not find a Blender \
+        print("Blendyn::spawn_linearvelocity_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -233,7 +233,7 @@ def spawn_linearacceleration_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_linearacceleration_element(): Element is already imported. \
+        print("Blendyn::spawn_linearacceleration_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -241,7 +241,7 @@ def spawn_linearacceleration_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_linearacceleration_element(): Could not find a Blender \
+        print("Blendyn::spawn_linearacceleration_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

@@ -35,10 +35,10 @@ from bpy.props import *
 def parse_shell4(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_shell4(): Parsing shell4" + rw[1])
+    print("Blendyn::parse_shell4(): Parsing shell4" + rw[1])
     try:
         el = ed['shell4_' + str(rw[1])]
-        print("parse_shell4(): found existing entry in elements dictionary for element "\
+        print("Blendyn::parse_shell4(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it")
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[3])
@@ -49,7 +49,7 @@ def parse_shell4(rw, ed):
             el.blender_object = el.name
             el.is_imported = True
     except KeyError:
-        print("parse_shell4(): didn't find entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_shell4(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
         el.type = 'shell4'

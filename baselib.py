@@ -58,7 +58,7 @@ import pdb
 try:
     from netCDF4 import Dataset
 except ImportError:
-    print("blendyn: could not find netCDF4 module. NetCDF import "\
+    print("Blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
     pass
 
@@ -224,7 +224,7 @@ def parse_log_file(context):
             mbs.file_basename + '.rfm')
     
     # Debug message to console
-    print("parse_log_file(): Trying to read nodes and elements from file: "\
+    print("Blendyn::parse_log_file(): Trying to read nodes and elements from file: "\
             + log_file)
 
     ret_val = {''}
@@ -249,12 +249,12 @@ def parse_log_file(context):
                     entry = entry + " " + rw[ii]
 
                 if ii == min(3, (len(rw) - 1)):
-                    print("parse_log_file(): row does not contain an element definition. Skipping...")
+                    print("Blendyn::parse_log_file(): row does not contain an element definition. Skipping...")
                 elif entry == "structural node:":
-                    print("parse_log_file(): Found a structural node.")
+                    print("Blendyn::parse_log_file(): Found a structural node.")
                     b_nodes_consistent = b_nodes_consistent * (parse_node(context, rw))
                 else:
-                    print("parse_log_file(): Found " + entry[:-1] + " element.")
+                    print("Blendyn::parse_log_file(): Found " + entry[:-1] + " element.")
                     b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
 
             if (is_init_nd and is_init_ed) or (b_nodes_consistent*b_elems_consistent):
@@ -268,11 +268,11 @@ def parse_log_file(context):
             else:
                 ret_val = {'FINISHED'}
     except IOError:
-        print("Could not locate the file " + log_file + ".")
+        print("Blendyn::parse_log_file(): Could not locate the file " + log_file + ".")
         ret_val = {'LOG_NOT_FOUND'}
         pass
     except StopIteration:
-        print("Reached the end of .log file")
+        print("Blendyn::parse_log_file() Reached the end of .log file")
 
     del_nodes = [var for var in nd.keys() if nd[var].is_imported == False]
     del_elems = [var for var in ed.keys() if ed[var].is_imported == False]
@@ -329,13 +329,13 @@ def parse_log_file(context):
                 next(reader)
             mbs.time_step = float(next(reader)[3])
     except FileNotFoundError:
-        print("Could not locate the file " + out_file)
+        print("Blendyn::parse_out_file(): Could not locate the file " + out_file)
         ret_val = {'OUT_NOT_FOUND'}
         pass
     except StopIteration:
-        print("Reached the end of .out file")
+        print("Blendyn::parse_out_file(): Reached the end of .out file")
     except IOError:
-        print("Could not read the file " + out_file)
+        print("Blendyn::parse_out_file(): Could not read the file " + out_file)
         pass
 
     try:
@@ -346,10 +346,10 @@ def parse_log_file(context):
     except StopIteration:
         pass
     except FileNotFoundError:
-        print("Could not locate the file " + rfm_file)
+        print("Blendyn::parse_out_file(): Could not locate the file " + rfm_file)
         pass
     except IOError:
-        print("Could not read the file " + rfm_file)
+        print("Blendyn::parse_out_file(): Could not read the file " + rfm_file)
         pass 
 
     mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
@@ -472,7 +472,7 @@ def assign_labels(context):
                             found = True
                             break
     except IOError:
-        print("assign_labels(): can't read from file {}, \
+        print("Blendyn::assign_labels(): can't read from file {}, \
                 sticking with default labeling...".format(log_file))
         return {'FILE_NOT_FOUND'}
 
@@ -564,7 +564,7 @@ def hide_or_delete(obj_names, missing):
 def set_motion_paths_mov(context):
 
     # Debug message
-    print("Setting Motion Paths using .mov output...")
+    print("Blendyn::set_motion_paths_mov(): Setting Motion Paths using .mov output...")
 
     # utility renaming
     scene = context.scene
@@ -582,7 +582,7 @@ def set_motion_paths_mov(context):
             mbs.file_basename + '.mov')
 
     # Debug message
-    print("Reading from file:", mov_file)
+    print("Blendyn::set_motion_paths_mov(): Reading from file:", mov_file)
 
     # total number of frames to be animated
     scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
@@ -861,7 +861,7 @@ def set_motion_paths_netcdf(context):
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
-            print("set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+            print("Blendyn::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
             return {'CANCELLED'}
         obj.select = False
         kk = kk + 1

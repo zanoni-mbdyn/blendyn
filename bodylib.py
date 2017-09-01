@@ -38,11 +38,11 @@ from .utilslib import *
 def parse_body(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_body(): Parsing body " + rw[1])
+    print("Blendyn::parse_body(): Parsing body " + rw[1])
     try:
         el = ed['body_' + str(rw[1])]
         
-        print("parse_body(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_body(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.magnitude = float(rw[3])     # mass
@@ -60,7 +60,7 @@ def parse_body(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_body(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_body(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'body'
         el.int_label = int(rw[1])
@@ -99,7 +99,7 @@ def spawn_body_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_body_element(): Element is already imported. \
+        print("Blendyn::spawn_body_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -107,7 +107,7 @@ def spawn_body_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_body_element(): Could not find a Blender \
+        print("Blendyn::spawn_body_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

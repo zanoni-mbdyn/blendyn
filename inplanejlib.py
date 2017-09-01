@@ -38,11 +38,11 @@ from .utilslib import *
 def parse_inplane(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_inplane(): Parsing inplane joint " + rw[1])
+    print("Blendyn::parse_inplane(): Parsing inplane joint " + rw[1])
     try:
         el = ed['inplane_' + str(rw[1])]
 
-        print("parse_inplane(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_inplane(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -64,7 +64,7 @@ def parse_inplane(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_inplane(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_inplane(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'inplane'
         el.int_label = int(rw[1])
@@ -164,7 +164,7 @@ def spawn_inplane_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_inplane_element(): Element is already imported. \
+        print("Blendyn::spawn_inplane_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -172,7 +172,7 @@ def spawn_inplane_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_inplane_element(): Could not find a Blender \
+        print("Blendyn::spawn_inplane_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -180,7 +180,7 @@ def spawn_inplane_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_inplane_element(): Could not find a Blender \
+        print("Blendyn::spawn_inplane_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}

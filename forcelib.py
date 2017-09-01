@@ -45,11 +45,11 @@ except ImportError:
 def parse_structural_absolute_force(rw, ed): 
     ret_val = True
     # Debug message
-    print("parse_structural_absolute_force(): Parsing structural absolute force" + rw[3])
+    print("Blendyn::parse_structural_absolute_force(): Parsing structural absolute force" + rw[3])
     try:
         el = ed['structural_absolute_force_' + str(rw[3])]
         
-        print("parse_structural_absolute_force(): found existing entry in \
+        print("Blendyn::parse_structural_absolute_force(): found existing entry in \
                 elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[4])
@@ -62,7 +62,7 @@ def parse_structural_absolute_force(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_absolute_force(): didn't find an entry in \
+        print("Blendyn::parse_structural_absolute_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_absolute_force'
@@ -88,11 +88,11 @@ def parse_structural_absolute_force(rw, ed):
 def parse_structural_follower_force(rw, ed): 
     ret_val = True
     # Debug message
-    print("parse_structural_follower_force(): Parsing structural follower force" + rw[3])
+    print("Blendyn::parse_structural_follower_force(): Parsing structural follower force" + rw[3])
     try:
         el = ed['structural_follower_force_' + str(rw[3])]
         
-        print("parse_structural_follower_force(): found existing entry in \
+        print("Blendyn::parse_structural_follower_force(): found existing entry in \
                 elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[4])
@@ -105,7 +105,7 @@ def parse_structural_follower_force(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_follower_force(): didn't find an entry in \
+        print("Blendyn::parse_structural_follower_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_follower_force'
@@ -131,11 +131,11 @@ def parse_structural_follower_force(rw, ed):
 def parse_structural_absolute_couple(rw, ed): 
     ret_val = True
     # Debug message
-    print("parse_structural_absolute_couple(): Parsing structural absolute force" + rw[3])
+    print("Blendyn::parse_structural_absolute_couple(): Parsing structural absolute force" + rw[3])
     try:
         el = ed['structural_absolute_couple_' + str(rw[3])]
         
-        print("parse_structural_absolute_couple(): found existing entry in \
+        print("Blendyn::parse_structural_absolute_couple(): found existing entry in \
                 elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[4])
@@ -148,7 +148,7 @@ def parse_structural_absolute_couple(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_absolute_couple(): didn't find an entry in \
+        print("Blendyn::parse_structural_absolute_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_absolute_couple'
@@ -174,11 +174,11 @@ def parse_structural_absolute_couple(rw, ed):
 def parse_structural_follower_couple(rw, ed): 
     ret_val = True
     # Debug message
-    print("parse_structural_follower_couple(): Parsing structural follower force" + rw[3])
+    print("Blendyn::parse_structural_follower_couple(): Parsing structural follower force" + rw[3])
     try:
         el = ed['structural_follower_couple_' + str(rw[3])]
         
-        print("parse_structural_follower_couple(): found existing entry in \
+        print("Blendyn::parse_structural_follower_couple(): found existing entry in \
                 elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[4])
@@ -191,7 +191,7 @@ def parse_structural_follower_couple(rw, ed):
         pass
     except KeyError:
         pass
-        print("parse_structural_follower_couple(): didn't find an entry in \
+        print("Blendyn::parse_structural_follower_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'structural_follower_couple'
@@ -221,7 +221,7 @@ def spawn_structural_force_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_structural_force_element(): Element is already imported. \
+        print("Blendyn::spawn_structural_force_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -229,7 +229,7 @@ def spawn_structural_force_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_structural_force_element(): Could not find a Blender \
+        print("Blendyn::spawn_structural_force_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -286,7 +286,7 @@ def spawn_structural_couple_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_structural_couple_element(): Element is already imported. \
+        print("Blendyn::spawn_structural_couple_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -294,7 +294,7 @@ def spawn_structural_couple_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_structural_couple_element(): Could not find a Blender \
+        print("Blendyn::spawn_structural_couple_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

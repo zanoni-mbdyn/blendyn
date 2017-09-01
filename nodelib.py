@@ -80,7 +80,7 @@ def set_obj_locrot_mov(obj, rw):
         obj.keyframe_insert(data_path = "rotation_quaternion")
     else:
         # Should not be reached
-        print("Error: unsupported rotation parametrization")
+        print("Blendyn::Error: unsupported rotation parametrization")
 
     return
 # -----------------------------------------------------------
@@ -100,7 +100,7 @@ def update_parametrization(obj):
         ret_val = 'FINISHED'
     else:
         # Cannot be reached
-        print("Error: unsupported rotation parametrization")
+        print("Blendyn::Error: unsupported rotation parametrization")
         ret_val = 'ROT_NOT_SUPPORTED'
 
     return ret_val
@@ -115,8 +115,8 @@ def update_label(self, context):
     
     # Debug Messages
     try:
-        print("MBDynPanel::update_label(): updating MBDyn node associated to object " + obj.name)
-        print("MBDynPanel::update_label(): selected MBDyn node = ", str(obj.mbdyn.int_label))
+        print("Blendyn::MBDynPanel::update_label(): updating MBDyn node associated to object " + obj.name)
+        print("Blendyn::MBDynPanel::update_label(): selected MBDyn node = ", str(obj.mbdyn.int_label))
     except AttributeError:
         pass
     
@@ -180,11 +180,11 @@ def parse_node(context, rw):
         else:
             raise RotKeyError("Error: rotation mode " + type + " not recognised")
 
-    print("parse_node(): Parsing node " + rw[2])
+    print("Blendyn::parse_node(): Parsing node " + rw[2])
     try:
         node = nd['node_' + str(rw[2])]
         node.is_imported = True
-        print("parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
+        print("Blendyn::parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
                 + ". Updating it.")
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         try:
@@ -193,7 +193,7 @@ def parse_node(context, rw):
             pass
         ret_val = True
     except KeyError:
-        print("parse_node(): didn't find an existing entry in nodes dictionary for node " + rw[2]\
+        print("Blendyn::parse_node(): didn't find an existing entry in nodes dictionary for node " + rw[2]\
                 + ". Creating it.")
         node = nd.add()
         node.is_imported = True

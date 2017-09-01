@@ -42,10 +42,10 @@ def parse_beam2(rw, ed):
     ret_val = True
 
     # Debug message
-    print("parse_beam2(): Parsing beam2 " + rw[1])
+    print("Blendyn::parse_beam2(): Parsing beam2 " + rw[1])
     try:
         el = ed['beam2_' + rw[1]]
-        print("parse_beam2(): found existing entry in elements dictionary for element "\
+        print("Blendyn::parse_beam2(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
@@ -58,7 +58,7 @@ def parse_beam2(rw, ed):
 
         pass
     except KeyError:
-        print("parse_beam2(): didn't find entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_beam2(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
         el.type = 'beam2'
@@ -91,13 +91,13 @@ def parse_beam3(rw, ed):
     
     ret_val = True 
     # Debug message
-    print("parse_beam3(): Parsing beam3 " + rw[1])
+    print("Blendyn::parse_beam3(): Parsing beam3 " + rw[1])
     
     try:
 
         el = ed['beam3_' + rw[1]]
         el.is_imported = False
-        print("parse_beam3(): found existing entry in elements dictionary for element "\
+        print("Blendyn::parse_beam3(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
@@ -111,7 +111,7 @@ def parse_beam3(rw, ed):
 
         pass
     except KeyError:
-        print("parse_beam3(): didn't find entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_beam3(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
         el.is_imported = False
@@ -254,7 +254,7 @@ def spawn_beam2_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_beam2_element(): Element is already imported. \
+        print("Blendyn::spawn_beam2_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return{'CANCELLED'}
@@ -264,7 +264,7 @@ def spawn_beam2_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_beam2_element(): Could not find a Blender \
+        print("Blendyn::spawn_beam2_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -272,7 +272,7 @@ def spawn_beam2_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_beam2_element(): Could not find a Blender \
+        print("Blendyn::spawn_beam2_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -383,7 +383,7 @@ def spawn_beam3_element(elem, context):
     nd = context.scene.mbdyn.nodes
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_beam3_element(): Element is already imported. \
+        print("Blendyn::spawn_beam3_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return{'CANCELLED'}
@@ -394,7 +394,7 @@ def spawn_beam3_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_beam3_element()): Could not find a Blender \
+        print("Blendyn::spawn_beam3_element()): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -402,7 +402,7 @@ def spawn_beam3_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_beam3_element(): Could not find a Blender \
+        print("Blendyn::spawn_beam3_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -410,7 +410,7 @@ def spawn_beam3_element(elem, context):
     try:
         n3 = nd['node_' + str(elem.nodes[2].int_label)].blender_object
     except KeyError:
-        print("spawn_beam3_element(): Could not find a Blender \
+        print("Blendyn::spawn_beam3_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[2].int_label))
         return {'NODE3_NOTFOUND'}
@@ -579,7 +579,7 @@ def update_beam3(elem, insert_keyframe = False):
         n2 = bpy.data.objects[nd['node_' + str(elem.nodes[1].int_label)].blender_object]
         n3 = bpy.data.objects[nd['node_' + str(elem.nodes[2].int_label)].blender_object]
     except KeyError:
-        print("update_beam3(): Could not find a Blender object " + \
+        print("Blendyn::update_beam3(): Could not find a Blender object " + \
                 str(elem.nodes[1].int_label))
         return {'OBJECTS_NOTFOUND'}
 

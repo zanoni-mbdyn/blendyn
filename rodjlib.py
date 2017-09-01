@@ -39,12 +39,12 @@ import pdb
 def parse_rod(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_rod(): Parsing rod " + rw[1])
+    print("Blendyn::parse_rod(): Parsing rod " + rw[1])
 
     try:
         el = ed['rod_' + str(rw[1])]
 
-        print("parse_rod(): found existing entry in elements dictionary for element "\
+        print("Blendyn::parse_rod(): found existing entry in elements dictionary for element "\
                 + rw[1] + ". Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
@@ -58,7 +58,7 @@ def parse_rod(rw, ed):
             el.blender_object = el.name
     except KeyError:
         
-        print("parse_rod(): didn't find entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_rod(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
         el.type = 'rod'
@@ -96,12 +96,12 @@ def parse_rod_bezier(rw, ed):
     ret_val = True
 
     # Debug message
-    print("parse_rod_bezier(): Parsing rod bezier " + rw[2])
+    print("Blendyn::parse_rod_bezier(): Parsing rod bezier " + rw[2])
     
     try:
         el = ed['rod_bezier_' + rw[2]]
 
-        print("parse_rod_bezier(): found existing entry in elements dictionary.\
+        print("Blendyn::parse_rod_bezier(): found existing entry in elements dictionary.\
                 Updating it.")
         
         el.nodes[0].int_label = int(rw[3])
@@ -117,7 +117,7 @@ def parse_rod_bezier(rw, ed):
             el.is_imported = True
     except KeyError:
 
-        print("parse_rod_bezier(): didn't find entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_rod_bezier(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
         el.type = 'rod_bezier'
@@ -392,7 +392,7 @@ class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
                 message = "Found the Object " + elem.blender_object + \
                 " remove or rename it to re-import the element!"
                 self.report({'WARNING'}, message)
-                print("Element is already imported. Remove it or rename it " +\
+                print("Blendyn::Element is already imported. Remove it or rename it " +\
                     "before re-importing the element.")
                 logging.warning(message)
                 return {'CANCELLED'}
@@ -548,7 +548,7 @@ def spawn_rod_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_rod_element(): Element is already imported. \
+        print("Blendyn::spawn_rod_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return{'CANCELLED'}
@@ -559,7 +559,7 @@ def spawn_rod_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_rod_element(): Could not find a Blender \
+        print("Blendyn::spawn_rod_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -567,7 +567,7 @@ def spawn_rod_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_rod_element(): Could not find a Blender \
+        print("Blendyn::spawn_rod_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -666,11 +666,11 @@ def spawn_rod_bezier_element(elem):
             elif elem.nodes[1].int_label == node.int_label:
                 n2 = node.blender_object
         if n1 == "none":
-            print("MBDynImportElemRodBez(): Could not find a Blender object \
+            print("Blendyn::spawn_rod_bezier_element(): Could not find a Blender object \
             associated to Node " + str(elem.nodes[0].int_label))
             return {'NODE1_NOTFOUND'}
         elif n2 == "none":
-            print("MBDynImportElemRodBez(): Could not find a Blender object \
+            print("Blendyn::spawn_rod_bezier_element(): Could not find a Blender object \
             associated to Node " + str(elem.nodes[1].int_label))
             return {'NODE2_NOTFOUND'}
 

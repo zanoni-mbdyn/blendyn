@@ -37,11 +37,11 @@ from .utilslib import parse_rotmat
 def parse_deformable_displacement(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_deformable_displacementj(): Parsing deformable displacement joint " + rw[1])
+    print("Blendyn::parse_deformable_displacementj(): Parsing deformable displacement joint " + rw[1])
     try:
         el = ed['deformable_displacement_' + str(rw[1])]
 
-        print("parse_deformable_displacement(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_deformable_displacement(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -61,7 +61,7 @@ def parse_deformable_displacement(rw, ed):
             el.blender_object = el.name
         el.is_imported = True 
     except KeyError:
-        print("parse_deformable_displacement(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_deformable_displacement(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'deformable_displacement'
         el.int_label = int(rw[1])

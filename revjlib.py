@@ -38,11 +38,11 @@ from .utilslib import *
 def parse_revolute_hinge(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_revolute_hinge(): Parsing revolute hinge joint " + rw[1])
+    print("Blendyn::parse_revolute_hinge(): Parsing revolute hinge joint " + rw[1])
     try:
         el = ed['revolute_hinge_' + str(rw[1])]
 
-        print("parse_revolute_hinge(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_revolute_hinge(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -64,7 +64,7 @@ def parse_revolute_hinge(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_revolute_hinge(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_revolute_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'revolute_hinge'
         el.int_label = int(rw[1])
@@ -103,11 +103,11 @@ def parse_revolute_hinge(rw, ed):
 def parse_revolute_pin(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_revolute_pin(): Parsing revolute pin joint " + rw[1])
+    print("Blendyn::parse_revolute_pin(): Parsing revolute pin joint " + rw[1])
     try:
         el = ed['revolute_pin_' + str(rw[1])]
 
-        print("parse_revolute_pin(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_revolute_pin(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -121,7 +121,7 @@ def parse_revolute_pin(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_revolute_pin(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_revolute_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'revolute_pin'
         el.int_label = int(rw[1])
@@ -150,11 +150,11 @@ def parse_revolute_pin(rw, ed):
 def parse_revolute_rot(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_revolute_rot(): Parsing revolute rot joint " + rw[1])
+    print("Blendyn::parse_revolute_rot(): Parsing revolute rot joint " + rw[1])
     try:
         el = ed['revolute_rot_' + str(rw[1])]
 
-        print("parse_revolute_rot(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_revolute_rot(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -176,7 +176,7 @@ def parse_revolute_rot(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_revolute_rot(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_revolute_rot(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'revolute_rot'
         el.int_label = int(rw[1])
@@ -220,7 +220,7 @@ def spawn_revolute_hinge_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_revolute_hinge_element(): Element is already imported. \
+        print("Blendyn::spawn_revolute_hinge_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -228,7 +228,7 @@ def spawn_revolute_hinge_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_revolute_hinge_element(): Could not find a Blender \
+        print("Blendyn::spawn_revolute_hinge_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -236,7 +236,7 @@ def spawn_revolute_hinge_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_revolute_hinge_element(): Could not find a Blender \
+        print("Blendyn::spawn_revolute_hinge_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -360,7 +360,7 @@ def spawn_revolute_pin_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_revolute_pin_element(): Element is already imported. \
+        print("Blendyn::spawn_revolute_pin_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -368,7 +368,7 @@ def spawn_revolute_pin_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_revolute_pin_element(): Could not find a Blender \
+        print("Blendyn::spawn_revolute_pin_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -476,7 +476,7 @@ def spawn_revolute_rot_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_revolute_rot_element(): Element is already imported. \
+        print("Blendyn::spawn_revolute_rot_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -484,7 +484,7 @@ def spawn_revolute_rot_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_revolute_rot_element(): Could not find a Blender \
+        print("Blendyn::spawn_revolute_rot_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -492,7 +492,7 @@ def spawn_revolute_rot_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_revolute_rot_element(): Could not find a Blender \
+        print("Blendyn::spawn_revolute_rot_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}

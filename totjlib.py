@@ -38,10 +38,10 @@ from .utilslib import *
 def parse_total(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_total(): Parsing total joint " + rw[1])
+    print("Blendyn::parse_total(): Parsing total joint " + rw[1])
     try:
         el = ed['total_joint_' + str(rw[1])]
-        print("parse_total(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_total(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[24])
@@ -88,7 +88,7 @@ def parse_total(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_total(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_total(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_joint'
         el.int_label = int(rw[1])
@@ -163,7 +163,7 @@ def spawn_total_joint_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_total_joint_element(): Element is already imported. \
+        print("Blendyn::spawn_total_joint_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -171,7 +171,7 @@ def spawn_total_joint_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_total_joint_element(): Could not find a Blender \
+        print("Blendyn::spawn_total_joint_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -179,7 +179,7 @@ def spawn_total_joint_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_total_joint_element(): Could not find a Blender \
+        print("Blendyn::spawn_total_joint_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -522,10 +522,10 @@ class Scene_OT_MBDyn_Import_Total_Joint_Element(bpy.types.Operator):
 def parse_total_pin(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_total_pin(): Parsing total pin joint " + rw[1])
+    print("Blendyn::parse_total_pin(): Parsing total pin joint " + rw[1])
     try:
         el = ed['total_pin_joint_' + str(rw[1])]
-        print("parse_total_pin(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_total_pin(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         
@@ -557,7 +557,7 @@ def parse_total_pin(rw, ed):
 
         pass
     except KeyError:
-        print("parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
@@ -712,7 +712,7 @@ def spawn_total_pin_joint_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_total_element(): Element is already imported. \
+        print("Blendyn::spawn_total_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -720,7 +720,7 @@ def spawn_total_pin_joint_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_total_element(): Could not find a Blender \
+        print("Blendyn::spawn_total_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

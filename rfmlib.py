@@ -36,17 +36,17 @@ def parse_reference_frame(rw, rd):
     ret_val = True
 
     # Debug message
-    print("parse_refrence_frame(): Parsing Reference Frame " + rw[0])
+    print("Blendyn::parse_refrence_frame(): Parsing Reference Frame " + rw[0])
 
     try:
         ref = rd['ref_' + str(rw[0]).strip()]
-        print("parse_reference_frame(): found existing entry in references dictionary." \
+        print("Blendyn::parse_reference_frame(): found existing entry in references dictionary." \
                 + " Updating it.")
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
     except KeyError:
-        print("parse_reference_frame(): didn't found an entry in elements dictionary." \
+        print("Blendyn::parse_reference_frame(): didn't found an entry in elements dictionary." \
                 + " Creating one.")
         
         ref = rd.add()
@@ -71,7 +71,7 @@ def spawn_reference_frame(ref, context):
     mbs = context.scene.mbdyn
 
     if any(obj == ref.blender_object for obj in bpy.data.objects.keys()):
-        print("spawn_reference_frame(): Reference already imported. \
+        print("Blendyn::spawn_reference_frame(): Reference already imported. \
             Remove the Blender object or rename it \
             before re-importing the element.")
         return {'OBJECT_EXISTS'}

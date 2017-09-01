@@ -41,11 +41,11 @@ import pdb
 def parse_angularvelocity(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_angularvelocity(): Parsing angularvelocity joint " + rw[1])
+    print("Blendyn::parse_angularvelocity(): Parsing angularvelocity joint " + rw[1])
     try:
         el = ed['angularvelocity_' + str(rw[1])]
 
-        print("parse_angularvelocity(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_angularvelocity(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         
@@ -56,7 +56,7 @@ def parse_angularvelocity(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_angularvelocity(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_angularvelocity(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'angularvelocity'
         el.int_label = int(rw[1])
@@ -81,11 +81,11 @@ def parse_angularvelocity(rw, ed):
 def parse_angularacceleration(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_angularacceleration(): Parsing angularacceleration joint " + rw[1])
+    print("Blendyn::parse_angularacceleration(): Parsing angularacceleration joint " + rw[1])
     try:
         el = ed['angularacceleration_' + str(rw[1])]
 
-        print("parse_angularacceleration(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_angularacceleration(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         
@@ -96,7 +96,7 @@ def parse_angularacceleration(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_angularacceleration(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_angularacceleration(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'angularacceleration'
         el.int_label = int(rw[1])
@@ -170,7 +170,7 @@ def spawn_angularvelocity_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_angularvelocity_element(): Element is already imported. \
+        print("Blendyn::spawn_angularvelocity_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -178,7 +178,7 @@ def spawn_angularvelocity_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_angularvelocity_element(): Could not find a Blender \
+        print("Blendyn::spawn_angularvelocity_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -235,7 +235,7 @@ def spawn_angularacceleration_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_angularacceleration_element(): Element is already imported. \
+        print("Blendyn::spawn_angularacceleration_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -243,7 +243,7 @@ def spawn_angularacceleration_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_angularacceleration_element(): Could not find a Blender \
+        print("Blendyn::spawn_angularacceleration_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

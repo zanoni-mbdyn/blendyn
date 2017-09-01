@@ -38,10 +38,10 @@ from .utilslib import *
 def parse_cardano_hinge(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_cardano_hinge(): Parsing Cardano hinge joint " + rw[1])
+    print("Blendyn::parse_cardano_hinge(): Parsing Cardano hinge joint " + rw[1])
     try:
         el = ed['cardano_hinge_' + str(rw[1])]
-        print("parse_cardano_hinge(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_cardano_hinge(): found existing entry in elements dictionary. Updating it.")
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -63,7 +63,7 @@ def parse_cardano_hinge(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_cardano_hinge(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_cardano_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'cardano_hinge'
         el.int_label = int(rw[1])
@@ -102,11 +102,11 @@ def parse_cardano_hinge(rw, ed):
 def parse_cardano_pin(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_cardano_pin(): Parsing Cardano pin joint " + rw[1])
+    print("Blendyn::parse_cardano_pin(): Parsing Cardano pin joint " + rw[1])
     try:
         el = ed['cardano_pin_' + str(rw[1])]
         
-        print("parse_cardano_pin(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_cardano_pin(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -122,7 +122,7 @@ def parse_cardano_pin(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("parse_cardano_pin(): didn't find an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_cardano_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'cardano_pin'
         el.int_label = int(rw[1])
@@ -156,7 +156,7 @@ def spawn_cardano_hinge_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_cardano_hinge_element(): Element is already imported. \
+        print("Blendyn::spawn_cardano_hinge_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -164,7 +164,7 @@ def spawn_cardano_hinge_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_cardano_hinge_element(): Could not find a Blender \
+        print("Blendyn::spawn_cardano_hinge_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
@@ -172,7 +172,7 @@ def spawn_cardano_hinge_element(elem, context):
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("spawn_cardano_hinge_element(): Could not find a Blender \
+        print("Blendyn::spawn_cardano_hinge_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
@@ -246,7 +246,7 @@ def spawn_cardano_pin_elem(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("spawn_cardano_pin_element(): Element is already imported. \
+        print("Blendyn::spawn_cardano_pin_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'CANCELLED'}
@@ -254,7 +254,7 @@ def spawn_cardano_pin_elem(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_cardano_pin_element(): Could not find a Blender \
+        print("Blendyn::spawn_cardano_pin_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

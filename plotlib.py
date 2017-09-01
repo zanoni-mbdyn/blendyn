@@ -41,7 +41,7 @@ import os
 try: 
     from netCDF4 import Dataset
 except ImportError:
-    print("blendyn: could not find netCDF4 module. NetCDF import "\
+    print("Blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
 import pdb

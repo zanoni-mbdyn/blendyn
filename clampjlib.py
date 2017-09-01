@@ -40,11 +40,11 @@ import pdb
 def parse_clamp(rw, ed):
     ret_val = True
     # Debug message
-    print("parse_clamp(): Parsing Cardano hinge joint " + rw[1])
+    print("Blendyn::parse_clamp(): Parsing Cardano hinge joint " + rw[1])
     try:
         el = ed['clamp_' + str(rw[1])]
         
-        print("parse_clamp(): found existing entry in elements dictionary. Updating it.")
+        print("Blendyn::parse_clamp(): found existing entry in elements dictionary. Updating it.")
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -66,7 +66,7 @@ def parse_clamp(rw, ed):
         el.is_imported = True
 
     except KeyError:
-        print("parse_clamp(): didn't found an entry in elements dictionary. Creating one.")
+        print("Blendyn::parse_clamp(): didn't found an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.type = 'clamp'
         el.int_label = int(rw[1])
@@ -108,7 +108,7 @@ def spawn_clamp_element(elem, context):
     nd = mbs.nodes
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-        print("spawn_clamp_element(): Element is already imported. \
+        print("Blendyn::spawn_clamp_element(): Element is already imported. \
                 Remove the Blender object or rename it \
                 before re-importing the element.")
         return {'OBJECT_EXISTS'}
@@ -116,7 +116,7 @@ def spawn_clamp_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("spawn_clamp_element(): Could not find a Blender \
+        print("Blendyn::spawn_clamp_element(): Could not find a Blender \
                 object associated to Node " + \
                 str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}

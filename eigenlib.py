@@ -39,7 +39,7 @@ import pdb
 try: 
     from netCDF4 import Dataset
 except ImportError:
-    print("mbdyn-blender: could not find netCDF4 module. NetCDF import "\
+    print("Blendyn:: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
 def update_curr_eigmode(self, context):
@@ -199,7 +199,8 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                 obj.keyframe_insert(data_path = "rotation_quaternion")
             else:
                 # Should not be reached
-                print("ops.mbdyn_eig_geometry: Error: unrecognised rotation parametrization")
+                print("Blendyn::Tools_OT_MBDyn_Eigen_Geometry::execute():"\
+                        + " Error: unrecognised rotation parametrization")
                 message = "Unrecognised rotation parametrization"
                 self.report({'ERROR'}, message)
                 logging.error(message)
@@ -232,8 +233,8 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode
         
-        # FIXME: DEBUG! Remove before committing (?) 
-        print("ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
+        print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                + " ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
     
@@ -242,11 +243,10 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
         eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
         
-        print("ops.mbdyn_eig_animate_mode: eigvec_abs = ")
-        print(eigvec_abs)
+        print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                + " eigvec_abs = {}".format(eigvec_abs))
         
         eigvec_phase = np.arctan2(eigvec_im, eigvec_re)
-        # eigvec_phase = eigvec_phase - eigvec_phase[0]   # FIXME: is this correct?
         
         scale = eigsol.anim_scale
 
@@ -275,7 +275,8 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
             node_idx = idx[np.where(nodes == nd[ndx].int_label)[0][0]]
             
-            print("ops.mbdyn_eig_animate_mode: node_idx = " + str(node_idx))
+            print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                    + " node_idx = " + str(node_idx))
 
             ref_pos = obj.location.copy()
             phi_tmp = Vector(( obj.rotation_axis_angle[0], \

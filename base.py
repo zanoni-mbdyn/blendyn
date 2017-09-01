@@ -52,7 +52,7 @@ import pdb
 try:
     from netCDF4 import Dataset
 except ImportError:
-    print("Blendyn: could not find the netCDF4 module. NetCDF import "\
+    print("Blendyn:: could not find the netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
 HAVE_PLOT = False
@@ -62,7 +62,7 @@ try:
     from .plotlib import *
     HAVE_PLOT = True
 except ImportError:
-    print("Blendyn: could not find the pygal module. Plotting  "\
+    print("Blendyn:: could not find the pygal module. Plotting  "\
         + "will be disabled.")
 
 HAVE_PSUTIL = False
@@ -70,7 +70,7 @@ try:
     import psutil
     HAVE_PSUTIL = True
 except ImportError:
-    print("Blendyn: could not find the psutil module. Stopping "\
+    print("Blendyn:: could not find the psutil module. Stopping "\
             + "MBDyn from the Blender UI will be disabled.")
 
 from .baselib import *
@@ -2273,7 +2273,7 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
                     obj.name = node.name
                 node.blender_object = obj.name
                 obj.mbdyn.is_assigned = True
-                print("MBDynNodeImportAllButton: added node " \
+                print("Blendyn::MBDynNodeImportAllButton::execute(): added node " \
                         + str(node.int_label) \
                         + " to scene and associated with object " + obj.name)
                 added_nodes += 1
@@ -2326,7 +2326,9 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
                     obj.name = node.name
                 node.blender_object = obj.name
                 obj.mbdyn.is_assigned = True
-                print("MBDynNodeAddButton: added node " + str(node.int_label) + " to scene and associated with object " + obj.name)
+                print("Blendyn::MBDynNodeAddButton:execute(): added node "\
+                        + str(node.int_label)\
+                        + " to scene and associated with object " + obj.name)
                 added_node = True
         if added_node:
             message = "MBDyn node " + node.string_label + " imported to scene."
@@ -2543,7 +2545,7 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
 
             else:
                 # DEBUG message to console
-                print("Object " + context.object.name + \
+                print("Blendyn::MBDynOBJNodeSelectButton::execute(): Object " + context.object.name + \
                       " MBDyn node association updated to node " + \
                 str(context.object.mbdyn.int_label))
         return{'FINISHED'}
@@ -2668,7 +2670,7 @@ class Object_OT_Delete_Override(bpy.types.Operator):
             try:
                 self.remove_from_dict(obj, context)
             except KeyError:
-                print("remove_from_dict(): key not found")
+                print("Blendyn::Object_OT_Delete_Override::remove_from_dict(): key not found")
                 pass
             bpy.context.scene.objects.unlink(obj)
             bpy.data.objects.remove(obj)
