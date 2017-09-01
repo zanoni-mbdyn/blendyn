@@ -145,6 +145,8 @@ def setup_import(filepath, context):
     else:
         mbs.use_netcdf = False
         mbs.num_rows = file_len(filepath)
+        if mbs.num_rows < 0:
+            return {'FILE_ERROR'}
     return {'FINISHED'}
 
 # -----------------------------------------------------------
@@ -375,6 +377,8 @@ def file_len(filepath):
                 pass
         return kk + 1
     except UnboundLocalError:
+        return 0
+    except IsADirectoryError:
         return 0
 # -----------------------------------------------------------
 # end of file_len() function
@@ -875,27 +879,30 @@ class BlenderHandler(logging.Handler):
         editor.write(log_entry + '\n')
 
 def log_messages(mbs, baseLogger, saved_blend):
-
-        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
-                    else 'untitled.blend'
-        blendFile = os.path.splitext(blendFile)[0]
-
-        formatter = '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
-        datefmt = '%m/%d/%Y %I:%M:%S %p'
-        global logFile
-        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
-
-        fh = logging.FileHandler(logFile)
-        fh.setFormatter(logging.Formatter(formatter, datefmt))
-
-        custom = BlenderHandler()
-        custom.setFormatter(logging.Formatter(formatter, datefmt))
-
-        baseLogger.addHandler(fh)
-        baseLogger.addHandler(custom)
-
-        if not saved_blend:
-            bpy.data.texts.new(os.path.basename(logFile))
+        try:
+	        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
+	                    else 'untitled.blend'
+	        blendFile = os.path.splitext(blendFile)[0]
+	
+	        formatter = '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+	        datefmt = '%m/%d/%Y %I:%M:%S %p'
+	        global logFile
+	        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
+	
+	        fh = logging.FileHandler(logFile)
+	        fh.setFormatter(logging.Formatter(formatter, datefmt))
+	
+	        custom = BlenderHandler()
+	        custom.setFormatter(logging.Formatter(formatter, datefmt))
+	
+	        baseLogger.addHandler(fh)
+	        baseLogger.addHandler(custom)
+	
+	        if not saved_blend:
+	            bpy.data.texts.new(os.path.basename(logFile))
+        except PermissionError as ex:
+            print("Blendyn::BlenderHandler::log_messages(): " +\
+                    "caught PermissionError exception {0}".format(ex))
 
 def delete_log():
     mbs = bpy.context.scene.mbdyn

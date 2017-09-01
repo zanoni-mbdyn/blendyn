@@ -985,15 +985,16 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
 
         si_retval = setup_import(self.filepath, context)
 
-        mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
-
-        baseLogger.handlers = []
-        log_messages(mbs, baseLogger, False)
-
         if si_retval == {'NETCDF_ERROR'}:
             self.report({'ERROR'}, "NetCDF module not imported correctly")
             return {'CANCELLED'}
+        elif si_retval == {'FILE_ERROR'}:
+            self.report({'ERROR'}, "Output file not set correctly (no file selected?)")
         elif si_retval == {'FINISHED'}:
+            mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
+            
+            baseLogger.handlers = []
+            log_messages(mbs, baseLogger, False)
             return si_retval
 
     def invoke(self, context, event):
