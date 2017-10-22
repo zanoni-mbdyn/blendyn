@@ -1497,11 +1497,14 @@ class MBDynLiveAnimation(bpy.types.Operator):
         wm = context.window_manager
         wm.event_timer_remove(self.timer)
 
+        mbs = context.scene.mbdyn
+
         if hasattr(self, "receiver"):
             self.receiver.close()
 
-        if hasattr(self, "sender"):
-            self.sender.close()
+        if hasattr(self, "senders"):
+            for driver in mbs.drivers:
+                self.senders[driver.name].close()
 
         wm.progress_end()
         return {'FINISHED'}

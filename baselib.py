@@ -97,7 +97,8 @@ if HAVE_PSUTIL:
         mbdynProc = [var for var in psutil.process_iter() if var.name() == 'mbdyn']
 
         if mbdynProc:
-            mbdynProc[0].kill()
+            for var in mbdynProc:
+                var.kill()
 
 def get_plot_vars_glob(context):
     mbs = context.scene.mbdyn
@@ -910,6 +911,8 @@ def log_messages(mbs, baseLogger, saved_blend):
 
 def delete_log():
     mbs = bpy.context.scene.mbdyn
+
+    kill_mbdyn()
 
     if not bpy.data.is_saved:
         try:
