@@ -130,8 +130,8 @@ class MBDynEigenanalysisProps(bpy.types.PropertyGroup):
     anim_frames = IntProperty(
             name = "Frames",
             description = "number of frames for eigenmode visualization",
-            default = 48
-            hard_min = 4
+            default = 48,
+            min = 4
             )
 
 bpy.utils.register_class(MBDynEigenanalysisProps)
