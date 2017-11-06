@@ -232,7 +232,7 @@ def spawn_gimbal_element(elem, context):
     # set parenting of wireframe obj
     parenting(gimbaljOBJ, n1OBJ)
 
-    grouping(context, gimbaljOBJ, [n1OBJ, n2OBJ, gimbal_childobj])
+    grouping(context, gimbaljOBJ, [n1OBJ, n2OBJ])
 
     elem.blender_object = gimbaljOBJ.name
 
