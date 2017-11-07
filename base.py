@@ -2231,11 +2231,11 @@ class MBDynOBJNodeSelect(bpy.types.Panel):
             row.label(nd_entry.string_label)
             if nd_entry.blender_object == obj.name:
                 row.label(nd_entry.blender_object, icon = 'OBJECT_DATA')
-                row.operator("sel.mbdynnode", text="ASSIGN").int_label = nd_entry.int_label
+                row.operator("sel.mbdynnode", text = "UNASSIGN").ndx = nd_entry.name
             else:
                 row.label(nd_entry.blender_object)
-                row.operator("sel.mbdynnode", text="ASSIGN").int_label = nd_entry.int_label
-                if bpy.data.objects.get(nd_entry.blender_object) == None:
+                row.operator("sel.mbdynnode", text = "ASSIGN").ndx = nd_entry.name
+                if bpy.data.objects.get(nd_entry.blender_object) == 'none':
                     row.operator(Scene_OT_MBDyn_Node_Import_Single.bl_idname, \
                             text="ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
@@ -2521,35 +2521,46 @@ class Scene_OT_MBDyn_Elements_Import_All(bpy.types.Operator):
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
     bl_idname = "sel.mbdynnode"
     bl_label = "MBDyn Node Sel Button"
-    int_label = bpy.props.IntProperty()
+    ndx = bpy.props.StringProperty()
 
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
 
     def execute(self, context):
-        axes = {'1': 'X', '2': 'Y', '3': 'Z'}
-        context.object.mbdyn.int_label = self.int_label
-        context.object.mbdyn.type = 'node.struct'
         ret_val = ''
-        for item in context.scene.mbdyn.nodes:
-            if self.int_label == item.int_label:
-                item.blender_object = context.object.name
-                ret_val = update_parametrization(context.object)
+        node = context.scene.mbdyn.nodes[self.ndx]
+        if node.blender_object == context.object.name:
+            node.blender_object = 'none'
+            ret_val == 'UNASSIGNED'
+        else:
+            node.blender_object = context.object.name
+            ret_val = update_parametrization(context.object)
 
-            if ret_val == 'ROT_NOT_SUPPORTED':
-                message = "Rotation parametrization not supported, node " \
-                + obj.mbdyn.string_label
-
-                self.report({'ERROR'}, message)
-                baseLogger.error(message)
-
-            else:
-                # DEBUG message to console
-                print("Blendyn::MBDynOBJNodeSelectButton::execute(): Object " + context.object.name + \
-                      " MBDyn node association updated to node " + \
-                str(context.object.mbdyn.int_label))
-        return{'FINISHED'}
+        if ret_val == 'ROT_NOT_SUPPORTED':
+            message = "Blendyn::MBDynOBJNodeSelectButton::execute(): "\
+                    + "Rotation parametrization not supported, node "\
+                    + obj.mbdyn.string_label
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+            print(message)
+            return {'CANCELLED'}
+        elif ret_val == 'UNASSIGNED':
+            # DEBUG message to console and log file
+            message = "Blendyn::MBDynOBJNodeSelectButton::execute(): "\
+                    + "Node " + str(node.int_label) + " association with "\
+                    + "Object " + context.object.name + " removed."
+            baseLogger.info(message)
+            print(message)
+            return {'FINISHED'}
+        else: # ret_val == 'FINISHED'
+            message = "Blendyn::MBDynOBJNodeSelectButton::execute(): Object "\
+                    + context.object.name \
+                    + " MBDyn node association updated to node " \
+                    + str(context.object.mbdyn.int_label)
+            baseLogger.info(message)
+            print(message)
+            return {'FINISHED'}
 # -----------------------------------------------------------
 # end of MBDynOBJNodeSelectButton class
 
