@@ -99,7 +99,7 @@ def update_parametrization(obj):
         obj.rotation_mode = 'QUATERNION'
         ret_val = 'FINISHED'
     else:
-        # Cannot be reached
+        # Should not be reached ...
         print("Blendyn::Error: unsupported rotation parametrization")
         ret_val = 'ROT_NOT_SUPPORTED'
 
