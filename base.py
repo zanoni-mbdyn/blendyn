@@ -1770,6 +1770,7 @@ class MBDynEigenanalysisPanel(bpy.types.Panel):
             row.separator()
             row = layout.row()
             row.label(text = "Animation parameters")
+            row = layout.row()
             row.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_scale")
             row = layout.row()
             row.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_frames")

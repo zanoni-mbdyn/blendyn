@@ -34,7 +34,6 @@ import logging
 from .nodelib import axes
 
 import os
-import pdb
 
 try: 
     from netCDF4 import Dataset
@@ -275,59 +274,68 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
 
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
             node_idx = idx[np.where(nodes == nd[ndx].int_label)[0][0]]
-            
-            print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
-                    + " node_idx = " + str(node_idx))
 
-            ref_pos = obj.location.copy()
-            phi_tmp = Vector(( obj.rotation_axis_angle[0], \
-                               obj.rotation_axis_angle[1], \
-                               obj.rotation_axis_angle[2], \
-                               obj.rotation_axis_angle[3] ))
+            if node_idx < 0:
+                message = "Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                    + " skipped Object " + nd[ndx].blender_object \
+                    + " with (dummy) node_idx = " + str(node_idx)
+                logging.warning(message)
+                print(message)
+            else:
+                message = "Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                    + " animating Object with node_idx = " + str(node_idx)
+                logging.info(message)
+                print(message)
 
-            ref_phi = Vector(( phi_tmp[1:4] ))*phi_tmp[0]
+                ref_pos = obj.location.copy()
+                phi_tmp = Vector(( obj.rotation_axis_angle[0], \
+                                obj.rotation_axis_angle[1], \
+                                obj.rotation_axis_angle[2], \
+                                obj.rotation_axis_angle[3] ))
 
-            for frame in range(eigsol.anim_frames):
-                context.scene.frame_current = init_frame + frame
-                t = frame/eigsol.anim_frames
+                ref_phi = Vector(( phi_tmp[1:4] ))*phi_tmp[0]
+
+                for frame in range(eigsol.anim_frames):
+                    context.scene.frame_current = init_frame + frame
+                    t = frame/eigsol.anim_frames
                 
-                obj.location = ref_pos + \
-                        Vector((
-                            scale*eigvec_abs[node_idx]*math.cos(2*math.pi*t + \
-                                    eigvec_phase[node_idx]),
-                            scale*eigvec_abs[node_idx + 1]*math.cos(2*math.pi*t + \
-                                    eigvec_phase[node_idx + 1]),
-                            scale*eigvec_abs[node_idx + 2]*math.cos(2*math.pi*t + \
-                                    eigvec_phase[node_idx + 2])
+                    obj.location = ref_pos + \
+                            Vector((
+                                scale*eigvec_abs[node_idx]*math.cos(2*math.pi*t + \
+                                        eigvec_phase[node_idx]),
+                                scale*eigvec_abs[node_idx + 1]*math.cos(2*math.pi*t + \
+                                        eigvec_phase[node_idx + 1]),
+                                scale*eigvec_abs[node_idx + 2]*math.cos(2*math.pi*t + \
+                                        eigvec_phase[node_idx + 2])
+                                ))
+
+                    obj.keyframe_insert(data_path = "location")
+
+                    new_phi = ref_phi + \
+                            Vector((
+                                scale*eigvec_abs[node_idx + 3]*math.cos(2*math.pi*t + \
+                                        eigvec_phase[node_idx + 3]),
+                                scale*eigvec_abs[node_idx + 4]*math.cos(2*math.pi*t + \
+                                        eigvec_phase[node_idx + 4]),
+                                scale*eigvec_abs[node_idx + 5]*math.cos(2*math.pi*t + \
+                                        eigvec_phase[node_idx + 5])
+                                ))
+
+
+                    new_phi_axis = new_phi.normalized()
+                    obj.rotation_axis_angle = \
+                        Vector(( 
+                            new_phi.magnitude, \
+                            new_phi_axis[0],
+                            new_phi_axis[1],
+                            new_phi_axis[2]
                             ))
 
-                obj.keyframe_insert(data_path = "location")
-
-                new_phi = ref_phi + \
-                        Vector((
-                            scale*eigvec_abs[node_idx + 3]*math.cos(2*math.pi*t + \
-                                    eigvec_phase[node_idx + 3]),
-                            scale*eigvec_abs[node_idx + 4]*math.cos(2*math.pi*t + \
-                                    eigvec_phase[node_idx + 4]),
-                            scale*eigvec_abs[node_idx + 5]*math.cos(2*math.pi*t + \
-                                    eigvec_phase[node_idx + 5])
-                            ))
-
-
-                new_phi_axis = new_phi.normalized()
-                obj.rotation_axis_angle = \
-                    Vector(( 
-                        new_phi.magnitude, \
-                        new_phi_axis[0],
-                        new_phi_axis[1],
-                        new_phi_axis[2]
-                        ))
-
-                obj.keyframe_insert(data_path = "rotation_axis_angle")
+                    obj.keyframe_insert(data_path = "rotation_axis_angle")
            
-            obj.select = False
-            kk = kk + 1
-            wm.progress_update(kk)
+                obj.select = False
+                kk = kk + 1
+                wm.progress_update(kk)
         wm.progress_end()
         return {'FINISHED'}
 # -----------------------------------------------------------
