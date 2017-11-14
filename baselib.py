@@ -124,21 +124,33 @@ def setup_import(filepath, context):
             mbs.num_rows = 0
             try:
                 eig_step = nc.variables['eig.step']
-                eig_time = nc.variables['eig.time']
-                eig_dCoef = nc.variables['eig.dCoef']
-                for ii in range(0, len(eig_step)):
-                    eigsol = mbs.eigensolutions.add()
-                    eigsol.step = eig_step[ii]
-                    eigsol.time = eig_time[ii]
-                    eigsol.dCoef = eig_dCoef[ii]
-                    eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
-                    eigsol.curr_eigmode = 1
+                if not(all(step < 0 for step in eig_step)):
+                    eig_time = nc.variables['eig.time']
+                    eig_dCoef = nc.variables['eig.dCoef']
+                    for ii in range(0, len(eig_step)):
+                        if eig.step[ii] > 0:
+                            eigsol = mbs.eigensolutions.add()
+                            eigsol.step = eig_step[ii]
+                            eigsol.time = eig_time[ii]
+                            eigsol.dCoef = eig_dCoef[ii]
+                            eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
+                            eigsol.curr_eigmode = 1
+                        else:
+                            message = ('MBDynSelectOutputFile::setup_import() WARNING:'+ \
+                                    'Eigensolution ' + str(ii) + ' does not have any ' +
+                                    'valid output')
+                            print(message)
+                            logging.warning(message)
+                else:
+                    raise KeyError
             except KeyError:
-                print('MBDynSelectOutputFile: no eigenanalysis results found')
+                message = 'MBDynSelectOutputFile::setup_import() INFO: ' + \
+                        'no valid eigenanalysis results found'
+                print(message)
+                logging.warning(message)
                 pass
 
             get_plot_vars_glob(context)
-
 
         except NameError:
             return {'NETCDF_ERROR'}
@@ -325,9 +337,10 @@ def parse_log_file(context):
     try:
         with open(out_file) as of:
             reader = csv.reader(of, delimiter = ' ', skipinitialspace = True)
-            for ii in range(4):
-                next(reader)
-            mbs.time_step = float(next(reader)[3])
+            while True:
+                if next(reader)[0] == 'Step':
+                  mbs.time_step = float(next(reader)[3])
+                  break
     except FileNotFoundError:
         print("Blendyn::parse_out_file(): Could not locate the file " + out_file)
         ret_val = {'OUT_NOT_FOUND'}
