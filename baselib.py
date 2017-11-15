@@ -45,6 +45,8 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
+import pdb
+
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -124,6 +126,7 @@ def setup_import(filepath, context):
             mbs.num_rows = 0
             try:
                 eig_step = nc.variables['eig.step']
+                pdb.set_trace()
                 if not(all(step < 0 for step in eig_step)):
                     eig_time = nc.variables['eig.time']
                     eig_dCoef = nc.variables['eig.dCoef']
@@ -647,8 +650,6 @@ def set_motion_paths_mov(context):
                 scene.frame_current += 1
                 frac = np.ceil(frame) - frame
 
-                print(frame, frac)
-
                 # skip (freq - 1)*N lines
                 for ii in range(int(Nskip) - (idx%2)*nodes_iterate):
                     first[ii % nodes_iterate] = np.array(next(reader)).astype(np.float)
@@ -686,7 +687,6 @@ def set_motion_paths_mov(context):
     for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
         st.time = mbs.time_step * ii
-
 
     return {'FINISHED'}
 # -----------------------------------------------------------

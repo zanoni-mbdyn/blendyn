@@ -810,20 +810,23 @@ bpy.app.handlers.frame_change_pre.append(update_time)
 
 @persistent
 def render_variables(scene):
-    try:
-        mbs = scene.mbdyn
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
-        string = [ '{0} : {1}'.format(var.variable, \
-        parse_render_string(netcdf_helper(nc, scene, var.value), var.components)) \
-        for var in mbs.render_vars ]
-        string = '\n'.join(string)
-        if len(mbs.render_vars):
-            bpy.data.scenes['Scene'].render.stamp_note_text = string
-    except IndexError:
-        pass
-bpy.app.handlers.frame_change_pre.append(render_variables)
+    if len(mbs.render_vars):
+        try:
+            mbs = scene.mbdyn
+            ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+            nc = Dataset(ncfile, "r", format="NETCDF3")
+            string = [ '{0} : {1}'.format(var.variable, \
+                parse_render_string(netcdf_helper(nc, scene, var.value), var.components)) \
+                for var in mbs.render_vars ]
+            string = '\n'.join(string)
+            if len(mbs.render_vars):
+                bpy.data.scenes['Scene'].render.stamp_note_text = string
+        except IndexError:
+            pass
+
+if HAVE_PLOT:
+    bpy.app.handlers.frame_change_pre.append(render_variables)
 
 @persistent
 def close_log(scene):
