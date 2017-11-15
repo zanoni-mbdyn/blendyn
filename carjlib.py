@@ -190,7 +190,7 @@ def spawn_cardano_hinge_element(elem, context):
         carjOBJ.name = elem.name
 
         # automatic scaling
-        s = (.5/sqrt(3.))(n1OBJ.scale.magnitude + \
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
                 n2OBJ.scale.magnitude)
         carjOBJ.scale = Vector(( s, s, s ))
 
