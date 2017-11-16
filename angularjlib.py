@@ -35,8 +35,6 @@ from bpy.props import *
 from .utilslib import parse_rotmat
 from .utilslib import parenting
 
-import pdb
-
 # helper function to parse angularvelocity joints
 def parse_angularvelocity(rw, ed):
     ret_val = True
@@ -257,7 +255,6 @@ def spawn_angularacceleration_element(elem, context):
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         angularaccelerationjOBJa = bpy.context.selected_objects[0]
-        pdb.set_trace()
         angularaccelerationjOBJ = angularaccelerationjOBJa.constraints[0].target
 
         angularaccelerationjOBJ.name = elem.name

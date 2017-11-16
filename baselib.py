@@ -31,7 +31,6 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
-
 import logging
 
 import numpy as np
@@ -45,8 +44,6 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
-import pdb
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -55,8 +52,6 @@ except ImportError:
     pass
 
 import os, time
-import pdb
-
 try:
     from netCDF4 import Dataset
 except ImportError:
@@ -126,7 +121,6 @@ def setup_import(filepath, context):
             mbs.num_rows = 0
             try:
                 eig_step = nc.variables['eig.step']
-                pdb.set_trace()
                 if not(all(step < 0 for step in eig_step)):
                     eig_time = nc.variables['eig.time']
                     eig_dCoef = nc.variables['eig.dCoef']

@@ -35,8 +35,6 @@ import logging
 import ntpath, os, csv, math
 from collections import namedtuple
 
-import pdb
-
 axes = {'1': 'X', '2': 'Y', '3': 'Z'}
 
 class RotKeyError(Exception):

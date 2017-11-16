@@ -34,8 +34,6 @@ from bpy.props import *
 
 from .utilslib import *
 
-import pdb
-
 ## Parses clamp joint entry in the .log file (see section E.2.8 of input manual for details)
 def parse_clamp(rw, ed):
     ret_val = True
@@ -182,7 +180,6 @@ class Scene_OT_MBDyn_Import_Clamp_Joint_Element(bpy.types.Operator):
         try:
             elem = ed['clamp_' + str(self.int_label)]
             retval = spawn_clamp_element(elem, context)
-            pdb.set_trace()
             if retval == {'OBJECT_EXISTS'}:
                 message = "Found the Object " + elem.blender_object + \
                     " remove or rename it to re-import the element!"

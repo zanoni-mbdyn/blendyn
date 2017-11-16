@@ -47,8 +47,6 @@ import subprocess
 from multiprocessing import Process
 import json
 
-import pdb
-
 try:
     from netCDF4 import Dataset
 except ImportError:
@@ -78,8 +76,6 @@ from .elements import *
 from .eigenlib import *
 from .rfmlib import *
 from .logwatcher import *
-
-import pdb
 
 ## Nodes Dictionary: contains nodes informations
 class MBDynNodesDictionary(bpy.types.PropertyGroup):

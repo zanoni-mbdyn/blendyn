@@ -31,8 +31,6 @@ import logging
 from mathutils import *
 from math import *
 
-import pdb
-
 from bpy.app.handlers import persistent
 from .utilslib import *
 

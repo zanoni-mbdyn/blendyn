@@ -33,8 +33,6 @@ from bpy.props import *
 
 from .utilslib import *
 
-import pdb
-
 ## Parses rod joint entry in the .log file
 def parse_rod(rw, ed):
     ret_val = True

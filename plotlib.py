@@ -35,7 +35,6 @@ import logging
 from .nodelib import *
 from .elementlib import *
 
-import pdb
 import os
 
 try: 
@@ -43,8 +42,6 @@ try:
 except ImportError:
     print("Blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
-
-import pdb
 
 def get_plot_vars(self, context):
     mbs = context.scene.mbdyn

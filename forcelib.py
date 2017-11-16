@@ -33,8 +33,6 @@ from bpy.props import *
 from .utilslib import *
 
 import os
-import pdb
-
 try: 
     from netCDF4 import Dataset
 except ImportError:
