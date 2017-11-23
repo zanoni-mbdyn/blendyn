@@ -186,7 +186,7 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
@@ -316,7 +316,7 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
@@ -416,7 +416,7 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
@@ -511,7 +511,7 @@ class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
@@ -599,7 +599,7 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(url = outfname + ".svg", write_to = outfname + ".png")
+        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
