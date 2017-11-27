@@ -189,9 +189,9 @@ class MBDynTime(bpy.types.PropertyGroup):
             name = "simulation time",
             description = "simulation time of animation frame"
             )
-bpy.utils.register_class(MBDynTime)
 # -----------------------------------------------------------
 # end of MBDynTime class
+bpy.utils.register_class(MBDynTime)
 
 ## PropertyGroup of Render Variables
 class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
@@ -207,9 +207,9 @@ class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
         name = "Components of the Variable",
         size = 9
     )
-bpy.utils.register_class(MBDynRenderVarsDictionary)
 # -----------------------------------------------------------
 # end of MBDynRenderVarsDictionary class
+bpy.utils.register_class(MBDynRenderVarsDictionary)
 
 class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
 	name = StringProperty(
@@ -221,6 +221,8 @@ class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
 		name = 'Actual collection group',
 		type = MBDynRenderVarsDictionary
 	)
+# -----------------------------------------------------------
+# end of MBDynDisplayVarsDictionary class
 bpy.utils.register_class(MBDynDisplayVarsDictionary)
 
 ## PropertyGroup of Environment Variables
@@ -233,15 +235,17 @@ class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
             name = "Values of Environment variables",
             description = "Values of variables to be set"
             )
-bpy.utils.register_class(MBDynEnvVarsDictionary)
 # -----------------------------------------------------------
 # end of MBDynEnvVarsDictionary class
+bpy.utils.register_class(MBDynEnvVarsDictionary)
 
 ## PropertyGroup of MBDyn plottable variables
 class MBDynPlotVars(bpy.types.PropertyGroup):
     name = StringProperty(
             name = "plottable variable"
             )
+# -----------------------------------------------------------
+# end of MBDynPlotVars class
 bpy.utils.register_class(MBDynPlotVars)
 
 ## Set scene properties
@@ -696,9 +700,9 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
                 default = 0.0
                 )
 
-bpy.utils.register_class(MBDynSettingsScene)
 # -----------------------------------------------------------
 # end of MBDynSettingsScene class
+bpy.utils.register_class(MBDynSettingsScene)
 
 ## MBDynSettings for Blender Object
 class MBDynSettingsObject(bpy.types.PropertyGroup):
@@ -788,9 +792,9 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
                 default = 0.0
                 )
 
-bpy.utils.register_class(MBDynSettingsObject)
 # -----------------------------------------------------------
 # end of MBDynSettingsObject class
+bpy.utils.register_class(MBDynSettingsObject)
 
 bpy.types.Scene.mbdyn = PointerProperty(type=MBDynSettingsScene)
 bpy.types.Object.mbdyn = PointerProperty(type=MBDynSettingsObject)
@@ -889,9 +893,9 @@ class MBDynStandardImport(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
-bpy.utils.register_class(MBDynStandardImport)
 # -----------------------------------------------------------
 # end of MBDynStandardImport class
+bpy.utils.register_class(MBDynStandardImport)
 
 
 class MBDynReadLog(bpy.types.Operator):
@@ -961,9 +965,9 @@ class MBDynReadLog(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
-bpy.utils.register_class(MBDynReadLog)
 # -----------------------------------------------------------
 # end of MBDynReadLog class
+bpy.utils.register_class(MBDynReadLog)
 
 class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
     """ Sets MBDyn's output files path and basename """
@@ -999,9 +1003,9 @@ class MBDynSelectOutputFile(bpy.types.Operator, ImportHelper):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
-bpy.utils.register_class(MBDynSelectOutputFile)
 # -----------------------------------------------------------
 # end of MBDynSelectLabFile class
+bpy.utils.register_class(MBDynSelectOutputFile)
 
 class MBDynAssignLabels(bpy.types.Operator):
     """ Assigns 'recognisable' labels to MBDyn nodes and elements by
@@ -1032,9 +1036,9 @@ class MBDynAssignLabels(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynAssignLabels)
 # -----------------------------------------------------------
 # end of MBDynAssignLabels class
+bpy.utils.register_class(MBDynAssignLabels)
 
 class MBDynClearData(bpy.types.Operator):
     """ Clears MBDyn elements and nodes dictionaries, essentially\
@@ -1057,9 +1061,9 @@ class MBDynClearData(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynClearData)
 # -----------------------------------------------------------
 # end of MBDynClearData class
+bpy.utils.register_class(MBDynClearData)
 
 class MBDynSetInstallPath(bpy.types.Operator):
     """Sets the Installation Path of MBDyn to be used\
@@ -1079,9 +1083,9 @@ class MBDynSetInstallPath(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynSetInstallPath)
 # -----------------------------------------------------------
 # end of MBDynSetInstallPath class
+bpy.utils.register_class(MBDynSetInstallPath)
 
 class MBDynDefaultInstallPath(bpy.types.Operator):
     """Sets the Installation path of MBDyn to the value\
@@ -1105,6 +1109,8 @@ class MBDynDefaultInstallPath(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
+# -----------------------------------------------------------
+# end of MBDynDefaultInstallPath class
 bpy.utils.register_class(MBDynDefaultInstallPath)
 
 class MBDynConfigInstallPath(bpy.types.Operator):
@@ -1129,6 +1135,8 @@ class MBDynConfigInstallPath(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
+# -----------------------------------------------------------
+# end of MBDynConfigInstallPath class
 bpy.utils.register_class(MBDynConfigInstallPath)
 
 class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
@@ -1153,9 +1161,9 @@ class MBDynSelectInputFile(bpy.types.Operator, ImportHelper):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
-bpy.utils.register_class(MBDynSelectInputFile)
 # -----------------------------------------------------------
 # end of MBDynSelectInputFile class
+bpy.utils.register_class(MBDynSelectInputFile)
 
 class MBDynSetEnvVariables(bpy.types.Operator):
     """Sets the Environment variables to be\
@@ -1182,9 +1190,9 @@ class MBDynSetEnvVariables(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynSetEnvVariables)
 # -----------------------------------------------------------
 # end of MBDynSetEnvVariables class
+bpy.utils.register_class(MBDynSetEnvVariables)
 
 class MBDynDeleteEnvVariables(bpy.types.Operator):
     """Delete Environment variables"""
@@ -1200,9 +1208,9 @@ class MBDynDeleteEnvVariables(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynDeleteEnvVariables)
 # -----------------------------------------------------------
 # end of MBDynDeleteEnvVariables class
+bpy.utils.register_class(MBDynDeleteEnvVariables)
 
 class MBDynRunSimulation(bpy.types.Operator):
     """Runs the MBDyn Simulation in background"""
@@ -1314,9 +1322,9 @@ class MBDynRunSimulation(bpy.types.Operator):
 
         return self.execute(context)
 
-bpy.utils.register_class(MBDynRunSimulation)
 # -----------------------------------------------------------
 # end of MBDynRunSimulation class
+bpy.utils.register_class(MBDynRunSimulation)
 
 class MBDynStopSimulation(bpy.types.Operator):
     """Stops the MBDyn simulation"""
@@ -1335,9 +1343,9 @@ class MBDynStopSimulation(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
-bpy.utils.register_class(MBDynStopSimulation)
 # -----------------------------------------------------------
 # end of MBDynStopSimulation class
+bpy.utils.register_class(MBDynStopSimulation)
 
 class MBDynSetMotionPaths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
@@ -1370,9 +1378,9 @@ class MBDynSetMotionPaths(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynSetMotionPaths)
 # -----------------------------------------------------------
 # end of MBDynSetMotionPaths class
+bpy.utils.register_class(MBDynSetMotionPaths)
 
 class MBDynSetImportFreqAuto(bpy.types.Operator):
     """ Sets the import frequency automatically in order to match the Blender
@@ -1387,7 +1395,9 @@ class MBDynSetImportFreqAuto(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-
+# -----------------------------------------------------------
+# end of MBDynSetImportFreqAuto class
+bpy.utils.register_class(MBDynSetImportFreqAuto)
 
 class MBDynSetRenderVariables(bpy.types.Operator):
     """Sets the Render variables to be\
@@ -1416,9 +1426,9 @@ class MBDynSetRenderVariables(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynSetRenderVariables)
 # -----------------------------------------------------------
 # end of MBDynSetRenderVariables class
+bpy.utils.register_class(MBDynSetRenderVariables)
 
 class MBDynDeleteRenderVariables(bpy.types.Operator):
     """Delete Render variables"""
@@ -1434,9 +1444,9 @@ class MBDynDeleteRenderVariables(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynDeleteRenderVariables)
 # -----------------------------------------------------------
 # end of MBDynDeleteRenderVariables class
+bpy.utils.register_class(MBDynDeleteRenderVariables)
 
 class MBDynDeleteAllRenderVariables(bpy.types.Operator):
     bl_idname = "sel.delete_all_render_variables"
@@ -1451,9 +1461,9 @@ class MBDynDeleteAllRenderVariables(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-
+# -----------------------------------------------------------
+# end of MBDynDeleteAllRenderVariables class
 bpy.utils.register_class(MBDynDeleteAllRenderVariables)
-
 
 class MBDynShowDisplayGroup(bpy.types.Operator):
     bl_idname = "ops.show_plot_group"
@@ -1479,9 +1489,9 @@ class MBDynShowDisplayGroup(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-
+# -----------------------------------------------------------
+# end of MBDynShowDisplayGroup class
 bpy.utils.register_class(MBDynShowDisplayGroup)
-
 
 class MBDynSetDisplayGroup(bpy.types.Operator):
     """Delete Render variables"""
@@ -1520,9 +1530,9 @@ class MBDynSetDisplayGroup(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-bpy.utils.register_class(MBDynSetDisplayGroup)
 # -----------------------------------------------------------
-# end of MBDynDeleteRenderVariables class
+# end of MBDynSetDisplayGroup class
+bpy.utils.register_class(MBDynSetDisplayGroup)
 
 class MBDynImportPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
@@ -1601,6 +1611,7 @@ class MBDynImportPanel(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of MBDynImportPanel class
+bpy.utils.register_class(MBDynImportPanel)
 
 class MBDynAnimatePanel(bpy.types.Panel):
     """ Create animation of simulation results - Toolbar Panel """
@@ -1640,6 +1651,7 @@ class MBDynAnimatePanel(bpy.types.Panel):
         col.prop(mbs, "time")
 # -----------------------------------------------------------
 # end of MBDynAnimatePanel class
+bpy.utils.register_class(MBDynAnimatePanel)
 
 class MBDynSimulationPanel(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
@@ -1725,6 +1737,7 @@ class MBDynSimulationPanel(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of MBDynSimulationPanel class
+bpy.utils.register_class(MBDynSimulationPanel)
 
 class MBDynEigenanalysisPanel(bpy.types.Panel):
     """ Visualizes the results of an eigenanalysis - Toolbar Panel """
@@ -1778,6 +1791,7 @@ class MBDynEigenanalysisPanel(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of MBDynEigenanalysisPanel class
+bpy.utils.register_class(MBDynEigenanalysisPanel)
 
 class MBDynActiveObjectPanel(bpy.types.Panel):
     """ Visualizes MBDyn data relative to the current active object - Toolbar Panel """
@@ -1854,6 +1868,7 @@ class MBDynActiveObjectPanel(bpy.types.Panel):
                 pass
 # -----------------------------------------------------------
 # end of MBDynActiveObjectPanel class
+bpy.utils.register_class(MBDynActiveObjectPanel)
 
 class MBDynNodes_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -1866,6 +1881,7 @@ class MBDynNodes_UL_List(bpy.types.UIList):
             layout.label('', icon = custom_icon)
 # -----------------------------------------------------------
 # end of MBDynNodes_UL_List class
+bpy.utils.register_class(MBDynNodes_UL_List)
 
 class MBDynElems_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -1878,12 +1894,14 @@ class MBDynElems_UL_List(bpy.types.UIList):
             layout.label('', icon = custom_icon)
 # -----------------------------------------------------------
 # end of MBDynElems_UL_List class
+bpy.utils.register_class(MBDynElems_UL_List)
 
 class MBDynPlotVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.label(item.name)
 # -----------------------------------------------------------
 # end of MBDynPLotVar_UL_List class
+bpy.utils.register_class(MBDynPlotVar_UL_List)
 
 class MBDynRenderVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -1891,6 +1909,7 @@ class MBDynRenderVar_UL_List(bpy.types.UIList):
         layout.label(item.value + comp_repr(item.components, item.value, context))
 # -----------------------------------------------------------
 # end of MBDynRenderVar_UL_List class
+bpy.utils.register_class(MBDynRenderVar_UL_List)
 
 class MBDynEnvVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -1898,6 +1917,7 @@ class MBDynEnvVar_UL_List(bpy.types.UIList):
         layout.label(item.value)
 # -----------------------------------------------------------
 # end of MBDynEnvVar_UL_List class
+bpy.utils.register_class(MBDynEnvVar_UL_List)
 
 class MBDynReferences_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -1910,6 +1930,7 @@ class MBDynReferences_UL_List(bpy.types.UIList):
             layout.label('', icon = custom_icon) 
 # -----------------------------------------------------------
 # end of MBDynReferences_UL_List class
+bpy.utils.register_class(MBDynReferences_UL_List)
 
 ## Panel in scene properties toolbar that shows the MBDyn
 #  nodes found in the .log file and links to an operator
@@ -1958,6 +1979,7 @@ class MBDynNodesScenePanel(bpy.types.Panel):
             row.prop(mbs, "is_vertshook", text = "Hook vertices to nodes")
 # -----------------------------------------------------------
 # end of MBDynNodesScenePanel class
+bpy.utils.register_class(MBDynNodesScenePanel)
 
 ## Panel in scene properties toolbar that shows the MBDyn
 #  elements found in the .log file
@@ -2011,7 +2033,8 @@ class MBDynElemsScenePanel(bpy.types.Panel):
             col = layout.column()
             col.operator(Scene_OT_MBDyn_Elements_Import_All.bl_idname)
 # -----------------------------------------------------------
-# end of MBDynNodesScenePanel class
+# end of MBDynElemsScenePanel class
+bpy.utils.register_class(MBDynElemsScenePanel)
 
 class MBDynScalingPanel(bpy.types.Panel):
     """ List of MBDyn elements: use import button to add \
@@ -2043,6 +2066,9 @@ class MBDynScalingPanel(bpy.types.Panel):
         row = box.row()
         row.operator(Scene_OT_MBDyn_Select_Elements_by_Type.bl_idname, text = 'Select Elements')
         row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
+# -----------------------------------------------------------
+# end of MBDynScalingPanel class
+bpy.utils.register_class(MBDynScalingPanel)
 
 ## Panel in Scene toolbar
 class MBDynPlotPanelScene(bpy.types.Panel):
@@ -2163,6 +2189,9 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             row = layout.row()
             row.label(text="Plotting from text output")
             row.label(text="is not supported yet.")
+# -----------------------------------------------------------
+# end of MBDynPlotPanelScene class
+bpy.utils.register_class(MBDynPlotPanelScene)
 
 ## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
 class MBDynReferenceScenePanel(bpy.types.Panel):
@@ -2200,6 +2229,9 @@ class MBDynReferenceScenePanel(bpy.types.Panel):
             pass
         except IndexError:
             pass
+# -----------------------------------------------------------
+# end of MBDynReferenceScenePanel class
+bpy.utils.register_class(MBDynReferenceScenePanel)
 
 ## Panel in object properties toolbar that helps associate
 #  MBDyn nodes to Blender objects
@@ -2239,6 +2271,7 @@ class MBDynOBJNodeSelect(bpy.types.Panel):
                             text="ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
 # end of MBDynOBJNodeSelect class
+bpy.utils.register_class(MBDynOBJNodeSelect)
 
 class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
     bl_idname = "add.mbdynnode_all"
@@ -2290,6 +2323,7 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Node_Import_All class
+bpy.utils.register_class(Scene_OT_MBDyn_Node_Import_All)
 
 class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
     bl_idname = "add.mbdynnode"
@@ -2342,6 +2376,7 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Node_Import_Single class
+bpy.utils.register_class(Scene_OT_MBDyn_Node_Import_Single)
 
 class Scene_OT_MBDyn_References_Import_All(bpy.types.Operator):
     bl_idname = "add.mbdyn_reference_all"
@@ -2362,6 +2397,7 @@ class Scene_OT_MBDyn_References_Import_All(bpy.types.Operator):
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_References_Import_All class
+bpy.utils.register_class(Scene_OT_MBDyn_References_Import_All)
 
 class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
     bl_idname = "add.mbdyn_reference_single"
@@ -2385,6 +2421,7 @@ class Scene_OT_MBDyn_References_Import_Single(bpy.types.Operator):
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_References_Import_Single class
+bpy.utils.register_class(Scene_OT_MBDyn_References_Import_Single)
 
 class Scene_OT_MBDyn_Select_all_Nodes(bpy.types.Operator):
     bl_idname = "sel.select_all_nodes"
@@ -2398,6 +2435,9 @@ class Scene_OT_MBDyn_Select_all_Nodes(bpy.types.Operator):
             obj = bpy.data.objects[var]
             obj.select = True
         return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Select_all_Nodes class
+bpy.utils.register_class(Scene_OT_MBDyn_Select_all_Nodes)
 
 class Scene_OT_MBDyn_Select_Elements_by_Type(bpy.types.Operator):
     bl_idname = "sel.select_all_elements"
@@ -2412,6 +2452,9 @@ class Scene_OT_MBDyn_Select_Elements_by_Type(bpy.types.Operator):
                 obj = bpy.data.objects[var]
                 obj.select = True
         return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Select_Elements_by_Type class
+bpy.utils.register_class(Scene_OT_MBDyn_Select_Elements_by_Type)
 
 class Scene_OT_MBDyn_Scale_Node(bpy.types.Operator):
     bl_idname = "add.mbdyn_scale_node"
@@ -2425,6 +2468,9 @@ class Scene_OT_MBDyn_Scale_Node(bpy.types.Operator):
         scaleOBJ.scale = Vector((s, s, s))
 
         return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Scale_Node class
+bpy.utils.register_class(Scene_OT_MBDyn_Scale_Node)
 
 class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_scale_elems"
@@ -2440,6 +2486,9 @@ class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
                 scaleOBJ.scale = Vector((s, s, s))
 
         return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Scale_Elements_by_Type class
+bpy.utils.register_class(Scene_OT_MBDyn_Scale_Elements_by_Type)
 
 class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_type"
@@ -2474,6 +2523,7 @@ class Scene_OT_MBDyn_Import_Elements_by_Type(bpy.types.Operator):
 
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Elements_by_Type class
+bpy.utils.register_class(Scene_OT_MBDyn_Import_Elements_by_Type)
 
 class Scene_OT_MBDyn_Elements_Import_All(bpy.types.Operator):
     bl_idname = "add.mbdyn_elems_all"
@@ -2516,6 +2566,7 @@ class Scene_OT_MBDyn_Elements_Import_All(bpy.types.Operator):
 
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Elements_Import_All class
+bpy.utils.register_class(Scene_OT_MBDyn_Elements_Import_All)
 
 class MBDynOBJNodeSelectButton(bpy.types.Operator):
     bl_idname = "sel.mbdynnode"
@@ -2562,6 +2613,7 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
             return {'FINISHED'}
 # -----------------------------------------------------------
 # end of MBDynOBJNodeSelectButton class
+bpy.utils.register_class(MBDynOBJNodeSelectButton)
 
 class MBDynCreateVerticesFromNodesButton(bpy.types.Operator):
     bl_idname = "add.vertsfromnodes"
@@ -2645,6 +2697,7 @@ class MBDynCreateVerticesFromNodesButton(bpy.types.Operator):
         return{'FINISHED'}
 # -----------------------------------------------------------
 # end of MBDynCreateVerticesFromNodesButton class
+bpy.utils.register_class(MBDynCreateVerticesFromNodesButton)
 
 class Object_OT_Delete_Override(bpy.types.Operator):
     """ Overrides the delete function of Blender Objects to remove
@@ -2686,3 +2739,6 @@ class Object_OT_Delete_Override(bpy.types.Operator):
             bpy.context.scene.objects.unlink(obj)
             bpy.data.objects.remove(obj)
             return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Object_OT_Delete_Override class
+bpy.utils.register_class(Object_OT_Delete_Override)
