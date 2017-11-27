@@ -115,42 +115,31 @@ def setup_import(filepath, context):
     mbs = context.scene.mbdyn
     mbs.file_path, mbs.file_basename = path_leaf(filepath)
     if filepath[-2:] == 'nc':
+        nc = Dataset(filepath, "r", format="NETCDF3")
+        mbs.use_netcdf = True
+        mbs.num_rows = 0
         try:
-            nc = Dataset(filepath, "r", format="NETCDF3")
-            mbs.use_netcdf = True
-            mbs.num_rows = 0
-            try:
-                eig_step = nc.variables['eig.step']
-                if not(all(step < 0 for step in eig_step)):
-                    eig_time = nc.variables['eig.time']
-                    eig_dCoef = nc.variables['eig.dCoef']
-                    for ii in range(0, len(eig_step)):
-                        if eig.step[ii] > 0:
-                            eigsol = mbs.eigensolutions.add()
-                            eigsol.step = eig_step[ii]
-                            eigsol.time = eig_time[ii]
-                            eigsol.dCoef = eig_dCoef[ii]
-                            eigsol.iNVec = nc.dimensions['eig_' + str(ii) + '_iNVec_out'].size
-                            eigsol.curr_eigmode = 1
-                        else:
-                            message = ('MBDynSelectOutputFile::setup_import() WARNING:'+ \
-                                    'Eigensolution ' + str(ii) + ' does not have any ' +
-                                    'valid output')
-                            print(message)
-                            logging.warning(message)
-                else:
-                    raise KeyError
-            except KeyError:
-                message = 'MBDynSelectOutputFile::setup_import() INFO: ' + \
-                        'no valid eigenanalysis results found'
-                print(message)
-                logging.warning(message)
-                pass
+            eig_step = nc.variables['eig.step']
+            eig_time = nc.variables['eig.time']
+            eig_dCoef = nc.variables['eig.dCoef']
+            NVecs = [dim for dim in nc.dimensions if 'iNVec_out' in dim]
 
-            get_plot_vars_glob(context)
+            for ii in range(0, len(NVecs)):
+                eigsol = mbs.eigensolutions.add()
+                eigsol.index = float(NVecs[ii][4:-10])
+                eigsol.step = eig_step[eigsol.index]
+                eigsol.time = eig_time[eigsol.index]
+                eigsol.dCoef = eig_dCoef[eigsol.index]
+                eigsol.iNVec = nc.dimensions[NVecs[ii]].size
+                eigsol.curr_eigmode = 1
+        except KeyError:
+            message = 'MBDynSelectOutputFile::setup_import() INFO: ' + \
+                    'no valid eigenanalysis results found'
+            print(message)
+            logging.warning(message)
+            pass
 
-        except NameError:
-            return {'NETCDF_ERROR'}
+        get_plot_vars_glob(context)
     else:
         mbs.use_netcdf = False
         mbs.num_rows = file_len(filepath)

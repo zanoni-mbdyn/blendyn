@@ -1747,34 +1747,34 @@ class MBDynEigenanalysisPanel(bpy.types.Panel):
             row.label(text = "Eigenanalysis")
             row = layout.row()
             row.prop(mbs, "curr_eigsol")
-            row = layout.row()
-            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "iNVec")
-            row.enabled = False
+            col = layout.column(align = True)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "index", slider = False)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "step", slider = False)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "time", slider = False)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "iNVec", slider = False)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "dCoef", slider = False)
+            col.enabled = False
             row = layout.row()
             row.operator(Tools_OT_MBDyn_Eigen_Geometry.bl_idname, text = "Reference configuration")
 
             row = layout.row()
             row.separator()
 
-            row = layout.row()
-            row.label(text = "Selected Eigenmode")
-            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "curr_eigmode", text = "")
-            row = layout.row()
-            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_real")
-            row.enabled = False
-            row = layout.row()
-            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_freq")
-            row.enabled = False
+            col = layout.column(align = True)
+            col.label(text = "Selected Eigenmode")
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "curr_eigmode", text = "")
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_real", slider = False)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_freq", slider = False)
+            col.enabled = False
 
+            row = layout.row()
             row.separator()
-            row = layout.row()
-            row.label(text = "Animation parameters")
-            row = layout.row()
-            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_scale")
-            row = layout.row()
-            row.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_frames")
-            row = layout.row()
-            row.operator(Tools_OT_MBDyn_Animate_Eigenmode.bl_idname, text = "Visualize mode")
+
+            col = layout.column(align = True)
+            col.label(text = "Animation parameters")
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_scale")
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_frames")
+            col.operator(Tools_OT_MBDyn_Animate_Eigenmode.bl_idname, text = "Visualize mode")
 
 # -----------------------------------------------------------
 # end of MBDynEigenanalysisPanel class

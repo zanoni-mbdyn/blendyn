@@ -82,7 +82,13 @@ def update_curr_eigsol(self, context):
 # end of update_curr_eigsol() function
 
 class MBDynEigenanalysisProps(bpy.types.PropertyGroup):
-    """ Holds the properties of the eigensolutions found in the MBDyn output """ 
+    """ Holds the properties of the eigensolutions found in the MBDyn output """
+
+    index = IntProperty(
+            name = "index",
+            description = "Index of the eigenanalysis"
+            )
+
     step = IntProperty(
             name = "step",
             description = "Step number at which the eigenanalysis was performed"
@@ -90,7 +96,8 @@ class MBDynEigenanalysisProps(bpy.types.PropertyGroup):
 
     time = FloatProperty(
             name = "time",
-            description = "the time in seconds at which the eigenanalysis was performed"
+            description = "the time in seconds at which the eigenanalysis was performed",
+            precision = 6
             )
 
     dCoef = FloatProperty(
