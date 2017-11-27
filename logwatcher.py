@@ -5,7 +5,10 @@ Real-time log files watcher supporting log rotation.
 Works with Python >= 2.6 and >= 3.2, on both POSIX and Windows.
 
 Author: Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>
-License: MIT
+License: MIT 
+
+Copyright: Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>
+Full licence available at: https://opensource.org/licenses/MIT
 """
 
 import os
