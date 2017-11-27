@@ -22,7 +22,6 @@
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-# TODO: check for unnecessary stuff
 from mathutils import *
 from math import *
 
@@ -903,16 +902,17 @@ def log_messages(mbs, baseLogger, saved_blend):
 def delete_log():
     mbs = bpy.context.scene.mbdyn
 
-    if not bpy.data.is_saved:
+    if not(bpy.data.is_saved) or mbs.del_log:
         try:
             os.remove(logFile)
-        except NameError:
+            print("Blendyn::delete_log(): removed file" + logFile)
+        except NameError as ex:
+            print("Blendyn::delete_log(): NameError:" + str(e))
             pass
 
-    elif mbs.del_log:
-        try:
-            os.remove(logFile)
-        except NameError:
-            pass
+def logging_shutdown():
+    print("Blendyn::logging_shutdown(): shutting down logs.")
+    logging.shutdown()
 
 atexit.register(delete_log)
+atexit.register(logging_shutdown)
