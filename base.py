@@ -810,6 +810,7 @@ bpy.app.handlers.frame_change_pre.append(update_time)
 
 @persistent
 def render_variables(scene):
+    mbs = scene.mbdyn
     if len(mbs.render_vars):
         try:
             mbs = scene.mbdyn
