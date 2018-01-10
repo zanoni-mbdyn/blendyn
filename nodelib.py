@@ -188,6 +188,8 @@ def parse_node(context, rw):
         try:
             node.initial_rot, node.parametrization = orient_to_quat(rw)
         except RotKeyError:
+            if len(rw) < 8: # this is a displacement node
+                node.initial_rot, node.parametrization = orient_to_quat(rw[0:6] + ['phi', '0', '0', '0'])
             pass
         ret_val = True
     except KeyError:
@@ -201,6 +203,8 @@ def parse_node(context, rw):
         try:
             node.initial_rot, node.parametrization = orient_to_quat(rw)
         except RotKeyError:
+            if len(rw) < 8: # this is a displacement node
+                node.initial_rot, node.parametrization = orient_to_quat(rw[0:6] + ['phi', '0', '0', '0'])
             pass
         pass
         ret_val = False
