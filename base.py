@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file base.py
-# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -810,6 +810,7 @@ bpy.app.handlers.frame_change_pre.append(update_time)
 
 @persistent
 def render_variables(scene):
+    mbs = scene.mbdyn
     if len(mbs.render_vars):
         try:
             mbs = scene.mbdyn
