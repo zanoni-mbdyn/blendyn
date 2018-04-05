@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file drivejlib.py
-# Copyright (C) 2015 -- 2017 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
