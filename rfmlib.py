@@ -36,7 +36,7 @@ def parse_reference_frame(rw, rd):
     ret_val = True
 
     # Debug message
-    print("Blendyn::parse_refrence_frame(): Parsing Reference Frame " + rw[0])
+    print("Blendyn::parse_reference_frame(): Parsing Reference Frame " + rw[0])
 
     try:
         ref = rd['ref_' + str(rw[0]).strip()]

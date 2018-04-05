@@ -327,20 +327,21 @@ def parse_log_file(context):
                   mbs.time_step = float(next(reader)[3])
                   break
     except FileNotFoundError:
-        print("Blendyn::parse_out_file(): Could not locate the file " + out_file)
+        print("Blendyn::parse_log_file(): Could not locate the file " + out_file)
         ret_val = {'OUT_NOT_FOUND'}
         pass
     except StopIteration:
-        print("Blendyn::parse_out_file(): Reached the end of .out file")
+        print("Blendyn::parse_log_file(): Reached the end of .out file")
     except IOError:
-        print("Blendyn::parse_out_file(): Could not read the file " + out_file)
+        print("Blendyn::parse_log_file(): Could not read the file " + out_file)
         pass
 
     try:
         with open(rfm_file) as rfm:
             reader = csv.reader(rfm, delimiter = ' ', skipinitialspace = True)
             for rfm_row in reader:
-                parse_reference_frame(rfm_row, rd)
+                if len(rfm_row) and rfm_row[0].strip() != '#':
+                        parse_reference_frame(rfm_row, rd)
     except StopIteration:
         pass
     except FileNotFoundError:
