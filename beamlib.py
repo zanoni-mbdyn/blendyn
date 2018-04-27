@@ -472,14 +472,15 @@ def spawn_beam3_element(elem, context):
     t3 = P3 - M2
     t3.normalize()
 
-    phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
-    phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
-    phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
+    # FIXME: This is nonsense!!
+    # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
+    # phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
+    # phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
     
-    polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
-    polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
-    polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
-    polydata.points[3].tilt = t3.to_3d()*(theta3*phi3)
+    # polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
+    # polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
+    # polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
+    # polydata.points[3].tilt = t3.to_3d()*(theta3*phi3)
 
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
