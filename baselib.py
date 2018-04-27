@@ -188,6 +188,8 @@ def no_output(context):
                 mbs.disabled_output = difference
         except FileNotFoundError:
             pass
+        except StopIteration:
+            pass
 # -----------------------------------------------------------
 # end of no_output() function
 
