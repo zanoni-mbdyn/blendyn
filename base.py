@@ -49,9 +49,10 @@ import json
 
 try:
     from netCDF4 import Dataset
-except ImportError:
-    print("Blendyn:: could not find the netCDF4 module. NetCDF import "\
-        + "will be disabled.")
+except ImportError as ierr:
+    print("Blendyn:: could not enable the netCDF module. NetCDF import "\
+            + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
 
 HAVE_PLOT = False
 
@@ -59,17 +60,20 @@ try:
     import pygal
     from .plotlib import *
     HAVE_PLOT = True
-except ImportError:
-    print("Blendyn:: could not find the pygal module. Plotting  "\
-        + "will be disabled.")
+except ImportError as ierr:
+    print("Blendyn:: could not enable the plotting module. Plotting  "\
+            + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
+    
 
 HAVE_PSUTIL = False
 try:
     import psutil
     HAVE_PSUTIL = True
-except ImportError:
-    print("Blendyn:: could not find the psutil module. Stopping "\
-            + "MBDyn from the Blender UI will be disabled.")
+except ImportError as ierr:
+    print("Blendyn:: could not enable the MBDyn control module. "\
+            + "Stopping MBDyn from the Blender UI will be disabled.")
+    print("{0}".format(ierr))
 
 from .baselib import *
 from .elements import *
