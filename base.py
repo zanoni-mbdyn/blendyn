@@ -2061,9 +2061,10 @@ class MBDynScalingPanel(bpy.types.Panel):
                 mbs, "nd_index")
         row = box.row()
         row.prop(mbs, "node_scale_slider")
-        row = box.row()
-        row.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = 'Select all Nodes')
-        row.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = 'Scale Node')
+        col = box.column()
+        col.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = 'Select all Nodes')
+        col.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = 'Scale Selected Node')
+        col.operator(Scene_OT_MBDyn_Scale_Nodes.bl_idname, text = 'Scale All Nodes')
 
         box = layout.box()
         row = box.row()
@@ -2464,20 +2465,42 @@ class Scene_OT_MBDyn_Select_Elements_by_Type(bpy.types.Operator):
 bpy.utils.register_class(Scene_OT_MBDyn_Select_Elements_by_Type)
 
 class Scene_OT_MBDyn_Scale_Node(bpy.types.Operator):
-    bl_idname = "add.mbdyn_scale_node"
-    bl_label = "Scale selected node"
+    bl_idname = "transform.mbdyn_scale_node"
+    bl_label = "Scale active node"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
         nd = mbs.nodes
         s = mbs.node_scale_slider
-        scaleOBJ = bpy.data.objects[nd[mbs.nd_index].blender_object]
-        scaleOBJ.scale = Vector((s, s, s))
-
+        actobj = bpy.context.scene.objects.active
+        for node in nd:
+            if node.blender_object == actobj.name:
+                actobj.scale = Vector((s, s, s))
+                # bpy.ops.object.transform_apply(location = False, \
+                #        rotation = False, scale = True)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Scale_Node class
 bpy.utils.register_class(Scene_OT_MBDyn_Scale_Node)
+
+class Scene_OT_MBDyn_Scale_Nodes(bpy.types.Operator):
+    bl_idname = "transform.mbdyn_scale_nodes"
+    bl_label = "Scale all sected nodes"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        s = mbs.node_scale_slider
+        for node in nd:
+            scaleOBJ = bpy.data.objects[node.blender_object]
+            bpy.context.scene.objects.active = scaleOBJ
+            scaleOBJ.scale = Vector((s, s, s))
+            # bpy.ops.object.transform_apply(location = False, \
+            #        rotation = False, scale = True)
+        return {'FINISHED'}
+# -----------------------------------------------------------
+# end of Scene_OT_MBDyn_Scale_Nodes class
+bpy.utils.register_class(Scene_OT_MBDyn_Scale_Nodes)
 
 class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
     bl_idname = "add.mbdyn_scale_elems"
@@ -2489,9 +2512,11 @@ class Scene_OT_MBDyn_Scale_Elements_by_Type(bpy.types.Operator):
         s = mbs.elem_scale_slider
         for elem in ed:
             if elem.type == mbs.elem_type_scale:
-                scaleOBJ = bpy.data.objects[elem.name]
+                scaleOBJ = bpy.data.objects[elem.blender_object]
+                bpy.context.scene.objects.active = scaleOBJ 
                 scaleOBJ.scale = Vector((s, s, s))
-
+             #   bpy.ops.object.transform_apply(location = False, \
+             #           rotation = False, scale = True)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Scale_Elements_by_Type class
