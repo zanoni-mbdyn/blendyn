@@ -651,10 +651,12 @@ def spawn_rod_element(elem, context):
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # create group for element
+    # create group for element and hide P1 and P2 objects
     bpy.ops.group.create(name = rodOBJ.name)
     grouping(context, rodOBJ, [p1OBJ, n1OBJ, p2OBJ, n2OBJ])
     n2OBJ.select = True
+    p1OBJ.hide = True
+    p2OBJ.hide = True
 
     elem.is_imported = True
     return{'FINISHED'}
