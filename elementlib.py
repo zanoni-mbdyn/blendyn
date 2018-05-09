@@ -73,7 +73,7 @@ def parse_elements(context, jnt_type, rw):
             "revolutepin": parse_revolute_pin,
             "revoluterotation": parse_revolute_rot,
             "rod": parse_rod,
-            "rod bezier": parse_rod_bezier,
+            # "rod bezier": parse_rod_bezier,
             "shell4" : parse_shell4,
             "sphericalhinge": parse_spherical_hinge,
             "spericalpin": parse_spherical_pin,
