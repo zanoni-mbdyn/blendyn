@@ -89,66 +89,66 @@ def parse_rod(rw, ed):
 # -------------------------------------------------------------------------------
 # end of parse_rod(rw, ed) function
 
-## Parses rod bezier joint entry in the .log file
-def parse_rod_bezier(rw, ed):
-    ret_val = True
-
-    # Debug message
-    print("Blendyn::parse_rod_bezier(): Parsing rod bezier " + rw[2])
-    
-    try:
-        el = ed['rod_bezier_' + rw[2]]
-
-        print("Blendyn::parse_rod_bezier(): found existing entry in elements dictionary.\
-                Updating it.")
-        
-        el.nodes[0].int_label = int(rw[3])
-        el.nodes[1].int_label = int(rw[10])
-        
-        el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-        el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-        el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
-        
-        if el.name in bpy.data.objects.keys():
-            el.blender_object = el.name
-            el.is_imported = True
-    except KeyError:
-
-        print("Blendyn::parse_rod_bezier(): didn't find entry in elements dictionary. Creating one.")
-        
-        el = ed.add()
-        el.type = 'rod_bezier'
-        el.int_label = int(rw[2])
-        
-        el.nodes.add()
-        el.nodes[0].int_label = int(rw[3])
-        
-        el.offsets.add()
-        el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-        
-        el.offsets.add()
-        el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        
-        el.nodes.add()
-        el.nodes[1].int_label = int(rw[10])
-        
-        el.offsets.add()
-        el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-        
-        el.offsets.add()
-        el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
-        
-        el.import_function = "add.mbdyn_elem_rod_bezier"
-        el.info_draw = "rod_bezier_info_draw"
-        el.update_info_operator = "update.rod_bezier"
-        el.write_operator = "write.rod_bezier"
-        el.name = "rod_bezier_" + str(el.int_label)
-        ret_val = False
-        pass
-    return ret_val
-# -------------------------------------------------------------------------------
-# end of parse_rod_bezier(rw, ed) function
+### Parses rod bezier joint entry in the .log file
+#def parse_rod_bezier(rw, ed):
+#    ret_val = True
+#
+#    # Debug message
+#    print("Blendyn::parse_rod_bezier(): Parsing rod bezier " + rw[2])
+#    
+#    try:
+#        el = ed['rod_bezier_' + rw[2]]
+#
+#        print("Blendyn::parse_rod_bezier(): found existing entry in elements dictionary.\
+#                Updating it.")
+#        
+#        el.nodes[0].int_label = int(rw[3])
+#        el.nodes[1].int_label = int(rw[10])
+#        
+#        el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
+#        el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+#        el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+#        el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
+#        
+#        if el.name in bpy.data.objects.keys():
+#            el.blender_object = el.name
+#            el.is_imported = True
+#    except KeyError:
+#
+#        print("Blendyn::parse_rod_bezier(): didn't find entry in elements dictionary. Creating one.")
+#        
+#        el = ed.add()
+#        el.type = 'rod_bezier'
+#        el.int_label = int(rw[2])
+#        
+#        el.nodes.add()
+#        el.nodes[0].int_label = int(rw[3])
+#        
+#        el.offsets.add()
+#        el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
+#        
+#        el.offsets.add()
+#        el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+#        
+#        el.nodes.add()
+#        el.nodes[1].int_label = int(rw[10])
+#        
+#        el.offsets.add()
+#        el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+#        
+#        el.offsets.add()
+#        el.offsets[3].value = Vector(( float(rw[14]), float(rw[15]), float(rw[16]) ))
+#        
+#        el.import_function = "add.mbdyn_elem_rod_bezier"
+#        el.info_draw = "rod_bezier_info_draw"
+#        el.update_info_operator = "update.rod_bezier"
+#        el.write_operator = "write.rod_bezier"
+#        el.name = "rod_bezier_" + str(el.int_label)
+#        ret_val = False
+#        pass
+#    return ret_val
+## -------------------------------------------------------------------------------
+## end of parse_rod_bezier(rw, ed) function
 
 # Function that displays Rod Element info in panel
 def rod_info_draw(elem, layout):
@@ -193,64 +193,64 @@ def rod_info_draw(elem, layout):
 # -----------------------------------------------------------
 # end of rod_info_draw() function
 
-# Function that displays Bezier Rod Element info in panel
-def rod_bezier_info_draw(elem, layout):
-    nd = bpy.context.scene.mbdyn.nodes
-    row = layout.row()
-    col = layout.column(align=True)
-    
-    # curve data for blender object representing the element
-    cvdata = bpy.data.curves[elem.blender_object + "_cvdata"].splines[0]
-
-    for node in nd:
-        if node.int_label == elem.nodes[0].int_label:
- 
-            # Display node 1 info
-            col.prop(node, "int_label", text = "Node 1 ID ")
-            col.prop(node, "string_label", text = "Node 1 label ")
-            col.prop(node, "blender_object", text = "Node 1 Object: ")
-            col.enabled = False
-
-            # Display first offset of node 1 info
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[0], "value", text = "", slider = False)
-
-            # Display second offset of node 1 info
-            row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[1], "value", text = "", slider = False)
-            # col.enabled = False
-            
-            layout.separator()
-
-        elif node.int_label == elem.nodes[1].int_label:
-            
-            # Display node 2 info
-            row = layout.row()
-            col = layout.column(align = True)
-            col.prop(node, "int_label", text = "Node 2 ID ")
-            col.prop(node, "string_label", text = "Node 2 label ")
-            col.prop(node, "blender_object", text = "Node 2 Object: ")
-            col.enabled = False
-
-            # Display first offset of node 2 info
-            row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[2], "value", text = "", slider = False)
-
-            # Display first offset of node 2 info
-            row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
-            col = layout.column(align = True)
-            col.prop(elem.offsets[3], "value", text = "", slider = False)
-
-            layout.separator()
-# -----------------------------------------------------------
-# end of rod_bezier_info_draw() function
+## Function that displays Bezier Rod Element info in panel
+#def rod_bezier_info_draw(elem, layout):
+#    nd = bpy.context.scene.mbdyn.nodes
+#    row = layout.row()
+#    col = layout.column(align=True)
+#    
+#    # curve data for blender object representing the element
+#    cvdata = bpy.data.curves[elem.blender_object + "_cvdata"].splines[0]
+#
+#    for node in nd:
+#        if node.int_label == elem.nodes[0].int_label:
+# 
+#            # Display node 1 info
+#            col.prop(node, "int_label", text = "Node 1 ID ")
+#            col.prop(node, "string_label", text = "Node 1 label ")
+#            col.prop(node, "blender_object", text = "Node 1 Object: ")
+#            col.enabled = False
+#
+#            # Display first offset of node 1 info
+#            row = layout.row()
+#            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+#            col = layout.column(align = True)
+#            col.prop(elem.offsets[0], "value", text = "", slider = False)
+#
+#            # Display second offset of node 1 info
+#            row = layout.row()
+#            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
+#            col = layout.column(align = True)
+#            col.prop(elem.offsets[1], "value", text = "", slider = False)
+#            # col.enabled = False
+#            
+#            layout.separator()
+#
+#        elif node.int_label == elem.nodes[1].int_label:
+#            
+#            # Display node 2 info
+#            row = layout.row()
+#            col = layout.column(align = True)
+#            col.prop(node, "int_label", text = "Node 2 ID ")
+#            col.prop(node, "string_label", text = "Node 2 label ")
+#            col.prop(node, "blender_object", text = "Node 2 Object: ")
+#            col.enabled = False
+#
+#            # Display first offset of node 2 info
+#            row = layout.row()
+#            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+#            col = layout.column(align = True)
+#            col.prop(elem.offsets[2], "value", text = "", slider = False)
+#
+#            # Display first offset of node 2 info
+#            row = layout.row()
+#            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
+#            col = layout.column(align = True)
+#            col.prop(elem.offsets[3], "value", text = "", slider = False)
+#
+#            layout.separator()
+## -----------------------------------------------------------
+## end of rod_bezier_info_draw() function
 
 ## Updates info for Rod element
 class RodUpdate(Operator):
@@ -283,44 +283,44 @@ class RodUpdate(Operator):
 # -----------------------------------------------------------
 # end of RodUpdate class
 
-## Updates info for Bezier Rod element
-class RodBezierUpdate(Operator):
-    bl_idname = "update.rod_bezier"
-    bl_label = "MBDyn Rod Bezier info updater"
-    elem_key = bpy.props.StringProperty()
-
-    def execute(self, context):
-        elem = bpy.context.scene.mbdyn.elems[self.elem_key]
-        nd = bpy.context.scene.mbdyn.nodes
-        cvdata = bpy.data.curves[elem.blender_object + "_cvdata"].splines[0]
-        for node in nd:
-            if node.int_label == elem.nodes[0].int_label:
-    
-                # node 1 offset 1
-                fOG = cvdata.bezier_points[0].co
-                RN1 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
-                xN1 = bpy.data.objects[node.blender_object].location
-                elem.offsets[0]['value'] = RN1.transposed()*(fOG - xN1)
-    
-                # node 1 offset 2
-                fAG = cvdata.bezier_points[0].handle_right
-                elem.offsets[1]['value'] = RN1.transposed()*(fAG - xN1) 
-        
-            elif node.int_label == elem.nodes[1].int_label:
-    
-                # node 2 offset 1
-                fBG = cvdata.bezier_points[1].handle_left
-                RN2 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
-                xN2 = bpy.data.objects[node.blender_object].location
-                elem.offsets[2]['value'] = RN2.transposed()*(fBG - xN2)
-    
-                # offset 2
-                fIG = cvdata.bezier_points[1].co
-                elem.offsets[3]['value'] = RN2.transposed()*(fIG - xN2)
-
-        return {'FINISHED'}
-# -----------------------------------------------------------
-# end of RodBezierUpdate class
+### Updates info for Bezier Rod element
+#class RodBezierUpdate(Operator):
+#    bl_idname = "update.rod_bezier"
+#    bl_label = "MBDyn Rod Bezier info updater"
+#    elem_key = bpy.props.StringProperty()
+#
+#    def execute(self, context):
+#        elem = bpy.context.scene.mbdyn.elems[self.elem_key]
+#        nd = bpy.context.scene.mbdyn.nodes
+#        cvdata = bpy.data.curves[elem.blender_object + "_cvdata"].splines[0]
+#        for node in nd:
+#            if node.int_label == elem.nodes[0].int_label:
+#    
+#                # node 1 offset 1
+#                fOG = cvdata.bezier_points[0].co
+#                RN1 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
+#                xN1 = bpy.data.objects[node.blender_object].location
+#                elem.offsets[0]['value'] = RN1.transposed()*(fOG - xN1)
+#    
+#                # node 1 offset 2
+#                fAG = cvdata.bezier_points[0].handle_right
+#                elem.offsets[1]['value'] = RN1.transposed()*(fAG - xN1) 
+#        
+#            elif node.int_label == elem.nodes[1].int_label:
+#    
+#                # node 2 offset 1
+#                fBG = cvdata.bezier_points[1].handle_left
+#                RN2 = bpy.data.objects[node.blender_object].matrix_world.to_3x3().normalized()
+#                xN2 = bpy.data.objects[node.blender_object].location
+#                elem.offsets[2]['value'] = RN2.transposed()*(fBG - xN2)
+#    
+#                # offset 2
+#                fIG = cvdata.bezier_points[1].co
+#                elem.offsets[3]['value'] = RN2.transposed()*(fIG - xN2)
+#
+#        return {'FINISHED'}
+## -----------------------------------------------------------
+## end of RodBezierUpdate class
 
 ## Imports a Rob element in the scene as a line joining two nodes
 class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
@@ -370,52 +370,52 @@ class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of Scene_OT_MBDyn_Import_Rod_Joint_Element class
 
-## Helps import a Rob Bezier element in the scene
-class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_rod_bezier"
-    bl_label = "MBDyn rod element importer"
-    int_label = bpy.props.IntProperty()
-
-    def draw(self, context):
-        layout = self.layout
-        layout.aligment = 'LEFT'
-
-    def execute(self, context):
-        ed = bpy.context.scene.mbdyn.elems
-        nd = bpy.context.scene.mbdyn.nodes
-        try:
-            elem = ed['rod_bezier_' + str(self.int_label)]
-            retval = spawn_rod_bezier_element(elem)
-            if retval == {'OBJECT_EXISTS'}:
-                message = "Found the Object " + elem.blender_object + \
-                " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                print("Blendyn::Element is already imported. Remove it or rename it " +\
-                    "before re-importing the element.")
-                logging.warning(message)
-                return {'CANCELLED'}
-            elif retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                "associated to Node " + str(elem.nodes[0].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
-                return {'CANCELLED'}
-            elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                "associated to Node " + str(elem.nodes[1].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
-                return {'CANCELLED'}
-            else:
-                return retval
-        except KeyError:
-            message = "Element rod_bezier_" + str(self.int_label) + " not found."
-            self.report({'ERROR'}, message)
-            logging.error(message)
-
-            return {'CANCELLED'}
-# -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element class
+### Helps import a Rob Bezier element in the scene
+#class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
+#    bl_idname = "add.mbdyn_elem_rod_bezier"
+#    bl_label = "MBDyn rod element importer"
+#    int_label = bpy.props.IntProperty()
+#
+#    def draw(self, context):
+#        layout = self.layout
+#        layout.aligment = 'LEFT'
+#
+#    def execute(self, context):
+#        ed = bpy.context.scene.mbdyn.elems
+#        nd = bpy.context.scene.mbdyn.nodes
+#        try:
+#            elem = ed['rod_bezier_' + str(self.int_label)]
+#            retval = spawn_rod_bezier_element(elem)
+#            if retval == {'OBJECT_EXISTS'}:
+#                message = "Found the Object " + elem.blender_object + \
+#                " remove or rename it to re-import the element!"
+#                self.report({'WARNING'}, message)
+#                print("Blendyn::Element is already imported. Remove it or rename it " +\
+#                    "before re-importing the element.")
+#                logging.warning(message)
+#                return {'CANCELLED'}
+#            elif retval == {'NODE1_NOTFOUND'}:
+#                message = "Could not import element: Blender object " +\
+#                "associated to Node " + str(elem.nodes[0].int_label) + " not found"
+#                self.report({'ERROR'}, message)
+#                logging.error(message)
+#                return {'CANCELLED'}
+#            elif retval == {'NODE2_NOTFOUND'}:
+#                message = "Could not import element: Blender object " +\
+#                "associated to Node " + str(elem.nodes[1].int_label) + " not found"
+#                self.report({'ERROR'}, message)
+#                logging.error(message)
+#                return {'CANCELLED'}
+#            else:
+#                return retval
+#        except KeyError:
+#            message = "Element rod_bezier_" + str(self.int_label) + " not found."
+#            self.report({'ERROR'}, message)
+#            logging.error(message)
+#
+#            return {'CANCELLED'}
+## -----------------------------------------------------------
+## end of Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element class
 
 
 ## Writes the input for Rod Element in the text panel
@@ -474,68 +474,68 @@ class RodWrite(Operator):
 # -----------------------------------------------------------
 # end of RodWrite class
          
-## Writes the input for Bezier Rod Element in text panel
-class RodBezierWrite(Operator):
-    bl_idname = "write.rod_bezier"
-    bl_label = "MBDyn Rod Bezier input writer"
-    elem_key = bpy.props.StringProperty()
-
-    def execute(self, context):
-        elem = bpy.context.scene.mbdyn.elems[self.elem_key]
-        fO = elem.offsets[0].value
-        fA = elem.offsets[1].value
-        fB = elem.offsets[2].value
-        fI = elem.offsets[3].value
-
-        nd = bpy.context.scene.mbdyn.nodes
-        n1 = nd['node_' + str(elem.nodes[0].int_label)]
-        n2 = nd['node_' + str(elem.nodes[1].int_label)]
-        
-        node_1_label = "Node_" + str(elem.nodes[0].int_label)
-        if n1.string_label != node_1_label:
-            node_1_label = n1.string_label
-        else:
-            node_1_label = str(n1.int_label)
-        
-        node_2_label = "Node_" + str(elem.nodes[1].int_label)
-        if n2.string_label != node_2_label:
-            node_2_label = n2.string_label
-        else:
-            node_2_label = str(n2.int_label)
-
-        # create new text object
-        rbtext = bpy.data.texts.new(self.elem_key)
-    
-        # write rod bezier input
-        rbtext.write("joint: " + self.elem_key + ",\n")
-        rbtext.write("\trod bezier,\n")
-        rbtext.write("\t" + node_1_label + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
-        rbtext.write("\t\t\t" + str(fO[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fO[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fO[2]) + "*msfz" + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
-        rbtext.write("\t\t\t" + str(fA[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fA[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fA[2]) + "*msfz" + ",\n")
-        rbtext.write("\t" + node_2_label + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
-        rbtext.write("\t\t\t" + str(fB[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fB[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fB[2]) + "*msfz" + ",\n")
-        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
-        rbtext.write("\t\t\t" + str(fI[0]) + "*msfx" + ",\n")
-        rbtext.write("\t\t\t" + str(fI[1]) + "*msfy" + ",\n")
-        rbtext.write("\t\t\t" + str(fI[2]) + "*msfz" + ",\n")
-        rbtext.write("\tfrom nodes;")
-
-        message = "Input file contribute for element written. See " +\
-                        rbtext.name + " in text editor"
-        self.report({'INFO'}, message)
-        logging.info(message)
-        return {'FINISHED'}
-# -----------------------------------------------------------
-# end of RodBezierWrite class
+### Writes the input for Bezier Rod Element in text panel
+#class RodBezierWrite(Operator):
+#    bl_idname = "write.rod_bezier"
+#    bl_label = "MBDyn Rod Bezier input writer"
+#    elem_key = bpy.props.StringProperty()
+#
+#    def execute(self, context):
+#        elem = bpy.context.scene.mbdyn.elems[self.elem_key]
+#        fO = elem.offsets[0].value
+#        fA = elem.offsets[1].value
+#        fB = elem.offsets[2].value
+#        fI = elem.offsets[3].value
+#
+#        nd = bpy.context.scene.mbdyn.nodes
+#        n1 = nd['node_' + str(elem.nodes[0].int_label)]
+#        n2 = nd['node_' + str(elem.nodes[1].int_label)]
+#        
+#        node_1_label = "Node_" + str(elem.nodes[0].int_label)
+#        if n1.string_label != node_1_label:
+#            node_1_label = n1.string_label
+#        else:
+#            node_1_label = str(n1.int_label)
+#        
+#        node_2_label = "Node_" + str(elem.nodes[1].int_label)
+#        if n2.string_label != node_2_label:
+#            node_2_label = n2.string_label
+#        else:
+#            node_2_label = str(n2.int_label)
+#
+#        # create new text object
+#        rbtext = bpy.data.texts.new(self.elem_key)
+#    
+#        # write rod bezier input
+#        rbtext.write("joint: " + self.elem_key + ",\n")
+#        rbtext.write("\trod bezier,\n")
+#        rbtext.write("\t" + node_1_label + ",\n")
+#        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
+#        rbtext.write("\t\t\t" + str(fO[0]) + "*msfx" + ",\n")
+#        rbtext.write("\t\t\t" + str(fO[1]) + "*msfy" + ",\n")
+#        rbtext.write("\t\t\t" + str(fO[2]) + "*msfz" + ",\n")
+#        rbtext.write("\t\tposition, reference, node, " + node_1_label + ",\n")
+#        rbtext.write("\t\t\t" + str(fA[0]) + "*msfx" + ",\n")
+#        rbtext.write("\t\t\t" + str(fA[1]) + "*msfy" + ",\n")
+#        rbtext.write("\t\t\t" + str(fA[2]) + "*msfz" + ",\n")
+#        rbtext.write("\t" + node_2_label + ",\n")
+#        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
+#        rbtext.write("\t\t\t" + str(fB[0]) + "*msfx" + ",\n")
+#        rbtext.write("\t\t\t" + str(fB[1]) + "*msfy" + ",\n")
+#        rbtext.write("\t\t\t" + str(fB[2]) + "*msfz" + ",\n")
+#        rbtext.write("\t\tposition, reference, node, " + node_2_label + ",\n")
+#        rbtext.write("\t\t\t" + str(fI[0]) + "*msfx" + ",\n")
+#        rbtext.write("\t\t\t" + str(fI[1]) + "*msfy" + ",\n")
+#        rbtext.write("\t\t\t" + str(fI[2]) + "*msfz" + ",\n")
+#        rbtext.write("\tfrom nodes;")
+#
+#        message = "Input file contribute for element written. See " +\
+#                        rbtext.name + " in text editor"
+#        self.report({'INFO'}, message)
+#        logging.info(message)
+#        return {'FINISHED'}
+## -----------------------------------------------------------
+## end of RodBezierWrite class
 
 # Created the object representing a rod joint element
 def spawn_rod_element(elem, context):
@@ -600,8 +600,10 @@ def spawn_rod_element(elem, context):
     # assign coordinates of knots in global frame 
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    # p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    # p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = Vector((f1))
+    p2 = Vector((f2))
 
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
@@ -616,180 +618,193 @@ def spawn_rod_element(elem, context):
     ## hooking of the line ends to the Blender objects 
     
     # P1 hook
+    objs = bpy.data.objects.keys()
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
     rodOBJ.select = True
     bpy.context.scene.objects.active = rodOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     rodOBJ.data.splines[0].points[0].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
+    bpy.ops.object.hook_add_newob()
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+    new_objs = bpy.data.objects.keys()
+    p1OBJkey = [obj for obj in new_objs if obj not in objs]
+    p1OBJ = bpy.data.objects[p1OBJkey[0]]
+    p1OBJ.name = rodOBJ.name + '_P1'
+    parenting(p1OBJ, n1OBJ)
 
     # P2 hook
+    objs = bpy.data.objects.keys()
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
     rodOBJ.select = True
     bpy.context.scene.objects.active = rodOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     rodOBJ.data.splines[0].points[1].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
+    bpy.ops.object.hook_add_newob()
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+    new_objs = bpy.data.objects.keys()
+    p2OBJkey = [obj for obj in new_objs if obj not in objs]
+    p2OBJ = bpy.data.objects[p2OBJkey[0]]
+    p2OBJ.name = rodOBJ.name + '_P2'
+    parenting(p2OBJ, n2OBJ)
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # create group for element
+    # create group for element and hide P1 and P2 objects
     bpy.ops.group.create(name = rodOBJ.name)
-    grouping(context, rodOBJ, [n1OBJ, n2OBJ])
+    grouping(context, rodOBJ, [p1OBJ, n1OBJ, p2OBJ, n2OBJ])
+    n2OBJ.select = True
+    p1OBJ.hide = True
+    p2OBJ.hide = True
 
     elem.is_imported = True
     return{'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_rod_element(elem) function
 
-def spawn_rod_bezier_element(elem):
-    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-        return {'OBJECT_EXISTS'}
-    else:
-        elem.is_imported = False
-        n1 = "none"
-        n2 = "none"
-        
-        # try to find Blender objects associated with the nodes that 
-        # the element connects
-        for node in nd:
-            if elem.nodes[0].int_label == node.int_label:
-                n1 = node.blender_object
-            elif elem.nodes[1].int_label == node.int_label:
-                n2 = node.blender_object
-        if n1 == "none":
-            print("Blendyn::spawn_rod_bezier_element(): Could not find a Blender object \
-            associated to Node " + str(elem.nodes[0].int_label))
-            return {'NODE1_NOTFOUND'}
-        elif n2 == "none":
-            print("Blendyn::spawn_rod_bezier_element(): Could not find a Blender object \
-            associated to Node " + str(elem.nodes[1].int_label))
-            return {'NODE2_NOTFOUND'}
-
-        # creation of line representing the rod
-        rodobj_id = "rod_bezier_" + str(elem.int_label)
-        rodcv_id =  rodobj_id + "_cvdata"
-        
-        # check if the object is already present
-        # If it is, remove it. FIXME: this may be dangerous!
-        if rodobj_id in bpy.data.objects.keys():
-            bpy.data.objects.remove(bpy.data.objects[rodobj_id])
-        
-        # check if curve is already present
-        # If it is, remove it. FIXME: this may be dangerous!
-        if rodcv_id in bpy.data.curves.keys():
-            bpy.data.curves.remove(bpy.data.curves[rodcv_id])
-        
-        # create a new curve and its object
-        cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
-        cvdata.dimensions = '3D'
-        polydata = cvdata.splines.new('BEZIER')
-        polydata.bezier_points.add(1)
-        
-        # Get offsets
-        fO = elem.offsets[0].value
-        fA = elem.offsets[1].value
-        fB = elem.offsets[2].value
-        fI = elem.offsets[3].value
-        
-        # Rotate and translate offsets
-        fOG = bpy.data.objects[n1].matrix_world*Vector(( fO[0], fO[1], fO[2], 1.0 ))
-        fAG = bpy.data.objects[n1].matrix_world*Vector(( fA[0], fA[1], fA[2], 1.0 ))
-        fBG = bpy.data.objects[n2].matrix_world*Vector(( fB[0], fB[1], fB[2], 1.0 ))
-        fIG = bpy.data.objects[n2].matrix_world*Vector(( fI[0], fI[1], fI[2], 1.0 ))
-
-        # node 1
-        polydata.bezier_points[0].co = Vector(( fOG[0], fOG[1], fOG[2] ))
-        polydata.bezier_points[0].handle_left_type = 'FREE'
-        polydata.bezier_points[0].handle_left = polydata.bezier_points[0].co
-        polydata.bezier_points[0].handle_right_type = 'FREE'
-        polydata.bezier_points[0].handle_right = Vector(( fAG[0], fAG[1], fAG[2] ))
-        
-        # node 2
-        polydata.bezier_points[1].co = Vector(( fIG[0], fIG[1], fIG[2] ))
-        polydata.bezier_points[1].handle_left_type = 'FREE'
-        polydata.bezier_points[1].handle_left = Vector(( fBG[0], fBG[1], fBG[2] ))
-        polydata.bezier_points[1].handle_right_type = 'FREE'
-        polydata.bezier_points[1].handle_right = polydata.bezier_points[1].co
-
-        rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
-        rodOBJ.mbdyn.type = 'elem.joint'
-        rodOBJ.mbdyn.dkey = elem.name
-        rodOBJ.mbdyn.int_label = elem.int_label
-        bpy.context.scene.objects.link(rodOBJ)
-        elem.blender_object = rodOBJ.name
-        elem.name = rodOBJ.name
-        rodOBJ.select = True
-
-        ## hooking of the line ends to the Blender objects
-        
-        # deselect all objects (guaranteed by previous the selection of rodOBJ)
-        bpy.ops.object.select_all()
-        
-        # select rod, set it to active and enter edit mode
-        rodOBJ.select = True
-        bpy.context.scene.objects.active = rodOBJ
-
-        # select first control point and its handles and object 1,
-        # then set the hook and deselect object of node 1
-        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-        
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = True
-        bpy.data.objects[n1].select = True
-        bpy.ops.object.hook_add_selob()
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = False
-        bpy.data.objects[n1].select = False
-
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = True
-        bpy.data.objects[n1].select = True
-        bpy.ops.object.hook_add_selob()
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = False
-        bpy.data.objects[n1].select = False 
-        
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = True
-        bpy.data.objects[n1].select = True
-        bpy.ops.object.hook_add_selob()
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = False
-        bpy.data.objects[n1].select = False
-
-        # exit edit mode and deselect all
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-        bpy.ops.object.select_all()
-
-        # select first control point and its handles and object 2,
-        # then set the hook and deselect object of node 2
-        
-        rodOBJ.select = True
-        bpy.context.scene.objects.active = rodOBJ
-        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-        
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = True
-        bpy.data.objects[n2].select = True
-        bpy.ops.object.hook_add_selob()
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = False
-        bpy.data.objects[n2].select = False
-
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = True
-        bpy.data.objects[n2].select = True
-        bpy.ops.object.hook_add_selob()
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = False
-        bpy.data.objects[n2].select = False 
-        
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = True
-        bpy.data.objects[n2].select = True
-        bpy.ops.object.hook_add_selob()
-        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = False
-        bpy.data.objects[n2].select = False
-
-        # exit edit mode and deselect all
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-        elem.is_imported = True
-        return{'FINISHED'}
-# -----------------------------------------------------------
-# end of spawn_rod_bezier_element(elem) function
+#def spawn_rod_bezier_element(elem):
+#    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+#        return {'OBJECT_EXISTS'}
+#    else:
+#        elem.is_imported = False
+#        n1 = "none"
+#        n2 = "none"
+#        
+#        # try to find Blender objects associated with the nodes that 
+#        # the element connects
+#        for node in nd:
+#            if elem.nodes[0].int_label == node.int_label:
+#                n1 = node.blender_object
+#            elif elem.nodes[1].int_label == node.int_label:
+#                n2 = node.blender_object
+#        if n1 == "none":
+#            print("Blendyn::spawn_rod_bezier_element(): Could not find a Blender object \
+#            associated to Node " + str(elem.nodes[0].int_label))
+#            return {'NODE1_NOTFOUND'}
+#        elif n2 == "none":
+#            print("Blendyn::spawn_rod_bezier_element(): Could not find a Blender object \
+#            associated to Node " + str(elem.nodes[1].int_label))
+#            return {'NODE2_NOTFOUND'}
+#
+#        # creation of line representing the rod
+#        rodobj_id = "rod_bezier_" + str(elem.int_label)
+#        rodcv_id =  rodobj_id + "_cvdata"
+#        
+#        # check if the object is already present
+#        # If it is, remove it. FIXME: this may be dangerous!
+#        if rodobj_id in bpy.data.objects.keys():
+#            bpy.data.objects.remove(bpy.data.objects[rodobj_id])
+#        
+#        # check if curve is already present
+#        # If it is, remove it. FIXME: this may be dangerous!
+#        if rodcv_id in bpy.data.curves.keys():
+#            bpy.data.curves.remove(bpy.data.curves[rodcv_id])
+#        
+#        # create a new curve and its object
+#        cvdata = bpy.data.curves.new(rodcv_id, type = 'CURVE')
+#        cvdata.dimensions = '3D'
+#        polydata = cvdata.splines.new('BEZIER')
+#        polydata.bezier_points.add(1)
+#        
+#        # Get offsets
+#        fO = elem.offsets[0].value
+#        fA = elem.offsets[1].value
+#        fB = elem.offsets[2].value
+#        fI = elem.offsets[3].value
+#        
+#        # Rotate and translate offsets
+#        fOG = bpy.data.objects[n1].matrix_world*Vector(( fO[0], fO[1], fO[2], 1.0 ))
+#        fAG = bpy.data.objects[n1].matrix_world*Vector(( fA[0], fA[1], fA[2], 1.0 ))
+#        fBG = bpy.data.objects[n2].matrix_world*Vector(( fB[0], fB[1], fB[2], 1.0 ))
+#        fIG = bpy.data.objects[n2].matrix_world*Vector(( fI[0], fI[1], fI[2], 1.0 ))
+#
+#        # node 1
+#        polydata.bezier_points[0].co = Vector(( fOG[0], fOG[1], fOG[2] ))
+#        polydata.bezier_points[0].handle_left_type = 'FREE'
+#        polydata.bezier_points[0].handle_left = polydata.bezier_points[0].co
+#        polydata.bezier_points[0].handle_right_type = 'FREE'
+#        polydata.bezier_points[0].handle_right = Vector(( fAG[0], fAG[1], fAG[2] ))
+#        
+#        # node 2
+#        polydata.bezier_points[1].co = Vector(( fIG[0], fIG[1], fIG[2] ))
+#        polydata.bezier_points[1].handle_left_type = 'FREE'
+#        polydata.bezier_points[1].handle_left = Vector(( fBG[0], fBG[1], fBG[2] ))
+#        polydata.bezier_points[1].handle_right_type = 'FREE'
+#        polydata.bezier_points[1].handle_right = polydata.bezier_points[1].co
+#
+#        rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
+#        rodOBJ.mbdyn.type = 'elem.joint'
+#        rodOBJ.mbdyn.dkey = elem.name
+#        rodOBJ.mbdyn.int_label = elem.int_label
+#        bpy.context.scene.objects.link(rodOBJ)
+#        elem.blender_object = rodOBJ.name
+#        elem.name = rodOBJ.name
+#        rodOBJ.select = True
+#
+#        ## hooking of the line ends to the Blender objects
+#        
+#        # deselect all objects (guaranteed by previous the selection of rodOBJ)
+#        bpy.ops.object.select_all()
+#        
+#        # select rod, set it to active and enter edit mode
+#        rodOBJ.select = True
+#        bpy.context.scene.objects.active = rodOBJ
+#
+#        # select first control point and its handles and object 1,
+#        # then set the hook and deselect object of node 1
+#        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+#        
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = True
+#        bpy.data.objects[n1].select = True
+#        bpy.ops.object.hook_add_selob()
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = False
+#        bpy.data.objects[n1].select = False
+#
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = True
+#        bpy.data.objects[n1].select = True
+#        bpy.ops.object.hook_add_selob()
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = False
+#        bpy.data.objects[n1].select = False 
+#        
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = True
+#        bpy.data.objects[n1].select = True
+#        bpy.ops.object.hook_add_selob()
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = False
+#        bpy.data.objects[n1].select = False
+#
+#        # exit edit mode and deselect all
+#        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+#        bpy.ops.object.select_all()
+#
+#        # select first control point and its handles and object 2,
+#        # then set the hook and deselect object of node 2
+#        
+#        rodOBJ.select = True
+#        bpy.context.scene.objects.active = rodOBJ
+#        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+#        
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = True
+#        bpy.data.objects[n2].select = True
+#        bpy.ops.object.hook_add_selob()
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = False
+#        bpy.data.objects[n2].select = False
+#
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = True
+#        bpy.data.objects[n2].select = True
+#        bpy.ops.object.hook_add_selob()
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = False
+#        bpy.data.objects[n2].select = False 
+#        
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = True
+#        bpy.data.objects[n2].select = True
+#        bpy.ops.object.hook_add_selob()
+#        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = False
+#        bpy.data.objects[n2].select = False
+#
+#        # exit edit mode and deselect all
+#        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+#        elem.is_imported = True
+#        return{'FINISHED'}
+## -----------------------------------------------------------
+## end of spawn_rod_bezier_element(elem) function

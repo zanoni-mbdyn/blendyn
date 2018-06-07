@@ -219,11 +219,11 @@ def spawn_total_joint_element(elem, context):
     # project offsets in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = R1*Vector(( f1[0], f1[1], f1[2] ))
+    p2 = R2*Vector(( f2[0], f2[1], f2[2] ))
 
     # place the joint object in the position defined relative to node 1
-    totjOBJ.location = p1 - n1OBJ.location
+    totjOBJ.location = p1
     totjOBJ.rotation_mode = 'QUATERNION'
     totjOBJ.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
 
@@ -242,8 +242,7 @@ def spawn_total_joint_element(elem, context):
 
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = \
-                    n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+            obj.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
             
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
@@ -264,8 +263,7 @@ def spawn_total_joint_element(elem, context):
             
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = \
-                    n1OBJ.rotation_quaternion * Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+            obj.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
@@ -290,8 +288,7 @@ def spawn_total_joint_element(elem, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
     RF1p = bpy.context.selected_objects[0]
     RF1p.rotation_mode = 'QUATERNION'
-    RF1p.rotation_quaternion = \
-            n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    RF1p.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
     parenting(RF1p, totjOBJ)
@@ -302,8 +299,7 @@ def spawn_total_joint_element(elem, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
     RF1r = bpy.context.selected_objects[0]
     RF1r.rotation_mode = 'QUATERNION'
-    RF1r.rotation_quaternion = \
-            n1OBJ.rotation_quaternion * Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+    RF1r.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
     parenting(RF1r, totjOBJ)
@@ -314,8 +310,7 @@ def spawn_total_joint_element(elem, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
     RF2p = bpy.context.selected_objects[0]
     RF2p.rotation_mode = 'QUATERNION'
-    RF2p.rotation_quaternion = \
-            n2OBJ.rotation_quaternion * Quaternion(( qp2[0], qp2[1], qp2[2], qp2[3] ))
+    RF2p.rotation_quaternion = Quaternion(( qp2[0], qp2[1], qp2[2], qp2[3] ))
     RF2p.scale = .33*totjOBJ.scale
     RF2p.name = totjOBJ.name + '_RF2_pos'
     parenting(RF2p, totjOBJ)
@@ -326,8 +321,7 @@ def spawn_total_joint_element(elem, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
     RF2r = bpy.context.selected_objects[0]
     RF2r.rotation_mode = 'QUATERNION'
-    RF2r.rotation_quaternion = \
-            n2OBJ.rotation_quaternion * Quaternion(( qr2[0], qr2[1], qr2[2], qr2[3] ))
+    RF2r.rotation_quaternion = Quaternion(( qr2[0], qr2[1], qr2[2], qr2[3] ))
     RF2r.scale = .33*totjOBJ.scale
     RF2r.name = totjOBJ.name + '_RF2_rot'
     parenting(RF2r, totjOBJ)
@@ -751,10 +745,10 @@ def spawn_total_pin_joint_element(elem, context):
 
     # project offsets in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
+    p1 = R1*Vector(( f1[0], f1[1], f1[2] ))
 
     # place the joint object in the position defined relative to node 1
-    totjOBJ.location = p1 - n1OBJ.location
+    totjOBJ.location = p1
     totjOBJ.rotation_mode = 'QUATERNION'
     totjOBJ.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
 
@@ -773,8 +767,7 @@ def spawn_total_pin_joint_element(elem, context):
             
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = \
-                    n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+            obj.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
             
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
@@ -794,8 +787,7 @@ def spawn_total_pin_joint_element(elem, context):
 
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = \
-                    n1OBJ.rotation_quaternion * Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+            obj.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
@@ -812,8 +804,7 @@ def spawn_total_pin_joint_element(elem, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
     RF1p = bpy.context.selected_objects[0]
     RF1p.rotation_mode = 'QUATERNION'
-    RF1p.rotation_quaternion = \
-            n1OBJ.rotation_quaternion * Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    RF1p.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
     parenting(RF1p, totjOBJ)
@@ -824,8 +815,7 @@ def spawn_total_pin_joint_element(elem, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
     RF1r = bpy.context.selected_objects[0]
     RF1r.rotation_mode = 'QUATERNION'
-    RF1r.rotation_quaternion = \
-            n1OBJ.rotation_quaternion * Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+    RF1r.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
     parenting(RF1r, totjOBJ)

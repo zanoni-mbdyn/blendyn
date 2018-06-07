@@ -610,18 +610,20 @@ def update_beam3(elem, insert_keyframe = False):
     cp2.location = Vector(( P2 + Vector((d[1]*t2)) )).to_3d()
     cp3.location = Vector(( P2 - Vector((d[1]*t2)) )).to_3d()
 
-    # set the tilt angles of the sections
-    t3 = P3.to_3d() - cp2.location
-    t3.normalize()
 
-    phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
-    phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
-    phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
+    # FIXME: This is nonsense!!
+    # set the tilt angles of the sections
+    # t3 = P3.to_3d() - cp2.location
+    # t3.normalize()
+
+    # phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
+    # phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
+    # phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
     
-    cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
-    cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
-    cvdata.splines[0].points[2].tilt = t2.to_3d()*(theta2*phi2)
-    cvdata.splines[0].points[3].tilt = t3.to_3d()*(theta3*phi3)
+    # cvdata.splines[0].points[0].tilt = t1.to_3d()*(theta1*phi1)
+    # cvdata.splines[0].points[1].tilt = t2.to_3d()*(theta2*phi2)
+    # cvdata.splines[0].points[2].tilt = t2.to_3d()*(theta2*phi2)
+    # cvdata.splines[0].points[3].tilt = t3.to_3d()*(theta3*phi3)
 
     bpy.context.scene.update()
 

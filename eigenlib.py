@@ -34,6 +34,7 @@ import logging
 from .nodelib import axes
 
 import os
+from sys import float_info
 
 try: 
     from netCDF4 import Dataset
@@ -52,24 +53,30 @@ def update_curr_eigmode(self, context):
         alpha_i = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][0, 1]
         beta = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][0, 2]
         det = (alpha_r + beta)**2 + alpha_i**2
-        self.lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
-        self.lambda_freq = (1./self.dCoef)*(alpha_i*beta)/(det*math.pi)
-        return
     elif self.curr_eigmode > self.iNVec:
         self.curr_eigmode = self.iNVec
         alpha_r = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.iNVec - 1, 0]
         alpha_i = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.iNVec - 1, 1]
         beta = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.iNVec - 1, 2]
         det = (alpha_r + beta)**2 + alpha_i**2
-        self.lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
-        self.lambda_freq = (1./self.dCoef)*(alpha_i*beta)/(det*math.pi)
     else:
         alpha_r = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.curr_eigmode - 1 , 0]
         alpha_i = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.curr_eigmode - 1, 1]
         beta = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.curr_eigmode - 1, 2]
         det = (alpha_r + beta)**2 + alpha_i**2
-        self.lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
-        self.lambda_freq = (1./self.dCoef)*(alpha_i*beta)/(det*math.pi)
+    
+    lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
+    lambda_imag = (1./self.dCoef)*(2*alpha_i*beta)/det
+    if alpha_i*beta < 0:
+        lambda_imag = -lambda_imag
+
+    if lambda_imag <= 2.*float_info.epsilon:
+        self.lambda_freq = 0.
+        self.lambda_damp = 100
+    else:
+        self.lambda_freq = lambda_imag/(2*math.pi)
+        self.lambda_damp = int(((lambda_real/lambda_imag)**2/(1 + (lambda_real/lambda_imag)**2))**.5*100)
+    return
 # -----------------------------------------------------------
 # end of update_curr_eigmode() function
 
@@ -117,9 +124,12 @@ class MBDynEigenanalysisProps(bpy.types.PropertyGroup):
             default = 0
             )
 
-    lambda_real = FloatProperty(
-            name = "real part",
-            description = "real part of current eigenvalue"
+    lambda_damp = IntProperty(
+            subtype = 'PERCENTAGE',
+            name = "damping [%]",
+            description = "damping factor of current eigenvalue [%]",
+            min = 0,
+            max = 100
             )
 
     lambda_freq = FloatProperty(
@@ -201,7 +211,7 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
             elif obj.mbdyn.parametrization == 'MATRIX':
                 obj.rotation_mode = 'QUATERNION'
-                R = Matrix(( nc.variables[node_var + 'R'][tdx, :] ))
+                R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :] ))
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
             else:

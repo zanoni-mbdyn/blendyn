@@ -538,7 +538,7 @@ def update_structural_force(elem, insert_keyframe = False):
     
     if mbs.use_netcdf:
 
-        tdx = scene.frame_current * mbs.load_frequency
+        tdx = int(scene.frame_current * mbs.load_frequency)
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r", format="NETCDF3")
