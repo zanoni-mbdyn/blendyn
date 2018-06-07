@@ -1783,7 +1783,7 @@ class MBDynEigenanalysisPanel(bpy.types.Panel):
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "curr_eigmode", text = "")
             col.enabled = True 
             col = layout.column(align = True)
-            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_real", slider = False)
+            col.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_damp", slider = False)
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "lambda_freq", slider = False)
             col.enabled = False
 
