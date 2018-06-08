@@ -172,9 +172,9 @@ def parse_node(context, rw):
         elif type == 'phi':
             vec = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             angle = vec.magnitude
-            sin_angle = sin(angle)
+            sin_angle = sin(angle/2.)
             vec.normalize()
-            return Quaternion(( cos(angle/2), vec[0]*sin_angle, vec[1]*sin_angle, vec[2]*sin_angle )), 'PHI'
+            return Quaternion(( cos(angle/2.), vec[0]*sin_angle, vec[1]*sin_angle, vec[2]*sin_angle )), 'PHI'
         else:
             raise RotKeyError("Error: rotation mode " + type + " not recognised")
 
