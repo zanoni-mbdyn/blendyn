@@ -190,7 +190,7 @@ def spawn_linearvelocity_element(elem, context):
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         linearvelocityjOBJv = bpy.context.selected_objects[0]
-        linearvelocityjOBJ = linearvelocityjOBJv.constraints[0].target
+        linearvelocityjOBJ = bpy.context.selected_objects[1]
         
         linearvelocityjOBJ.name = elem.name
         linearvelocityjOBJv.name = elem.name + '.v'
@@ -255,7 +255,7 @@ def spawn_linearacceleration_element(elem, context):
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         linearaccelerationjOBJa = bpy.context.selected_objects[0]
-        linearaccelerationjOBJ = linearaccelerationjOBJa.constraints[0].target
+        linearaccelerationjOBJ = bpy.context.selected_objects[1]
 
         linearaccelerationjOBJ.name = elem.name
         linearaccelerationjOBJa.name = elem.name + '.a'
