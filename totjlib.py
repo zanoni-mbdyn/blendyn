@@ -48,21 +48,21 @@ def parse_total(rw, ed):
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        R1p = Matrix()
+        R1p = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1p)
         el.rotoffsets[0].value = R1p.to_quaternion(); 
 
-        R1r = Matrix()
+        R1r = Matrix().to_3x3()
         parse_rotmat(rw, 15, R1r)
         el.rotoffsets[1].value = R1r.to_quaternion(); 
         
         el.offsets[1].value = Vector(( float(rw[25]), float(rw[26]), float(rw[27]) ))
 
-        R2p = Matrix()
+        R2p = Matrix().to_3x3()
         parse_rotmat(rw, 28, R2p)
         el.rotoffsets[2].value = R2p.to_quaternion();
         
-        R2r = Matrix()
+        R2r = Matrix().to_3x3()
         parse_rotmat(rw, 37, R2r)
         el.rotoffsets[3].value = R2r.to_quaternion();
 
@@ -102,12 +102,12 @@ def parse_total(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         el.rotoffsets.add()
-        R1p = Matrix()
+        R1p = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1p)
         el.rotoffsets[0].value = R1p.to_quaternion();
 
         el.rotoffsets.add()
-        R1r = Matrix() 
+        R1r = Matrix().to_3x3() 
         parse_rotmat(rw, 15, R1r)
         el.rotoffsets[1].value = R1r.to_quaternion();
 
@@ -115,12 +115,12 @@ def parse_total(rw, ed):
         el.offsets[1].value = Vector(( float(rw[25]), float(rw[26]), float(rw[27]) ))
 
         el.rotoffsets.add()
-        R2p = Matrix()
+        R2p = Matrix().to_3x3()
         parse_rotmat(rw, 28, R2p)
         el.rotoffsets[2].value = R2p.to_quaternion();
         
         el.rotoffsets.add()
-        R2r = Matrix()
+        R2r = Matrix().to_3x3()
         parse_rotmat(rw, 37, R2r)
         el.rotoffsets[3].value = R2r.to_quaternion();
 
@@ -525,11 +525,11 @@ def parse_total_pin(rw, ed):
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        R1p = Matrix()
+        R1p = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1p)
         el.rotoffsets[0].value = R1p.to_quaternion(); 
 
-        R1r = Matrix()
+        R1r = Matrix().to_3x3()
         parse_rotmat(rw, 15, R1r)
         el.rotoffsets[1].value = R1r.to_quaternion(); 
         
@@ -563,12 +563,12 @@ def parse_total_pin(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         el.rotoffsets.add()
-        R1p = Matrix()
+        R1p = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1p)
         el.rotoffsets[0].value = R1p.to_quaternion();
 
         el.rotoffsets.add()
-        R1r = Matrix()
+        R1r = Matrix().to_3x3()
         parse_rotmat(rw, 15, R1p)
         el.rotoffsets[1].value = R1r.to_quaternion();
 

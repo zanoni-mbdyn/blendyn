@@ -47,11 +47,11 @@ def parse_prismatic(rw, ed):
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
          
-        R1 = Matrix()
+        R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
-        R2 = Matrix()
+        R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2) 
         el.rotoffsets[1].value = R2.to_quaternion(); 
 
@@ -71,12 +71,12 @@ def parse_prismatic(rw, ed):
         el.nodes[1].int_label = int(rw[15])
 
         el.rotoffsets.add()
-        R1 = Matrix()
+        R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
         el.rotoffsets.add()
-        R2 = Matrix()
+        R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 

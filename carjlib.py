@@ -48,13 +48,13 @@ def parse_cardano_hinge(rw, ed):
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
-        R1 = Matrix()
+        R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
         
-        R2 = Matrix()
+        R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R1)
         el.rotoffsets[1].value = R2.to_quaternion(); 
 
@@ -77,7 +77,7 @@ def parse_cardano_hinge(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         el.rotoffsets.add()
-        R1 = Matrix()
+        R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
@@ -85,7 +85,7 @@ def parse_cardano_hinge(rw, ed):
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         el.rotoffsets.add()
-        R2 = Matrix()
+        R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
@@ -111,7 +111,7 @@ def parse_cardano_pin(rw, ed):
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
-        R1 = Matrix()
+        R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
@@ -134,7 +134,7 @@ def parse_cardano_pin(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         el.rotoffsets.add()
-        R1 = Matrix()
+        R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
