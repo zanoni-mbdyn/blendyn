@@ -73,7 +73,7 @@ def set_obj_locrot_mov(obj, rw):
         R = Matrix(((rw[4], rw[5], rw[6], 0.0),\
                     (rw[7], rw[8], rw[9], 0.0),\
                     (rw[10], rw[11], rw[12], 0.0),\
-                    (0.0, 0.0, 0.0, 1.0)))
+                    (0.0, 0.0, 0.0, 1.0))).to_3x3()
         obj.rotation_quaternion = R.to_quaternion()
         obj.keyframe_insert(data_path = "rotation_quaternion")
     else:

@@ -722,6 +722,19 @@ def netcdf_helper(nc, scene, key):
 
     return answer
 
+def netcdf_helper_quat(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current * freq
+    frac = np.ceil(tdx) - tdx
+
+    q_first = Matrix((nc.variables[key][int(tdx)])).transposed().to_quaternion()
+    q_second = Matrix((nc.variables[key][int(np.ceil(tdx))])).transposed().to_quaternion()
+    theta = q_second.angle - q_first.angle
+    if theta:
+        return 1/sin(theta)*(q_first*sin((1 - frac)*theta) + q_second*(frac*theta))
+    else:
+        return q_first
 def parse_render_string(var, components):
     if hasattr(var, '__iter__'):
         return ', '.join(['{:.2f}'.format(item) if components[idx] else ' ' for idx, item in enumerate(var)])
@@ -853,9 +866,8 @@ def set_motion_paths_netcdf(context):
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                answer = netcdf_helper(nc, scene, node_var + 'R')
-                R = Matrix((answer))
-                obj.rotation_quaternion = R.to_quaternion()
+                obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
+                
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached

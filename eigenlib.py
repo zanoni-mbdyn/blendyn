@@ -211,7 +211,7 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
             elif obj.mbdyn.parametrization == 'MATRIX':
                 obj.rotation_mode = 'QUATERNION'
-                R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :] ))
+                R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
             else:
