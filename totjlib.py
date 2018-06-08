@@ -200,32 +200,10 @@ def spawn_total_joint_element(elem, context):
     else:
         return {'LIBRARY_ERROR'}
 
-    # joint offsets with respect to nodes
-    f1 = elem.offsets[0].value
-    f2 = elem.offsets[1].value
-
-    # "position orientation" w.r.t. node 1
-    qp1 = elem.rotoffsets[0].value
-
-    # "rotation orientation" w.r.t node 1
-    qr1 = elem.rotoffsets[1].value
-
-    # "position orientation" w.r.t. node 2
-    qp2 = elem.rotoffsets[2].value
-
-    # "rotation orientation" w.r.t. node 2
-    qr2 = elem.rotoffsets[3].value
-
-    # project offsets in global frame
-    R1 = n1OBJ.rotation_quaternion.to_matrix()
-    R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = R2*Vector(( f2[0], f2[1], f2[2] ))
-
     # place the joint object in the position defined relative to node 1
-    totjOBJ.location = p1
+    totjOBJ.location = elem.offsets[0].value
     totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
 
     # display traslation arrows
     pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
@@ -238,11 +216,11 @@ def spawn_total_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
-            obj.location = p1
+            obj.location = elem.offsets[0].value
 
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
             
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
@@ -259,11 +237,11 @@ def spawn_total_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
-            obj.location = p1
+            obj.location = elem.offsets[0].value
             
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+            obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
@@ -285,52 +263,52 @@ def spawn_total_joint_element(elem, context):
 
     # create an object representing the RF used to express the relative
     # position w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
     RF1p = bpy.context.selected_objects[0]
     RF1p.rotation_mode = 'QUATERNION'
-    RF1p.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
-    parenting(RF1p, totjOBJ)
+    parenting(RF1p, n1OBJ)
     RF1p.hide = True
 
     # create an object representing the RF used to express the relative
     # orientation w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
     RF1r = bpy.context.selected_objects[0]
     RF1r.rotation_mode = 'QUATERNION'
-    RF1r.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+    RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
-    parenting(RF1r, totjOBJ)
+    parenting(RF1r, n1OBJ)
     RF1r.hide = True
 
     # create an object representing the RF used to express the relative
     # position w.r.t. node 2, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value)
     RF2p = bpy.context.selected_objects[0]
     RF2p.rotation_mode = 'QUATERNION'
-    RF2p.rotation_quaternion = Quaternion(( qp2[0], qp2[1], qp2[2], qp2[3] ))
+    RF2p.rotation_quaternion = Quaternion(elem.rotoffsets[2].value[0:])
     RF2p.scale = .33*totjOBJ.scale
     RF2p.name = totjOBJ.name + '_RF2_pos'
-    parenting(RF2p, totjOBJ)
+    parenting(RF2p, n2OBJ)
     RF2p.hide = True
 
     # create an object representing the RF used to express the relative
     # orientation w.r.t. node 2, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value)
     RF2r = bpy.context.selected_objects[0]
     RF2r.rotation_mode = 'QUATERNION'
-    RF2r.rotation_quaternion = Quaternion(( qr2[0], qr2[1], qr2[2], qr2[3] ))
+    RF2r.rotation_quaternion = Quaternion(elem.rotoffsets[3].value[0:])
     RF2r.scale = .33*totjOBJ.scale
     RF2r.name = totjOBJ.name + '_RF2_rot'
-    parenting(RF2r, totjOBJ)
+    parenting(RF2r, n2OBJ)
     RF2r.hide = True
 
     # set parenting of wireframe obj
     parenting(totjOBJ, n1OBJ)
 
-    grouping(context, totjOBJ, [n1OBJ])
+    grouping(context, totjOBJ, [n1OBJ, n2OBJ, RF1p, RF1r, RF2p, RF2r])
 
     elem.blender_object = totjOBJ.name
 
@@ -403,13 +381,13 @@ def total_info_draw(elem, layout):
 
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./3.)
+            split = box.split(1./8.)
            
             # position
             column = split.column()
-            column.row().label(text = "pos.X")
-            column.row().label(text = "pos.Y")
-            column.row().label(text = "pos.Z")
+            column.row().label(text = "pos.X:")
+            column.row().label(text = "pos.Y:")
+            column.row().label(text = "pos.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -420,9 +398,9 @@ def total_info_draw(elem, layout):
 
             # linear velocity
             column = split.column()
-            column.row().label(text = "vel.X")
-            column.row().label(text = "vel.Y")
-            column.row().label(text = "vel.Z")
+            column.row().label(text = "vel.X:")
+            column.row().label(text = "vel.Y:")
+            column.row().label(text = "vel.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -433,9 +411,9 @@ def total_info_draw(elem, layout):
 
             # rotation
             column = split.column()
-            column.row().label(text = "rot.X")
-            column.row().label(text = "rot.Y")
-            column.row().label(text = "rot.Z")
+            column.row().label(text = "rot.X:")
+            column.row().label(text = "rot.Y:")
+            column.row().label(text = "rot.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -446,9 +424,9 @@ def total_info_draw(elem, layout):
 
             # angular velocity 
             column = split.column()
-            column.row().label(text = "angvel.X")
-            column.row().label(text = "angvel.Y")
-            column.row().label(text = "angvel.Z")
+            column.row().label(text = "angvel.X:")
+            column.row().label(text = "angvel.Y:")
+            column.row().label(text = "angvel.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -639,13 +617,13 @@ def total_pin_info_draw(elem, layout):
             
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./3.)
+            split = box.split(1./8.)
            
             # position
             column = split.column()
-            column.row().label(text = "pos.X")
-            column.row().label(text = "pos.Y")
-            column.row().label(text = "pos.Z")
+            column.row().label(text = "pos.X:")
+            column.row().label(text = "pos.Y:")
+            column.row().label(text = "pos.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -656,9 +634,9 @@ def total_pin_info_draw(elem, layout):
 
             # linear velocity
             column = split.column()
-            column.row().label(text = "vel.X")
-            column.row().label(text = "vel.Y")
-            column.row().label(text = "vel.Z")
+            column.row().label(text = "vel.X:")
+            column.row().label(text = "vel.Y:")
+            column.row().label(text = "vel.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -669,9 +647,9 @@ def total_pin_info_draw(elem, layout):
 
             # rotation
             column = split.column()
-            column.row().label(text = "rot.X")
-            column.row().label(text = "rot.Y")
-            column.row().label(text = "rot.Z")
+            column.row().label(text = "rot.X:")
+            column.row().label(text = "rot.Y:")
+            column.row().label(text = "rot.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -682,9 +660,9 @@ def total_pin_info_draw(elem, layout):
 
             # angular velocity 
             column = split.column()
-            column.row().label(text = "angvel.X")
-            column.row().label(text = "angvel.Y")
-            column.row().label(text = "angvel.Z")
+            column.row().label(text = "angvel.X:")
+            column.row().label(text = "angvel.Y:")
+            column.row().label(text = "angvel.Z:")
 
             column = split.column()
             for kk in range(3):
@@ -734,23 +712,10 @@ def spawn_total_pin_joint_element(elem, context):
     else:
         return {'LIBRARY_ERROR'}
 
-    # joint offsets with respect to nodes
-    f1 = elem.offsets[0].value
-
-    # "position orientation" w.r.t. node
-    qp1 = elem.rotoffsets[0].value
-
-    # "rotation orientation" w.r.t node
-    qr1 = elem.rotoffsets[1].value
-
-    # project offsets in global frame
-    R1 = n1OBJ.rotation_quaternion.to_matrix()
-    p1 = R1*Vector(( f1[0], f1[1], f1[2] ))
-
     # place the joint object in the position defined relative to node 1
-    totjOBJ.location = p1
+    totjOBJ.location = elem.offsets[0].value
     totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
 
     # display traslation arrows
     pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
@@ -763,11 +728,11 @@ def spawn_total_pin_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
-            obj.location = p1
+            obj.location = elem.offsets[0].value
             
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
             
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
@@ -783,11 +748,11 @@ def spawn_total_pin_joint_element(elem, context):
             obj = bpy.context.selected_objects[0]
            
             # position it correctly
-            obj.location = p1
+            obj.location = elem.offsets[0].value
 
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
@@ -801,30 +766,30 @@ def spawn_total_pin_joint_element(elem, context):
 
     # create an object representing the RF used to express the relative
     # position w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
     RF1p = bpy.context.selected_objects[0]
     RF1p.rotation_mode = 'QUATERNION'
-    RF1p.rotation_quaternion = Quaternion(( qp1[0], qp1[1], qp1[2], qp1[3] ))
+    RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
-    parenting(RF1p, totjOBJ)
+    parenting(RF1p, n1OBJ)
     RF1p.hide = True
 
     # create an object representing the RF used to express the relative
     # orientation w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = p1)
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
     RF1r = bpy.context.selected_objects[0]
     RF1r.rotation_mode = 'QUATERNION'
-    RF1r.rotation_quaternion = Quaternion(( qr1[0], qr1[1], qr1[2], qr1[3] ))
+    RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value)
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
-    parenting(RF1r, totjOBJ)
+    parenting(RF1r, n1OBJ)
     RF1r.hide = True
 
     # set parenting of wireframe obj
     parenting(totjOBJ, n1OBJ)
 
-    grouping(context, totjOBJ, [n1OBJ])
+    grouping(context, totjOBJ, [n1OBJ, RF1p, RF1r])
 
     elem.blender_object = totjOBJ.name
 
