@@ -607,7 +607,7 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     elem_scale_slider = FloatProperty(
-            name = 'Value of scaling',
+            name = "Scaling Factor",
             default = 1.0
     )
 
@@ -2061,19 +2061,20 @@ class MBDynScalingPanel(bpy.types.Panel):
                 mbs, "nd_index")
         row = box.row()
         row.prop(mbs, "node_scale_slider")
-        col = box.column()
-        col.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = 'Select all Nodes')
-        col.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = 'Scale Selected Node')
-        col.operator(Scene_OT_MBDyn_Scale_Nodes.bl_idname, text = 'Scale All Nodes')
+        col = box.column(align = True)
+        col.operator(Scene_OT_MBDyn_Select_all_Nodes.bl_idname, text = "Select All Nodes")
+        col.operator(Scene_OT_MBDyn_Scale_Node.bl_idname, text = "Scale Selected Node")
+        col.operator(Scene_OT_MBDyn_Scale_Nodes.bl_idname, text = "Scale All Nodes")
 
         box = layout.box()
-        row = box.row()
-        row.prop(mbs, "elem_type_scale")
-        row = box.row()
-        row.prop(mbs, "elem_scale_slider")
-        row = box.row()
-        row.operator(Scene_OT_MBDyn_Select_Elements_by_Type.bl_idname, text = 'Select Elements')
-        row.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
+        col = box.column()
+        col.label("Elements to scale:")
+        col.prop(mbs, "elem_type_scale", text = "")
+        col = box.column()
+        col.prop(mbs, "elem_scale_slider")
+        col = box.column(align = True)
+        col.operator(Scene_OT_MBDyn_Select_Elements_by_Type.bl_idname, text = "Select Elements")
+        col.operator(Scene_OT_MBDyn_Scale_Elements_by_Type.bl_idname, text = "Scale Elements")
 # -----------------------------------------------------------
 # end of MBDynScalingPanel class
 bpy.utils.register_class(MBDynScalingPanel)
