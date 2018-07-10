@@ -960,8 +960,8 @@ class MBDynReadLog(bpy.types.Operator):
 
         elif ret_val == {'FINISHED'}:
             message = "MBDyn entities imported successfully"
-            bpy.data.scenes['Scene'].render.use_stamp = True
-            bpy.data.scenes['Scene'].render.use_stamp_note = True
+            bpy.context.scene.render.use_stamp = True
+            bpy.context.scene.render.use_stamp_note = True
             self.report({'INFO'}, message) 
             baseLogger.info(message)
 
