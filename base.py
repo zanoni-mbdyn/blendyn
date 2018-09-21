@@ -199,16 +199,21 @@ bpy.utils.register_class(MBDynTime)
 
 ## PropertyGroup of Render Variables
 class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
-    variable = StringProperty(
-        name = "Render Variables",
-        description = 'Variables to be set'
+    varname = StringProperty(
+        name = "Display name",
+        description = "Name of variable to be displayed in rendered frames"
     )
-    value = StringProperty(
-        name = "Values of Render Variables",
-        description = "Values of variables to be set"
+    variable = StringProperty(
+        name = "NetCDF variable",
+        description = "NetCDF variables to be displayed"
     )
     components = BoolVectorProperty(
-        name = "Components of the Variable",
+        name = "Components of the variable to use in display",
+        size = 9
+    )
+    value = FloatVectorProperty(
+        name = "Numerical value",
+        description = "Numerical value of variable at current frame",
         size = 9
     )
 # -----------------------------------------------------------
@@ -218,7 +223,7 @@ bpy.utils.register_class(MBDynRenderVarsDictionary)
 class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
 	name = StringProperty(
 		name = 'Group of Display Variables',
-		description = 'Janga Reddy'
+		description = ''
 	)
 
 	group = CollectionProperty(
@@ -821,8 +826,8 @@ def render_variables(scene):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, "r", format="NETCDF3")
-            string = [ '{0} : {1}'.format(var.variable, \
-                parse_render_string(netcdf_helper(nc, scene, var.value), var.components)) \
+            string = [ '{0} : {1}'.format(var.varname, \
+                parse_render_string(netcdf_helper_rvars(nc, scene, var), var.components)) \
                 for var in mbs.render_vars ]
             string = '\n'.join(string)
             if len(mbs.render_vars):
@@ -1405,8 +1410,7 @@ class MBDynSetImportFreqAuto(bpy.types.Operator):
 bpy.utils.register_class(MBDynSetImportFreqAuto)
 
 class MBDynSetRenderVariables(bpy.types.Operator):
-    """Sets the Render variables to be\
-        used in a Blender Render"""
+    """ Sets the Variables to be displayed in rendered view """
 
     bl_idname = "sel.set_render_variable"
     bl_label = "Set Render Variable"
@@ -1414,17 +1418,17 @@ class MBDynSetRenderVariables(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        exist_render_vars = [mbs.render_vars[var].value for var in range(len(mbs.render_vars))]
+        exist_render_vars = [mbs.render_vars[var].variable for var in range(len(mbs.render_vars))]
 
         try:
             index = exist_render_vars.index(mbs.plot_vars[mbs.plot_var_index].name)
-            mbs.render_vars[index].variable = mbs.render_var_name
+            mbs.render_vars[index].varname = mbs.render_var_name
             mbs.render_vars[index].components = mbs.plot_comps
 
         except ValueError:
             rend = mbs.render_vars.add()
-            rend.variable = mbs.render_var_name
-            rend.value = mbs.plot_vars[mbs.plot_var_index].name
+            rend.varname = mbs.render_var_name
+            rend.variable = mbs.plot_vars[mbs.plot_var_index].name
             rend.components = mbs.plot_comps
 
         return {'FINISHED'}
@@ -1512,21 +1516,21 @@ class MBDynSetDisplayGroup(bpy.types.Operator):
             index = exist_display_groups.index(mbs.group_name)
             mbs.display_vars_group[index].group.clear()
 
-            janga = mbs.display_vars_group[mbs.group_name]
+            diaplaygroup = mbs.display_vars_group[mbs.group_name]
 
             for ii in list(range(len(mbs.render_vars))):
-                rend = janga.group.add()
+                rend = displaygroup.group.add()
                 rend.variable = mbs.render_vars[ii].variable
                 rend.value = mbs.render_vars[ii].value
                 rend.components = mbs.render_vars[ii].components
 
 
         except ValueError:
-            janga = mbs.display_vars_group.add()
-            janga.name = mbs.group_name
+            displaygroup = mbs.display_vars_group.add()
+            displaygroup.name = mbs.group_name
 
             for ii in list(range(len(mbs.render_vars))):
-                rend = janga.group.add()
+                rend = displaygroup.group.add()
                 rend.variable = mbs.render_vars[ii].variable
                 rend.value = mbs.render_vars[ii].value
                 rend.components = mbs.render_vars[ii].components
@@ -1912,8 +1916,8 @@ bpy.utils.register_class(MBDynPlotVar_UL_List)
 
 class MBDynRenderVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.label(item.variable)
-        layout.label(item.value + comp_repr(item.components, item.value, context))
+        layout.label(item.varname)
+        layout.label(item.variable + comp_repr(item.components, item.variable, context))
 # -----------------------------------------------------------
 # end of MBDynRenderVar_UL_List class
 bpy.utils.register_class(MBDynRenderVar_UL_List)
@@ -1945,7 +1949,7 @@ bpy.utils.register_class(MBDynReferences_UL_List)
 class MBDynNodesScenePanel(bpy.types.Panel):
     """ List of MBDyn nodes: use import all button to add \
             them all to the scene at once """
-    bl_label = "MBDyn nodes"
+    bl_label = "MBDyn Nodes"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
@@ -1993,7 +1997,7 @@ bpy.utils.register_class(MBDynNodesScenePanel)
 class MBDynElemsScenePanel(bpy.types.Panel):
     """ List of MBDyn elements: use import button to add \
             them to the scene  """
-    bl_label = "MBDyn elements"
+    bl_label = "MBDyn Elements"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "scene"
@@ -2046,7 +2050,7 @@ bpy.utils.register_class(MBDynElemsScenePanel)
 class MBDynScalingPanel(bpy.types.Panel):
     """ List of MBDyn elements: use import button to add \
             them to the scene  """
-    bl_label = "Scale MBDyn Entities"
+    bl_label = "MBDyn Objects Scaling"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "scene"
@@ -2082,7 +2086,7 @@ bpy.utils.register_class(MBDynScalingPanel)
 ## Panel in Scene toolbar
 class MBDynPlotPanelScene(bpy.types.Panel):
     """ Plotting of MBDyn entities private data """
-    bl_label = "MBDyn data plot"
+    bl_label = "MBDyn Data Display"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
@@ -2162,17 +2166,14 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             except IndexError:
                 pass
 
-            layout.separator()
-            layout.separator()
-
+            row = layout.row()
+            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Add to Display Variables')
+            
             row = layout.row()
             row.template_list('MBDynRenderVar_UL_List', "MBDyn Render Variables list", mbs, "render_vars",\
                     mbs, "render_index")
             row = layout.row()
             row.prop(mbs, "render_var_name")
-
-            row = layout.row()
-            row.operator(MBDynSetRenderVariables.bl_idname, text = 'Set Display Variable')
 
             row = layout.row()
             row.operator(MBDynDeleteRenderVariables.bl_idname, text = 'Delete Display Variable')
@@ -2246,7 +2247,7 @@ bpy.utils.register_class(MBDynReferenceScenePanel)
 #  MBDyn nodes to Blender objects
 class MBDynOBJNodeSelect(bpy.types.Panel):
     """ Associate MBDyn node with current object """
-    bl_label = "MBDyn nodes"
+    bl_label = "MBDyn Nodes"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
