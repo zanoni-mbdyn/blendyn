@@ -169,7 +169,8 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
             description = "Function that updates the visualization of the element",
             default = 'none'
             )
-    bpy.utils.register_class(MBDynElemsDictionary)
+
+bpy.utils.register_class(MBDynElemsDictionary)
 # -----------------------------------------------------------
 # end of MBDynElemsDictionary class 
 
