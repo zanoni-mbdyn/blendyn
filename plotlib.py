@@ -326,7 +326,7 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         return {'FINISHED'}
 
 class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
-    """ Plot all the variables in the Variables List """
+    """Plot all the variables in the Variables List"""
     bl_idname = "ops.mbdyn_plot_var_variables"
     bl_label = "Plot all the variables in Variables List"
 
@@ -359,8 +359,8 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
             nc = Dataset(ncfile, 'r', format='NETCDF3')
 
             # get its dimensions
-            key = variable.variable
-            var = nc.variables[key]
+            varname = variable.value
+            var = nc.variables[varname]
             dim = len(var.shape)
 
             # get time vector
@@ -373,7 +373,7 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
                 n,m = var.shape
                 for mdx in range(m):
                     if variable.components[mdx]:
-                        chart.add('{0}.{1}  {2}'.format(key, mdx+1, units), \
+                        chart.add('{0}.{1}  {2}'.format(varname, mdx+1, units), \
                                 [(time[idx], var[idx,mdx]) for idx in range(0, n, mbs.plot_frequency)])
             elif dim == 3:
                 n,m,k = var.shape
@@ -389,11 +389,11 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
                     dims2 = [0, 1, 2, 0, 1, 3, 0, 1, 2]
                 for mdx in range(len(dims_names)):
                     if variable.components[mdx]:
-                        chart.add('{0}.{1}  {2}'.format(key, dims_names[mdx], units), \
+                        chart.add('{0}.{1}  {2}'.format(varname, dims_names[mdx], units), \
                                 [(time[idx], var[idx, dims1[mdx], dims2[mdx]]) \
                                 for idx in range(0, n, mbs.plot_frequency)])
             else:
-                chart.add('{0}  {1}'.format(key, units), [(time[idx], var[idx]) \
+                chart.add('{0}  {1}'.format(varname, units), [(time[idx], var[idx]) \
                         for idx in range(0, len(time), mbs.plot_frequency)])
 
         chart.x_title = "time [s]"
@@ -420,7 +420,7 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
         bpy.ops.image.open(filepath = outfname + ".png")
 
 
-        message = "Variable " + key + " plotted"
+        message = "Variable " + varname + " plotted"
         self.report({'INFO'}, message)
         logging.info(message)
         return {'FINISHED'}

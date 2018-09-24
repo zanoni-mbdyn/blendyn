@@ -713,36 +713,12 @@ def get_display_group(self, context):
 def netcdf_helper(nc, scene, key):
     mbs = scene.mbdyn
     freq = mbs.load_frequency
-    tdx = scene.frame_current*freq
+    tdx = scene.frame_current * freq
     frac = np.ceil(tdx) - tdx
 
     first = nc.variables[key][int(tdx)]
     second = nc.variables[key][int(np.ceil(tdx))]
-    answer = first*frac + second*(1 - frac)
-
-    return answer
-
-def netcdf_helper_rvars(nc, scene, var):
-    mbs = scene.mbdyn
-    freq = mbs.load_frequency
-    tdx = scene.frame_current*freq
-    frac = np.ceil(tdx) - tdx
-
-    first = nc.variables[var.variable][int(tdx)]
-    second = nc.variables[var.variable][int(np.ceil(tdx))]
-    answer = first*frac + second*(1 - frac)
-
-    dims = len(answer.shape)
-
-    if (dims == 1):
-        for ii in range(len(answer)):
-            if (var.components[ii]):
-                var.value[ii] = answer[ii]
-    elif (dims == 2):
-        for ii in range(3):
-            for jj in range(3):
-                if var.components[ii + jj]:
-                    var.value[ii + jj] = answer[ii,jj]
+    answer = first * frac + second * (1-frac)
 
     return answer
 
