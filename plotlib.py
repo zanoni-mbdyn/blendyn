@@ -638,8 +638,8 @@ class MBDynPlotPanelObject(bpy.types.Panel):
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r', format='NETCDF3')
             row.template_list("MBDynPlotVar_Object_UL_List", \
-                    "MBDyn variable to plot", mbo, "plot_vars", \
-                    mbs, "plot_var_index")
+                    "MBDyn variable to plot", mbs, "plot_vars", \
+                    mbo, "plot_var_index")
             
 #             row.prop(mbo, "plot_var")
 #             try:
