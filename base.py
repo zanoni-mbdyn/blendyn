@@ -269,7 +269,7 @@ class MBDynPlotVars(bpy.types.PropertyGroup):
         default = [True for i in range(9)],
         size = 9
         )
-    driver = BoolProperty(
+    as_driver = BoolProperty(
             name = "Use as driver variable",
             default = False,
             update = update_driver_variables
