@@ -43,24 +43,24 @@ except ImportError:
     print("Blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
-def get_plot_vars(self, context):
-    mbs = context.scene.mbdyn
-    mbo = context.active_object.mbdyn
-
-    if mbs.use_netcdf:
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
-        key = mbo.type + "." + str(mbo.int_label)
-
-        var_list = list()
-        for var in nc.variables:
-            if key in var and key != var:
-                var_list.append(var)
-
-        return [(var, var, 'Variable "%s"'%var) for var in var_list]
-    else:
-        return [('none', 'none', 'none', 1)]
+# def get_plot_vars(self, context):
+#     mbs = context.scene.mbdyn
+#     mbo = context.active_object.mbdyn
+# 
+#     if mbs.use_netcdf:
+#         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+#                 mbs.file_basename + '.nc')
+#         nc = Dataset(ncfile, 'r', format='NETCDF3')
+#         key = mbo.type + "." + str(mbo.int_label)
+# 
+#         var_list = list()
+#         for var in nc.variables:
+#             if key in var and key != var:
+#                 var_list.append(var)
+# 
+#         return [(var, var, 'Variable "%s"'%var) for var in var_list]
+#     else:
+#         return [('none', 'none', 'none', 1)]
 
 class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
     """ Plots the selected variable autospectrum (Sxx) in the image editor 

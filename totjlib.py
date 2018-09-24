@@ -90,6 +90,7 @@ def parse_total(rw, ed):
     except KeyError:
         print("Blendyn::parse_total(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.class = 'elem.joint'
         el.type = 'total_joint'
         el.int_label = int(rw[1])
 
@@ -258,7 +259,8 @@ def spawn_total_joint_element(elem, context):
     totjOBJ.mbdyn.int_label = elem.int_label
     totjOBJ.mbdyn.string_label = elem.string_label
     totjOBJ.mbdyn.dkey = elem.name
-    totjOBJ.mbdyn.type = elem.type 
+    totjOBJ.mbdyn.type = elem.type
+    totjOBJ.mbdyn.class = elem.class
 
 
     # create an object representing the RF used to express the relative
@@ -531,6 +533,7 @@ def parse_total_pin(rw, ed):
     except KeyError:
         print("Blendyn::parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.class = 'elem.joint'
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
 
