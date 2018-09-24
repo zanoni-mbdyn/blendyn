@@ -216,18 +216,33 @@ class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
 bpy.utils.register_class(MBDynRenderVarsDictionary)
 
 class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
-	name = StringProperty(
-		name = 'Group of Display Variables',
-		description = ''
-	)
-
-	group = CollectionProperty(
-		name = 'Actual collection group',
-		type = MBDynRenderVarsDictionary
-	)
+    name = StringProperty(
+	name = "Group of Display Variables",
+	description = ""
+    )
+    group = CollectionProperty(
+	name = "Actual collection group",
+	type = MBDynRenderVarsDictionary
+    )
 # -----------------------------------------------------------
 # end of MBDynDisplayVarsDictionary class
 bpy.utils.register_class(MBDynDisplayVarsDictionary)
+
+class MBDynDriverVariablesDictionary(bpy.types.PropertyGroup):
+    ncvar = StringProperty(
+        name = "NetCDF variable",
+        description = "Complete path of underlying NetCDF variable"
+    )
+    ndims = IntProperty(
+        description = "Number of dimensions"
+    )
+    indexes = IntVectorProperty(
+        size = 2,
+        description = "Indexes of the component of the variable"
+    )
+# -----------------------------------------------------------
+# end of MBDynDriverVariablesDictionary class
+bpy.utils.register_class(MBDynDriverVariablesDictionary)
 
 ## PropertyGroup of Environment Variables
 class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
@@ -246,8 +261,19 @@ bpy.utils.register_class(MBDynEnvVarsDictionary)
 ## PropertyGroup of MBDyn plottable variables
 class MBDynPlotVars(bpy.types.PropertyGroup):
     name = StringProperty(
-            name = "plottable variable"
+            name = "Plottable variable"
             )
+    plot_comps = BoolVectorProperty(
+        name = "components",
+        description = "Components of property to plot",
+        default = [True for i in range(9)],
+        size = 9
+        )
+    driver = BoolProperty(
+            name = "Use as driver variable",
+            default = False,
+            update = update_driver_variables
+    )
 # -----------------------------------------------------------
 # end of MBDynPlotVars class
 bpy.utils.register_class(MBDynPlotVars)
@@ -370,6 +396,11 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     render_vars = CollectionProperty(
         name = "MBDyn render variables collection",
         type = MBDynRenderVarsDictionary
+    )
+
+    driver_vars = CollectionProperty(
+        name = "Driver variables tied to NetCDF variables",
+        type = MBDynDriverVariablesDictionary
     )
 
     display_vars_group = CollectionProperty(
@@ -648,16 +679,10 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
             )
 
     plot_var_index = IntProperty(
-            name = "variable index",
+            name = "Plot variable index",
             description = "index of the current variable to be plotted",
             default = 0
             )
-    plot_comps = BoolVectorProperty(
-        name = "components",
-        description = "Components of property to plot",
-        default = [True for i in range(9)],
-        size = 9
-        )
 
     if HAVE_PLOT:
 
@@ -759,42 +784,48 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
 
     # Specific for plotting
     if HAVE_PLOT:
-        plot_var = EnumProperty(
-                name = "Variables",
-                items = get_plot_vars,
-                description = ""
-                )
-
-        plot_comps = BoolVectorProperty(
-                name = "components",
-                description = "Components of property to plot",
-                default = [True for i in range(9)],
-                size = 9
-                )
-        
-        plot_type = EnumProperty(
-            items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
-                     ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)],
-            name = "plot type",
-            default = "TIME HISTORY"
+        plot_var_index = IntProperty(
+                name = "Plot variable index",
+                description = "index of the current variable to be plotted",
+                default = 0
             )
-
-        fft_remove_mean = BoolProperty(
-                name = "Subtract mean",
-                description = "Subtract the mean value before calculating the FFT",
-                default = False
-                )
-        plot_xrange_min = FloatProperty(
-                name = "minimum X value",
-                description = "Minimum value for abscissa",
-                default = 0.0
-                )
-
-        plot_xrange_max = FloatProperty(
-                name = "maximum X value",
-                description = "Maximum value for abscissa",
-                default = 0.0
-                )
+#     if HAVE_PLOT:
+#         plot_var = EnumProperty(
+#                 name = "Variables",
+#                 items = get_plot_vars,
+#                 description = ""
+#                 )
+# 
+#         plot_comps = BoolVectorProperty(
+#                 name = "components",
+#                 description = "Components of property to plot",
+#                 default = [True for i in range(9)],
+#                 size = 9
+#                 )
+#         
+#         plot_type = EnumProperty(
+#             items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
+#                      ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)],
+#             name = "plot type",
+#             default = "TIME HISTORY"
+#             )
+# 
+#         fft_remove_mean = BoolProperty(
+#                 name = "Subtract mean",
+#                 description = "Subtract the mean value before calculating the FFT",
+#                 default = False
+#                 )
+#         plot_xrange_min = FloatProperty(
+#                 name = "minimum X value",
+#                 description = "Minimum value for abscissa",
+#                 default = 0.0
+#                 )
+# 
+#         plot_xrange_max = FloatProperty(
+#                 name = "maximum X value",
+#                 description = "Maximum value for abscissa",
+#                 default = 0.0
+#                 )
 
 # -----------------------------------------------------------
 # end of MBDynSettingsObject class
@@ -1910,6 +1941,22 @@ class MBDynPlotVar_UL_List(bpy.types.UIList):
 # end of MBDynPLotVar_UL_List class
 bpy.utils.register_class(MBDynPlotVar_UL_List)
 
+class MBDynPlotVar_Object_UL_List(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.name)
+    def filter_items(self, context, data, propname):
+        items = getattr(data, propname)
+        mbo = context.object.mbdyn
+        hf = bpy.types.UI_UL_list
+        flt_flags = hf.filter_items_by_name(mbo.type + '.' + str(mbo.int_label),\
+                self.bitflag_filter_item, items, "name", \
+                reverse = self.use_filter_name_inverse)
+        return flt_flags, []
+
+# -----------------------------------------------------------
+# end of MBDynPLotVar_Object_UL_List class
+bpy.utils.register_class(MBDynPlotVar_Object_UL_List)
+
 class MBDynRenderVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.label(item.variable)
@@ -2082,7 +2129,7 @@ bpy.utils.register_class(MBDynScalingPanel)
 ## Panel in Scene toolbar
 class MBDynPlotPanelScene(bpy.types.Panel):
     """ Plotting of MBDyn entities private data """
-    bl_label = "MBDyn data plot"
+    bl_label = "MBDyn Data Plot"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
@@ -2096,12 +2143,11 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r', format='NETCDF3')
-            # row.prop(mbs, 'plot_var')
             row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
                     mbs, "plot_var_index")
             try:
                 dim = len(nc.variables[mbs.plot_vars[mbs.plot_var_index].name].shape)
-                if dim == 2:     # Vec3: FIXME check if other possibilities exist
+                if dim == 2:     # Vec3
                     box = layout.box()
                     split = box.split(1./3.)
                     column = split.column()
@@ -2110,7 +2156,7 @@ class MBDynPlotPanelScene(bpy.types.Panel):
                     column.prop(mbs, "plot_comps", index = 1, text = "y")
                     column = split.column()
                     column.prop(mbs, "plot_comps", index = 2, text = "z")
-                elif dim == 3:
+                elif dim == 3:  # Mat3x3
                     if mbs.plot_var[-1] == 'R':
                         box = layout.box()
                         split = box.split(1./3.)

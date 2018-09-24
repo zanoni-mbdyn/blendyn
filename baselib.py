@@ -109,6 +109,15 @@ def get_plot_vars_glob(context):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var
 
+def update_driver_variables():
+    mbs = bpy.context.scene.mbdyn
+    pvar = mbs.plot_vars[mbs.plot_var.index]
+    if pvar.driver:
+        mbs.driver_vars.remove(pvar.name)
+    else:
+        dvar = mbs.driver_vars.add()
+        dvar.ncvar = pvar.name
+
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
     mbs = context.scene.mbdyn

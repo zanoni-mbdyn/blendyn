@@ -637,77 +637,81 @@ class MBDynPlotPanelObject(bpy.types.Panel):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r', format='NETCDF3')
-            row.prop(mbo, "plot_var")
-            try:
-                dim = len(nc.variables[mbo.plot_var].shape)
-                if dim == 2:     # vec3
-                    box = layout.box()
-                    split = box.split(1./3.)
-                    column = split.column()
-                    column.prop(mbo, "plot_comps", index = 0, text = "x")
-                    column = split.column()
-                    column.prop(mbo, "plot_comps", index = 1, text = "y")
-                    column = split.column()
-                    column.prop(mbo, "plot_comps", index = 2, text = "z")
-                elif dim == 3:
-                    if mbo.plot_var[-1] == 'R':
-                        box = layout.box()
-                        split = box.split(1./3.)
-                        column = split.column()
-                        column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
-                        column = split.column()
-                        column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
-                        column.row().prop(mbo, "plot_comps", index = 3, text = "(2,2)")
-                        column = split.column()
-                        column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
-                        column.row().prop(mbo, "plot_comps", index = 4, text = "(2,3)")
-                        column.row().prop(mbo, "plot_comps", index = 5, text = "(3,3)")
-                    else:
-                        box = layout.box()
-                        split = box.split(1./3.)
-                        column = split.column()
-                        column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
-                        column.row().prop(mbo, "plot_comps", index = 3, text = "(2,1)")
-                        column.row().prop(mbo, "plot_comps", index = 6, text = "(3,1)")
-                        column = split.column()
-                        column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
-                        column.row().prop(mbo, "plot_comps", index = 4, text = "(2,2)")
-                        column.row().prop(mbo, "plot_comps", index = 7, text = "(3,2)")
-                        column = split.column()
-                        column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
-                        column.row().prop(mbo, "plot_comps", index = 5, text = "(2,3)")
-                        column.row().prop(mbo, "plot_comps", index = 8, text = "(3,3)")
+            row.template_list("MBDynPlotVar_Object_UL_List", \
+                    "MBDyn variable to plot", mbo, "plot_vars", \
+                    mbs, "plot_var_index")
+            
+#             row.prop(mbo, "plot_var")
+#             try:
+#                 dim = len(nc.variables[mbo.plot_var].shape)
+#                 if dim == 2:     # vec3
+#                     box = layout.box()
+#                     split = box.split(1./3.)
+#                     column = split.column()
+#                     column.prop(mbo, "plot_comps", index = 0, text = "x")
+#                     column = split.column()
+#                     column.prop(mbo, "plot_comps", index = 1, text = "y")
+#                     column = split.column()
+#                     column.prop(mbo, "plot_comps", index = 2, text = "z")
+#                 elif dim == 3:
+#                     if mbo.plot_var[-1] == 'R':
+#                         box = layout.box()
+#                         split = box.split(1./3.)
+#                         column = split.column()
+#                         column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
+#                         column = split.column()
+#                         column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
+#                         column.row().prop(mbo, "plot_comps", index = 3, text = "(2,2)")
+#                         column = split.column()
+#                         column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
+#                         column.row().prop(mbo, "plot_comps", index = 4, text = "(2,3)")
+#                         column.row().prop(mbo, "plot_comps", index = 5, text = "(3,3)")
+#                     else:
+#                         box = layout.box()
+#                         split = box.split(1./3.)
+#                         column = split.column()
+#                         column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
+#                         column.row().prop(mbo, "plot_comps", index = 3, text = "(2,1)")
+#                         column.row().prop(mbo, "plot_comps", index = 6, text = "(3,1)")
+#                         column = split.column()
+#                         column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
+#                         column.row().prop(mbo, "plot_comps", index = 4, text = "(2,2)")
+#                         column.row().prop(mbo, "plot_comps", index = 7, text = "(3,2)")
+#                         column = split.column()
+#                         column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
+#                         column.row().prop(mbo, "plot_comps", index = 5, text = "(2,3)")
+#                         column.row().prop(mbo, "plot_comps", index = 8, text = "(3,3)")
                 row = layout.row()
                 col = layout.column()
                 col.prop(mbs, "plot_frequency")
                 col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import frequency")
-                row = layout.row()
-                row.prop(mbo, "plot_type", text="Plot type:")
-                row = layout.row()
-                row.prop(mbo, "plot_xrange_min")
-                row = layout.row()
-                row.prop(mbo, "plot_xrange_max")
-                row = layout.row()
-                if mbo.plot_type == "TIME HISTORY":
-                    row.operator(Object_OT_MBDyn_plot_var.bl_idname, text="Plot variable")
-                elif mbo.plot_type == "AUTOSPECTRUM":
-                    row = layout.row()
-                    row.prop(mbo, "fft_remove_mean")
-                    row = layout.row()
-                    row.operator(Object_OT_MBDyn_plot_var_Sxx.bl_idname,
-                            text="Plot variable Autospectrum")
-            except KeyError:
-                pass
-        else:
-            row = layout.row()
-            row.label(text="Plotting from text output")
-            row.label(text="is not supported yet.")
+#                 row = layout.row()
+#                 row.prop(mbo, "plot_type", text="Plot type:")
+#                 row = layout.row()
+#                 row.prop(mbo, "plot_xrange_min")
+#                 row = layout.row()
+#                 row.prop(mbo, "plot_xrange_max")
+#                 row = layout.row()
+#                 if mbo.plot_type == "TIME HISTORY":
+#                     row.operator(Object_OT_MBDyn_plot_var.bl_idname, text="Plot variable")
+#                 elif mbo.plot_type == "AUTOSPECTRUM":
+#                     row = layout.row()
+#                     row.prop(mbo, "fft_remove_mean")
+#                     row = layout.row()
+#                     row.operator(Object_OT_MBDyn_plot_var_Sxx.bl_idname,
+#                             text="Plot variable Autospectrum")
+#             except KeyError:
+#                 pass
+#         else:
+#             row = layout.row()
+#             row.label(text="Plotting from text output")
+#             row.label(text="is not supported yet.")
 
 
-## Panel in object properties toolbar
+## Panel in scene properties toolbar
 class MBDynPlotPanelScene(bpy.types.Panel):
-    """ Plotting of MBDyn entities private data """
-    bl_label = "MBDyn data plot"
+    """ Plotting of MBDyn data for current object """
+    bl_label = "MBDyn Data Plot"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
