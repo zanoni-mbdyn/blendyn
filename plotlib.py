@@ -640,7 +640,10 @@ class MBDynPlotPanelObject(bpy.types.Panel):
             row.template_list("MBDynPlotVar_Object_UL_List", \
                     "MBDyn variable to plot", mbs, "plot_vars", \
                     mbo, "plot_var_index")
-            
+            row = layout.row()
+            row.prop(mbs.plot_vars[mbo.plot_var_index], "plot_comps")
+            row = layout.row()
+            row.prop(mbs.plot_vars[mbo.plot_var_index], "as_driver")
 #             row.prop(mbo, "plot_var")
 #             try:
 #                 dim = len(nc.variables[mbo.plot_var].shape)
