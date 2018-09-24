@@ -1954,7 +1954,7 @@ class MBDynPlotVar_Object_UL_List(bpy.types.UIList):
         items = getattr(data, propname)
         mbo = context.object.mbdyn
         hf = bpy.types.UI_UL_list
-        flt_flags = hf.filter_items_by_name(mbo.class + '.' + str(mbo.int_label),\
+        flt_flags = hf.filter_items_by_name(mbo.mbclass + '.' + str(mbo.int_label),\
                 self.bitflag_filter_item, items)
         return flt_flags, []
 
