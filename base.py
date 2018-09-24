@@ -1949,8 +1949,7 @@ class MBDynPlotVar_Object_UL_List(bpy.types.UIList):
         mbo = context.object.mbdyn
         hf = bpy.types.UI_UL_list
         flt_flags = hf.filter_items_by_name(mbo.type + '.' + str(mbo.int_label),\
-                self.bitflag_filter_item, items, "name", \
-                reverse = self.use_filter_name_reverse)
+                self.bitflag_filter_item, items, "name", False)
         return flt_flags, []
 
 # -----------------------------------------------------------
