@@ -742,7 +742,7 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             description = "True if the object has been assigned an MBDyn node",
             )
 
-    class = StringProperty(
+    mbclass = StringProperty(
             name = "MBDyn entity class",
             description = "Class of MBDyn entity associate with object",
             default = 'none'
@@ -2353,7 +2353,7 @@ class Scene_OT_MBDyn_Node_Import_All(bpy.types.Operator):
                     return {'CANCELLED'}
 
                 obj = context.scene.objects.active
-                obj.mbdyn.class = 'node.struct'
+                obj.mbdyn.mbclass = 'node.struct'
                 obj.mbdyn.type = 'node.struct'
                 obj.mbdyn.int_label = node.int_label
                 obj.mbdyn.string_label = node.string_label
@@ -2408,7 +2408,7 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
                     baseLogger.error(message)
                     return {'CANCELLED'}
                 obj = context.scene.objects.active
-                obj.mbdyn.class = 'node.struct'
+                obj.mbdyn.mbclass = 'node.struct'
                 obj.mbdyn.type = 'node.struct'
                 obj.mbdyn.int_label = node.int_label
                 obj.mbdyn.string_label = node.string_label
