@@ -109,7 +109,7 @@ def get_plot_vars_glob(context):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var
 
-def update_driver_variables():
+def update_driver_variables(self, context):
     mbs = bpy.context.scene.mbdyn
     pvar = mbs.plot_vars[mbs.plot_var.index]
     if pvar.driver:
