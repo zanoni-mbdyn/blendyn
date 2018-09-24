@@ -264,11 +264,11 @@ class MBDynPlotVars(bpy.types.PropertyGroup):
             name = "Plottable variable"
             )
     plot_comps = BoolVectorProperty(
-        name = "components",
-        description = "Components of property to plot",
-        default = [True for i in range(9)],
-        size = 9
-        )
+            name = "components",
+            description = "Components of property to plot",
+            default = [True for i in range(9)],
+            size = 9
+            )
     as_driver = BoolProperty(
             name = "Use as driver variable",
             default = False,
