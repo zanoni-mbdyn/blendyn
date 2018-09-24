@@ -218,7 +218,7 @@ bpy.utils.register_class(MBDynRenderVarsDictionary)
 class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
 	name = StringProperty(
 		name = 'Group of Display Variables',
-		description = 'Janga Reddy'
+		description = ''
 	)
 
 	group = CollectionProperty(
@@ -1512,21 +1512,21 @@ class MBDynSetDisplayGroup(bpy.types.Operator):
             index = exist_display_groups.index(mbs.group_name)
             mbs.display_vars_group[index].group.clear()
 
-            janga = mbs.display_vars_group[mbs.group_name]
+            vargroup = mbs.display_vars_group[mbs.group_name]
 
             for ii in list(range(len(mbs.render_vars))):
-                rend = janga.group.add()
+                rend = vargroup.group.add()
                 rend.variable = mbs.render_vars[ii].variable
                 rend.value = mbs.render_vars[ii].value
                 rend.components = mbs.render_vars[ii].components
 
 
         except ValueError:
-            janga = mbs.display_vars_group.add()
-            janga.name = mbs.group_name
+            vargroup = mbs.display_vars_group.add()
+            vargroup.name = mbs.group_name
 
             for ii in list(range(len(mbs.render_vars))):
-                rend = janga.group.add()
+                rend = vargroup.group.add()
                 rend.variable = mbs.render_vars[ii].variable
                 rend.value = mbs.render_vars[ii].value
                 rend.components = mbs.render_vars[ii].components
