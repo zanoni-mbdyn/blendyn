@@ -82,12 +82,14 @@ bpy.utils.register_class(MBDynElemToBeUpdated)
 class MBDynElemsDictionary(bpy.types.PropertyGroup):
     mbclass = StringProperty(
             name = "Class of MBDyn element",
-            description ""
+            description  = ""
             )
+
     type = StringProperty(
             name = "Type of MBDyn element",
             description = ""
             )
+
     int_label = IntProperty(
             name = "Integer label of element",
             description = ""
@@ -167,15 +169,13 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
             description = "Function that updates the visualization of the element",
             default = 'none'
             )
-    bpy.utils.register_class(MBDynElemsDictionary)
+
+bpy.utils.register_class(MBDynElemsDictionary)
 # -----------------------------------------------------------
 # end of MBDynElemsDictionary class 
 
 # Override delete operator to remove element from elements dictionary
 # when the related object is deleted
-
-
-
 class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
     """ Imports all the elements selected (by type and label range) into a single
         mesh Blender Object. Currently useful only for shell4 elements. """
