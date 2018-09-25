@@ -58,6 +58,10 @@ def parse_brake(rw, ed):
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2) 
         el.rotoffsets[1].value = R2.to_quaternion(); 
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -66,6 +70,7 @@ def parse_brake(rw, ed):
     except KeyError:
         print("Blendyn::parse_brake(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'brake'
         el.int_label = int(rw[1])
 

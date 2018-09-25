@@ -48,6 +48,10 @@ def parse_linearvelocity(rw, ed):
         el.nodes[0].int_label = int(rw[2])
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -56,6 +60,7 @@ def parse_linearvelocity(rw, ed):
     except KeyError:
         print("Blendyn::parse_linearvelocity(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'linearvelocity'
         el.int_label = int(rw[1])
 
@@ -64,6 +69,10 @@ def parse_linearvelocity(rw, ed):
 
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         el.import_function = "add.mbdyn_elem_linearvelocity"
         # el.info_draw = "linearvelocity_info_draw"
@@ -96,6 +105,7 @@ def parse_linearacceleration(rw, ed):
     except KeyError:
         print("Blendyn::parse_linearacceleration(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'linearacceleration'
         el.int_label = int(rw[1])
 

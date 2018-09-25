@@ -185,6 +185,11 @@ def parse_node(context, rw):
         node.is_imported = True
         print("Blendyn::parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
                 + ". Updating it.")
+
+        # FIXME: this is here to enhance backwards compatibility: should disappear 
+        # in the future
+        node.mbclass = 'node.struct'
+        
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         try:
             node.initial_rot, node.parametrization = orient_to_quat(rw)
@@ -197,6 +202,7 @@ def parse_node(context, rw):
         print("Blendyn::parse_node(): didn't find an existing entry in nodes dictionary for node " + rw[2]\
                 + ". Creating it.")
         node = nd.add()
+        node.mbclass = 'node.struct'
         node.is_imported = True
         node.int_label = int(rw[2])
         node.name = "node_" + rw[2]
@@ -218,7 +224,7 @@ def parse_node(context, rw):
 def spawn_node_obj(context, node):
     mbs = context.scene.mbdyn
 
-    if (node.string_label in bpy.data.objects) or ("node_" + node.int_label in bpy.data.objects):
+    if (node.string_label in bpy.data.objects) or ("node_" + str(node.int_label) in bpy.data.objects):
         return False
 
     if mbs.node_object == "ARROWS":

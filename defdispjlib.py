@@ -57,12 +57,17 @@ def parse_deformable_displacement(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion(); 
         
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True 
     except KeyError:
         print("Blendyn::parse_deformable_displacement(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'deformable_displacement'
         el.int_label = int(rw[1])
 

@@ -48,6 +48,10 @@ def parse_angularvelocity(rw, ed):
         el.nodes[0].int_label = int(rw[2])
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -56,6 +60,7 @@ def parse_angularvelocity(rw, ed):
     except KeyError:
         print("Blendyn::parse_angularvelocity(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'angularvelocity'
         el.int_label = int(rw[1])
 
@@ -89,6 +94,10 @@ def parse_angularacceleration(rw, ed):
         
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -96,6 +105,7 @@ def parse_angularacceleration(rw, ed):
     except KeyError:
         print("Blendyn::parse_angularacceleration(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'angularacceleration'
         el.int_label = int(rw[1])
 

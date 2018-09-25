@@ -53,6 +53,10 @@ def parse_body(rw, ed):
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets[2].value = Vector(( float(rw[10]), float(rw[11]), float(rw[12]) ))
         el.offsets[3].value = Vector(( float(rw[13]), float(rw[14]), float(rw[15]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.body'
          
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -62,6 +66,7 @@ def parse_body(rw, ed):
         pass
         print("Blendyn::parse_body(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.body'
         el.type = 'body'
         el.int_label = int(rw[1])
 

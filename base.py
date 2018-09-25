@@ -83,6 +83,11 @@ from .logwatcher import *
 
 ## Nodes Dictionary: contains nodes informations
 class MBDynNodesDictionary(bpy.types.PropertyGroup):
+    mbclass = StringProperty(
+            name = "Class of MBDyn element",
+            description  = ""
+            )
+    
     int_label = IntProperty(
             name = "node integer label",
             description = "Node integer label",

@@ -58,6 +58,10 @@ def parse_revolute_hinge(rw, ed):
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2) 
         el.rotoffsets[1].value = R2.to_quaternion(); 
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -66,6 +70,7 @@ def parse_revolute_hinge(rw, ed):
     except KeyError:
         print("Blendyn::parse_revolute_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'revolute_hinge'
         el.int_label = int(rw[1])
 
@@ -116,6 +121,10 @@ def parse_revolute_pin(rw, ed):
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -123,6 +132,7 @@ def parse_revolute_pin(rw, ed):
     except KeyError:
         print("Blendyn::parse_revolute_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'revolute_pin'
         el.int_label = int(rw[1])
 
@@ -170,6 +180,10 @@ def parse_revolute_rot(rw, ed):
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -178,6 +192,7 @@ def parse_revolute_rot(rw, ed):
     except KeyError:
         print("Blendyn::parse_revolute_rot(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'revolute_rot'
         el.int_label = int(rw[1])
 

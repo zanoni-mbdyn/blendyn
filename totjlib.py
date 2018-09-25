@@ -86,6 +86,11 @@ def parse_total(rw, ed):
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
+
+         
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
         pass
     except KeyError:
         print("Blendyn::parse_total(): didn't find an entry in elements dictionary. Creating one.")
@@ -529,7 +534,13 @@ def parse_total_pin(rw, ed):
         #       indicating which angular velocity constraints are active
         el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
 
-        pass
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
+        if el.name in bpy.data.objects.keys():
+            el.blender_object = el.name
+
     except KeyError:
         print("Blendyn::parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
