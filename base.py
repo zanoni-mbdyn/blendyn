@@ -724,17 +724,17 @@ bpy.utils.register_class(MBDynSettingsScene)
 class MBDynSettingsObject(bpy.types.PropertyGroup):
     """ Properties of the current Blender Object related to MBDyn """
     # Boolean: has the current object being assigned an MBDyn's entity?
-    is_assigned = BoolProperty(
-            name = "MBDyn entity assigned",
-            description = "True if the object has been assigned an MBDyn node",
-            )
-
-    mbclass = StringProperty(
-            name = "MBDyn entity class",
-            description = "Class of MBDyn entity associate with object",
-            default = 'none'
-            )
-
+#     is_assigned = BoolProperty(
+#             name = "MBDyn entity assigned",
+#             description = "True if the object has been assigned an MBDyn node",
+#             )
+# 
+#     mbclass = StringProperty(
+#             name = "MBDyn entity class",
+#             description = "Class of MBDyn entity associate with object",
+#             default = 'none'
+#             )
+# 
     # Type of MBDyn entity
     type = StringProperty(
             name = "MBDyn entity type",
@@ -744,37 +744,37 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
 
     # Dictionary key
     dkey = StringProperty(
-            name = "MBDyn dictionary key",
-            description = "Key of the entry of the MBDyn dictionary relative to the object",
-            default = 'none'
+            name = "MBDyn dictionary index",
+            description = "Index of the entry of the MBDyn dictionary relative to the object",
+            default = 'none' 
             )
-
-    # Integer representing MBDyn's node label assigned to the object
-    int_label = IntProperty(
-            name = "MBDyn node",
-            description = "Integer label of MBDyn's node assigned to the object",
-            update = update_label
-            )
-
-    # String representing MBDyn's node string label assigned to the object.
-    # Non-"not assigned" only if a .lab file with correct syntax is found
-    string_label = StringProperty(
-            name = "MBDyn's node or joint string label",
-            description = "String label of MBDyn's node assigned to the object (if present)",
-            default = "not assigned"
-            )
-
-    # Rotation parametrization of node
-    parametrization = EnumProperty(
-            items = [("EULER123", "euler123", "euler123", '', 1),\
-                     ("EULER131", "euler313", "euler313", '', 2),\
-                     ("EULER321", "euler321", "euler321", '', 3),\
-                     ("PHI", "phi", "phi", '', 4),\
-                     ("MATRIX", "mat", "mat", '', 5)],
-            name = "rotation parametrization",
-            default = "EULER123"
-            )
-
+# 
+#     # Integer representing MBDyn's node label assigned to the object
+#     int_label = IntProperty(
+#             name = "MBDyn node",
+#             description = "Integer label of MBDyn's node assigned to the object",
+#             update = update_label
+#             )
+# 
+#     # String representing MBDyn's node string label assigned to the object.
+#     # Non-"not assigned" only if a .lab file with correct syntax is found
+#     string_label = StringProperty(
+#             name = "MBDyn's node or joint string label",
+#             description = "String label of MBDyn's node assigned to the object (if present)",
+#             default = "not assigned"
+#             )
+# 
+#     # Rotation parametrization of node
+#     parametrization = EnumProperty(
+#             items = [("EULER123", "euler123", "euler123", '', 1),\
+#                      ("EULER131", "euler313", "euler313", '', 2),\
+#                      ("EULER321", "euler321", "euler321", '', 3),\
+#                      ("PHI", "phi", "phi", '', 4),\
+#                      ("MATRIX", "mat", "mat", '', 5)],
+#             name = "rotation parametrization",
+#             default = "EULER123"
+#             )
+# 
     # Specific for plotting
     if HAVE_PLOT:
         plot_var_index = IntProperty(
@@ -1767,11 +1767,15 @@ class MBDynPlotVar_Object_UL_List(bpy.types.UIList):
         layout.label(item.name)
     def filter_items(self, context, data, propname):
         items = getattr(data, propname)
-        mbo = context.object.mbdyn
+        obj = context.object
         hf = bpy.types.UI_UL_list
-        flt_flags = hf.filter_items_by_name(mbo.mbclass + '.' + str(mbo.int_label),\
-                self.bitflag_filter_item, items)
-        return flt_flags, []
+        try
+            dictitem = get_dict_item(context, obj)
+            flt_flags = hf.filter_items_by_name(dictobj.mbclass + '.' + str(dictobj.int_label),\
+                    self.bitflag_filter_item, items)
+            return flt_flags, []
+        except KeyError:
+            return [], []
 
 # -----------------------------------------------------------
 # end of MBDynPLotVar_Object_UL_List class
@@ -2045,11 +2049,8 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                     return {'CANCELLED'}
 
                 obj = context.scene.objects.active
-                obj.mbdyn.mbclass = 'node.struct'
-                obj.mbdyn.type = 'node.struct'
-                obj.mbdyn.int_label = node.int_label
-                obj.mbdyn.string_label = node.string_label
-                obj.mbdyn.parametrization = node.parametrization
+                obj.mbdyn.type = 'node'
+                obj.mbdyn.dkey = node.name
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = node.initial_rot
                 update_parametrization(obj)
@@ -2058,7 +2059,6 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                 else:
                     obj.name = node.name
                 node.blender_object = obj.name
-                obj.mbdyn.is_assigned = True
                 print("Blendyn::BLENDYN_OT_node_import_all::execute(): added node " \
                         + str(node.int_label) \
                         + " to scene and associated with object " + obj.name)
@@ -2100,11 +2100,8 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
                     baseLogger.error(message)
                     return {'CANCELLED'}
                 obj = context.scene.objects.active
-                obj.mbdyn.mbclass = 'node.struct'
-                obj.mbdyn.type = 'node.struct'
-                obj.mbdyn.int_label = node.int_label
-                obj.mbdyn.string_label = node.string_label
-                obj.mbdyn.parametrization = node.parametrization
+                obj.mbdyn.type = 'node'
+                obj.mbdyn.dkey = node.name
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = node.initial_rot
                 update_parametrization(obj)
@@ -2113,7 +2110,6 @@ class Scene_OT_MBDyn_Node_Import_Single(bpy.types.Operator):
                 else:
                     obj.name = node.name
                 node.blender_object = obj.name
-                obj.mbdyn.is_assigned = True
                 print("Blendyn::MBDynNodeAddButton:execute(): added node "\
                         + str(node.int_label)\
                         + " to scene and associated with object " + obj.name)
@@ -2360,6 +2356,8 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
         node = context.scene.mbdyn.nodes[self.ndx]
         if node.blender_object == context.object.name:
             node.blender_object = 'none'
+            context.object.mbdyn.type = 'none'
+            context.object.mbdyn.dkey = 'none'
             ret_val == 'UNASSIGNED'
         else:
             node.blender_object = context.object.name
@@ -2368,7 +2366,7 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
         if ret_val == 'ROT_NOT_SUPPORTED':
             message = "Blendyn::MBDynOBJNodeSelectButton::execute(): "\
                     + "Rotation parametrization not supported, node "\
-                    + obj.mbdyn.string_label
+                    + str(node.int_label)
             self.report({'ERROR'}, message)
             baseLogger.error(message)
             print(message)
@@ -2385,7 +2383,7 @@ class MBDynOBJNodeSelectButton(bpy.types.Operator):
             message = "Blendyn::MBDynOBJNodeSelectButton::execute(): Object "\
                     + context.object.name \
                     + " MBDyn node association updated to node " \
-                    + str(context.object.mbdyn.int_label)
+                    + str(node.int_label)
             baseLogger.info(message)
             print(message)
             return {'FINISHED'}
@@ -2490,22 +2488,14 @@ class Object_OT_Delete_Override(bpy.types.Operator):
 
     @classmethod
     def remove_from_dict(self, obj, context):
-        if obj.mbdyn.type == 'node.struct':
-            node = bpy.context.scene.mbdyn.nodes[obj.mbdyn.dkey]
-            node.blender_object = 'none'
-            node.is_imported = False
-        elif obj.mbdyn.type == 'reference':
-            ref = bpy.context.scene.mbdyn.references[obj.mbdyn.dkey]
-            ref.blender_object = 'none'
-            ref.is_imported = False
-        else:
-            elem = bpy.context.scene.mbdyn.elems[obj.mbdyn.dkey]
-            elem.blender_object = 'none'
-            elem.is_imported = False
+        dictitem = get_dict_item(context, obj)
+        dictitem.blender_object = 'none'
+        dictitem.is_imported = 'none'
+
+        if obj.mbdyn.type == 'element':
             for idx, ude in enumerate(bpy.context.scene.mbdyn.elems_to_update):
-                if ude.dkey == elem.name:
-                    bpy.context.scene.mbdyn.elems_to_update.remove(idx)
-                    break
+                bpy.context.scene.mbdyn.elems_to_update.remove(idx)
+                break
 
     def execute(self, context):
         for obj in context.selected_objects:

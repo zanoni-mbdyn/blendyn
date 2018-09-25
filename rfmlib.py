@@ -79,19 +79,15 @@ def spawn_reference_frame(ref, context):
     bpy.ops.object.empty_add(type = 'ARROWS', location = ref.pos)
     obj = context.scene.objects.active
     obj.mbdyn.type = 'reference'
-    obj.mbdyn.int_label = ref.int_label
-    obj.mbdyn.string_label = ref.string_label
-    obj.mbdyn.parametrization = 'PHI'
+    obj.mbdyn.dkey = ref.name
     obj.rotation_mode = 'QUATERNION'
     obj.rotation_quaternion = ref.rot
 
-    if obj.mbdyn.string_label != "none":
+    if ref.string_label != "none":
         obj.name = ref.string_label
-
     else:
         obj.name = ref.name
    
-    obj.mbdyn.dkey = ref.name
     ref.blender_object = obj.name
     return {'FINISHED'}
 # -----------------------------------------------------------

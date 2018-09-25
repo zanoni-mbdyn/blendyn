@@ -176,7 +176,10 @@ def spawn_angularvelocity_element(elem, context):
     mbs = context.scene.mbdyn
     nd = mbs.nodes
 
-    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+    if elem.blender_object in bpy.data.objects:
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        bpy.data.objects[elem.blender_object].mbdyn.mbclass = 'elem.joint'
         return {'OBJECT_EXISTS'}
         print("Blendyn::spawn_angularvelocity_element(): Element is already imported. \
                 Remove the Blender object or rename it \
@@ -226,7 +229,10 @@ def spawn_angularvelocity_element(elem, context):
         # set parenting of wireframe obj
         parenting(angularvelocityjOBJ, n1OBJ)
 
+        # connection with dictionary item
         elem.blender_object = angularvelocityjOBJ.name
+        angularvelocityOBJ.mbdyn.type = 'element'
+        angularvelocityOBJ.mbdyn.dkey = elem.name
 
         return {'FINISHED'}
     else:
@@ -291,7 +297,10 @@ def spawn_angularacceleration_element(elem, context):
         # set parenting of wireframe obj
         parenting(angularaccelerationjOBJ, n1OBJ)
 
+        # association with dictionary element
         elem.blender_object = angularaccelerationjOBJ.name
+        angularaccelerationjOBJ.mbdyn.type = 'element'
+        angularaccelerationjOBJ.mbdyn.dkey = elem.name
 
         return {'FINISHED'}
     else:

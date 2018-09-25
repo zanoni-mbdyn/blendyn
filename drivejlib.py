@@ -198,9 +198,8 @@ def spawn_drive_displacement_element(elem, context):
 
 
     drvdispOBJ = bpy.data.objects.new(drvdispobj_id, cvdata)
-    drvdispOBJ.mbdyn.type = 'elem.joint'
+    drvdispOBJ.mbdyn.type = 'element'
     drvdispOBJ.mbdyn.dkey = elem.name
-    drvdispOBJ.mbdyn.int_label= elem.int_label
     bpy.context.scene.objects.link(drvdispOBJ)
     elem.blender_object = drvdispOBJ.name
 

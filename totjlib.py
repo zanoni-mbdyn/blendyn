@@ -261,12 +261,8 @@ def spawn_total_joint_element(elem, context):
     totjOBJ.scale = Vector(( s, s, s ))
 
     # set mbdyn props of object
-    totjOBJ.mbdyn.int_label = elem.int_label
-    totjOBJ.mbdyn.string_label = elem.string_label
+    totOBJ.mbdyn.type = 'element'
     totjOBJ.mbdyn.dkey = elem.name
-    totjOBJ.mbdyn.type = elem.type
-    totjOBJ.mbdyn.mbclass = elem.mbclass
-
 
     # create an object representing the RF used to express the relative
     # position w.r.t. node 1, for model debugging
@@ -806,6 +802,8 @@ def spawn_total_pin_joint_element(elem, context):
     grouping(context, totjOBJ, [n1OBJ, RF1p, RF1r])
 
     elem.blender_object = totjOBJ.name
+    totOBJ.mbdyn.dkey = elem.key
+    totOBJ.mbdyn.type = 'element'
 
     return {'FINISHED'}
 # -----------------------------------------------------------

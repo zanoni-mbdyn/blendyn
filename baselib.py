@@ -493,6 +493,15 @@ def assign_labels(context):
 # -----------------------------------------------------------
 # end of assign_labels() function
 
+def get_dict_item(context, obj):
+    if obj.mbdyn.type == 'node':
+        return context.mbdyn.nodes[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'element':
+        return context.mbdyn.elems[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'reference':
+        return context.mbdyn.refs[obj.mbdyn.dkey]
+    else:
+        return None
 
 def update_label(self, context):
 
@@ -888,9 +897,12 @@ def set_motion_paths_netcdf(context):
     wm.progress_end()
 
     return {'FINISHED'}
-
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
+
+def mbdyn_type_poll(self, context):
+    return self in ['node', 'element', 'reference', 'none']
+
 class BlenderHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)

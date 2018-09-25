@@ -44,6 +44,10 @@ def parse_shell4(rw, ed):
         el.nodes[1].int_label = int(rw[3])
         el.nodes[2].int_label = int(rw[4])
         el.nodes[3].int_label = int(rw[5])
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
         el.is_imported = True
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -52,6 +56,7 @@ def parse_shell4(rw, ed):
         print("Blendyn::parse_shell4(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
+        el.mbclass = 'elem.shell'
         el.type = 'shell4'
         el.int_label = int(rw[1])
         
@@ -120,9 +125,8 @@ def spawn_shell4_element(elem, context):
     bpy.ops.mesh.primitive_plane_add(location = avg_location)
     shellOBJ = bpy.context.scene.objects.active
     shellOBJ.name = elem.name
-    shellOBJ.mbdyn.type = 'elem.shell4'
+    shellOBJ.mbdyn.type = 'element'
     shellOBJ.mbdyn.dkey = elem.name
-    shellOBJ.mbdyn.int_label = elem.int_label
     mesh = shellOBJ.data
 
     # move vertices to nodes locations

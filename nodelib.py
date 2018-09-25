@@ -86,7 +86,8 @@ def set_obj_locrot_mov(obj, rw):
 
 def update_parametrization(obj):
     ret_val = ''
-    param = obj.mbdyn.parametrization
+    dictitem = get_dict_item(bpy.context, obj)
+    param = dictitem.parametrization
     if param == 'PHI':
         obj.rotation_mode = 'AXIS_ANGLE'
         ret_val = 'FINISHED'
@@ -104,42 +105,6 @@ def update_parametrization(obj):
     return ret_val
 # -----------------------------------------------------------
 # end of update_parametrization() function 
-
-def update_label(self, context):
-    
-    # utility renaming
-    obj = context.object
-    nd = context.scene.mbdyn.nodes
-    
-    # Debug Messages
-    try:
-        print("Blendyn::MBDynPanel::update_label(): updating MBDyn node associated to object " + obj.name)
-        print("Blendyn::MBDynPanel::update_label(): selected MBDyn node = ", str(obj.mbdyn.int_label))
-    except AttributeError:
-        pass
-    
-    # Search for int label and assign corresponding string label, if found.
-    # If not, signal it by assign the "not found" label
-    node_string_label = "not_found"
-    obj.mbdyn.is_assigned = False
-    for item in nd:
-        if item.int_label == obj.mbdyn.int_label:
-            node_string_label = item.string_label
-            item.blender_object = obj.name
-            obj.mbdyn.is_assigned = True
-    
-    obj.mbdyn.string_label = node_string_label
-    if obj.mbdyn.is_assigned:
-        ret_val = update_parametrization(obj)
-
-    if ret_val == 'ROT_NOT_SUPPORTED':
-        message = "Rotation parametrization not supported, node " \
-            + obj.mbdyn.string_label
-        self.report({'ERROR'}, message)
-        logging.error(message)
-    return
-# -----------------------------------------------------------
-# end of update_label() function <-- FIXME: Duplicate? 
 
 ## Function that parses the single row of the .log file and stores
 #  the node element definition in elems
