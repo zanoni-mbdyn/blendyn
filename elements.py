@@ -80,7 +80,7 @@ bpy.utils.register_class(MBDynElemToBeUpdated)
 # end of MBDynToBeUpdated class 
 
 class MBDynElemsDictionary(bpy.types.PropertyGroup):
-    class = StringProperty(
+    mbclass = StringProperty(
             name = "Class of MBDyn element",
             description ""
             )
