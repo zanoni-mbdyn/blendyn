@@ -34,6 +34,7 @@ import logging
 
 from .nodelib import *
 from .elementlib import *
+from .base import HAVE_PLOT
 
 import os
 
@@ -43,26 +44,7 @@ except ImportError:
     print("Blendyn: could not find netCDF4 module. NetCDF import "\
         + "will be disabled.")
 
-# def get_plot_vars(self, context):
-#     mbs = context.scene.mbdyn
-#     mbo = context.active_object.mbdyn
-# 
-#     if mbs.use_netcdf:
-#         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-#                 mbs.file_basename + '.nc')
-#         nc = Dataset(ncfile, 'r', format='NETCDF3')
-#         key = mbo.type + "." + str(mbo.int_label)
-# 
-#         var_list = list()
-#         for var in nc.variables:
-#             if key in var and key != var:
-#                 var_list.append(var)
-# 
-#         return [(var, var, 'Variable "%s"'%var) for var in var_list]
-#     else:
-#         return [('none', 'none', 'none', 1)]
-
-class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
+class BLENDYN_OT_plot_var_sxx(bpy.types.Operator):
     """ Plots the selected variable autospectrum (Sxx) in the image editor 
         and optionally save it as .svg in the 'plots' directory.
         The user can choose among all the variables of all the 
@@ -196,7 +178,7 @@ class Scene_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         return {'FINISHED'}
         
 
-class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
+class Object_OT_MBDyn_plot_var_sxx(bpy.types.Operator):
     """ Plots the object's selected variable autospectrum in the image editor 
         and optionally save it as .svg in the 'plots' directory """
     bl_idname = "ops.mbdyn_plot_var_sxx_obj"
@@ -325,7 +307,7 @@ class Object_OT_MBDyn_plot_var_Sxx(bpy.types.Operator):
         logging.info(message)
         return {'FINISHED'}
 
-class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
+class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
     """Plot all the variables in the Variables List"""
     bl_idname = "ops.mbdyn_plot_var_variables"
     bl_label = "Plot all the variables in Variables List"
@@ -426,7 +408,7 @@ class Scene_OT_MBDyn_plot_variables_list(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class Scene_OT_MBDyn_plot_var(bpy.types.Operator):
+class BLENDYN_OT_plot_var(bpy.types.Operator):
     """ Plots the selected variable in the image editor
         and optionally save it as .svg in the 'plots' directory.
         The user can choose among all the variables of all the
@@ -609,15 +591,156 @@ class Object_OT_MBDyn_plot_var(bpy.types.Operator):
         return {'FINISHED'}
 
 ## Simple operator to set plot frequency for
-class Scene_OT_MBDyn_plot_freq(bpy.types.Operator):
-    """ Sets the plot frequency for the current Object equal
+class BLENDYN_OT_set_plot_freq(bpy.types.Operator):
+    """ Sets the plot frequency for the current object plot variable equal
         to the import frequency of the MBDyn results """
     bl_idname = "ops.mbdyn_set_plot_freq_scene"
     bl_label = "Sets the plot frequency for the scene equal to the load frequency"
+    is_object = bpy.props.BoolProperty()
 
     def execute(self, context):
-        context.scene.mbdyn.plot_frequency = context.scene.mbdyn.load_frequency
+        mbs = context.scene.mbdyn
+        if is_object:
+            pvar = mbs.plot_vars[context.object.mbdyn.plot_var_index]
+        else:
+            pvar = mbs.plot_vars[mbs.plot_var_index]
+        pvar.frequency = context.scene.mbdyn.load_frequency
         return {'FINISHED'}
+
+class BLENDYN_OT_set_render_variable(bpy.types.Operator):
+    """ Sets the NetCDF variables to be\
+        displayed in the rendered frame """
+
+    bl_idname = "sel.set_render_variable"
+    bl_label = "Set Render Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        idx = [mbs.render_vars[key].idx for key in range(len(mbs.render_vars))]
+
+        try:
+            mbs.render_vars[idx].varname = mbs.render_var_name
+        except ValueError:
+            rend = mbs.render_vars.add()
+            rend.varname = mbs.render_var_name
+            rend.variable = mbs.plot_vars[mbs.plot_var_index].name
+            rend.components = mbs.plot_vars[mbs.plot_var_index].components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_set_render_variable class
+bpy.utils.register_class(BLENDYN_OT_set_render_variable)
+
+class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
+    """Delete Render variables"""
+    bl_idname = "sel.delete_render_variable"
+    bl_label = "Delete Render Variable"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.render_vars.remove(mbs.render_index)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_delete_render_variable class
+bpy.utils.register_class(BLENDYN_OT_delete_render_variable)
+
+class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
+    bl_idname = "sel.delete_all_render_variables"
+    bl_label = "Delete all Render variables"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        mbs.render_vars.clear()
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_delete_all_render_variables class
+bpy.utils.register_class(BLENDYN_OT_delete_all_render_variables)
+
+class MBDynShowDisplayGroup(bpy.types.Operator):
+    bl_idname = "ops.show_plot_group"
+    bl_label = "show display group"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        if mbs.display_enum_group is '':
+            message = 'No Groups set'
+            self.report({'ERROR'}, message)
+            logging.error(message)
+
+        mbs.render_vars.clear()
+
+        for var in mbs.display_vars_group[mbs.display_enum_group].group:
+            rend = mbs.render_vars.add()
+            rend.variable = var.variable
+            rend.value = var.value
+            rend.components = var.components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of MBDynShowDisplayGroup class
+bpy.utils.register_class(MBDynShowDisplayGroup)
+
+class BLENDYN_OT_set_display_group(bpy.types.Operator):
+    """ Set group of variables to display in rendered frames """
+    bl_idname = "sel.set_display_group"
+    bl_label = "Set Display Group"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+
+        exist_display_groups = [mbs.display_vars_group[var].name for var in range(len(mbs.display_vars_group))]
+
+        try:
+            index = exist_display_groups.index(mbs.group_name)
+            mbs.display_vars_group[index].group.clear()
+
+            vargroup = mbs.display_vars_group[mbs.group_name]
+
+            for ii in list(range(len(mbs.render_vars))):
+                rend = vargroup.group.add()
+                rend.idx = mbs.render_vars[ii].idx
+                rend.varname = mbs.render_vars[ii].varname
+                rend.variable = mbs.render_vars[ii].variable
+                rend.components = mbs.render_vars[ii].components
+
+
+        except ValueError:
+            vargroup = mbs.display_vars_group.add()
+            vargroup.name = mbs.group_name
+
+            for ii in list(range(len(mbs.render_vars))):
+                rend = vargroup.group.add()
+                rend.idx = mbs.render_vars[ii].idx
+                rend.varname = mbs.render_vars[ii].varname
+                rend.variable = mbs.render_vars[ii].variable
+                rend.components = mbs.render_vars[ii].components
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_set_display_group class
+bpy.utils.register_class(BLENDYN_OT_set_display_group)
+
 
 ## Panel in object properties toolbar
 class MBDynPlotPanelObject(bpy.types.Panel):
@@ -632,6 +755,7 @@ class MBDynPlotPanelObject(bpy.types.Panel):
         mbo = context.object.mbdyn
         layout = self.layout
         row = layout.row()
+        pvar = mbs.plot_vars[mbo.plot_var_index]
 
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
@@ -641,86 +765,83 @@ class MBDynPlotPanelObject(bpy.types.Panel):
                     "MBDyn variable to plot", mbs, "plot_vars", \
                     mbo, "plot_var_index")
             row = layout.row()
-            row.prop(mbs.plot_vars[mbo.plot_var_index], "plot_comps")
+            row.prop(pvar, "as_driver")
+            try:
+                dim = len(nc.variables[pvar.name].shape)
+                if dim == 2:     # vec3
+                    box = layout.box()
+                    split = box.split(1./3.)
+                    column = split.column()
+                    column.prop(pvar, "plot_comps", index = 0, text = "x")
+                    column = split.column()
+                    column.prop(pvar, "plot_comps", index = 1, text = "y")
+                    column = split.column()
+                    column.prop(pvar, "plot_comps", index = 2, text = "z")
+                elif dim == 3:
+                    if pvar.name[-1] == 'R':
+                        box = layout.box()
+                        split = box.split(1./3.)
+                        column = split.column()
+                        column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
+                        column = split.column()
+                        column.row().prop(pvar, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(pvar, "plot_comps", index = 3, text = "(2,2)")
+                        column = split.column()
+                        column.row().prop(pvar, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(pvar, "plot_comps", index = 4, text = "(2,3)")
+                        column.row().prop(pvar, "plot_comps", index = 5, text = "(3,3)")
+                    else:
+                        box = layout.box()
+                        split = box.split(1./3.)
+                        column = split.column()
+                        column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(pvar, "plot_comps", index = 3, text = "(2,1)")
+                        column.row().prop(pvar, "plot_comps", index = 6, text = "(3,1)")
+                        column = split.column()
+                        column.row().prop(pvar, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(pvar, "plot_comps", index = 4, text = "(2,2)")
+                        column.row().prop(pvar, "plot_comps", index = 7, text = "(3,2)")
+                        column = split.column()
+                        column.row().prop(pvar, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(pvar, "plot_comps", index = 5, text = "(2,3)")
+                        column.row().prop(pvar, "plot_comps", index = 8, text = "(3,3)")
+                row = layout.row()
+                col = layout.column()
+                col.prop(pvar, "plot_frequency")
+                col.operator(BLENDYN_OT_set_plot_freq.bl_idname, text = "Use Import frequency")
+                row = layout.row()
+                row.prop(pvar, "plot_type", text="Plot type:")
+                row = layout.row()
+                row.prop(pvar, "plot_xrange_min")
+                row = layout.row()
+                row.prop(pvar, "plot_xrange_max")
+                row = layout.row()
+                if pvar.plot_type == "TIME HISTORY":
+                    row.operator(Object_OT_MBDyn_plot_var.bl_idname, text = "Plot variable")
+                elif pvar.plot_type == "AUTOSPECTRUM":
+                    row = layout.row()
+                    row.prop(pvar, "fft_remove_mean")
+                    row = layout.row()
+                    row.operator(Object_OT_MBDyn_plot_var_sxx.bl_idname,
+                        text="Plot variable Autospectrum")
+            except KeyError:
+                pass
+        else:
             row = layout.row()
-            row.prop(mbs.plot_vars[mbo.plot_var_index], "as_driver")
-#             row.prop(mbo, "plot_var")
-#             try:
-#                 dim = len(nc.variables[mbo.plot_var].shape)
-#                 if dim == 2:     # vec3
-#                     box = layout.box()
-#                     split = box.split(1./3.)
-#                     column = split.column()
-#                     column.prop(mbo, "plot_comps", index = 0, text = "x")
-#                     column = split.column()
-#                     column.prop(mbo, "plot_comps", index = 1, text = "y")
-#                     column = split.column()
-#                     column.prop(mbo, "plot_comps", index = 2, text = "z")
-#                 elif dim == 3:
-#                     if mbo.plot_var[-1] == 'R':
-#                         box = layout.box()
-#                         split = box.split(1./3.)
-#                         column = split.column()
-#                         column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
-#                         column = split.column()
-#                         column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
-#                         column.row().prop(mbo, "plot_comps", index = 3, text = "(2,2)")
-#                         column = split.column()
-#                         column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
-#                         column.row().prop(mbo, "plot_comps", index = 4, text = "(2,3)")
-#                         column.row().prop(mbo, "plot_comps", index = 5, text = "(3,3)")
-#                     else:
-#                         box = layout.box()
-#                         split = box.split(1./3.)
-#                         column = split.column()
-#                         column.row().prop(mbo, "plot_comps", index = 0, text = "(1,1)")
-#                         column.row().prop(mbo, "plot_comps", index = 3, text = "(2,1)")
-#                         column.row().prop(mbo, "plot_comps", index = 6, text = "(3,1)")
-#                         column = split.column()
-#                         column.row().prop(mbo, "plot_comps", index = 1, text = "(1,2)")
-#                         column.row().prop(mbo, "plot_comps", index = 4, text = "(2,2)")
-#                         column.row().prop(mbo, "plot_comps", index = 7, text = "(3,2)")
-#                         column = split.column()
-#                         column.row().prop(mbo, "plot_comps", index = 2, text = "(1,3)")
-#                         column.row().prop(mbo, "plot_comps", index = 5, text = "(2,3)")
-#                         column.row().prop(mbo, "plot_comps", index = 8, text = "(3,3)")
-            row = layout.row()
-            col = layout.column()
-            col.prop(mbs, "plot_frequency")
-            col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import frequency")
-#                 row = layout.row()
-#                 row.prop(mbo, "plot_type", text="Plot type:")
-#                 row = layout.row()
-#                 row.prop(mbo, "plot_xrange_min")
-#                 row = layout.row()
-#                 row.prop(mbo, "plot_xrange_max")
-#                 row = layout.row()
-#                 if mbo.plot_type == "TIME HISTORY":
-#                     row.operator(Object_OT_MBDyn_plot_var.bl_idname, text="Plot variable")
-#                 elif mbo.plot_type == "AUTOSPECTRUM":
-#                     row = layout.row()
-#                     row.prop(mbo, "fft_remove_mean")
-#                     row = layout.row()
-#                     row.operator(Object_OT_MBDyn_plot_var_Sxx.bl_idname,
-#                             text="Plot variable Autospectrum")
-#             except KeyError:
-#                 pass
-#         else:
-#             row = layout.row()
-#             row.label(text="Plotting from text output")
-#             row.label(text="is not supported yet.")
+            row.label(text = "Plotting from text output")
+            row.label(text = "is not supported yet.")
 
-
-## Panel in scene properties toolbar
-class MBDynPlotPanelScene(bpy.types.Panel):
-    """ Plotting of MBDyn data for current object """
+## Panel in Scene toolbar
+class MBDYN_PT_plot_scene(bpy.types.Panel):
+    """ Plotting of MBDyn entities private data """
     bl_label = "MBDyn Data Plot"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
-
+    
     def draw(self, context):
         mbs = context.scene.mbdyn
+        pvar = mbs.plot_vars[mbs.plot_var_index]
         layout = self.layout
         row = layout.row()
 
@@ -728,71 +849,110 @@ class MBDynPlotPanelScene(bpy.types.Panel):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r', format='NETCDF3')
-            # row.prop(mbs, 'plot_var')
             row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
                     mbs, "plot_var_index")
             try:
-                dim = len(nc.variables[mbs.plot_vars[mbs.plot_var_index].name].shape)
-                if dim == 2:     # Vec3: FIXME check if other possibilities exist
+                dim = len(nc.variables[pvar.name].shape)
+                if dim == 2:     # Vec3
                     box = layout.box()
                     split = box.split(1./3.)
                     column = split.column()
-                    column.prop(mbs, "plot_comps", index = 0, text = "x")
+                    column.prop(pvar, "plot_comps", index = 0, text = "x")
                     column = split.column()
-                    column.prop(mbs, "plot_comps", index = 1, text = "y")
+                    column.prop(pvar, "plot_comps", index = 1, text = "y")
                     column = split.column()
-                    column.prop(mbs, "plot_comps", index = 2, text = "z")
-                elif dim == 3:
-                    if mbs.plot_var[-1] == 'R':
+                    column.prop(pvar, "plot_comps", index = 2, text = "z")
+                elif dim == 3:  # Mat3x3
+                    if pvar.name[-1] == 'R':
                         box = layout.box()
                         split = box.split(1./3.)
                         column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
-                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,2)")
+                        column.row().prop(pvar, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(pvar, "plot_comps", index = 3, text = "(2,2)")
                         column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
-                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,3)")
-                        column.row().prop(mbs, "plot_comps", index = 5, text = "(3,3)")
+                        column.row().prop(pvar, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(pvar, "plot_comps", index = 4, text = "(2,3)")
+                        column.row().prop(pvar, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
                         split = box.split(1./3.)
                         column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 0, text = "(1,1)")
-                        column.row().prop(mbs, "plot_comps", index = 3, text = "(2,1)")
-                        column.row().prop(mbs, "plot_comps", index = 6, text = "(3,1)")
+                        column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
+                        column.row().prop(pvar, "plot_comps", index = 3, text = "(2,1)")
+                        column.row().prop(pvar, "plot_comps", index = 6, text = "(3,1)")
                         column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 1, text = "(1,2)")
-                        column.row().prop(mbs, "plot_comps", index = 4, text = "(2,2)")
-                        column.row().prop(mbs, "plot_comps", index = 7, text = "(3,2)")
+                        column.row().prop(pvar, "plot_comps", index = 1, text = "(1,2)")
+                        column.row().prop(pvar, "plot_comps", index = 4, text = "(2,2)")
+                        column.row().prop(pvar, "plot_comps", index = 7, text = "(3,2)")
                         column = split.column()
-                        column.row().prop(mbs, "plot_comps", index = 2, text = "(1,3)")
-                        column.row().prop(mbs, "plot_comps", index = 5, text = "(2,3)")
-                        column.row().prop(mbs, "plot_comps", index = 8, text = "(3,3)")
-                row = layout.row()
-                col = layout.column()
-                col.prop(mbs, "plot_frequency")
-                col.operator(Scene_OT_MBDyn_plot_freq.bl_idname, text="Use Import frequency")
-                row = layout.row()
-                row.prop(mbs, "plot_type")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_min")
-                row = layout.row()
-                row.prop(mbs, "plot_xrange_max")
-                row = layout.row()
-                if mbs.plot_type == "TIME HISTORY":
-                    row.operator(Scene_OT_MBDyn_plot_var.bl_idname, 
-                            text="Plot variable")
-                elif mbs.plot_type == "AUTOSPECTRUM":
+                        column.row().prop(pvar, "plot_comps", index = 2, text = "(1,3)")
+                        column.row().prop(pvar, "plot_comps", index = 5, text = "(2,3)")
+                        column.row().prop(pvar, "plot_comps", index = 8, text = "(3,3)")
+                if HAVE_PLOT:
                     row = layout.row()
-                    row.prop(mbs, "fft_remove_mean")
+                    col = layout.column()
+                    col.prop(pvar, "plot_frequency")
+                    col.operator(BLENDYN_OT_set_plot_freq.bl_idname, text = "Use Import freq")
                     row = layout.row()
-                    row.operator(Scene_OT_MBDyn_plot_var_Sxx.bl_idname,
-                            text="Plot variable Autospectrum")
+                    row.prop(pvar, "plot_type")
+                    row = layout.row()
+                    row.prop(pvar, "plot_xrange_min")
+                    row = layout.row()
+                    row.prop(pvar, "plot_xrange_max")
+                    row = layout.row()
+                    if pvar.plot_type == "TIME HISTORY":
+                        row.operator(BLENDYN_OT_plot_var.bl_idname, 
+                                text="Plot variable")
+                    elif mbs.plot_type == "AUTOSPECTRUM":
+                        row = layout.row()
+                        row.prop(mbs, "fft_remove_mean")
+                        row = layout.row()
+                        row.operator(BLENDYN_OT_plot_var_sxx.bl_idname,
+                                text="Plot variable Autospectrum")
             except IndexError:
                 pass
+
+            layout.separator()
+            layout.separator()
+
+            row = layout.row()
+            row.template_list('BLENDYN_UL_render_vars_list', \
+                    "MBDyn Variables to Render", mbs, "render_vars",\
+                    mbs, "render_index")
+            row = layout.row()
+            row.prop(mbs, "render_var_name")
+
+            row = layout.row()
+            row.operator(BLENDYN_OT_set_render_variable.bl_idname, text = 'Set Display Variable')
+
+            row = layout.row()
+            row.operator(BLENDYN_OT_delete_render_variable.bl_idname, \
+                    text = 'Delete Display Variable')
+            row.operator(BLENDYN_OT_delete_all_render_variables.bl_idname, text = 'Clear')
+
+            if HAVE_PLOT:
+                row = layout.row()
+                row.operator(BLENDYN_OT_plot_variables_list.bl_idname, \
+                        text="Plot variables in List")
+
+                row.prop(mbs, "plot_group", text = "Plot Group")
+                layout.separator()
+                layout.separator()
+
+                row = layout.row()
+                row.prop(mbs, "group_name")
+                row.operator(BLENDYN_OT_set_display_group.bl_idname, text="Set Display Group")
+
+                row = layout.row()
+                row.prop(mbs, "display_enum_group")
+                row.operator(MBDynShowDisplayGroup.bl_idname, text = "Show Display Group")
+
         else:
             row = layout.row()
             row.label(text="Plotting from text output")
             row.label(text="is not supported yet.")
+# -----------------------------------------------------------
+# end of MBDYN_PT_plot_scene class
+bpy.utils.register_class(MBDYN_PT_plot_scene)
