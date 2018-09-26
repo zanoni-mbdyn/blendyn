@@ -896,7 +896,7 @@ def delete_log():
             pass
 
 def logging_shutdown():
-    print("Blendyn::logging_shutdown(): shutting down logs.")
+    print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
 
 atexit.register(delete_log)

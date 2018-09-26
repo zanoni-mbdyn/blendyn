@@ -54,18 +54,6 @@ except ImportError as ierr:
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))
 
-HAVE_PLOT = False
-
-try:
-    import pygal
-    from .plotlib import *
-    HAVE_PLOT = True
-except ImportError as ierr:
-    print("Blendyn:: could not enable the plotting module. Plotting  "\
-            + "will be disabled. The reported error was:")
-    print("{0}".format(ierr))
-    
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -81,6 +69,17 @@ from .eigenlib import *
 from .rfmlib import *
 from .logwatcher import *
 
+HAVE_PLOT = False
+
+try:
+    import pygal
+    HAVE_PLOT = True
+    from .plotlib import *
+except ImportError as ierr:
+    print("Blendyn:: could not enable the plotting module. Plotting  "\
+            + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
+    
 ## Nodes Dictionary: contains nodes informations
 class MBDynNodesDictionary(bpy.types.PropertyGroup):
     mbclass = StringProperty(
