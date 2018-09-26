@@ -238,6 +238,8 @@ def spawn_cardano_hinge_element(elem, context):
         # set group
         grouping(context, carjOBJ, [n1OBJ])
 
+        carjOBJ.mbdyn.dkey = elem.name
+        carjOBJ.mbdyn.type = 'element'
         elem.blender_object = carjOBJ.name
 
         return {'FINISHED'}

@@ -218,6 +218,8 @@ def spawn_axialrot_element(elem, context):
 
         grouping(context, axialrotjOBJ, [n1OBJ])
 
+        axialrotOBJ.mbdyn.dkey = elem.name
+        axialrotOBJ.mbdyn.type = 'element'
         elem.blender_object = axialrotjOBJ.name
 
         return {'FINISHED'}

@@ -198,9 +198,8 @@ def spawn_distance_element(elem, context):
 
 
     distOBJ = bpy.data.objects.new(distobj_id, cvdata)
-    distOBJ.mbdyn.type = 'elem.joint'
+    distOBJ.mbdyn.type = 'element'
     distOBJ.mbdyn.dkey = elem.name
-    distOBJ.mbdyn.int_label= elem.int_label
     bpy.context.scene.objects.link(distOBJ)
     elem.blender_object = distOBJ.name
 

@@ -158,6 +158,8 @@ def spawn_clamp_element(elem, context):
         # set group
         grouping(context, clampjOBJ, [n1OBJ])
 
+        clampOBJ.mbdyn.dkey = elem.name
+        clampOBJ.mbdyn.type = 'element'
         elem.blender_object = clampjOBJ.name
 
         return {'FINISHED'}

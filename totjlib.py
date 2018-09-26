@@ -802,7 +802,7 @@ def spawn_total_pin_joint_element(elem, context):
     grouping(context, totjOBJ, [n1OBJ, RF1p, RF1r])
 
     elem.blender_object = totjOBJ.name
-    totOBJ.mbdyn.dkey = elem.key
+    totOBJ.mbdyn.dkey = elem.name
     totOBJ.mbdyn.type = 'element'
 
     return {'FINISHED'}

@@ -723,18 +723,6 @@ bpy.utils.register_class(MBDynSettingsScene)
 ## MBDynSettings for Blender Object
 class MBDynSettingsObject(bpy.types.PropertyGroup):
     """ Properties of the current Blender Object related to MBDyn """
-    # Boolean: has the current object being assigned an MBDyn's entity?
-#     is_assigned = BoolProperty(
-#             name = "MBDyn entity assigned",
-#             description = "True if the object has been assigned an MBDyn node",
-#             )
-# 
-#     mbclass = StringProperty(
-#             name = "MBDyn entity class",
-#             description = "Class of MBDyn entity associate with object",
-#             default = 'none'
-#             )
-# 
     # Type of MBDyn entity
     type = StringProperty(
             name = "MBDyn entity type",
@@ -748,33 +736,6 @@ class MBDynSettingsObject(bpy.types.PropertyGroup):
             description = "Index of the entry of the MBDyn dictionary relative to the object",
             default = 'none' 
             )
-# 
-#     # Integer representing MBDyn's node label assigned to the object
-#     int_label = IntProperty(
-#             name = "MBDyn node",
-#             description = "Integer label of MBDyn's node assigned to the object",
-#             update = update_label
-#             )
-# 
-#     # String representing MBDyn's node string label assigned to the object.
-#     # Non-"not assigned" only if a .lab file with correct syntax is found
-#     string_label = StringProperty(
-#             name = "MBDyn's node or joint string label",
-#             description = "String label of MBDyn's node assigned to the object (if present)",
-#             default = "not assigned"
-#             )
-# 
-#     # Rotation parametrization of node
-#     parametrization = EnumProperty(
-#             items = [("EULER123", "euler123", "euler123", '', 1),\
-#                      ("EULER131", "euler313", "euler313", '', 2),\
-#                      ("EULER321", "euler321", "euler321", '', 3),\
-#                      ("PHI", "phi", "phi", '', 4),\
-#                      ("MATRIX", "mat", "mat", '', 5)],
-#             name = "rotation parametrization",
-#             default = "EULER123"
-#             )
-# 
     # Specific for plotting
     if HAVE_PLOT:
         plot_var_index = IntProperty(
@@ -901,52 +862,52 @@ class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
 
         missing = context.scene.mbdyn.missing
         if len(obj_names) > 0:
-            message = "Some of the nodes/elements are missing in the new .log file"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Some of the nodes/elements are missing in the new .log file"
             baseLogger.warning(message)
             hide_or_delete(obj_names, missing)
 
         if len(mbs.disabled_output) > 0:
-            message = "No output for nodes " + mbs.disabled_output
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: No output for nodes " + mbs.disabled_output
             baseLogger.warning(message)
 
         if ret_val == {'LOG_NOT_FOUND'}:
-            message = "MBDyn .log file not found"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::ERROR: MBDyn .log file not found"
             self.report({'ERROR'}, message)
             baseLogger.error(message)
             return {'CANCELLED'}
 
         elif ret_val == {'NODES_NOT_FOUND'}:
-            message = "The .log file selected does not contain MBDyn nodes definitions"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::ERROR: The .log file selected does not contain MBDyn nodes definitions"
             self.report({'ERROR'}, message)
             baseLogger.error(message)
             return {'CANCELLED'}
 
         elif ret_val == {'MODEL_INCONSISTENT'}:
-            message = "Contents of MBDyn .log file inconsistent with the scene"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Contents of MBDyn .log file inconsistent with the scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'NODES_INCONSISTENT'}:
-            message = "Nodes in MBDyn .log file inconsistent with the scene"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Nodes in MBDyn .log file inconsistent with the scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'ELEMS_INCONSISTENT'}:
-            message = "Elements in MBDyn .log file inconsistent with the scene"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Elements in MBDyn .log file are inconsistent with the scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'OUT_NOT_FOUND'}:
-            message = "Could not locate the .out file"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Could not locate the .out file"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'FINISHED'}:
-            message = "MBDyn entities imported successfully"
+            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::INFO:  MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True
             bpy.context.scene.render.use_stamp_note = True
             self.report({'INFO'}, message) 
@@ -1769,7 +1730,7 @@ class MBDynPlotVar_Object_UL_List(bpy.types.UIList):
         items = getattr(data, propname)
         obj = context.object
         hf = bpy.types.UI_UL_list
-        try
+        try:
             dictitem = get_dict_item(context, obj)
             flt_flags = hf.filter_items_by_name(dictobj.mbclass + '.' + str(dictobj.int_label),\
                     self.bitflag_filter_item, items)
@@ -2054,7 +2015,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = node.initial_rot
                 update_parametrization(obj)
-                if obj.mbdyn.string_label != "none":
+                if node.string_label != "none":
                     obj.name = node.string_label
                 else:
                     obj.name = node.name

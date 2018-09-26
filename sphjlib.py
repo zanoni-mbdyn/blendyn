@@ -236,6 +236,8 @@ def spawn_spherical_hinge_element(elem, context):
 
         grouping(context, sphjOBJ, [n1OBJ])
 
+        sphjOBJ.mbdyn.dkey = elem.name
+        sphjOBJ.mbdyn.type = 'element'
         elem.blender_object = sphjOBJ.name 
 
         return {'FINISHED'}

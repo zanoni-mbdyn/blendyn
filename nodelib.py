@@ -22,13 +22,11 @@
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
-# TODO: check for unnecessary stuff
 import bpy
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
-from bpy_extras.io_utils import ImportHelper
+# from bpy.types import Operator, Panel
+# from bpy.props import *
 
 import logging
 
@@ -36,6 +34,18 @@ import ntpath, os, csv, math
 from collections import namedtuple
 
 axes = {'1': 'X', '2': 'Y', '3': 'Z'}
+
+def get_dict_item(context, obj):
+    if obj.mbdyn.type == 'node':
+        return context.scene.mbdyn.nodes[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'element':
+        return context.scene.mbdyn.elems[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'reference':
+        return context.scene.mbdyn.refs[obj.mbdyn.dkey]
+    else:
+        return None
+# ------------------------------------------------------------
+# end of get_dict_item() function
 
 class RotKeyError(Exception):
     def __init__(self, value):
@@ -55,7 +65,8 @@ def set_obj_locrot_mov(obj, rw):
     obj.keyframe_insert(data_path = "location")
     
     # Orientation
-    parametrization = obj.mbdyn.parametrization
+    dictobj = get_dict_obj(bpy.context, obj)
+    parametrization = dictobj.parametrization
     
     if parametrization[0:5] == 'EULER':
         obj.rotation_euler = Euler(Vector(( math.radians(rw[4]),\

@@ -144,10 +144,8 @@ def spawn_body_element(elem, context):
         bodyOBJ.rotation_mode = 'QUATERNION'
 
         # set mbdyn props of object
-        bodyOBJ.mbdyn.int_label = elem.int_label
-        bodyOBJ.mbdyn.string_label = elem.string_label
         bodyOBJ.mbdyn.dkey = elem.name
-        bodyOBJ.mbdyn.type = elem.type
+        bodyOBJ.mbdyn.type = 'element'
 
         # set parenting of wireframe obj
         parenting(bodyOBJ, n1OBJ)

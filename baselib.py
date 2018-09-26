@@ -493,58 +493,6 @@ def assign_labels(context):
 # -----------------------------------------------------------
 # end of assign_labels() function
 
-def get_dict_item(context, obj):
-    if obj.mbdyn.type == 'node':
-        return context.mbdyn.nodes[obj.mbdyn.dkey]
-    elif obj.mbdyn.type == 'element':
-        return context.mbdyn.elems[obj.mbdyn.dkey]
-    elif obj.mbdyn.type == 'reference':
-        return context.mbdyn.refs[obj.mbdyn.dkey]
-    else:
-        return None
-
-def update_label(self, context):
-
-    # utility renaming
-    obj = context.scene.objects.active
-    nd = context.scene.mbdyn.nodes
-
-    # Search for int label and assign corresponding string label, if found.
-    # If not, signal it by assign the "not found" label
-    node_string_label = "not_found"
-    obj.mbdyn.is_assigned = False
-    if obj.mbdyn.type == 'node.struct':
-        try:
-            key = 'node_' + str(obj.mbdyn.int_label)
-            node_string_label = nd[key].string_label
-            nd[key].blender_object = obj.name
-            obj.mbdyn.is_assigned = True
-            obj.mbdyn.string_label = node_string_label
-
-            ret_val = {}
-            if obj.mbdyn.is_assigned:
-                ret_val = update_parametrization(obj)
-
-            if ret_val == 'ROT_NOT_SUPPORTED':
-                message = "Rotation parametrization not supported, node " \
-                + obj.mbdyn.string_label
-                self.report({'ERROR'}, message)
-                logging.error(message)
-
-            elif ret_val == 'LOG_NOT_FOUND':
-                message = "MBDyn .log file not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
-
-        except KeyError:
-            message = "Node not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
-            pass
-    return
-# -----------------------------------------------------------
-# end of update_label() function
-
 ## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
     mbs = context.scene.mbdyn
@@ -841,13 +789,14 @@ def set_motion_paths_netcdf(context):
     kk = 0
     for ndx in anim_nodes:
 
-        if str(nd[ndx].int_label) in mbs.disabled_output.split(' '):
+        dictobj = nd[ndx]
+        if str(dictobj.int_label) in mbs.disabled_output.split(' '):
             continue
 
-        obj = bpy.data.objects[nd[ndx].blender_object]
+        obj = bpy.data.objects[dictobj.blender_object]
         obj.select = True
-        node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
-        if obj.mbdyn.parametrization[0:5] == 'EULER':
+        node_var = 'node.struct.' + str(dictobj.int_label) + '.'
+        if dictobj.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -858,11 +807,11 @@ def set_motion_paths_netcdf(context):
                 answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
                 obj.rotation_euler = \
                         Euler( Vector((answer)),
-                                axes[obj.mbdyn.parametrization[7]] +\
-                                axes[obj.mbdyn.parametrization[6]] +\
-                                axes[obj.mbdyn.parametrization[5]] )
+                                axes[dictobj.parametrization[7]] +\
+                                axes[dictobj.parametrization[6]] +\
+                                axes[dictobj.parametrization[5]] )
                 obj.keyframe_insert(data_path = "rotation_euler")
-        elif obj.mbdyn.parametrization == 'PHI':
+        elif dictobj.parametrization == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -876,7 +825,7 @@ def set_motion_paths_netcdf(context):
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif obj.mbdyn.parametrization == 'MATRIX':
+        elif dictobj.parametrization == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 

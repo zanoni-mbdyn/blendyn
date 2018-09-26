@@ -226,6 +226,8 @@ def spawn_linearvelocity_element(elem, context):
         # set parenting of wireframe obj
         parenting(linearvelocityjOBJ, n1OBJ)
 
+        linearvelocityOBJ.mbdyn.dkey = elem.name
+        linearvelocityOBJ.mbdyn.type = 'element'
         elem.blender_object = linearvelocityjOBJ.name
 
         return {'FINISHED'}

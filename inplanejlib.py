@@ -229,6 +229,8 @@ def spawn_inplane_element(elem, context):
 
         grouping(context, inplanejOBJ, [n1OBJ])
 
+        inplanejOBJ.mbdyn.dkey = elem.name
+        inplanejOBJ.mbdyn.type = 'element'
         elem.blender_object = inplanejOBJ.name
 
         return {'FINISHED'}

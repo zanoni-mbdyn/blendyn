@@ -615,9 +615,8 @@ def spawn_rod_element(elem, context):
     polydata.points[1].co = p2.to_4d()
 
     rodOBJ = bpy.data.objects.new(rodobj_id, cvdata)
-    rodOBJ.mbdyn.type = 'elem.joint'
+    rodOBJ.mbdyn.type = 'element'
     rodOBJ.mbdyn.dkey = elem.name
-    rodOBJ.mbdyn.int_label= elem.int_label
     bpy.context.scene.objects.link(rodOBJ)
     elem.blender_object = rodOBJ.name
         
@@ -740,9 +739,8 @@ def spawn_rod_element(elem, context):
 #        polydata.bezier_points[1].handle_right = polydata.bezier_points[1].co
 #
 #        rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
-#        rodOBJ.mbdyn.type = 'elem.joint'
+#        rodOBJ.mbdyn.type = 'element'
 #        rodOBJ.mbdyn.dkey = elem.name
-#        rodOBJ.mbdyn.int_label = elem.int_label
 #        bpy.context.scene.objects.link(rodOBJ)
 #        elem.blender_object = rodOBJ.name
 #        elem.name = rodOBJ.name

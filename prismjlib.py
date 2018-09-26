@@ -219,6 +219,8 @@ def spawn_prismatic_element(elem, context):
 
         grouping(context, prismjOBJ, [n1OBJ])
 
+        prismjOBJ.mbdyn.dkey = elem.name
+        prismjOBJ.mbdyn.type = 'element'
         elem.blender_object = prismjOBJ.name
 
         return {'FINISHED'}

@@ -306,6 +306,8 @@ def spawn_revolute_hinge_element(elem, context):
 
         grouping(context, revjOBJ, [n1OBJ, n2OBJ])
 
+        revjOBJ.mbdyn.dkey = elem.name
+        revjOBJ.mbdyn.type = 'element'
         elem.blender_object = revjOBJ.name
 
         return {'FINISHED'}
@@ -421,6 +423,8 @@ def spawn_revolute_pin_element(elem, context):
 
         grouping(context, revjOBJ, [n1OBJ])
 
+        revjOBJ.mbdyn.dkey = elem.name
+        revjOBJ.mbdyn.dkey = 'element'
         elem.blender_object = revjOBJ.name
 
         return {'FINISHED'}

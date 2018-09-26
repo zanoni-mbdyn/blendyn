@@ -218,6 +218,8 @@ def spawn_inline_element(elem, context):
 
         grouping(context, inlinejOBJ, [n1OBJ])
 
+        inlinejOBJ.mbdyn.dkey = elem.name
+        inlinejOBJ.mbdyn.type = 'element'
         elem.blender_object = inlinejOBJ.name
 
         return {'FINISHED'}

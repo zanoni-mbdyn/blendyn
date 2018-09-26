@@ -239,6 +239,8 @@ def spawn_gimbal_element(elem, context):
 
     grouping(context, gimbaljOBJ, [n1OBJ, n2OBJ])
 
+    gimbaljOBJ.mbdyn.dkey = elem.name
+    gimbaljOBJ.mbdyn.type = 'element'
     elem.blender_object = gimbaljOBJ.name
 
     return {'FINISHED'}

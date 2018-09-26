@@ -182,17 +182,18 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
             return {'CANCELLED'}
     
         for ndx in anim_nodes:
-            obj = bpy.data.objects[nd[ndx].blender_object]
+            dictobj = nd[ndx]
+            obj = bpy.data.objects[dictobj.blender_object]
             obj.select = True
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
             
             obj.location = Vector(( nc.variables[node_var + 'X'][eigsol.step - 1, :] ))
             obj.keyframe_insert(data_path = "location")
 
-            if obj.mbdyn.parametrization[0:5] == 'EULER':
-                eu_seq = axes[obj.mbdyn.parametrization[7]] +\
-                         axes[obj.mbdyn.parametrization[6]] +\
-                         axes[obj.mbdyn.parametrization[5]]
+            if dictobj.parametrization[0:5] == 'EULER':
+                eu_seq = axes[dictobj.parametrization[7]] +\
+                         axes[dictobj.parametrization[6]] +\
+                         axes[dictobj.parametrization[5]]
                 obj.rotation_mode = eu_seq
                 obj.rotation_euler = \
                         Euler(\
@@ -202,22 +203,22 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                                 eu_seq
                             )
                 obj.keyframe_insert(data_path = "rotation_euler")
-            elif obj.mbdyn.parametrization == 'PHI':
+            elif dictobj.parametrization == 'PHI':
                 obj.rotation_mode = 'AXIS_ANGLE'
                 rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-            elif obj.mbdyn.parametrization == 'MATRIX':
+            elif dictobj.parametrization == 'MATRIX':
                 obj.rotation_mode = 'QUATERNION'
                 R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
                 obj.rotation_quaternion = R.to_quaternion()
                 obj.keyframe_insert(data_path = "rotation_quaternion")
             else:
                 # Should not be reached
-                print("Blendyn::Tools_OT_MBDyn_Eigen_Geometry::execute():"\
-                        + " Error: unrecognised rotation parametrization")
+                print("Blendyn::Tools_OT_MBDyn_Eigen_Geometry::execute()::ERROR:"\
+                        + " Unrecognised rotation parametrization")
                 message = "Unrecognised rotation parametrization"
                 self.report({'ERROR'}, message)
                 logging.error(message)

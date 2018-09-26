@@ -100,7 +100,7 @@ def parse_elements(context, jnt_type, rw):
     try:
         ret_val = joint_types[jnt_type](rw, ed)
     except KeyError:
-        print("parse_elements(): Element type " + jnt_type + " not implemented yet. \
+        print("Blendyn::parse_elements(): Element type " + jnt_type + " not implemented yet. \
                 Skipping...")
         ret_val = True
         pass

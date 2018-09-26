@@ -281,7 +281,8 @@ def spawn_structural_force_element(elem, context):
         grouping(context, forceOBJ, [n1OBJ])
 
         elem.blender_object = forceOBJ.name
-        forceOBJ.mbdyn.int_label = elem.int_label
+        forceOBJ.mbdyn.dkey = elem.name
+        forceOBJ.mbdyn.type = 'element'
 
         # Flag the object to be updated
         ude = bpy.context.scene.mbdyn.elems_to_update.add()
@@ -346,7 +347,8 @@ def spawn_structural_couple_element(elem, context):
         grouping(context, coupleOBJ, [n1OBJ])
 
         elem.blender_object = coupleOBJ.name
-        coupleOBJ.mbdyn.int_label = elem.int_label
+        coupleOBJ.mbdyn.dkey = elem.name
+        coubleOBJ.mbdyn.type = 'element'
 
         # Flag the object to be updated
         ude = bpy.context.scene.mbdyn.elems_to_update.add()
