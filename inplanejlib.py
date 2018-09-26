@@ -145,8 +145,8 @@ def inplane_info_draw(elem, layout):
         n1OBJ = bpy.data.objects[n1]
         q1 = elem.rotoffsets[0].value
         direction = Vector((0, 0, 1))
-        janga = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
-        direction.rotate(janga)
+        q = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        direction.rotate(q)
         direction = list(map(str, direction))
         direction = ', '.join(direction)
         row.label(text = "Normal to InPlane Joint" + direction)
