@@ -224,6 +224,25 @@ class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
 # end of MBDynRenderVarsDictionary class
 bpy.utils.register_class(MBDynRenderVarsDictionary)
 
+## PropertyGroup of Driver Variables
+class MBDynDriverVarsDictionary(bpy.types.PropertyGroup):
+    variable = StringProperty(
+        name = "Variable",
+        description = "NetCDF variable to be rendered"
+    )
+    components = BoolVectorProperty(
+        name = "Components",
+        description = "Components of the variable to be displayed",
+        size = 9
+    )
+    values = FloatVectorProperty(
+        name = "Values",
+        description = "Values of the variable at current frame"
+    )
+# -----------------------------------------------------------
+# end of MBDynDriverVarsDictionary class
+bpy.utils.register_class(MBDynDriverVarsDictionary)
+
 class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
     name = StringProperty(
 	name = "Group of Display Variables",
@@ -417,8 +436,15 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     )
 
     render_vars = CollectionProperty(
-        name = "MBDyn render variables collection",
+        name = "RenderVars",
+        description = "MBDyn render variables collection",
         type = MBDynRenderVarsDictionary
+    )
+
+    driver_vars = CollectionProperty(
+        name = "DriverVars",
+        description = "Variables set to track NetCDF variables",
+        type = MBDynDriverVarsDictionary
     )
 
     display_vars_group = CollectionProperty(
@@ -764,12 +790,11 @@ def render_variables(scene):
     mbs = scene.mbdyn
     if len(mbs.render_vars):
         try:
-            mbs = scene.mbdyn
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, "r", format="NETCDF3")
             string = [ '{0} : {1}'.format(var.variable, \
-                parse_render_string(netcdf_helper(nc, scene, var.value), var.components)) \
+                parse_render_string(netcdf_helper(nc, scene, var.variable), var.components)) \
                 for var in mbs.render_vars ]
             string = '\n'.join(string)
             if len(mbs.render_vars):
@@ -779,6 +804,24 @@ def render_variables(scene):
 
 if HAVE_PLOT:
     bpy.app.handlers.frame_change_pre.append(render_variables)
+
+@persistent
+def update_driver_vars(scene):
+    mbs = scene.mbdyn
+    ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc')
+    nc = Dataset(ncfile, "r", format="NETCDF3")
+    for dvar in mbs.driver_vars:
+        ncvar = netcdf_helper(nc, scene, dvar.variable)
+        dim = len(ncvar.shape)
+        if dim == 1:
+            for ii in range(len(ncvar)):
+                dvar.values[ii] = ncvar[ii] if dvar.components[ii] else 0.0
+        else:
+            for ii in range(3):
+                for jj in range(3):
+                    dvar.values[ii + jj] = ncvar[ii,jj] if dvar.components[ii+jj] else 0.0
+bpy.app.handlers.frame_change_pre.append(update_driver_vars)
 
 @persistent
 def close_log(scene):
@@ -1731,10 +1774,12 @@ class MBDynPlotVar_Object_UL_List(bpy.types.UIList):
         hf = bpy.types.UI_UL_list
         try:
             dictitem = get_dict_item(context, obj)
-            flt_flags = hf.filter_items_by_name(dictobj.mbclass + '.' + str(dictobj.int_label),\
-                    self.bitflag_filter_item, items)
+            flt_flags = hf.filter_items_by_name(dictitem.mbclass + '.' + \
+                    str(dictitem.int_label), self.bitflag_filter_item, items)
             return flt_flags, []
         except KeyError:
+            return [], []
+        except AttributeError:
             return [], []
 
 # -----------------------------------------------------------
@@ -1743,16 +1788,16 @@ bpy.utils.register_class(MBDynPlotVar_Object_UL_List)
 
 class BLENDYN_UL_render_vars_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.label(item.variable)
-        layout.label(item.value + comp_repr(item.components, item.value, context))
+        layout.label(item.varname)
+        layout.label(item.variable + comp_repr(item.components, item.variable, context))
 # -----------------------------------------------------------
 # end of BLENDYN_UL_render_vars_list class
 bpy.utils.register_class(BLENDYN_UL_render_vars_list)
 
 class MBDynEnvVar_UL_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.varname)
         layout.label(item.variable)
-        layout.label(item.value)
 # -----------------------------------------------------------
 # end of MBDynEnvVar_UL_List class
 bpy.utils.register_class(MBDynEnvVar_UL_List)

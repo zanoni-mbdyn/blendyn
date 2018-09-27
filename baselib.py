@@ -111,12 +111,16 @@ def get_plot_vars_glob(context):
 
 def update_driver_variables(self, context):
     mbs = bpy.context.scene.mbdyn
-    pvar = mbs.plot_vars[mbs.plot_var.index]
-    if pvar.driver:
-        mbs.driver_vars.remove(pvar.name)
-    else:
+    pvar = mbs.plot_vars[mbs.plot_var_index]
+
+    if pvar.as_driver:
         dvar = mbs.driver_vars.add()
-        dvar.ncvar = pvar.name
+        dvar.name = pvar.name
+        dvar.variable = pvar.name
+        dvar.components = pvar.plot_comps
+    else:
+        idx = [idx for idx in range(len(mbs.driver_vars)) if mbs.driver_vars[idx].name == pvar.name]
+        mbs.driver_vars.remove(idx[0])
 
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
@@ -708,16 +712,17 @@ def parse_render_string(var, components):
     else:
         return '{:.2f}'.format(var)
 
-def comp_repr(components, value, context):
+def comp_repr(components, variable, context):
     mbs = context.scene.mbdyn
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r", format="NETCDF3")
-    var = nc.variables[value]
+    var = nc.variables[variable]
     dim = len(var.shape)
 
     comps = ''
 
+    pvar = mbs.plot_vars[mbs.plot_var_index]
     if dim == 2:
         n,m = var.shape
         comps = [str(mdx + 1) for mdx in range(m) if components[mdx] is True]
@@ -725,7 +730,7 @@ def comp_repr(components, value, context):
 
     elif dim == 3:
         n,m,k = var.shape
-        if mbs.plot_var[-1] == 'R':
+        if pvar.name[-1] == 'R':
             dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
 
         else:
