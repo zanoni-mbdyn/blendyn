@@ -859,7 +859,10 @@ def rename_log(scene):
     logFile = ('{0}_{1}.bylog').format(mbs.file_path + 'untitled', mbs.file_basename)
     newBlend = path_leaf(bpy.data.filepath)[1]
     newLog = ('{0}_{1}.bylog').format(mbs.file_path + newBlend, mbs.file_basename)
-    os.rename(logFile, newLog)
+    try:
+        os.rename(logFile, newLog)
+    except FileNotFoundError:
+        pass
 
     bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
 
@@ -2489,13 +2492,16 @@ class Object_OT_Delete_Override(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None
+        return (context.active_object is not None) and len(context.scene.mbdyn.nodes)
 
     @classmethod
     def remove_from_dict(self, obj, context):
-        dictitem = get_dict_item(context, obj)
-        dictitem.blender_object = 'none'
-        dictitem.is_imported = 'none'
+        try:
+            dictitem = get_dict_item(context, obj)
+            dictitem.blender_object = 'none'
+            dictitem.is_imported = 'none'
+        except AttributeError:
+            return {'CANCELLED'}
 
         if obj.mbdyn.type == 'element':
             for idx, ude in enumerate(bpy.context.scene.mbdyn.elems_to_update):

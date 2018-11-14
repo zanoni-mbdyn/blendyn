@@ -759,9 +759,12 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
     def draw(self, context):
         mbs = context.scene.mbdyn
         mbo = context.object.mbdyn
+        try:
+            pvar = mbs.plot_vars[mbo.plot_var_index]
+        except IndexError:
+            return
         layout = self.layout
         row = layout.row()
-        pvar = mbs.plot_vars[mbo.plot_var_index]
 
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
@@ -851,7 +854,10 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
     
     def draw(self, context):
         mbs = context.scene.mbdyn
-        pvar = mbs.plot_vars[mbs.plot_var_index]
+        try:
+            pvar = mbs.plot_vars[mbs.plot_var_index]
+        except IndexError:
+            return    
         layout = self.layout
         row = layout.row()
 

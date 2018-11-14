@@ -107,6 +107,7 @@ def spawn_shell4_element(elem, context):
         n2OBJ = bpy.data.objects[n2]
     except KeyError:
         return {'NODE2_NOTFOUND'}
+
     try:
         n3 = nd['node_' + str(elem.nodes[2].int_label)].blender_object
         n3OBJ = bpy.data.objects[n3]
@@ -136,7 +137,7 @@ def spawn_shell4_element(elem, context):
     mesh.vertices[2].co = shellOBJ.matrix_world.inverted()*n4OBJ.location
 
     # create hooks
-    bpy.ops.object.select_all()
+    bpy.ops.object.select_all(action = 'DESELECT')
     shellOBJ.select = True
     bpy.context.scene.objects.active = shellOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
