@@ -28,7 +28,6 @@ import logging
 
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
 from bpy.props import *
 
 from .utilslib import *
