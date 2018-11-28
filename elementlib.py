@@ -32,6 +32,7 @@ from bpy.props import *
 import ntpath, os, csv, math
 from collections import namedtuple
 
+from .aerolib import *
 from .beamlib import *
 from .bodylib import *
 from .carjlib import *
@@ -62,6 +63,9 @@ def parse_elements(context, jnt_type, rw):
     ed = context.scene.mbdyn.elems
 
     joint_types  = {    
+            "aero0": parse_aero0,
+            "aero2": parse_aero2,
+            "aero3": parse_aero3,
             "beam2": parse_beam2,
             "beam3": parse_beam3,
             "body": parse_body,

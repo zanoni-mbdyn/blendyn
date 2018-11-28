@@ -874,7 +874,10 @@ def rename_log(scene):
     logFile = ('{0}_{1}.bylog').format(mbs.file_path + 'untitled', mbs.file_basename)
     newBlend = path_leaf(bpy.data.filepath)[1]
     newLog = ('{0}_{1}.bylog').format(mbs.file_path + newBlend, mbs.file_basename)
-    os.rename(logFile, newLog)
+    try:
+        os.rename(logFile, newLog)
+    except FileNotFoundError:
+        pass
 
     bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
 
@@ -2742,22 +2745,18 @@ class Object_OT_Delete_Override(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None
+        return (context.active_object is not None) and len(context.scene.mbdyn.nodes)
 
     @classmethod
     def remove_from_dict(self, obj, context):
-        if obj.mbdyn.type == 'node.struct':
-            node = bpy.context.scene.mbdyn.nodes[obj.mbdyn.dkey]
-            node.blender_object = 'none'
-            node.is_imported = False
-        elif obj.mbdyn.type == 'reference':
-            ref = bpy.context.scene.mbdyn.references[obj.mbdyn.dkey]
-            ref.blender_object = 'none'
-            ref.is_imported = False
-        else:
-            elem = bpy.context.scene.mbdyn.elems[obj.mbdyn.dkey]
-            elem.blender_object = 'none'
-            elem.is_imported = False
+        try:
+            dictitem = get_dict_item(context, obj)
+            dictitem.blender_object = 'none'
+            dictitem.is_imported = 'none'
+        except AttributeError:
+            return {'CANCELLED'}
+
+        if obj.mbdyn.type == 'element':
             for idx, ude in enumerate(bpy.context.scene.mbdyn.elems_to_update):
                 if ude.dkey == elem.name:
                     bpy.context.scene.mbdyn.elems_to_update.remove(idx)
