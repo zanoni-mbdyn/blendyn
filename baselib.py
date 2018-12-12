@@ -859,9 +859,14 @@ def mbdyn_type_poll(self, context):
 
 class BlenderHandler(logging.Handler):
     def emit(self, record):
+        MAXKEYLEN = 2**6 - 1    # FIXME: Is this universal?
         log_entry = self.format(record)
-        editor = bpy.data.texts[os.path.basename(logFile)]
-        editor.write(log_entry + '\n')
+        try:
+            editor = bpy.data.texts[os.path.basename(logFile)]
+            editor.write(log_entry + '\n')
+        except KeyError:
+            logtext = os.path.basename(logFile)
+            editor = bpy.data.texts[logtext[0:MAXKEYLEN]]
 
 def log_messages(mbs, baseLogger, saved_blend):
         try:
