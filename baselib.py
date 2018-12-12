@@ -906,15 +906,21 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
+
 class BlenderHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
-        editor = bpy.data.texts[os.path.basename(logFile)]
-        editor.write(log_entry + '\n')
+        try:
+            editor = bpy.data.texts[os.path.basename(logFile)]
+            editor.write(log_entry + '\n')
+        except KeyError:
+            # FIXME: temporary, need to investigate why this happens
+            print("Blendyn::BlenderHandler: could not access log text file.")
+            pass
 
 def log_messages(mbs, baseLogger, saved_blend):
         try:
-	        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
+	        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved
 	                    else 'untitled.blend'
 	        blendFile = os.path.splitext(blendFile)[0]
 	

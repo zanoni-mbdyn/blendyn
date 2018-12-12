@@ -255,14 +255,17 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
                 + " ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
-    
-        eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
-        eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
-        eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
-        eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
-        
-        print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
-                + " eigvec_abs = {}".format(eigvec_abs))
+   
+        try;
+            eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
+            eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
+            eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
+            eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
+        except KeyError:
+            message = "The eigenanalysis output is incomplete. Aborting."
+            self.report('ERROR', message)
+            logging.error(message)
+            return {'CANCELLED'}
         
         eigvec_phase = np.arctan2(eigvec_im, eigvec_re)
         
