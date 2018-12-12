@@ -256,7 +256,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
    
-        try;
+        try:
             eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
             eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
             eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
