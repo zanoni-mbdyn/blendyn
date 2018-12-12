@@ -594,7 +594,7 @@ class BLENDYN_OT_object_plot_var(bpy.types.Operator):
 
         message = "Variable " + pvar.name + " plotted"
         self.report({'INFO'}, message)
-        logging.info("BLENDYN_OT_object_plot_var::exectute(): " + message)
+        logging.info("BLENDYN_OT_object_plot_var::execute(): " + message)
         return {'FINISHED'}
 # --------------------------------------------------
 # end of BLENDYN_OT_object_plot_var class

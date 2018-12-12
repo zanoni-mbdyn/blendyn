@@ -109,19 +109,6 @@ def get_plot_vars_glob(context):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var
 
-def update_driver_variables(self, context):
-    mbs = bpy.context.scene.mbdyn
-    pvar = mbs.plot_vars[mbs.plot_var_index]
-
-    if pvar.as_driver:
-        dvar = mbs.driver_vars.add()
-        dvar.name = pvar.name
-        dvar.variable = pvar.name
-        dvar.components = pvar.plot_comps
-    else:
-        idx = [idx for idx in range(len(mbs.driver_vars)) if mbs.driver_vars[idx].name == pvar.name]
-        mbs.driver_vars.remove(idx[0])
-
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
     mbs = context.scene.mbdyn
@@ -497,6 +484,49 @@ def assign_labels(context):
 # -----------------------------------------------------------
 # end of assign_labels() function
 
+
+def update_label(self, context):
+
+    # utility renaming
+    obj = context.scene.objects.active
+    nd = context.scene.mbdyn.nodes
+
+    # Search for int label and assign corresponding string label, if found.
+    # If not, signal it by assign the "not found" label
+    node_string_label = "not_found"
+    obj.mbdyn.is_assigned = False
+    if obj.mbdyn.type == 'node.struct':
+        try:
+            key = 'node_' + str(obj.mbdyn.int_label)
+            node_string_label = nd[key].string_label
+            nd[key].blender_object = obj.name
+            obj.mbdyn.is_assigned = True
+            obj.mbdyn.string_label = node_string_label
+
+            ret_val = {}
+            if obj.mbdyn.is_assigned:
+                ret_val = update_parametrization(obj)
+
+            if ret_val == 'ROT_NOT_SUPPORTED':
+                message = "Rotation parametrization not supported, node " \
+                + obj.mbdyn.string_label
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
+            elif ret_val == 'LOG_NOT_FOUND':
+                message = "MBDyn .log file not found"
+                self.report({'ERROR'}, message)
+                logging.error(message)
+
+        except KeyError:
+            message = "Node not found"
+            self.report({'ERROR'}, message)
+            logging.error(message)
+            pass
+    return
+# -----------------------------------------------------------
+# end of update_label() function
+
 ## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
     mbs = context.scene.mbdyn
@@ -683,12 +713,36 @@ def get_display_group(self, context):
 def netcdf_helper(nc, scene, key):
     mbs = scene.mbdyn
     freq = mbs.load_frequency
-    tdx = scene.frame_current * freq
+    tdx = scene.frame_current*freq
     frac = np.ceil(tdx) - tdx
 
     first = nc.variables[key][int(tdx)]
     second = nc.variables[key][int(np.ceil(tdx))]
-    answer = first * frac + second * (1-frac)
+    answer = first*frac + second*(1 - frac)
+
+    return answer
+
+def netcdf_helper_rvars(nc, scene, var):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = np.ceil(tdx) - tdx
+
+    first = nc.variables[var.variable][int(tdx)]
+    second = nc.variables[var.variable][int(np.ceil(tdx))]
+    answer = first*frac + second*(1 - frac)
+
+    dims = len(answer.shape)
+
+    if (dims == 1):
+        for ii in range(len(answer)):
+            if (var.components[ii]):
+                var.value[ii] = answer[ii]
+    elif (dims == 2):
+        for ii in range(3):
+            for jj in range(3):
+                if var.components[ii + jj]:
+                    var.value[ii + jj] = answer[ii,jj]
 
     return answer
 
@@ -712,17 +766,16 @@ def parse_render_string(var, components):
     else:
         return '{:.2f}'.format(var)
 
-def comp_repr(components, variable, context):
+def comp_repr(components, value, context):
     mbs = context.scene.mbdyn
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r", format="NETCDF3")
-    var = nc.variables[variable]
+    var = nc.variables[value]
     dim = len(var.shape)
 
     comps = ''
 
-    pvar = mbs.plot_vars[mbs.plot_var_index]
     if dim == 2:
         n,m = var.shape
         comps = [str(mdx + 1) for mdx in range(m) if components[mdx] is True]
@@ -730,7 +783,7 @@ def comp_repr(components, variable, context):
 
     elif dim == 3:
         n,m,k = var.shape
-        if pvar.name[-1] == 'R':
+        if mbs.plot_var[-1] == 'R':
             dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
 
         else:
@@ -794,14 +847,13 @@ def set_motion_paths_netcdf(context):
     kk = 0
     for ndx in anim_nodes:
 
-        dictobj = nd[ndx]
-        if str(dictobj.int_label) in mbs.disabled_output.split(' '):
+        if str(nd[ndx].int_label) in mbs.disabled_output.split(' '):
             continue
 
-        obj = bpy.data.objects[dictobj.blender_object]
+        obj = bpy.data.objects[nd[ndx].blender_object]
         obj.select = True
-        node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-        if dictobj.parametrization[0:5] == 'EULER':
+        node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
+        if obj.mbdyn.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -812,11 +864,11 @@ def set_motion_paths_netcdf(context):
                 answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
                 obj.rotation_euler = \
                         Euler( Vector((answer)),
-                                axes[dictobj.parametrization[7]] +\
-                                axes[dictobj.parametrization[6]] +\
-                                axes[dictobj.parametrization[5]] )
+                                axes[obj.mbdyn.parametrization[7]] +\
+                                axes[obj.mbdyn.parametrization[6]] +\
+                                axes[obj.mbdyn.parametrization[5]] )
                 obj.keyframe_insert(data_path = "rotation_euler")
-        elif dictobj.parametrization == 'PHI':
+        elif obj.mbdyn.parametrization == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -830,7 +882,7 @@ def set_motion_paths_netcdf(context):
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif dictobj.parametrization == 'MATRIX':
+        elif obj.mbdyn.parametrization == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -851,12 +903,9 @@ def set_motion_paths_netcdf(context):
     wm.progress_end()
 
     return {'FINISHED'}
+
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
-
-def mbdyn_type_poll(self, context):
-    return self in ['node', 'element', 'reference', 'none']
-
 class BlenderHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
@@ -901,7 +950,7 @@ def delete_log():
             pass
 
 def logging_shutdown():
-    print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
+    print("Blendyn::logging_shutdown(): shutting down logs.")
     logging.shutdown()
 
 atexit.register(delete_log)
