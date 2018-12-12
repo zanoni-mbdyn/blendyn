@@ -333,19 +333,19 @@ def total_info_draw(elem, layout):
 
             # Display offset from node 1
             row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            row.label(text = "offset 1 in node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[0], "value", text = "", slider = False)
             
             # Display position orientation -  node 1
             row = layout.row()
-            row.label(text = "pos. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "pos. orientation node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
 
             # Display rotation orientation -  node 1
             row = layout.row()
-            row.label(text = "rot. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "rot. orientation node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
 
@@ -361,19 +361,19 @@ def total_info_draw(elem, layout):
 
             # Display offset from node 2
             row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
+            row.label(text = "offset 2 in node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[1], "value", text = "", slider = False)
             
             # Display position orientation -  node 2
             row = layout.row()
-            row.label(text = "pos. orientation node 2" + node.string_label + " R.F.")
+            row.label(text = "pos. orientation node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[2], "value", text = "", slider = False)
 
             # Display rotation orientation -  node 2
             row = layout.row()
-            row.label(text = "rot. orientation node 2" + node.string_label + " R.F.")
+            row.label(text = "rot. orientation node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[3], "value", text = "", slider = False)
 
@@ -597,19 +597,19 @@ def total_pin_info_draw(elem, layout):
 
             # Display offset from node 1
             row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            row.label(text = "offset 1 in node R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[0], "value", text = "", slider = False)
             
             # Display position orientation -  node 1
             row = layout.row()
-            row.label(text = "pos. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "pos. orientation node R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
 
             # Display rotation orientation -  node 1
             row = layout.row()
-            row.label(text = "rot. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "rot. orientation node R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
 
