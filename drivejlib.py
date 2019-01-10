@@ -50,6 +50,10 @@ def parse_drive_displacement(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -58,6 +62,7 @@ def parse_drive_displacement(rw, ed):
     except KeyError:
         print("Blendyn::parse_drive_displacement(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'drive_displacement'
         el.int_label = int(rw[1])
 
@@ -193,9 +198,8 @@ def spawn_drive_displacement_element(elem, context):
 
 
     drvdispOBJ = bpy.data.objects.new(drvdispobj_id, cvdata)
-    drvdispOBJ.mbdyn.type = 'elem.joint'
+    drvdispOBJ.mbdyn.type = 'element'
     drvdispOBJ.mbdyn.dkey = elem.name
-    drvdispOBJ.mbdyn.int_label= elem.int_label
     bpy.context.scene.objects.link(drvdispOBJ)
     elem.blender_object = drvdispOBJ.name
 

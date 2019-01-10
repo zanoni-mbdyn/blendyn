@@ -53,6 +53,10 @@ def parse_structural_absolute_force(rw, ed):
         el.nodes[0].int_label = int(rw[4])
         
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.force'
          
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -63,6 +67,7 @@ def parse_structural_absolute_force(rw, ed):
         print("Blendyn::parse_structural_absolute_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.force'
         el.type = 'structural_absolute_force'
         el.int_label = int(rw[3])
 
@@ -96,6 +101,10 @@ def parse_structural_follower_force(rw, ed):
         el.nodes[0].int_label = int(rw[4])
         
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.force'
          
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -106,6 +115,7 @@ def parse_structural_follower_force(rw, ed):
         print("Blendyn::parse_structural_follower_force(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.force'
         el.type = 'structural_follower_force'
         el.int_label = int(rw[3])
 
@@ -139,6 +149,10 @@ def parse_structural_absolute_couple(rw, ed):
         el.nodes[0].int_label = int(rw[4])
         
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.force'
          
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -149,6 +163,7 @@ def parse_structural_absolute_couple(rw, ed):
         print("Blendyn::parse_structural_absolute_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.force'
         el.type = 'structural_absolute_couple'
         el.int_label = int(rw[3])
 
@@ -182,6 +197,10 @@ def parse_structural_follower_couple(rw, ed):
         el.nodes[0].int_label = int(rw[4])
         
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.force'
          
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
@@ -192,6 +211,7 @@ def parse_structural_follower_couple(rw, ed):
         print("Blendyn::parse_structural_follower_couple(): didn't find an entry in \
                 elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.force'
         el.type = 'structural_follower_couple'
         el.int_label = int(rw[3])
 
@@ -261,7 +281,8 @@ def spawn_structural_force_element(elem, context):
         grouping(context, forceOBJ, [n1OBJ])
 
         elem.blender_object = forceOBJ.name
-        forceOBJ.mbdyn.int_label = elem.int_label
+        forceOBJ.mbdyn.dkey = elem.name
+        forceOBJ.mbdyn.type = 'element'
 
         # Flag the object to be updated
         ude = bpy.context.scene.mbdyn.elems_to_update.add()
@@ -326,7 +347,8 @@ def spawn_structural_couple_element(elem, context):
         grouping(context, coupleOBJ, [n1OBJ])
 
         elem.blender_object = coupleOBJ.name
-        coupleOBJ.mbdyn.int_label = elem.int_label
+        coupleOBJ.mbdyn.dkey = elem.name
+        coubleOBJ.mbdyn.type = 'element'
 
         # Flag the object to be updated
         ude = bpy.context.scene.mbdyn.elems_to_update.add()

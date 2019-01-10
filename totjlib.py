@@ -86,10 +86,16 @@ def parse_total(rw, ed):
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
+
+         
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
         pass
     except KeyError:
         print("Blendyn::parse_total(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'total_joint'
         el.int_label = int(rw[1])
 
@@ -254,13 +260,6 @@ def spawn_total_joint_element(elem, context):
             n2OBJ.scale.magnitude)
     totjOBJ.scale = Vector(( s, s, s ))
 
-    # set mbdyn props of object
-    totjOBJ.mbdyn.int_label = elem.int_label
-    totjOBJ.mbdyn.string_label = elem.string_label
-    totjOBJ.mbdyn.dkey = elem.name
-    totjOBJ.mbdyn.type = elem.type 
-
-
     # create an object representing the RF used to express the relative
     # position w.r.t. node 1, for model debugging
     bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
@@ -310,7 +309,10 @@ def spawn_total_joint_element(elem, context):
 
     grouping(context, totjOBJ, [n1OBJ, n2OBJ, RF1p, RF1r, RF2p, RF2r])
 
+    # set mbdyn props of object
     elem.blender_object = totjOBJ.name
+    totjOBJ.mbdyn.dkey = elem.name
+    totjOBJ.mbdyn.type = 'element'
 
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -527,10 +529,17 @@ def parse_total_pin(rw, ed):
         #       indicating which angular velocity constraints are active
         el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
 
-        pass
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
+        if el.name in bpy.data.objects.keys():
+            el.blender_object = el.name
+
     except KeyError:
         print("Blendyn::parse_total_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
 
@@ -792,6 +801,8 @@ def spawn_total_pin_joint_element(elem, context):
     grouping(context, totjOBJ, [n1OBJ, RF1p, RF1r])
 
     elem.blender_object = totjOBJ.name
+    totOBJ.mbdyn.dkey = elem.name
+    totOBJ.mbdyn.type = 'element'
 
     return {'FINISHED'}
 # -----------------------------------------------------------

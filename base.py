@@ -2499,7 +2499,7 @@ class Object_OT_Delete_Override(bpy.types.Operator):
         try:
             dictitem = get_dict_item(context, obj)
             dictitem.blender_object = 'none'
-            dictitem.is_imported = 'none'
+            dictitem.is_imported = False
         except AttributeError:
             return {'CANCELLED'}
 

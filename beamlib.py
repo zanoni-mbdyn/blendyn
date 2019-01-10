@@ -52,6 +52,10 @@ def parse_beam2(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.beam'
+        
         el.is_imported = True
 
         pass
@@ -59,6 +63,7 @@ def parse_beam2(rw, ed):
         print("Blendyn::parse_beam2(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
+        el.mbclass = 'elem.beam'
         el.type = 'beam2'
         el.int_label = int(rw[1])
         
@@ -104,6 +109,10 @@ def parse_beam3(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets[1].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+        
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.beam'
 
         el.is_imported = True
 
@@ -111,8 +120,8 @@ def parse_beam3(rw, ed):
     except KeyError:
         print("Blendyn::parse_beam3(): didn't find entry in elements dictionary. Creating one.")
         
-        el = ed.add()
-        el.is_imported = False
+        el = ed.add() 
+        el.mbclass = 'elem.beam'
         el.type = 'beam3'
         el.int_label = int(rw[1])
         
@@ -312,9 +321,8 @@ def spawn_beam2_element(elem, context):
 
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
-    beamOBJ.mbdyn.type = 'elem.beam'
+    beamOBJ.mbdyn.type = 'element'
     beamOBJ.mbdyn.dkey = elem.name
-    beamOBJ.mbdyn.int_label = elem.int_label
     bpy.context.scene.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
@@ -484,12 +492,11 @@ def spawn_beam3_element(elem, context):
 
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
-    beamOBJ.mbdyn.type = 'elem.beam'
+    beamOBJ.mbdyn.type = 'element'
     beamOBJ.mbdyn.dkey = elem.name
     ude = bpy.context.scene.mbdyn.elems_to_update.add()
     ude.dkey = elem.name
     ude.name = elem.name
-    beamOBJ.mbdyn.int_label = elem.int_label
 
     bpy.context.scene.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name

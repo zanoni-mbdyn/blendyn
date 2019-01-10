@@ -22,13 +22,11 @@
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
-# TODO: check for unnecessary stuff
 import bpy
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
-from bpy_extras.io_utils import ImportHelper
+# from bpy.types import Operator, Panel
+# from bpy.props import *
 
 import logging
 
@@ -36,6 +34,18 @@ import ntpath, os, csv, math
 from collections import namedtuple
 
 axes = {'1': 'X', '2': 'Y', '3': 'Z'}
+
+def get_dict_item(context, obj):
+    if obj.mbdyn.type == 'node':
+        return context.scene.mbdyn.nodes[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'element':
+        return context.scene.mbdyn.elems[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'reference':
+        return context.scene.mbdyn.refs[obj.mbdyn.dkey]
+    else:
+        return None
+# ------------------------------------------------------------
+# end of get_dict_item() function
 
 class RotKeyError(Exception):
     def __init__(self, value):
@@ -55,7 +65,8 @@ def set_obj_locrot_mov(obj, rw):
     obj.keyframe_insert(data_path = "location")
     
     # Orientation
-    parametrization = obj.mbdyn.parametrization
+    dictobj = get_dict_obj(bpy.context, obj)
+    parametrization = dictobj.parametrization
     
     if parametrization[0:5] == 'EULER':
         obj.rotation_euler = Euler(Vector(( math.radians(rw[4]),\
@@ -86,7 +97,8 @@ def set_obj_locrot_mov(obj, rw):
 
 def update_parametrization(obj):
     ret_val = ''
-    param = obj.mbdyn.parametrization
+    dictitem = get_dict_item(bpy.context, obj)
+    param = dictitem.parametrization
     if param == 'PHI':
         obj.rotation_mode = 'AXIS_ANGLE'
         ret_val = 'FINISHED'
@@ -104,42 +116,6 @@ def update_parametrization(obj):
     return ret_val
 # -----------------------------------------------------------
 # end of update_parametrization() function 
-
-def update_label(self, context):
-    
-    # utility renaming
-    obj = context.object
-    nd = context.scene.mbdyn.nodes
-    
-    # Debug Messages
-    try:
-        print("Blendyn::MBDynPanel::update_label(): updating MBDyn node associated to object " + obj.name)
-        print("Blendyn::MBDynPanel::update_label(): selected MBDyn node = ", str(obj.mbdyn.int_label))
-    except AttributeError:
-        pass
-    
-    # Search for int label and assign corresponding string label, if found.
-    # If not, signal it by assign the "not found" label
-    node_string_label = "not_found"
-    obj.mbdyn.is_assigned = False
-    for item in nd:
-        if item.int_label == obj.mbdyn.int_label:
-            node_string_label = item.string_label
-            item.blender_object = obj.name
-            obj.mbdyn.is_assigned = True
-    
-    obj.mbdyn.string_label = node_string_label
-    if obj.mbdyn.is_assigned:
-        ret_val = update_parametrization(obj)
-
-    if ret_val == 'ROT_NOT_SUPPORTED':
-        message = "Rotation parametrization not supported, node " \
-            + obj.mbdyn.string_label
-        self.report({'ERROR'}, message)
-        logging.error(message)
-    return
-# -----------------------------------------------------------
-# end of update_label() function <-- FIXME: Duplicate? 
 
 ## Function that parses the single row of the .log file and stores
 #  the node element definition in elems
@@ -185,6 +161,11 @@ def parse_node(context, rw):
         node.is_imported = True
         print("Blendyn::parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
                 + ". Updating it.")
+
+        # FIXME: this is here to enhance backwards compatibility: should disappear 
+        # in the future
+        node.mbclass = 'node.struct'
+        
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         try:
             node.initial_rot, node.parametrization = orient_to_quat(rw)
@@ -197,6 +178,7 @@ def parse_node(context, rw):
         print("Blendyn::parse_node(): didn't find an existing entry in nodes dictionary for node " + rw[2]\
                 + ". Creating it.")
         node = nd.add()
+        node.mbclass = 'node.struct'
         node.is_imported = True
         node.int_label = int(rw[2])
         node.name = "node_" + rw[2]
@@ -217,6 +199,9 @@ def parse_node(context, rw):
 #  representing an MBDyn node
 def spawn_node_obj(context, node):
     mbs = context.scene.mbdyn
+
+    if (node.string_label in bpy.data.objects) or ("node_" + str(node.int_label) in bpy.data.objects):
+        return False
 
     if mbs.node_object == "ARROWS":
         bpy.ops.object.empty_add(type = 'ARROWS', location = node.initial_pos)
