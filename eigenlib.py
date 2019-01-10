@@ -36,6 +36,8 @@ from .nodelib import axes
 import os
 from sys import float_info
 
+import pdb
+
 try: 
     from netCDF4 import Dataset
 except ImportError:
@@ -254,7 +256,13 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
                 + " ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
 
+        pdb.set_trace()
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
+        if all(idx < 0):
+            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."\
+            self.report({'ERROR'}, message)
+            logging.error(message)
+            return {'CANCELLED'}
    
         try:
             eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
@@ -263,7 +271,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
             eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
         except KeyError:
             message = "The eigenanalysis output is incomplete. Aborting."
-            self.report('ERROR', message)
+            self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
         
