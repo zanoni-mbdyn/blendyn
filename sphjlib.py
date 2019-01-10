@@ -55,6 +55,10 @@ def parse_spherical_hinge(rw, ed):
         
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
         
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion(); 
@@ -65,6 +69,7 @@ def parse_spherical_hinge(rw, ed):
     except KeyError:
         print("Blendyn::parse_spherical_hinge(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'spherical_hinge'
         el.int_label = int(rw[1])
 
@@ -116,6 +121,10 @@ def parse_spherical_pin(rw, ed):
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion(); 
         
+        # FIXME: this is here to enhance backwards compatibility.
+        # should disappear in future versions
+        el.mbclass = 'elem.joint'
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -123,6 +132,7 @@ def parse_spherical_pin(rw, ed):
     except KeyError:
         print("Blendyn::parse_spherical_pin(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
+        el.mbclass = 'elem.joint' 
         el.type = 'spherical_pin'
         el.int_label = int(rw[1])
 
@@ -226,6 +236,8 @@ def spawn_spherical_hinge_element(elem, context):
 
         grouping(context, sphjOBJ, [n1OBJ])
 
+        sphjOBJ.mbdyn.dkey = elem.name
+        sphjOBJ.mbdyn.type = 'element'
         elem.blender_object = sphjOBJ.name 
 
         return {'FINISHED'}

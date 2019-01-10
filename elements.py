@@ -80,27 +80,32 @@ bpy.utils.register_class(MBDynElemToBeUpdated)
 # end of MBDynToBeUpdated class 
 
 class MBDynElemsDictionary(bpy.types.PropertyGroup):
+    mbclass = StringProperty(
+            name = "Class of MBDyn element",
+            description  = ""
+            )
+
     type = StringProperty(
-        name = "Type of MBDyn element",
-        description = ""
-        )
+            name = "Type of MBDyn element",
+            description = ""
+            )
 
     int_label = IntProperty(
-        name = "Integer label of element",
-        description = ""
-        )
+            name = "Integer label of element",
+            description = ""
+            )
 
     string_label = StringProperty(
-        name = "String label of element",
-        description = "",
-        default = "none"
-        )
+            name = "String label of element",
+            description = "",
+            default = "none"
+            )
 
     nodes = CollectionProperty(
-        type = MBDynElemNodesColl,
-        name = "Connected nodes",
-        description = "MBDyn nodes that the element connects"
-        )
+            type = MBDynElemNodesColl,
+            name = "Connected nodes",
+            description = "MBDyn nodes that the element connects"
+            )
 
     magnitude = FloatProperty(
             name = "Magnitude of element",
@@ -109,70 +114,68 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
             )
 
     offsets = CollectionProperty(
-        type = MBDynElemOffset,
-        name = "Offsets of attach points",
-        description = "Collector of offsets of element attaching points"
-        )
+            type = MBDynElemOffset,
+            name = "Offsets of attach points",
+            description = "Collector of offsets of element attaching points"
+            )
 
     rotoffsets = CollectionProperty(
-        type = MBDynElemRotOffset,
-        name = "Rotational offsets of attach R.Fs. of joint",
-        description = "Collector of rotational offsets of element attach R.Fs."
-        )
+            type = MBDynElemRotOffset,
+            name = "Rotational offsets of attach R.Fs. of joint",
+            description = "Collector of rotational offsets of element attach R.Fs."
+            )
 
     import_function = StringProperty(
-        name = "Import operator",
-        description = "Id name of the class defining the import operator for the element"
-        )
+            name = "Import operator",
+            description = "Id name of the class defining the import operator for the element"
+            )
 
     draw_function = StringProperty(
-        name = "Draw function",
-        description = "Id of the function that is called when the element configuration is updated",
-        )
+            name = "Draw function",
+            description = "Id of the function that is called when the element configuration is updated",
+            )
 
     update_info_operator = StringProperty(
-        name = "Update operator",
-        description = "Id name of the operator that updates the element info using \
-            the current position of the blender objects representing it",
-        default = 'none'
-        )
+            name = "Update operator",
+            description = "Id name of the operator that updates the element info using \
+                    the current position of the blender objects representing it",
+                    default = 'none'
+                    )
 
     write_operator = StringProperty(
-        name = "Input write operator",
-        description = "Id name of the operator that writes the element input contribute",
-        default = 'none'
-        )
+            name = "Input write operator",
+            description = "Id name of the operator that writes the element input contribute",
+            default = 'none'
+            )
 
     info_draw = StringProperty(
-        name = "Element Info Function",
-        description = "Name of the function used to display element data in the View3D panel",
-        default = "elem_info_draw"
-        )
+            name = "Element Info Function",
+            description = "Name of the function used to display element data in the View3D panel",
+            default = "elem_info_draw"
+            )
 
     blender_object = StringProperty(
-        name = "Blender Object",
-        description = "Name of the Blender Object associated with this element"
-        )
+            name = "Blender Object",
+            description = "Name of the Blender Object associated with this element"
+            )
 
     is_imported = BoolProperty(
-        name = "Is imported flag",
-        description = "Flag set to true at the end of the import process"
-        )
+            name = "Is imported flag",
+            description = "Flag set to true at the end of the import process"
+            )
 
     update = StringProperty(
-        name = "Update function",
-        description = "Function that updates the visualization of the element",
-        default = 'none'
-        )
+            name = "Update function",
+            description = "Function that updates the visualization of the element",
+            default = 'none'
+            )
+
 bpy.utils.register_class(MBDynElemsDictionary)
 # -----------------------------------------------------------
 # end of MBDynElemsDictionary class 
 
 # Override delete operator to remove element from elements dictionary
 # when the related object is deleted
-
-
-
 class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
     """ Imports all the elements selected (by type and label range) into a single
         mesh Blender Object. Currently useful only for shell4 elements. """

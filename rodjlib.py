@@ -52,6 +52,11 @@ def parse_rod(rw, ed):
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
         el.is_imported = True
+
+        # FIXME: this is here to enhance backwards compatibility.
+        # Should disappear in future versions
+        el.mbclass = 'elem.joint'
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
     except KeyError:
@@ -59,6 +64,7 @@ def parse_rod(rw, ed):
         print("Blendyn::parse_rod(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
+        el.mbclass = 'elem.joint'
         el.type = 'rod'
         
         el.int_label = int(rw[1])
@@ -609,9 +615,8 @@ def spawn_rod_element(elem, context):
     polydata.points[1].co = p2.to_4d()
 
     rodOBJ = bpy.data.objects.new(rodobj_id, cvdata)
-    rodOBJ.mbdyn.type = 'elem.joint'
+    rodOBJ.mbdyn.type = 'element'
     rodOBJ.mbdyn.dkey = elem.name
-    rodOBJ.mbdyn.int_label= elem.int_label
     bpy.context.scene.objects.link(rodOBJ)
     elem.blender_object = rodOBJ.name
         
@@ -734,9 +739,8 @@ def spawn_rod_element(elem, context):
 #        polydata.bezier_points[1].handle_right = polydata.bezier_points[1].co
 #
 #        rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
-#        rodOBJ.mbdyn.type = 'elem.joint'
+#        rodOBJ.mbdyn.type = 'element'
 #        rodOBJ.mbdyn.dkey = elem.name
-#        rodOBJ.mbdyn.int_label = elem.int_label
 #        bpy.context.scene.objects.link(rodOBJ)
 #        elem.blender_object = rodOBJ.name
 #        elem.name = rodOBJ.name
