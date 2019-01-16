@@ -259,7 +259,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         pdb.set_trace()
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
         if all(idx < 0):
-            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."\
+            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
