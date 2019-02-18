@@ -36,8 +36,6 @@ from .nodelib import axes
 import os
 from sys import float_info
 
-import pdb
-
 try: 
     from netCDF4 import Dataset
 except ImportError:
@@ -256,7 +254,6 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
                 + " ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
 
-        pdb.set_trace()
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
         if all(idx < 0):
             message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."
