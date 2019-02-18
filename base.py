@@ -810,17 +810,18 @@ def update_driver_vars(scene):
     mbs = scene.mbdyn
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, "r", format="NETCDF3")
-    for dvar in mbs.driver_vars:
-        ncvar = netcdf_helper(nc, scene, dvar.variable)
-        dim = len(ncvar.shape)
-        if dim == 1:
-            for ii in range(len(ncvar)):
-                dvar.values[ii] = ncvar[ii] if dvar.components[ii] else 0.0
-        else:
-            for ii in range(3):
-                for jj in range(3):
-                    dvar.values[ii + jj] = ncvar[ii,jj] if dvar.components[ii+jj] else 0.0
+    if (mbs.is_loaded and mbs.use_netcdf):
+        nc = Dataset(ncfile, "r", format="NETCDF3")
+        for dvar in mbs.driver_vars:
+            ncvar = netcdf_helper(nc, scene, dvar.variable)
+            dim = len(ncvar.shape)
+            if dim == 1:
+                for ii in range(len(ncvar)):
+                    dvar.values[ii] = ncvar[ii] if dvar.components[ii] else 0.0
+            else:
+                for ii in range(3):
+                    for jj in range(3):
+                        dvar.values[ii + jj] = ncvar[ii,jj] if dvar.components[ii+jj] else 0.0
 bpy.app.handlers.frame_change_pre.append(update_driver_vars)
 
 @persistent
