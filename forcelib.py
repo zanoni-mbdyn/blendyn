@@ -38,6 +38,8 @@ try:
 except ImportError:
     pass
 
+import pdb
+
 ## Parses structural absolute force entry in the .log file 
 #  (see section E.2.22 of input manual for details)
 def parse_structural_absolute_force(rw, ed): 
@@ -570,7 +572,9 @@ def update_structural_force(elem, insert_keyframe = False):
         R0 = nodeOBJ.matrix_world.to_3x3().normalized()
         
         obj = bpy.data.objects[elem.blender_object]
+        
         F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
+
         Fl = R0.transposed()*F
 
         obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
