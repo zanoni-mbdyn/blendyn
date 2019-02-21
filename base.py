@@ -2051,8 +2051,9 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
                 if not(spawn_node_obj(context, node)):
-                    message = "Could not spawn the Blender object assigned to node {}"\
-                            .format(node.int_label + ". Object already present?")
+                    message = ("Could not spawn the Blender object assigned to node " \
+                              + str(node.int_label) \
+                              + ". Object already present?")
                     self.report({'ERROR'}, message)
                     baseLogger.error(message)
                     return {'CANCELLED'}
