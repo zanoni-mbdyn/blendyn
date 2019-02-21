@@ -570,8 +570,15 @@ def update_structural_force(elem, insert_keyframe = False):
         R0 = nodeOBJ.matrix_world.to_3x3().normalized()
         
         obj = bpy.data.objects[elem.blender_object]
-        
-        F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
+       
+        try: 
+            F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
+        except IndexError:
+            if tdx > nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]
+                pass    # we're requesting a value of the force 
+                        # at a time past the MBDyn last timestep
+            else
+                raise
 
         Fl = R0.transposed()*F
 
