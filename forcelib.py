@@ -38,8 +38,6 @@ try:
 except ImportError:
     pass
 
-import pdb
-
 ## Parses structural absolute force entry in the .log file 
 #  (see section E.2.22 of input manual for details)
 def parse_structural_absolute_force(rw, ed): 
