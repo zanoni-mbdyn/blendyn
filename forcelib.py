@@ -574,10 +574,10 @@ def update_structural_force(elem, insert_keyframe = False):
         try: 
             F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
         except IndexError:
-            if tdx > nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]
+            if tdx > nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]:
                 pass    # we're requesting a value of the force 
                         # at a time past the MBDyn last timestep
-            else
+            else:
                 raise
 
         Fl = R0.transposed()*F
