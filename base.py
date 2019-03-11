@@ -865,9 +865,9 @@ def rename_log(scene):
     except FileNotFoundError:
         pass
 
-    bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
-
-    log_messages(mbs, baseLogger, True)
+    if os.path.basename(logFile) != "untitled_not yet loaded.bylog":
+        bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
+        log_messages(mbs, baseLogger, True)
 
 bpy.app.handlers.save_post.append(rename_log)
 

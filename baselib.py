@@ -909,5 +909,11 @@ def logging_shutdown():
     print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
 
+    print("BLENDYN::logging_shutdown()::INFO: removing handlers.")
+    logger = logging.getLogger()
+    for handler in logger.handlers:
+        logging.removeHandler(handler)
+    print("BLENDYN::logging_shutdown()::INFO: done.")
+
 atexit.register(delete_log)
 atexit.register(logging_shutdown)
