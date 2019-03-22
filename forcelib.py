@@ -348,7 +348,7 @@ def spawn_structural_couple_element(elem, context):
 
         elem.blender_object = coupleOBJ.name
         coupleOBJ.mbdyn.dkey = elem.name
-        coubleOBJ.mbdyn.type = 'element'
+        coupleOBJ.mbdyn.type = 'element'
 
         # Flag the object to be updated
         ude = bpy.context.scene.mbdyn.elems_to_update.add()
@@ -570,11 +570,18 @@ def update_structural_force(elem, insert_keyframe = False):
         R0 = nodeOBJ.matrix_world.to_3x3().normalized()
         
         obj = bpy.data.objects[elem.blender_object]
-        F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
-        Fl = R0.transposed()*F
-
-        obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
-        obj.scale = Vector(( 1, 1, Fl.magnitude ))
+       
+        try: 
+            F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
+            Fl = R0.transposed()*F
+            obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
+            obj.scale = Vector(( 1, 1, Fl.magnitude ))
+        except IndexError:
+            if tdx > nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]:
+                pass    # we're requesting a value of the force 
+                        # at a time past the MBDyn last timestep
+            else:
+                raise
     else:
         pass
 # -----------------------------------------------------------

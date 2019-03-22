@@ -865,9 +865,9 @@ def rename_log(scene):
     except FileNotFoundError:
         pass
 
-    bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
-
-    log_messages(mbs, baseLogger, True)
+    if os.path.basename(logFile) != "untitled_not yet loaded.bylog":
+        bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
+        log_messages(mbs, baseLogger, True)
 
 bpy.app.handlers.save_post.append(rename_log)
 
@@ -2051,8 +2051,9 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
                 if not(spawn_node_obj(context, node)):
-                    message = "Could not spawn the Blender object assigned to node {}"\
-                            .format(node.int_label + ". Object already present?")
+                    message = ("Could not spawn the Blender object assigned to node " \
+                              + str(node.int_label) \
+                              + ". Object already present?")
                     self.report({'ERROR'}, message)
                     baseLogger.error(message)
                     return {'CANCELLED'}
