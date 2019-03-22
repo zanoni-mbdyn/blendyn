@@ -258,7 +258,8 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
         if all(idx < 0):
-            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."
+            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty. \
+                    Activate \"output geometry\" in eigenanalysis card."
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
