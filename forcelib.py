@@ -348,7 +348,7 @@ def spawn_structural_couple_element(elem, context):
 
         elem.blender_object = coupleOBJ.name
         coupleOBJ.mbdyn.dkey = elem.name
-        coubleOBJ.mbdyn.type = 'element'
+        coupleOBJ.mbdyn.type = 'element'
 
         # Flag the object to be updated
         ude = bpy.context.scene.mbdyn.elems_to_update.add()
