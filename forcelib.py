@@ -563,7 +563,7 @@ def update_structural_force(elem, insert_keyframe = False):
         tdx = int(scene.frame_current * mbs.load_frequency)
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
 
         node = nd['node_' + str(elem.nodes[0].int_label)]
         nodeOBJ = bpy.data.objects[node.blender_object]
@@ -577,7 +577,7 @@ def update_structural_force(elem, insert_keyframe = False):
             obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
             obj.scale = Vector(( 1, 1, Fl.magnitude ))
         except IndexError:
-            if tdx > nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]:
+            if tdx >= nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]:
                 pass    # we're requesting a value of the force 
                         # at a time past the MBDyn last timestep
             else:
@@ -600,7 +600,7 @@ def update_structural_couple(elem, insert_keyframe = False):
         tdx = scene.frame_current * mbs.load_frequency
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
 
         node = nd['node_' + str(elem.nodes[0].int_label)]
         nodeOBJ = bpy.data.objects[node.blender_object]

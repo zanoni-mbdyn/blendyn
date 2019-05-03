@@ -45,7 +45,7 @@ except ImportError:
 def update_curr_eigmode(self, context):
     mbs = context.scene.mbdyn
     nc = Dataset(os.path.join(os.path.dirname(mbs.file_path), \
-            mbs.file_basename + '.nc'), 'r', format='NETCDF3')
+            mbs.file_basename + '.nc'), 'r')
     eigsol_idx = context.scene.mbdyn.curr_eigsol
     if self.curr_eigmode < 1:
         self.curr_eigmode = 1
@@ -166,7 +166,7 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
         
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
 
@@ -246,7 +246,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode
