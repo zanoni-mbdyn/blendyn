@@ -36,8 +36,6 @@ from .nodelib import axes
 import os
 from sys import float_info
 
-# import pdb
-
 try: 
     from netCDF4 import Dataset
 except ImportError:
