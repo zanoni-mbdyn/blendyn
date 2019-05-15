@@ -308,7 +308,7 @@ def spawn_aero2_element(elem, context):
         bpy.data.objects.remove(bpy.data.objects[planeobj_id])
 
     # create a mesh plane
-    bpy.ops.mesh.primitive_plane_add()
+    bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
     aero2OBJ = bpy.context.scene.objects.active
     aero2OBJ.name = elem.name
     aero2OBJ.mbdyn.type = 'element'
@@ -387,7 +387,7 @@ def spawn_aero3_element(elem, context):
         bpy.data.objects.remove(bpy.data.objects[planeobj_id])
 
     # create a mesh plane
-    bpy.ops.mesh.primitive_plane_add()
+    bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
     aero3OBJ = bpy.context.scene.objects.active
     aero3OBJ.name = elem.name
     aero3OBJ.mbdyn.type = 'element'
