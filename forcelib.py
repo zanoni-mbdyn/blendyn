@@ -578,8 +578,8 @@ def update_structural_force(elem, insert_keyframe = False):
             obj.scale = Vector(( 1, 1, Fl.magnitude ))
         except IndexError:
             if tdx >= nc.variables['elem.force.' + str(elem.int_label) + '.F'].shape[0]:
-                pass    # we're requesting a value of the force 
-                        # at a time past the MBDyn last timestep
+                pass    # we're requesting a value of the
+                        # force beyond the last timestep
             else:
                 raise
     else:
@@ -607,11 +607,19 @@ def update_structural_couple(elem, insert_keyframe = False):
         R0 = nodeOBJ.matrix_world.to_3x3().normalized()
         
         obj = bpy.data.objects[elem.blender_object]
-        M = Vector(( nc.variables['elem.couple.' + str(elem.int_label) + '.M'][tdx,:] ))
-        Ml = R0.transposed()*M
 
-        obj.rotation_quaternion = (-Ml).to_track_quat('-Z', 'Y')
-        obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))
+        try:
+            M = Vector(( nc.variables['elem.couple.' + str(elem.int_label) + '.M'][tdx,:] ))
+            Ml = R0.transposed()*M
+            obj.rotation_quaternion = (-Ml).to_track_quat('-Z', 'Y')
+            # FIXME: This results in very large objects!
+            obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))
+        except IndexError:
+            if tdx >= nc.variables['elem.couple.' + str(elem.int_label) + '.M'].shape[0]:
+                pass    # we're requesting a value of the
+                        # couple beyond the last timestep
+            else:
+                raise
     else:
         pass
     pass

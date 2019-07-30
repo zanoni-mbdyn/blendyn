@@ -75,7 +75,7 @@ try:
     import pygal
     HAVE_PLOT = True
     from .plotlib import *
-except ImportError as ierr:
+except (ImportError, OSError) as ierr:
     print("Blendyn:: could not enable the plotting module. Plotting  "\
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))

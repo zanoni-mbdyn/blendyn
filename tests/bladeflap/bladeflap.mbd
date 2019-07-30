@@ -37,13 +37,41 @@ begin: data;
 	integrator: initial value;
 end: data;
 
+set: integer GROUND = 1;
+set: integer HUB = 2;
+set: integer BLADE1_FLAP = 10;
+set: integer BLADE1_MIDDLE = 11;
+set: integer BLADE1_TIP = 12;
+
+set: real OMEGA = 40.84;		# radian/s, hub angular velocity
+set: real R = 5.5;			# m, rotor radius
+set: real FLAP_OFFSET = 0.04*R;		# m, flap hinge offset
+set: real M = 50.;			# kg, mass of the blade 
+set: real SPAN = (R - FLAP_OFFSET);	# m, blade length
+
 begin: initial value;
 	initial time: 0.;
-	final time: 60.;
-	time step: 1.e-3;	# time step must allow about 100 steps/rev
+	
+	final time: (1./OMEGA)*70.;	# revolutions
+	# final time: (1./OMEGA) * 4.;  	# for eigenanalysis
+	
+	time step: (1./OMEGA) / 250.;	# time step must allow at least 100 steps/rev
 
 	max iterations: 60;
 	tolerance: 1.e-6;
+
+	linear solver: naive, colamd;
+	output: counter;
+	# output: residual;
+
+	derivatives tolerance: 1e-1;
+	
+	/*
+	eigenanalysis: (1./OMEGA) * 3.,
+		use lapack,
+		output eigenvectors,
+		output geometry;
+	*/
 end: initial value;
 
 begin: control data;
@@ -66,23 +94,18 @@ begin: control data;
 	beams: 
 		+1	# blade beam
 	;
+
 	forces:
 		+1	# perturbation
 	;
+
 	output results: netcdf;
+
+	/* for eigenanalysis
+	rigid body kinematics:
+		const, angular velocity, 0.0, 0.0, OMEGA;
+	*/
 end: control data;
-
-set: integer GROUND = 1;
-set: integer HUB = 2;
-set: integer BLADE1_FLAP = 10;
-set: integer BLADE1_MIDDLE = 11;
-set: integer BLADE1_TIP = 12;
-
-set: real OMEGA = 40.84;		# radian/s, hub angular velocity
-set: real R = 5.5;			# m, rotor radius
-set: real FLAP_OFFSET = 0.04*R;		# m, flap hinge offset
-set: real M = 50.;			# kg, mass of the blade 
-set: real SPAN = (R - FLAP_OFFSET);	# m, blade length
 
 /*
 
@@ -114,6 +137,7 @@ reference: HUB,
 	reference, GROUND, eye,
 	reference, GROUND, null,
 	reference, GROUND, 0., 0., OMEGA;
+	# reference, GROUND, 0., 0., 0.;  # for eigenanalysis
 
 reference: BLADE1_FLAP,
 	reference, HUB, FLAP_OFFSET, 0., 0.,
@@ -183,6 +207,7 @@ begin: elements;
 			reference, GROUND, null,
 			hinge, reference, GROUND, eye,
 		const, OMEGA;
+		# const, 0.;	# for eigenanalysis
 
 	/* revolute joint axis about joint's local axis 3
 	 * which corresponds to axis 2 in blade's reference frame
@@ -237,6 +262,8 @@ begin: elements;
 		same, 
 		same;
 
+
+	# perturbation: comment out for eigenanalysis
 	force: BLADE1_TIP, absolute,
 		BLADE1_TIP,
 		position, null,
@@ -248,7 +275,6 @@ begin: elements;
 			0.,             # initial value
 			forever,	
 			1.;		# final value
-			
 end: elements;
 
 # vim:ft=mbd
