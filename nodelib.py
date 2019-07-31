@@ -65,7 +65,7 @@ def set_obj_locrot_mov(obj, rw):
     obj.keyframe_insert(data_path = "location")
     
     # Orientation
-    dictobj = get_dict_obj(bpy.context, obj)
+    dictobj = get_dict_item(bpy.context, obj)
     parametrization = dictobj.parametrization
     
     if parametrization[0:5] == 'EULER':

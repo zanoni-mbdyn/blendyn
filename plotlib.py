@@ -59,7 +59,7 @@ class BLENDYN_OT_scene_plot_var_sxx(bpy.types.Operator):
         # get requested netCDF variable
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        nc = Dataset(ncfile, 'r')
 
         # get its dimensions
         pvar = mbs.plot_vars[mbs.plot_var_index]
@@ -193,7 +193,7 @@ class BLENDYN_OT_object_plot_var_sxx(bpy.types.Operator):
         # get requested netCDF variable
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        nc = Dataset(ncfile, 'r')
 
         # get its dimensions
         pvar = mbs.plot_vars[mbo.plot_var_index]
@@ -342,7 +342,7 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
             # get requested netCDF variable
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r', format='NETCDF3')
+            nc = Dataset(ncfile, 'r')
             ncvar = nc.variables[pvar.name]
 
             # get its dimensions
@@ -436,7 +436,7 @@ class BLENDYN_OT_scene_plot_var(bpy.types.Operator):
         # get requested netCDF variable
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        nc = Dataset(ncfile, 'r')
 
         # get its dimensions
         pvar = mbs.plot_vars[mbs.plot_var_index]
@@ -523,7 +523,7 @@ class BLENDYN_OT_object_plot_var(bpy.types.Operator):
         pvar = mbs.plot_vars[mbo.plot_var_index]
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        nc = Dataset(ncfile, 'r')
         ncvar = nc.variables[pvar.name]
 
         # get its dimensions
@@ -594,7 +594,7 @@ class BLENDYN_OT_object_plot_var(bpy.types.Operator):
 
         message = "Variable " + pvar.name + " plotted"
         self.report({'INFO'}, message)
-        logging.info("BLENDYN_OT_object_plot_var::exectute(): " + message)
+        logging.info("BLENDYN_OT_object_plot_var::execute(): " + message)
         return {'FINISHED'}
 # --------------------------------------------------
 # end of BLENDYN_OT_object_plot_var class
@@ -769,7 +769,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r', format='NETCDF3')
+            nc = Dataset(ncfile, 'r')
             row.template_list("MBDynPlotVar_Object_UL_List", \
                     "MBDyn variable to plot", mbs, "plot_vars", \
                     mbo, "plot_var_index")
@@ -864,7 +864,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r', format='NETCDF3')
+            nc = Dataset(ncfile, 'r')
             row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
                     mbs, "plot_var_index")
             try:

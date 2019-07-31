@@ -11,8 +11,8 @@
                         position, reference, CURR_ROTOR, null,
                         orientation, reference, CURR_ROTOR, eye,
                 CURR_ROTOR + HUB,
-                        position, reference,CURR_ROTOR, null,
-                        orientation, reference,CURR_ROTOR, eye,
+                        position, reference, CURR_ROTOR, null,
+                        orientation, reference, CURR_ROTOR, eye,
                 const, omega;
 
         /*

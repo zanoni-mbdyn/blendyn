@@ -260,10 +260,6 @@ def spawn_total_joint_element(elem, context):
             n2OBJ.scale.magnitude)
     totjOBJ.scale = Vector(( s, s, s ))
 
-    # set mbdyn props of object
-    totOBJ.mbdyn.type = 'element'
-    totjOBJ.mbdyn.dkey = elem.name
-
     # create an object representing the RF used to express the relative
     # position w.r.t. node 1, for model debugging
     bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
@@ -313,7 +309,10 @@ def spawn_total_joint_element(elem, context):
 
     grouping(context, totjOBJ, [n1OBJ, n2OBJ, RF1p, RF1r, RF2p, RF2r])
 
+    # set mbdyn props of object
     elem.blender_object = totjOBJ.name
+    totjOBJ.mbdyn.dkey = elem.name
+    totjOBJ.mbdyn.type = 'element'
 
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -336,19 +335,19 @@ def total_info_draw(elem, layout):
 
             # Display offset from node 1
             row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            row.label(text = "offset 1 in node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[0], "value", text = "", slider = False)
             
             # Display position orientation -  node 1
             row = layout.row()
-            row.label(text = "pos. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "pos. orientation node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
 
             # Display rotation orientation -  node 1
             row = layout.row()
-            row.label(text = "rot. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "rot. orientation node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
 
@@ -364,19 +363,19 @@ def total_info_draw(elem, layout):
 
             # Display offset from node 2
             row = layout.row()
-            row.label(text = "offset 2 in Node " + node.string_label + " R.F.")
+            row.label(text = "offset 2 in node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[1], "value", text = "", slider = False)
             
             # Display position orientation -  node 2
             row = layout.row()
-            row.label(text = "pos. orientation node 2" + node.string_label + " R.F.")
+            row.label(text = "pos. orientation node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[2], "value", text = "", slider = False)
 
             # Display rotation orientation -  node 2
             row = layout.row()
-            row.label(text = "rot. orientation node 2" + node.string_label + " R.F.")
+            row.label(text = "rot. orientation node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[3], "value", text = "", slider = False)
 
@@ -607,19 +606,19 @@ def total_pin_info_draw(elem, layout):
 
             # Display offset from node 1
             row = layout.row()
-            row.label(text = "offset 1 in Node " + node.string_label + " R.F.")
+            row.label(text = "offset 1 in node R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[0], "value", text = "", slider = False)
             
             # Display position orientation -  node 1
             row = layout.row()
-            row.label(text = "pos. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "pos. orientation node R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[0], "value", text = "", slider = False)
 
             # Display rotation orientation -  node 1
             row = layout.row()
-            row.label(text = "rot. orientation node 1" + node.string_label + " R.F.")
+            row.label(text = "rot. orientation node R.F.")
             col = layout.column(align = True)
             col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
 

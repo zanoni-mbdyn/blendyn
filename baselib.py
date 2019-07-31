@@ -99,7 +99,7 @@ def get_plot_vars_glob(context):
     if mbs.use_netcdf:
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r', format='NETCDF3')
+        nc = Dataset(ncfile, 'r')
         N = len(nc.variables["time"])
 
         var_list = list()
@@ -114,7 +114,7 @@ def setup_import(filepath, context):
     mbs = context.scene.mbdyn
     mbs.file_path, mbs.file_basename = path_leaf(filepath)
     if filepath[-2:] == 'nc':
-        nc = Dataset(filepath, "r", format="NETCDF3")
+        nc = Dataset(filepath, "r")
         mbs.use_netcdf = True
         mbs.num_rows = 0
         try:
@@ -157,7 +157,7 @@ def no_output(context):
     if mbs.use_netcdf:
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
         list1 = nc.variables.keys()
         regex = re.compile(r'node.struct.*\.X$')
         list2 = list(filter(regex.search, list1))
@@ -300,7 +300,7 @@ def parse_log_file(context):
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, "r", format="NETCDF3")
+            nc = Dataset(ncfile, "r")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
             disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
@@ -691,7 +691,7 @@ def get_render_vars(self, context):
     ed = mbs.elems
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, "r", format="NETCDF3")
+    nc = Dataset(ncfile, "r")
     units = ['m/s', 's', 'm', 'N', 'Nm']
     render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
     render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
@@ -770,8 +770,8 @@ def comp_repr(components, value, context):
     mbs = context.scene.mbdyn
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, "r", format="NETCDF3")
-    var = nc.variables[value]
+    nc = Dataset(ncfile, "r")
+    var = nc.variables[variable]
     dim = len(var.shape)
 
     comps = ''
@@ -810,7 +810,7 @@ def set_motion_paths_netcdf(context):
 
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, "r", format="NETCDF3")
+    nc = Dataset(ncfile, "r")
     nctime = nc.variables["time"]
 
     mbs.time_step = nctime[1]
@@ -908,9 +908,14 @@ def set_motion_paths_netcdf(context):
 # end of set_motion_paths_netcdf() function
 class BlenderHandler(logging.Handler):
     def emit(self, record):
+        MAXKEYLEN = 2**6 - 1    # FIXME: Is this universal?
         log_entry = self.format(record)
-        editor = bpy.data.texts[os.path.basename(logFile)]
-        editor.write(log_entry + '\n')
+        try:
+            editor = bpy.data.texts[os.path.basename(logFile)]
+            editor.write(log_entry + '\n')
+        except KeyError:
+            logtext = os.path.basename(logFile)
+            editor = bpy.data.texts[logtext[0:MAXKEYLEN]]
 
 def log_messages(mbs, baseLogger, saved_blend):
         try:
@@ -950,8 +955,14 @@ def delete_log():
             pass
 
 def logging_shutdown():
-    print("Blendyn::logging_shutdown(): shutting down logs.")
+    print("Blendyn::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
+
+    print("Blendyn::logging_shutdown()::INFO: removing handlers.")
+    logger = logging.getLogger()
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+    print("Blendyn::logging_shutdown()::INFO: done.")
 
 atexit.register(delete_log)
 atexit.register(logging_shutdown)

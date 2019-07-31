@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # MBDynImporter -- eigenlib.py
-# Copyright (C) 2016 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2014-2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -45,7 +45,7 @@ except ImportError:
 def update_curr_eigmode(self, context):
     mbs = context.scene.mbdyn
     nc = Dataset(os.path.join(os.path.dirname(mbs.file_path), \
-            mbs.file_basename + '.nc'), 'r', format='NETCDF3')
+            mbs.file_basename + '.nc'), 'r')
     eigsol_idx = context.scene.mbdyn.curr_eigsol
     if self.curr_eigmode < 1:
         self.curr_eigmode = 1
@@ -166,7 +166,7 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
         
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
 
@@ -186,42 +186,50 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
             obj = bpy.data.objects[dictobj.blender_object]
             obj.select = True
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
-            
-            obj.location = Vector(( nc.variables[node_var + 'X'][eigsol.step - 1, :] ))
-            obj.keyframe_insert(data_path = "location")
-
-            if dictobj.parametrization[0:5] == 'EULER':
-                eu_seq = axes[dictobj.parametrization[7]] +\
-                         axes[dictobj.parametrization[6]] +\
-                         axes[dictobj.parametrization[5]]
-                obj.rotation_mode = eu_seq
-                obj.rotation_euler = \
-                        Euler(\
-                            Vector (( \
-                               math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :]) \
-                                )), \
-                                eu_seq
-                            )
-                obj.keyframe_insert(data_path = "rotation_euler")
-            elif dictobj.parametrization == 'PHI':
-                obj.rotation_mode = 'AXIS_ANGLE'
-                rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
-                rotvec_norm = rotvec.normalized()
-                obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
-                        rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
-                obj.keyframe_insert(data_path = "rotation_axis_angle")
-            elif dictobj.parametrization == 'MATRIX':
-                obj.rotation_mode = 'QUATERNION'
-                R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
-                obj.rotation_quaternion = R.to_quaternion()
-                obj.keyframe_insert(data_path = "rotation_quaternion")
-            else:
-                # Should not be reached
-                print("Blendyn::Tools_OT_MBDyn_Eigen_Geometry::execute()::ERROR:"\
-                        + " Unrecognised rotation parametrization")
-                message = "Unrecognised rotation parametrization"
-                self.report({'ERROR'}, message)
+           
+            try:
+                obj.location = Vector(( nc.variables[node_var + 'X'][eigsol.step - 1, :] ))
+            except KeyError:
+                message = "Output for node " + str(nd[ndx].int_label) + " not found. "\
+                        + "It will not be animated"
+                self.report({'WARNING'}, message)
                 logging.error(message)
+                pass
+            else:
+                obj.keyframe_insert(data_path = "location")
+    
+                if dictobj.parametrization[0:5] == 'EULER':
+                    eu_seq = axes[dictobj.parametrization[7]] +\
+                             axes[dictobj.parametrization[6]] +\
+                             axes[dictobj.parametrization[5]]
+                    obj.rotation_mode = eu_seq
+                    obj.rotation_euler = \
+                            Euler(\
+                                Vector (( \
+                                   math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :]) \
+                                    )), \
+                                    eu_seq
+                                )
+                    obj.keyframe_insert(data_path = "rotation_euler")
+                elif dictobj.parametrization == 'PHI':
+                    obj.rotation_mode = 'AXIS_ANGLE'
+                    rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
+                    rotvec_norm = rotvec.normalized()
+                    obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
+                            rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
+                    obj.keyframe_insert(data_path = "rotation_axis_angle")
+                elif dictobj.parametrization == 'MATRIX':
+                    obj.rotation_mode = 'QUATERNION'
+                    R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
+                    obj.rotation_quaternion = R.to_quaternion()
+                    obj.keyframe_insert(data_path = "rotation_quaternion")
+                else:
+                    # Should not be reached
+                    print("Blendyn::Tools_OT_MBDyn_Eigen_Geometry::execute()::ERROR:"\
+                            + " Unrecognised rotation parametrization")
+                    message = "Unrecognised rotation parametrization"
+                    self.report({'ERROR'}, message)
+                    logging.error(message)
             
             obj.select = False
 
@@ -246,7 +254,7 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r", format="NETCDF3")
+        nc = Dataset(ncfile, "r")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode
@@ -255,14 +263,23 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
                 + " ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
-    
-        eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
-        eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
-        eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
-        eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
-        
-        print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
-                + " eigvec_abs = {}".format(eigvec_abs))
+        if all(idx < 0):
+            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."\
+                    + " Activate \"output geometry\" in eigenanalysis card."
+            self.report({'ERROR'}, message)
+            logging.error(message)
+            return {'CANCELLED'}
+   
+        try:
+            eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
+            eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
+            eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
+            eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
+        except KeyError:
+            message = "The eigenanalysis output is incomplete. Aborting."
+            self.report({'ERROR'}, message)
+            logging.error(message)
+            return {'CANCELLED'}
         
         eigvec_phase = np.arctan2(eigvec_im, eigvec_re)
         
