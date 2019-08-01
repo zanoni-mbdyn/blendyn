@@ -154,9 +154,9 @@ bpy.utils.register_class(MBDynEigenanalysisProps)
 # -----------------------------------------------------------
 # end of MBDynEigenanalysisProps class
 
-class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
+class BLENDYN_OT_mbdyn_eigen_geometry(bpy.types.Operator):
     """ Visualizes the reference geometry for the current eigensolution  """ 
-    bl_idname = "ops.mbdyn_eig_geometry"
+    bl_idname = "BLENDYN_OT_mbdyn_eigen_geometry"
     bl_label = "Visualize reference geometry for current eigensolution"
 
     def execute(self, context):
@@ -225,7 +225,7 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
                     obj.keyframe_insert(data_path = "rotation_quaternion")
                 else:
                     # Should not be reached
-                    print("Blendyn::Tools_OT_MBDyn_Eigen_Geometry::execute()::ERROR:"\
+                    print("Blendyn::BLENDYN_OT_mbdyn_eigen_geometry::execute()::ERROR:"\
                             + " Unrecognised rotation parametrization")
                     message = "Unrecognised rotation parametrization"
                     self.report({'ERROR'}, message)
@@ -239,9 +239,9 @@ class Tools_OT_MBDyn_Eigen_Geometry(bpy.types.Operator):
         bpy.context.scene.frame_current = frame
         return {'FINISHED'}
 # -----------------------------------------------------------
-# end of Tools_OT_MBDyn_Eigen_Geometry class
+# end of BLENDYN_OT_mbdyn_eigen_geometry class
 
-class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
+class BLENDYN_OT_mbdyn_animate_eigenmode(bpy.types.Operator):
     """ Animates the model to show the currently selected eigenmode """
     bl_idname = "ops.mbdyn_eig_animate_mode"
     bl_label = "Visualize the currently selected eigenmode"
@@ -259,12 +259,12 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode
         
-        print("Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+        print("Blendyn::BLENDYN_OT_mbdyn_animate_eigenmode:execute():"\
                 + " ops.mbdyn_eig_animate_mode: animating mode " + str(cem))
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
         if all(idx < 0):
-            message = "Tools_OT_MBDyn_Animate_Eigenmode::execute(): eig.idx is empty."\
+            message = "BLENDYN_OT_mbdyn_animate_eigenmode::execute(): eig.idx is empty."\
                     + " Activate \"output geometry\" in eigenanalysis card."
             self.report({'ERROR'}, message)
             logging.error(message)
@@ -311,13 +311,13 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
             node_idx = idx[np.where(nodes == nd[ndx].int_label)[0][0]]
 
             if node_idx < 0:
-                message = "Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                message = "Blendyn::BLENDYN_OT_mbdyn_animate_eigenmode:execute():"\
                     + " skipped Object " + nd[ndx].blender_object \
                     + " with (dummy) node_idx = " + str(node_idx)
                 logging.warning(message)
                 print(message)
             else:
-                message = "Blendyn::Tools_OT_MBDyn_Animate_Eigenmode:execute():"\
+                message = "Blendyn::BLENDYN_OT_mbdyn_animate_eigenmode:execute():"\
                     + " animating Object with node_idx = " + str(node_idx)
                 logging.info(message)
                 print(message)
@@ -374,5 +374,5 @@ class Tools_OT_MBDyn_Animate_Eigenmode(bpy.types.Operator):
         wm.progress_end()
         return {'FINISHED'}
 # -----------------------------------------------------------
-# end of Tools_OT_MBDyn_Animate_Eigenmode class
+# end of BLENDYN_OT_mbdyn_animate_eigenmode class
 

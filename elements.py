@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file elements.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -39,47 +39,47 @@ import ntpath, os, csv
 
 from .elementlib import *
 
-class MBDynElemOffset(bpy.types.PropertyGroup):
+class BLENDYN_PG_elem_pos_offset(bpy.types.PropertyGroup):
     value = FloatVectorProperty(
         name = "Offset value",
 	description = "The offset vector, with respect to the node",
         size = 3,
         precision = 6
 	)
-bpy.utils.register_class(MBDynElemOffset)
 # -----------------------------------------------------------
-# end of MBDynElemOffset class 
+# end of BLENDYN_PG_elem_pos_offset class 
+bpy.utils.register_class(BLENDYN_PG_elem_pos_offset)
 
-class MBDynElemRotOffset(bpy.types.PropertyGroup):
+class BLENDYN_PG_elem_rot_offset(bpy.types.PropertyGroup):
     value = FloatVectorProperty(
         name = "Offset value",
         description = "The rotational offset quaternion, with respect to the node",
         size = 4,
         precision = 6
         )
-bpy.utils.register_class(MBDynElemRotOffset)
 # -----------------------------------------------------------
-# end of MBDynElemRotOffset class 
+# end of BLENDYN_PG_elem_rot_offset class 
+bpy.utils.register_class(BLENDYN_PG_elem_rot_offset)
 
-class MBDynElemNodesColl(bpy.types.PropertyGroup):
+class BLENDYN_PG_nodes_collection(bpy.types.PropertyGroup):
     int_label = IntProperty(
         name = "MBDyn node ID",
         description = "",
         )
-bpy.utils.register_class(MBDynElemNodesColl)
 # -----------------------------------------------------------
-# end of MBDynElemNodesColl class 
+# end of BLENDYN_PG_nodes_collection class 
+bpy.utils.register_class(BLENDYN_PG_nodes_collection)
 
-class MBDynElemToBeUpdated(bpy.types.PropertyGroup):
+class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
     dkey = StringProperty(
             name = "Key of element to be updated",
             description = "",
             )
-bpy.utils.register_class(MBDynElemToBeUpdated)
 # -----------------------------------------------------------
-# end of MBDynToBeUpdated class 
+# end of BLENDYN_PG_elem_to_be_updated class 
+bpy.utils.register_class(BLENDYN_PG_elem_to_be_updated)
 
-class MBDynElemsDictionary(bpy.types.PropertyGroup):
+class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
     mbclass = StringProperty(
             name = "Class of MBDyn element",
             description  = ""
@@ -102,7 +102,7 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
             )
 
     nodes = CollectionProperty(
-            type = MBDynElemNodesColl,
+            type = BLENDYN_PG_nodes_collection,
             name = "Connected nodes",
             description = "MBDyn nodes that the element connects"
             )
@@ -114,13 +114,13 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
             )
 
     offsets = CollectionProperty(
-            type = MBDynElemOffset,
+            type = BLENDYN_PG_elem_pos_offset,
             name = "Offsets of attach points",
             description = "Collector of offsets of element attaching points"
             )
 
     rotoffsets = CollectionProperty(
-            type = MBDynElemRotOffset,
+            type = BLENDYN_PG_elem_rot_offset,
             name = "Rotational offsets of attach R.Fs. of joint",
             description = "Collector of rotational offsets of element attach R.Fs."
             )
@@ -170,16 +170,16 @@ class MBDynElemsDictionary(bpy.types.PropertyGroup):
             default = 'none'
             )
 
-bpy.utils.register_class(MBDynElemsDictionary)
 # -----------------------------------------------------------
-# end of MBDynElemsDictionary class 
+# end of BLENDYN_PG_elems_dictionary class 
+bpy.utils.register_class(BLENDYN_PG_elems_dictionary)
 
 # Override delete operator to remove element from elements dictionary
 # when the related object is deleted
-class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
+class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
     """ Imports all the elements selected (by type and label range) into a single
         mesh Blender Object. Currently useful only for shell4 elements. """
-    bl_idname =  "add.mbdyn_elem_as_mesh"
+    bl_idname =  "BLENDYN_OT_import_elements_as_mesh"
     bl_label = "Import MBDyn elements as single mesh"
 
     def execute(self, context):
@@ -208,8 +208,9 @@ class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
                 try:
                     verts.append(bpy.data.objects[nd[node].blender_object].location)
                 except KeyError:
-                    message = "Could not find Blender Objects for " + \
-                            elem.name + " import"
+                    message = "BLENDYN_OT_import_elements_as_mesh::execute(): "\
+                              + "Could not find Blender Objects for " \
+                              + elem.name + " import"
                     self.report({'ERROR'}, message)
                     logging.error(message)
         
@@ -248,8 +249,10 @@ class Scene_OT_MBDyn_Import_Elements_as_Mesh(bpy.types.Operator):
 
             return {'FINISHED'}
         else:
-            message = "No mesh data was created"
+            message = "BLENDYN_OT_import_elements_as_mesh::execute(): "\
+                      + "No mesh data was created"
             self.report({'WARNING'}, message)
             logging.warranty(message)
             return {'CANCELLED'}
-
+# end of BLENDYN_OT_import_elements_as_mesh class
+bpy.utils.register_class(BLENDYN_OT_import_elements_as_mesh)
