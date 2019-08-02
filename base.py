@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file base.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -22,8 +22,6 @@
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-# TODO: check for unnecessary stuff
-
 import os
 
 import bpy
@@ -39,12 +37,10 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import ntpath, os, csv, math, time, shutil
+import os, shutil
 import numpy as np
 
-from collections import namedtuple
 import subprocess
-from multiprocessing import Process
 import json
 
 try:
@@ -515,12 +511,14 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
         description = "If this value is X, different than 0, the import starts at X seconds",
         min = 0.0,
         default = 0.0
+        update = update_start_time
         )
 
     end_time = FloatProperty(
         name = "End Time",
         description = "If this value is X, different than total simulation time, the import stops at X seconds",
         min = 0.0
+        update = update_end_time
         )
 
     time_step = FloatProperty(
@@ -873,7 +871,7 @@ bpy.app.handlers.save_post.append(rename_log)
 
 class BLENDYN_OT_standard_import(bpy.types.Operator):
     """ Standard Import Process """
-    bl_idname = "BLENDYN_OT_standard_import"
+    bl_idname = "mbdyn.BLENDYN_OT_standard_import"
     bl_label = "MBDyn Standard Import"
 
     def execute(self, context):
@@ -899,7 +897,7 @@ bpy.utils.register_class(BLENDYN_OT_standard_import)
 
 class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
-    bl_idname = "BLENDYN_OT_read_mbdyn_log_file"
+    bl_idname = "mbdyn.BLENDYN_OT_read_mbdyn_log_file"
     bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
@@ -908,52 +906,66 @@ class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
 
         missing = context.scene.mbdyn.missing
         if len(obj_names) > 0:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Some of the nodes/elements are missing in the new .log file"
+            message = "BLENDYN_OT_read_mbdyn_log::execure(): "\
+                    + "Some of the nodes/elements are missing in the new .log file"
+            self.report({'WARNING'}, message)
             baseLogger.warning(message)
             hide_or_delete(obj_names, missing)
 
         if len(mbs.disabled_output) > 0:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: No output for nodes " + mbs.disabled_output
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "No output for nodes " + mbs.disabled_output
+            self.report({'WARNING'}, message)
             baseLogger.warning(message)
 
         if ret_val == {'LOG_NOT_FOUND'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::ERROR: MBDyn .log file not found"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + ".log file not found"
             self.report({'ERROR'}, message)
             baseLogger.error(message)
             return {'CANCELLED'}
 
         elif ret_val == {'NODES_NOT_FOUND'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::ERROR: The .log file selected does not contain MBDyn nodes definitions"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "The .log file selected does not contain node definitions"
             self.report({'ERROR'}, message)
             baseLogger.error(message)
             return {'CANCELLED'}
 
         elif ret_val == {'MODEL_INCONSISTENT'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Contents of MBDyn .log file inconsistent with the scene"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "Contents of .log file are not onsistent with "\
+                    + "current Blender scene."
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'NODES_INCONSISTENT'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Nodes in MBDyn .log file inconsistent with the scene"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "Nodes in .log file are not consistent with "\
+                    + "current Blender scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'ELEMS_INCONSISTENT'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Elements in MBDyn .log file are inconsistent with the scene"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "Elements in .log file are not consistent with "\
+                    + "curren Blender scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'OUT_NOT_FOUND'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::WARNING: Could not locate the .out file"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "Could not locate the .out file"
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'FINISHED'}
 
         elif ret_val == {'FINISHED'}:
-            message = "Blendyn::BLENDYN_OT_read_mbdyn_log::INFO:  MBDyn model imported successfully"
+            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
+                    + "MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True
             bpy.context.scene.render.use_stamp_note = True
             self.report({'INFO'}, message) 
@@ -970,8 +982,7 @@ bpy.utils.register_class(BLENDYN_OT_read_mbdyn_log)
 
 class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
     """ Sets MBDyn's output files path and basename """
-
-    bl_idname = "BLENDYN_OT_select_output_file"
+    bl_idname = "mbdyn.BLENDYN_OT_select_output_file"
     bl_label = "Select MBDyn results file"
 
     filter_glob = StringProperty(
@@ -988,13 +999,18 @@ class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
         si_retval = setup_import(self.filepath, context)
 
         if si_retval == {'NETCDF_ERROR'}:
-            self.report({'ERROR'}, "NetCDF module not imported correctly")
+            message = "BLENDYN_OT_select_output_file::execute(): "\
+                    + "NetCDF module not imported correctly" 
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
             return {'CANCELLED'}
         elif si_retval == {'FILE_ERROR'}:
-            self.report({'ERROR'}, "Output file not set correctly (no file selected?)")
+            message = "BLENDYN_OT_select_output_file::execute(): "\
+                    + "Output file not set correctly (no file selected?)"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
         elif si_retval == {'FINISHED'}:
             mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
-            
             baseLogger.handlers = []
             log_messages(mbs, baseLogger, False)
             return si_retval
@@ -1009,26 +1025,29 @@ bpy.utils.register_class(BLENDYN_OT_select_output_file)
 class BLENDYN_OT_assign_labels(bpy.types.Operator):
     """ Assigns 'recognisable' labels to MBDyn nodes and elements by
         parsing the .log file """
-    bl_idname = "BLENDYN_OT_assign_labels"
+    bl_idname = "mbdyn.BLENDYN_OT_assign_labels"
     bl_label = "Import labels of MBDyn objects"
 
     def execute(self, context):
         ret_val = assign_labels(context)
         if ret_val == {'NOTHING_DONE'}:
-            message = 'MBDyn labels file provided appears to not contain ' +\
-            'correct labels.'
+            message = "BLENDYN_OT_assign_labels::execute(): "\
+                    +  "MBDyn labels file provided appears to not contain " \
+                    + "correctly defined labels."
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'CANCELLED'}
 
         elif ret_val == {'LABELS_UPDATED'}:
-            message = "MBDyn labels imported"
+            message = "BLENDYN_OT_assign_labels::execute(): "\
+                    + "MBDyn labels imported correctly."
             self.report({'INFO'}, message)
             baseLogger.info(message)
             return {'FINISHED'}
 
         elif ret_val == {'FILE_NOT_FOUND'}:
-            message = "MBDyn labels file not found..."
+            message = "BLENDYN_OT_assign_labels::execute(): "\
+                    + "MBDyn labels file not found."
             self.report({'ERROR'}, message)
             baseLogger.error(message)
             return {'CANCELLED'}
@@ -1042,7 +1061,7 @@ bpy.utils.register_class(BLENDYN_OT_assign_labels)
 class BLENDYN_OT_clear_data(bpy.types.Operator):
     """ Clears MBDyn elements and nodes dictionaries, essentially\
     'cleaning' the scene of all MBDyn related data"""
-    bl_idname = "BLENDYN_OT_clear_data"
+    bl_idname = "mbdyn.BLENDYN_OT_clear_data"
     bl_label = "Clear MBDyn Data"
 
     def execute(self, context):
@@ -1053,7 +1072,8 @@ class BLENDYN_OT_clear_data(bpy.types.Operator):
             if isinstance(dummy, bpy.types.bpy_prop_collection):
                 dummy.clear()
 
-        message = "Scene MBDyn data cleared."
+        message = "BLENDYN_OT_clear_data::execute(): "\
+                + "Cleared MBDyn data."
         self.report({'INFO'}, message)
         baseLogger.info(message)
         return {'FINISHED'}
@@ -1067,13 +1087,17 @@ bpy.utils.register_class(BLENDYN_OT_clear_data)
 class BLENDYN_OT_set_mbdyn_install_path(bpy.types.Operator):
     """Sets the Installation Path of MBDyn to be used\
         in running simulation"""
-    bl_idname = "BLENDYN_OT_set_mbdyn_install_path"
+    bl_idname = "mbdyn.BLENDYN_OT_set_mbdyn_install_path"
     bl_label = "Set installation path of MBDyn"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
         mbdyn_path = mbs.install_path
         config = {'mbdyn_path': mbdyn_path}
+        message = "BLENDYN_OT_set_mbdyn_install_path::execute(): "\
+                + "MBDyn install path set to "
+                + mbdyn_path
+        baseLogger.info(message)
 
         with open(os.path.join(mbs.addon_path, 'config.json'), 'w') as f:
             json.dump(config, f)
@@ -1089,8 +1113,7 @@ bpy.utils.register_class(BLENDYN_OT_set_mbdyn_install_path)
 class BLENDYN_OT_mbdyn_default_install_path(bpy.types.Operator):
     """Sets the Installation path of MBDyn to the value\
         found in the system $PATH variable"""
-
-    bl_idname = "BLENDYN_OT_mbdyn_default_install_path"
+    bl_idname = "mbdyn.BLENDYN_OT_mbdyn_default_install_path"
     bl_label = "Set Default Path for MBDyn"
 
     def execute(self, context):
@@ -1098,9 +1121,14 @@ class BLENDYN_OT_mbdyn_default_install_path(bpy.types.Operator):
 
         if shutil.which('mbdyn'):
             mbs.install_path = os.path.dirname(shutil.which('mbdyn'))
-
+            message = "BLENDYN_OT_mbdyn_default_install_path::execute(): "\
+                    + "MBDyn found in system's PATH at "\
+                    + mbs.install_path
+            self.report({'INFO'}, message)
+            baseLogger.info(message)
         else:
-            message = 'MBDyn path is not set in the system $PATH variable'
+            message = "BLENDYN_OT_mbdyn_default_install_path::execute(): "\
+                    + "MBDyn path is not set in the system $PATH variable"
             self.report({'ERROR'}, message)
             baseLogger.error(message)
 
@@ -1115,8 +1143,7 @@ bpy.utils.register_class(BLENDYN_OT_mbdyn_default_install_path)
 class BLENDYN_OT_config_mbdyn_install_path(bpy.types.Operator):
     """Sets the Installation path of MBDyn to the value\
         found in config.json"""
-
-    bl_idname = "BLENDYN_OT_config_mbdyn_install_path"
+    bl_idname = "mbdyn.BLENDYN_OT_config_mbdyn_install_path"
     bl_label = "Set config.json Path for MBDyn"
 
     def execute(self, context):
@@ -1125,11 +1152,15 @@ class BLENDYN_OT_config_mbdyn_install_path(bpy.types.Operator):
         try:
             with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
                 mbs.install_path = json.load(f)['mbdyn_path']
+                message = "BLENDYN_OT_config_mbdyn_install_path::execute(): "\
+                        + "Loaded MBDyn installation path "\
+                        + mbs.install_path + " from config.json file"
+                baseLogger.info(message)
         except FileNotFoundError:
-            message = 'No config.json file found. Set value above'
+            message = "BLENDYN_OT_config_mbdyn_install_path::execute(): "\
+                    + "No config.json file found. Please set the path manually."
             self.report({'ERROR'}, message)
             baseLogger.error(message)
-
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1141,8 +1172,7 @@ bpy.utils.register_class(BLENDYN_OT_config_mbdyn_install_path)
 class BLENDYN_OT_select_mbdyn_input_file(bpy.types.Operator, ImportHelper):
     """Set input file's path and basename\
         to be used in MBDyn simulation"""
-
-    bl_idname = "BLENDYN_OT_select_mbdyn_input_file"
+    bl_idname = "mbdyn.BLENDYN_OT_select_mbdyn_input_file"
     bl_label = "MBDyn input file"
 
     def execute(self, context):
@@ -1156,6 +1186,11 @@ class BLENDYN_OT_select_mbdyn_input_file(bpy.types.Operator, ImportHelper):
         mbs.file_basename = mbs.input_basename
         mbs.file_path = os.path.dirname(mbs.input_path)
 
+        message = "BLENDYN_OT_select_mbdyn_input_file::execute(): "\
+                + "Set input file to " \
+                + mbs.input_path + mbs.input_basename
+
+        baseLogger.info(message)
         return {'FINISHED'}
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -1165,10 +1200,9 @@ class BLENDYN_OT_select_mbdyn_input_file(bpy.types.Operator, ImportHelper):
 bpy.utils.register_class(BLENDYN_OT_select_mbdyn_input_file)
 
 class BLENDYN_OT_set_env_variable(bpy.types.Operator):
-    """Sets the Environment variable to be\
+    """Sets an environment variable to be\
         used in MBDyn simulation"""
-
-    bl_idname = "BLENDYN_OT_set_env_variable"
+    bl_idname = "mbdyn.BLENDYN_OT_set_env_variable"
     bl_label = "Set Environment Variable"
 
     def execute(self, context):
@@ -1185,6 +1219,10 @@ class BLENDYN_OT_set_env_variable(bpy.types.Operator):
             env.variable = mbs.env_variable
             env.value = mbs.env_value
 
+        message = "BLENDYN_OT_set_env_variable::execute(): "\
+                + "Set environment variable " 
+                + env.variable + " = " + env.value
+        baseLogger.info(message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1195,12 +1233,15 @@ bpy.utils.register_class(BLENDYN_OT_set_env_variable)
 
 class BLENDYN_OT_delete_env_variable(bpy.types.Operator):
     """Delete Environment variable"""
-    bl_idname = "BLENDYN_OT_delete_env_variable"
+    bl_idname = "mbdyn.BLENDYN_OT_delete_env_variable"
     bl_label = "Delete Environment Variable"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
 
+        message = "BLENDYN_OT_delete_env_variable::execute(): "\
+                + "Removing environment variable "
+                + mbs.env_vars[mbs.env_index]
         mbs.env_vars.remove(mbs.env_index)
 
         return {'FINISHED'}
@@ -1213,7 +1254,7 @@ bpy.utils.register_class(BLENDYN_OT_delete_env_variable)
 
 class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
     """Runs the MBDyn Simulation in background"""
-    bl_idname = "BLENDYN_OT_run_mbdyn_simulation"
+    bl_idname = "mbdyn.BLENDYN_OT_run_mbdyn_simulation"
     bl_label = "Run MBDyn Simulation"
 
     timer = None
@@ -1246,7 +1287,6 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
                     filename = basename_list
                     filename[-1] = str(mbs.sim_num)
                     mbs.file_basename = "_".join(filename)
-
             except ValueError:
                 pass
 
@@ -1261,6 +1301,9 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
         self.timer = context.window_manager.event_timer_add(0.5, context.window)
         context.window_manager.modal_handler_add(self)
 
+        message = "BLENDYN_OT_run_mbdyn_simulation::execute() "\
+                 + "Started MBDyn simulation... "
+        baseLogger.info(message)
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
@@ -1293,6 +1336,7 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
             context.window_manager.event_timer_remove(self.timer)
 
             si_retval = {'FINISHED'}
+
             if ( os.path.isfile(os.path.join(mbs.file_path, \
                     mbs.file_basename + '.nc') ) and not( mbs.force_text_import) ):
                 si_retval = setup_import(os.path.join(mbs.file_path, \
@@ -1306,6 +1350,9 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
                         mbs.file_basename + '.mov'), context)
             return si_retval
 
+        message = "BLENDYN_OT_run_mbdyn_simulation::execute() "\
+                 + "MBDyn simulation completed."
+        baseLogger.info(message)
 
         return {'PASS_THROUGH'}
 
@@ -1316,7 +1363,10 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
         mbs.mbdyn_running = True
 
         if not mbs.final_time:
-            self.report({'ERROR'}, "Enter Final Time for the simulation to proceed")
+            message = "BLENDYN_OT_run_mbdyn_simulation::invoke() "\
+                 + "Enter final time to start the simulation. Aborting..."
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
             return {'CANCELLED'}
 
         return self.execute(context)
@@ -1327,7 +1377,7 @@ bpy.utils.register_class(BLENDYN_OT_run_mbdyn_simulation)
 
 class BLENDYN_OT_stop_mbdyn_simulation(bpy.types.Operator):
     """Stops the MBDyn simulation"""
-    bl_idname = "sel.mbdyn_stop_simulation"
+    bl_idname = "mbdyn.BLENDYN_OT_stop_mbdyn_simulation"
     bl_label = "Stop MBDyn Simulation"
 
     def execute(self, context):
@@ -1336,7 +1386,10 @@ class BLENDYN_OT_stop_mbdyn_simulation(bpy.types.Operator):
 
         mbs.mbdyn_running = False
 
-        self.report({'INFO'}, "The MBDyn simulation was interrupted")
+        message = "BLENDYN_OT_stop_mbdyn_simulation::execute(): "\
+                + "MBDyn simulation halted."
+        self.report({'INFO'}, message)
+        baseLogger.info(message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1348,19 +1401,11 @@ bpy.utils.register_class(BLENDYN_OT_stop_mbdyn_simulation)
 
 class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
-    bl_idname = "BLENDYN_OT_set_motion_paths"
+    bl_idname = "mbdyn.BLENDYN_OT_set_motion_paths"
     bl_label = "MBDyn Motion Path setter"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-
-        if mbs.end_time > (mbs.num_timesteps) * mbs.time_step:
-            self.report({'ERROR'}, "End time greater than total simulation time")
-            return {'CANCELLED'}
-
-        if mbs.start_time > (mbs.num_timesteps) * mbs.time_step:
-            self.report({'ERROR'}, "Start time greater than total simulation time")
-            return {'CANCELLED'}
 
         remove_oldframes(context)
 
@@ -1369,10 +1414,10 @@ class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
         else:
             ret_val = set_motion_paths_netcdf(context)
         if ret_val == 'CANCELLED':
-            message = "MBDyn results file not loaded"
+            message = "BLENDYN_OT_set_motion_paths::execute()"
+                    + "MBDyn results file not loaded"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
-            
+            baseLogger.warning(message) 
         return ret_val
 
     def invoke(self, context, event):
@@ -1384,7 +1429,7 @@ bpy.utils.register_class(BLENDYN_OT_set_motion_paths)
 class BLENDYN_OT_set_import_freq_auto(bpy.types.Operator):
     """ Sets the import frequency automatically in order to match the Blender
         time and the simulation time, based on the current render fps """
-    bl_idname = "set.mbdyn_loadfreq_auto"
+    bl_idname = "mbdyn.BLENDYN_OT_set_import_freq_auto"
     bl_label = "Import frequency: auto"
 
     def execute(self, context):
@@ -1400,8 +1445,7 @@ bpy.utils.register_class(BLENDYN_OT_set_import_freq_auto)
 
 class BLENDYN_OT_set_render_variables(bpy.types.Operator):
     """ Sets the Variables to be displayed in rendered view """
-
-    bl_idname = "sel.set_render_variable"
+    bl_idname = "mbdyn.BLENDYN_OT_set_render_variables"
     bl_label = "Set Render Variable"
 
     def execute(self, context):
@@ -1430,7 +1474,7 @@ bpy.utils.register_class(BLENDYN_OT_set_render_variables)
 
 class BLENDYN_OT_delete_render_variables(bpy.types.Operator):
     """Delete Render variables"""
-    bl_idname = "sel.delete_render_variable"
+    bl_idname = "mbdyn.BLENDYN_OT_delete_render_variables"
     bl_label = "Delete Render Variable"
 
     def execute(self, context):
@@ -1447,7 +1491,7 @@ class BLENDYN_OT_delete_render_variables(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_delete_render_variables)
 
 class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
-    bl_idname = "sel.delete_all_render_variables"
+    bl_idname = "mbdyn.BLENDYN_OT_delete_all_render_variables"
     bl_label = "Delete all Render variables"
 
     def execute(self, context):
@@ -1464,14 +1508,15 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_DeleteAllRenderVariables)
 
 class BLENDYN_OT_show_display_group(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_show_display_group"
+    bl_idname = "mbdyn.BLENDYN_OT_show_display_group"
     bl_label = "show display group"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
 
         if mbs.display_enum_group is '':
-            message = 'No Groups set'
+            message = "BLENDYN_OT_show_display_group::execute(): "\
+                    + "No Groups set"
             self.report({'ERROR'}, message)
             logging.error(message)
 
@@ -1493,7 +1538,7 @@ bpy.utils.register_class(BLENDYN_OT_show_display_group)
 
 class BLENDYN_OT_set_display_group(bpy.types.Operator):
     """Delete Render variables"""
-    bl_idname = "BLENDYN_OT_set_display_group"
+    bl_idname = "mbdyn.BLENDYN_OT_set_display_group"
     bl_label = "Set Display Group"
 
     def execute(self, context):
@@ -1555,12 +1600,14 @@ class BLENDYN_PT_import(bpy.types.Panel):
         row.label(text = "MBDyn simulation results")
 
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_select_output_file', text = "Select results file")
+        col.operator(BLENDYN_OT_select_output_file.bl_idname, \
+                text = "Select results file")
 
         row = layout.row()
         row.label(text = "MBDyn Standard Import")
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_standard_import', text = "Standard Import")
+        col.operator(BLENDYN_OT_standard_import.bl_idname,\
+                text = "Standard Import")
         # Display MBDyn file basename and info
         row = layout.row()
 
@@ -1585,11 +1632,13 @@ class BLENDYN_PT_import(bpy.types.Panel):
         row = layout.row()
         # row.label(text="Load MBDyn data")
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_read_mbdyn_log', text = "Load .log file")
+        col.operator(BLENDYN_OT_read_mbdyn_log.bl_idname, \
+                text = "Load .log file")
 
         # Assign MBDyn labels to elements in dictionaries
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_assign_labels', text = "Load MBDyn labels")
+        col.operator(BLENDYN_OT_assign_labels.bl_idname, \
+                text = "Load MBDyn labels")
 
         # Set action to be taken for missing nodes/elements
         row = layout.row()
@@ -1603,9 +1652,10 @@ class BLENDYN_PT_import(bpy.types.Panel):
 
         # Clear MBDyn data for scene
         row = layout.row()
-        row.label(text="Erase all MBDyn data in scene")
+        row.label(text = "Erase MBDyn data in scene")
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_clear_data', text = "CLEAR MBDYN DATA")
+        col.operator(BLENDYN_OT_clear_data.bl_idname, \
+                text = "CLEAR MBDYN DATA")
 
 # -----------------------------------------------------------
 # end of BLENDYN_PT_import class
@@ -1628,24 +1678,26 @@ class BLENDYN_PT_animate(bpy.types.Panel):
         mbs = context.scene.mbdyn
 
         # Insert keyframes for animation
-        col = layout.column(align=True)
+        col = layout.column(align = True)
         col.label(text = "Start animating")
-        col.operator('BLENDYN_OT_set_motion_paths', text = "Animate scene")
-        col.operator('BLENDYN_OT_set_import_freq_auto', text = "Auto set frequency")
+        col.operator(BLENDYN_OT_set_motion_paths.bl_idname, \
+                text = "Animate scene")
+        col.operator(BLENDYN_OT_set_import_freq_auto.bl_idname, \
+                text = "Auto set frequency")
         col.prop(mbs, "load_frequency")
         
         # time_step > 0 only if .log file had been loaded
         col.enabled = bool(mbs.time_step)   
 
 
-        col = layout.column(align=True)
+        col = layout.column(align = True)
 
         col.label(text = "Time Range of import")
         col.prop(mbs, "start_time")
         col.prop(mbs, "end_time")
 
 
-        col = layout.column(align=True)
+        col = layout.column(align = True)
         col.label(text = "Current Simulation Time")
         col.prop(mbs, "time")
 # -----------------------------------------------------------
@@ -1675,12 +1727,15 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
         # if not os.path.exists(os.path.join(os.path.dirname(mbs.addon_path), 'config.json')):
 
         row = layout.row()
-        row.label(text='Path of MBDyn')
-        col = layout.column(align=True)
-        col.prop(mbs, "install_path", text="Path")
-        col.operator('BLENDYN_OT_set_mbdyn_install_path', text = 'Set Installation Path')
-        col.operator('BLENDYN_OT_mbdyn_default_install_path', text = 'Use default MBDyn')
-        col.operator('BLENDYN_OT_config_mbdyn_install_path', text = 'Use config MBDyn Path')
+        row.label(text = 'Path of MBDyn')
+        col = layout.column(align = True)
+        col.prop(mbs, "install_path", text = "Path")
+        col.operator(BLENDYN_OT_set_mbdyn_install_path.bl_idname, \
+                text = 'Set Installation Path')
+        col.operator(BLENDYN_OT_mbdyn_default_install_path.bl_idname, \
+                text = 'Use default MBDyn')
+        col.operator(BLENDYN_OT_config_mbdyn_install_path.bl_idname, \
+                text = 'Use config MBDyn Path')
 
         col = layout.column(align = True)
         col.label(text = "Selected input file")
@@ -1688,7 +1743,8 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
         col.enabled = False
 
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_SelectMBDynInputFile', text = 'Select input file')
+        col.operator(BLENDYN_OT_SelectMBDynInputFile.bl_idname, \
+                text = 'Select input file')
         
         col = layout.column(align = True)
         col.label(text = "Output Directory")
@@ -1712,14 +1768,18 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
         row.label(text='Set Environment Variables')
 
         row = layout.row()
-        row.template_list('BLENDYN_UL_env_vars_list', "MBDyn Environment variables list", mbs, "env_vars",\
+        row.template_list('BLENDYN_UL_env_vars_list', \
+                "MBDyn Environment variables list", \
+                mbs, "env_vars",\
                 mbs, "env_index")
 
         col = layout.column(align = True)
         col.prop(mbs, "env_variable", text = "Variable")
         col.prop(mbs, "env_value", text = "Value")
-        col.operator('BLENDYN_OT_set_env_variable', text = 'Set Variable')
-        col.operator('BLENDYN_OT_delete_env_variable', text = 'Delete Variable')
+        col.operator(BLENDYN_OT_set_env_variable.bl_idname, \
+                text = 'Set Variable')
+        col.operator(BLENDYN_OT_delete_env_variable.bl_idname, \
+                text = 'Delete Variable')
 
         col = layout.column(align = True)
         col.prop(mbs, "ui_time", text = 'Final Time')
@@ -1729,11 +1789,13 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
 
 
         col = layout.column(align = True)
-        col.operator('BLENDYN_OT_run_mbdyn_simulation', text = 'Run Simulation')
+        col.operator(BLENDYN_OT_run_mbdyn_simulation.bl_idname, \
+                text = 'Run Simulation')
 
         if HAVE_PSUTIL:
             col = layout.column(align = True)
-            col.operator('BLENDYN_OT_stop_mbdyn_simulation', text = 'Stop Simulaton')
+            col.operator(BLENDYN_OT_stop_mbdyn_simulation.bl_idname, \
+                    text = 'Stop Simulaton')
 
 # -----------------------------------------------------------
 # end of BLENDYN_PT_simulation class
@@ -1768,7 +1830,8 @@ class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "dCoef", slider = False)
             col.enabled = False
             row = layout.row()
-            row.operator('BLENDYN_OT_mbdyn_eigen_geometry', text = "Reference configuration")
+            row.operator(BLENDYN_OT_mbdyn_eigen_geometry.bl_idname, \
+                    text = "Reference configuration")
 
             row = layout.row()
             row.separator()
@@ -1789,7 +1852,8 @@ class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
             col.label(text = "Animation parameters")
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_scale")
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_frames")
-            col.operator('BLENDYN_OT_mbdyn_animate_eigenmode', text = "Visualize mode")
+            col.operator(BLENDYN_OT_mbdyn_animate_eigenmode.bl_idname, \
+                    text = "Visualize mode")
 
 # -----------------------------------------------------------
 # end of BLENDYN_PT_eigenanalysis class
@@ -1818,7 +1882,7 @@ class BLENDYN_PT_active_object(bpy.types.Panel):
         if bpy.context.active_object:
             col = layout.column()
             row = col.row()
-            row.label(text="Active Object")
+            row.label(text = "Active Object")
             row = col.row()
 
             try:
@@ -1971,7 +2035,9 @@ class BLENDYN_PT_nodes_scene(bpy.types.Panel):
         nd = mbs.nodes
         layout = self.layout
         row = layout.row()
-        row.template_list('BLENDYN_UL_mbdyn_nodes_list', "MBDyn nodes list", mbs, "nodes",\
+        row.template_list('BLENDYN_UL_mbdyn_nodes_list', \   
+                "MBDyn nodes list", \
+                mbs, "nodes",\
                 mbs, "nd_index")
 
         if len(nd):
@@ -1991,11 +2057,11 @@ class BLENDYN_PT_nodes_scene(bpy.types.Panel):
             col.prop(mbs, "min_node_import")
             col.prop(mbs, "max_node_import")
             row = layout.row()
-            row.operator('BLENDYN_OT_node_import_all.bl_idname',\
+            row.operator(BLENDYN_OT_node_import_all.bl_idname,\
                     text = "Add nodes to scene")
 
             row = layout.row()
-            row.operator('BLENDYN_OT_create_vertices_from_nodes',\
+            row.operator(BLENDYN_OT_create_vertices_from_nodes.bl_idname,\
                     text = "Create vertex grid from nodes")
 
             row = layout.row()
@@ -2018,7 +2084,9 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
         mbs = context.scene.mbdyn
         layout = self.layout
         row = layout.row()
-        row.template_list("BLENDYN_UL_elements_list", "MBDyn elements", mbs, "elems",\
+        row.template_list("BLENDYN_UL_elements_list", \
+                "MBDyn elements", \
+                mbs, "elems",\
                 mbs, "ed_index")
 
         if len(mbs.elems):
@@ -2078,9 +2146,12 @@ class BLENDYN_PT_scaling(bpy.types.Panel):
         row = box.row()
         row.prop(mbs, "node_scale_slider")
         col = box.column(align = True)
-        col.operator('BLENDYN_OT_select_all_nodes', text = "Select All Nodes")
-        col.operator('BLENDYN_OT_scale_node', text = "Scale Selected Node")
-        col.operator('BLENDYN_OT_scale_sel_nodes', text = "Scale All Nodes")
+        col.operator(BLENDYN_OT_select_all_nodes.bl_idname, \
+                text = "Select All Nodes")
+        col.operator(BLENDYN_OT_scale_node.bl_idname, \
+                text = "Scale Selected Node")
+        col.operator(BLENDYN_OT_scale_sel_nodes.bl_idname, \
+                text = "Scale All Nodes")
 
         box = layout.box()
         col = box.column()
@@ -2089,8 +2160,10 @@ class BLENDYN_PT_scaling(bpy.types.Panel):
         col = box.column()
         col.prop(mbs, "elem_scale_slider")
         col = box.column(align = True)
-        col.operator('BLENDYN_OT_select_elements_by_type', text = "Select Elements")
-        col.operator('BLENDYN_OT_scale_elements_by_type', text = "Scale Elements")
+        col.operator(BLENDYN_OT_select_elements_by_type.bl_idname, \
+                text = "Select Elements")
+        col.operator(BLENDYN_OT_scale_elements_by_type.bl_idname, \
+                text = "Scale Elements")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_scaling class
 bpy.utils.register_class(BLENDYN_PT_scaling)
@@ -2123,9 +2196,9 @@ class BLENDYN_PT_reference_scene(bpy.types.Panel):
             col.enabled = False
 
             col = layout.column()
-            col.operator('BLENDYN_OT_references_import_single', \
+            col.operator(BLENDYN_OT_references_import_single.bl_idname, \
                     text = "Add reference to the scene").int_label = item.int_label
-            col.operator('BLENDYN_OT_references_import_all', \
+            col.operator(BLENDYN_OT_references_import_all.bl_idname, \
                    text = "Add all references to the scene")
         except KeyError:
             pass
@@ -2164,19 +2237,22 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
             row.label(nd_entry.string_label)
             if nd_entry.blender_object == obj.name:
                 row.label(nd_entry.blender_object, icon = 'OBJECT_DATA')
-                row.operator('BLENDYN_OT_obj_select_node', text = "UNASSIGN").ndx = nd_entry.name
+                row.operator(BLENDYN_OT_obj_select_node.bl_idname, \
+                        text = "UNASSIGN").ndx = nd_entry.name
             else:
                 row.label(nd_entry.blender_object)
-                row.operator('BLENDYN_OT_obj_select_node', text = "ASSIGN").ndx = nd_entry.name
+                row.operator(BLENDYN_OT_obj_select_node.bl_idname, \
+                        text = "ASSIGN").ndx = nd_entry.name
                 if bpy.data.objects.get(nd_entry.blender_object) == 'none':
-                    row.operator('BLENDYN_OT_single_node_import', \
+                    row.operator(BLENDYN_OT_single_node_import.bl_idname, \
                             text="ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
 bpy.utils.register_class(BLENDYN_PT_obj_select)
 
 class BLENDYN_OT_node_import_all(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_node_import_all"
+    """ Imports all the MBDyn nodes into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_node_import_all"
     bl_label = "Add MBDyn nodes to scene"
 
     def execute(self, context):
@@ -2219,7 +2295,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
             return {'FINISHED'}
         else:
             message = ("BLENDYN_OT_node_import_all::execute(): " \
-                      + "No MBDyn nodes imported"
+                      + "No MBDyn nodes imported")
             self.report({'WARNING'}, message)
             baseLogger.warning(message)
             return {'CANCELLED'}
@@ -2228,7 +2304,9 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_node_import_all)
 
 class BLENDYN_OT_single_node_import(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_single_node_import"
+    """ Imports a single MBDyn node, selected by the user in the UI,
+        into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_single_node_import"
     bl_label = "Add selected MBDyn node to scene"
     int_label = bpy.props.IntProperty()
 
@@ -2263,7 +2341,7 @@ class BLENDYN_OT_single_node_import(bpy.types.Operator):
                 message = "BLENDYN_OT_single_node_import::execute(): " \
                           + "added node " + str(node.int_label)\
                           + " to scene and associated it with object " \
-                          + obj.name)
+                          + obj.name
                 self.report({'INFO'}, message)
                 baseLogger.info(message)
                 added_node = True
@@ -2285,7 +2363,8 @@ class BLENDYN_OT_single_node_import(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_single_node_import)
 
 class BLENDYN_OT_references_import_all(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_references_import_all"
+    """ Imports all the MBDyn references into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_references_import_all"
     bl_label = "Add MBDyn references to scene"
 
     def execute(self, context):
@@ -2307,7 +2386,9 @@ class BLENDYN_OT_references_import_all(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_references_import_all)
 
 class BLENDYN_OT_references_import_single(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_references_import_single"
+    """ Import a single reference frame, selected by
+        the user in the UI, into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_references_import_single"
     bl_label = "Add MBDyn reference to scene"
 
     int_label = IntProperty()
@@ -2332,7 +2413,8 @@ class BLENDYN_OT_references_import_single(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_references_import_single)
 
 class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_select_all_nodes"
+    """ Selects all the objects associated to  MBDyn nodes"""
+    bl_idname = "mbdyn.BLENDYN_OT_select_all_nodes"
     bl_label = "Select all MBDyn Node Objects"
 
     def execute(self, context):
@@ -2348,7 +2430,9 @@ class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_select_all_nodes)
 
 class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_select_elements_by_type"
+    """ Select all the objects associated to MBDyn elements
+        of a specified type """
+    bl_idname = "mbdyn.BLENDYN_OT_select_elements_by_type"
     bl_label = "Select all MBDyn objects"
 
     def execute(self, context):
@@ -2365,7 +2449,9 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_select_elements_by_type)
 
 class BLENDYN_OT_scale_node(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_scale_node"
+    """ Scales the selected object, associated with
+        an MBDyn node """
+    bl_idname = "mbdyn.BLENDYN_OT_scale_node"
     bl_label = "Scale active node"
 
     def execute(self, context):
@@ -2384,7 +2470,9 @@ class BLENDYN_OT_scale_node(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_scale_node)
 
 class BLENDYN_OT_scale_sel_nodes(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_scale_sel_nodes"
+    """ Scales the selected objects, associated with
+        MBDyn nodes """
+    bl_idname = "mbdyn.BLENDYN_OT_scale_sel_nodes"
     bl_label = "Scale all sected nodes"
 
     def execute(self, context):
@@ -2403,7 +2491,9 @@ class BLENDYN_OT_scale_sel_nodes(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_scale_sel_nodes)
 
 class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_scale_elements_by_type"
+    """ Scales the objects associated with MBDyn elements of
+        the selected type """
+    bl_idname = "mbdyn.BLENDYN_OT_scale_elements_by_type"
     bl_label = "Scale all elements of selected type"
 
     def execute(self, context):
@@ -2423,7 +2513,8 @@ class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_scale_elements_by_type)
 
 class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_import_elements_by_type"
+    """ Imports the MBDyn elements of the selected type in the blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_elements_by_type"
     bl_label = "Add all elements of selected type to scene"
 
     def execute(self, context):
@@ -2459,7 +2550,8 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_import_elements_by_type)
 
 class BLENDYN_OT_elements_import_all(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_elements_import_all"
+    """ Imports all the supported MBDyn elements into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_elements_import_all"
     bl_label = "Add all the elements to the scene"
 
     def execute(self, context):
@@ -2504,7 +2596,8 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_elements_import_all)
 
 class BLENDYN_OT_obj_select_node(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_obj_select_node"
+    """ Selects the objects associated with an MBDyn node """
+    bl_idname = "mbdyn.BLENDYN_OT_obj_select_node"
     bl_label = "MBDyn Node Select Button"
     ndx = bpy.props.StringProperty()
 
@@ -2553,7 +2646,9 @@ class BLENDYN_OT_obj_select_node(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_obj_select_node)
 
 class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_create_vertices_from_nodes"
+    """ Creates a mesh in which the vertices are hooked to
+        the motion of MBDyn nodes """
+    bl_idname = "mbdyn.BLENDYN_OT_create_vertices_from_nodes"
     bl_label = "Create vertices from nodes"
 
     def draw(self, context):
@@ -2640,7 +2735,7 @@ bpy.utils.register_class(BLENDYN_OT_create_vertices_from_nodes)
 class BLENDYN_OT_delete_override(bpy.types.Operator):
     """ Overrides the delete function of Blender Objects to remove
         the related elements in MBDyn dictionaries """
-    bl_idname = "BLENDYN_OT_delete_override"
+    bl_idname = "mbdyn.BLENDYN_OT_delete_override"
     bl_label = "Object Delete Operator"
     use_global = BoolProperty()
 
@@ -2655,7 +2750,7 @@ class BLENDYN_OT_delete_override(bpy.types.Operator):
             dictitem.blender_object = 'none'
             dictitem.is_imported = False
         except AttributeError:
-            return {'CANCELLED'}
+            pass
 
         if obj.mbdyn.type == 'element':
             for idx, ude in enumerate(bpy.context.scene.mbdyn.elems_to_update):
@@ -2667,7 +2762,6 @@ class BLENDYN_OT_delete_override(bpy.types.Operator):
             try:
                 self.remove_from_dict(obj, context)
             except KeyError:
-                print("BLENDYN_OT_delete_override::remove_from_dict(): key not found")
                 pass
             bpy.context.scene.objects.unlink(obj)
             bpy.data.objects.remove(obj)

@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file defdisplib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -24,24 +24,19 @@
 
 import bpy
 
-import logging
-
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
 
 from .utilslib import parse_rotmat
 
 # helper function to parse deformable displacement joints
 def parse_deformable_displacement(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_deformable_displacementj(): Parsing deformable displacement joint " + rw[1])
     try:
         el = ed['deformable_displacement_' + str(rw[1])]
-
-        print("Blendyn::parse_deformable_displacement(): found existing entry in elements dictionary. Updating it.")
+        
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_deformable_displacement()", el)
+        eldbmsg('FOUND_DICT', "BLENDYN::parse_deformable_displacement()", el) 
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -65,11 +60,13 @@ def parse_deformable_displacement(rw, ed):
             el.blender_object = el.name
         el.is_imported = True 
     except KeyError:
-        print("Blendyn::parse_deformable_displacement(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.mbclass = 'elem.joint'
         el.type = 'deformable_displacement'
         el.int_label = int(rw[1])
+        
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_deformable_displacement()", el)
+        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_deformable_displacement()", el)  
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -92,7 +89,7 @@ def parse_deformable_displacement(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_deformable_displacement"
+        el.import_function = "mbdyn.BLENDYN_OT_import_deformable_displacement"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -108,8 +105,8 @@ def spawn_deformable_displacement_element(elem, context):
 # end of spawn_deformable_displacament_element(elem, context) function
 
 ## Imports a Deformable Displacement Joint in the scene -- TODO
-class Scene_OT_MBDyn_Import_Deformable_Displacement_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_deformable_displacement"
+class BLENDYN_OT_import_deformable_displacement(bpy.types.Operator):
+    bl_idname = "mbdyn.BLENDYN_OT_import_deformable_displacement"
     bl_label = "MBDyn deformable displacement joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -125,10 +122,7 @@ class Scene_OT_MBDyn_Import_Deformable_Displacement_Joint_Element(bpy.types.Oper
             elem = ed['defdispj_' + str(self.int_label)]
             return spawn_defdispj_element(elem, context)
         except KeyError:
-            message = "Element deformable_displacement_" + str(elem.int_label) \
-                   + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg('DICT_ERROR', type(self)__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Deformable_Displacement_Element class
+# end of BLENDYN_OT_import_deformable_displacement class

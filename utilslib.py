@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file utilslib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -22,19 +22,19 @@
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
-# TODO: check for unnecessary stuff
 import bpy
 
 import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
+from bpy.types import Operator
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
-import ntpath, os, csv, math
-from collections import namedtuple
+import csv
 
 class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
     """ Loads NACA airfoil profile in Selig format """
@@ -171,3 +171,110 @@ def grouping(context, elem_obj, obj_list):
 
 # -----------------------------------------------------------
 # end of grouping function
+
+
+def eldbmsg(msg, who, elem):
+    # Prints various standard debug messages for element import.
+
+    def parse(message):
+       message = message + "Parsing " + elem.type \
+               + " " + str(elem.int_label)
+       baseLogger.info(message)
+       return message
+
+    def foundid(message):
+        message = message + \
+                + "found existing entry in elements dictionary for "\
+                + elem.type + " " + str(elem.int_label) + ". Updating it."
+        baseLogger.info(message)
+        return message
+
+    def notfoundid(message):
+        message = message + \
+                + "didn't find entry in elements dictionary for "\
+                + elem.type + " " + str(elem.int_label) + ". Creating it."
+       baseLogger.info(message)
+       return message
+
+    def objexists(message):
+        message = message + \
+                + "Element " + elem.type + " " + str(elem.int_label) \
+                + " is already imported. Remove the Blender object "\
+                + "or rename it before re-importing the element."
+        baseLogger.error(message)
+        return message
+
+    def objsnotfound(message):
+        message = message + \
+                + "Could not find Blender objects"
+        baseLogger.error(message)
+        return message
+
+    def n1notfound(message):
+        message = message + \
+                + "Could not find the Blender object associated to node " + \
+                str(elem.nodes[0].int_label)
+        baseLogger.error(message)
+        return message 
+
+    def n2notfound(message):
+        message = message + \
+                + "Could not find the Blender object associated to node " + \
+                str(elem.nodes[1].int_label)
+        baseLogger.error(message)
+        return message 
+
+    def n3notfound(message):
+        message = message + \
+                + "Could not find the Blender object associated to node " + \
+                str(elem.nodes[2].int_label)
+        baseLogger.error(message)
+        return message 
+
+    def n4notfound(message):
+        message = message + \
+                + "Could not find the Blender object associated to node " + \
+                str(elem.nodes[3].int_label)
+        baseLogger.error(message)
+        return message 
+    
+    def libraryerror(message):
+        message = message + \
+                + "Could not import " \
+                + elem.type + " " + str(elem.int_label) \
+                + ": could not load library object"
+        baseLogger.error(message)
+        return message
+
+    def dicterror(message).
+        message = message +
+                + "Element " + elem.type + " " + str(elem.int_label) + " " \
+                + "not found."
+        baseLogger.error(message)
+        return message
+
+    def importsuccess(message):
+        message = message + \
+                + "Element " + elem.type + " " + str(elem.int_label) + " " \
+                + "imported correcly."
+        baseLogger.info(message)
+        return message
+
+   # map messages
+   messages = {'PARSE_ELEM' : parse,
+               'FOUND_DICT' : foundid,
+               'NOTFOUND_DICT' : notfoundid,
+               'OBJECT_EXISTS' : objexists,
+               'OBJECTS_NOTFOUND' : objsnotfound,
+               'NODE1_NOTFOUND' : n1notfound,
+               'NODE2_NOTFOUND' : n2notfound,
+               'NODE3_NOTFOUND' : n3notfound,
+               'NODE4_NOTFOUND' : n4notfound,
+               'LIBRARY_ERROR' : libraryerror,
+               'DICT_ERROR' : dicterror,
+               'IMPORT_SUCCESS' : importsuccess
+   }
+
+   message = who + ": "
+   message = messages[msg](message)
+   print(message)

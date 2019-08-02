@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file aerolib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -24,8 +24,6 @@
 
 import bpy, bmesh
 
-import logging
-
 from mathutils import *
 from math import *
 from bpy.props import *
@@ -35,12 +33,13 @@ from .utilslib import *
 ## Parses aerodynamic body element entry in .log file
 def parse_aero0(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_aero0(): Parsing aerodynamic body" + rw[1])
+    
     try: 
         el = ed['aero0_' + str(rw[1])]
-        print("Blendyn::parse_aero0(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it")
+        
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
+        eldbmsg('FOUND_DICT', "BLENDYN::parse_aero0()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[6]), float(rw[7]), float(rw[8]) ))
@@ -54,12 +53,13 @@ def parse_aero0(rw, ed):
 
         pass
     except KeyError:
-        print("Blendyn::parse_aero0(): didn't find entry in elements dictionary. Creating one.")
-        
         el = ed.add()
         el.mbclass = 'elem.aero'
         el.type = 'aero0'
         el.int_label = int(rw[1])
+
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
+        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_aero0()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -73,7 +73,7 @@ def parse_aero0(rw, ed):
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[12]), float(rw[13]), float(rw[14]) ))
 
-        el.import_function = "add.mbdyn_elem_aero0"
+        el.import_function = "mbdyn.BLENDYN_OT_import_aerodynamic_body"
         el.name = el.type + "_" + str(el.int_label)
 
         el.is_imported = True
@@ -87,17 +87,22 @@ def parse_aero0(rw, ed):
 def parse_aero2(rw, ed):
     ret_val = True
     # Debug message
-    print("Blendyn::parse_aero2(): Parsing two-node aerodynamic beam" + rw[1])
+    message = "Blendyn::parse_aero2(): Parsing two-node aerodynamic beam" + rw[1]
+    print(message)
+    baseLogger.info(message)
     try: 
         el = ed['aero2_' + str(rw[1])]
-        print("Blendyn::parse_aero2(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it")
+        
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero2()", el)
+        eldbmsg('FOUND_DICT', "BLENDYN::parse_aero2()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[6]), float(rw[7]), float(rw[8]) ))
         el.nodes[1].int_label = int(rw[9])
         el.offsets[2].value = Vector(( float(rw[10]), float(rw[11]), float(rw[12]) ))
         el.offsets[3].value = Vector(( float(rw[13]), float(rw[14]), float(rw[15]) ))
+        
         # FIXME: this is here to enhance backwards compatibility
         # Should disappear in future versions
         el.mbclass = 'elem.aero'
@@ -106,12 +111,13 @@ def parse_aero2(rw, ed):
 
         pass
     except KeyError:
-        print("Blendyn::parse_aero2(): didn't find entry in elements dictionary. Creating one.")
-        
         el = ed.add()
         el.mbclass = 'elem.aero'
         el.type = 'aero2'
         el.int_label = int(rw[1])
+
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
+        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_aero0()", el)
        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -129,7 +135,7 @@ def parse_aero2(rw, ed):
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[13]), float(rw[14]), float(rw[15]) ))
 
-        el.import_function = "add.mbdyn_elem_aero2"
+        el.import_function = "mbdyn.BLENDYN_OT_import_aerodynamic_beam2"
         el.name = el.type + "_" + str(el.int_label)
 
         el.is_imported = True
@@ -143,11 +149,12 @@ def parse_aero2(rw, ed):
 def parse_aero3(rw, ed):
     ret_val = True
     # Debug message
-    print("Blendyn::parse_aero3(): Parsing three-node aerodynamic beam" + rw[1])
     try: 
         el = ed['aero3_' + str(rw[1])]
-        print("Blendyn::parse_aero3(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it")
+        
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero2()", el)
+        eldbmsg('FOUND_DICT', "BLENDYN::parse_aero2()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[6]), float(rw[7]), float(rw[8]) ))
@@ -166,12 +173,13 @@ def parse_aero3(rw, ed):
 
         pass
     except KeyError:
-        print("Blendyn::parse_aero3(): didn't find entry in elements dictionary. Creating one.")
-        
         el = ed.add()
         el.mbclass = 'elem.aero'
         el.type = 'aero3'
         el.int_label = int(rw[1])
+
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
+        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_aero0()", el)
        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -197,7 +205,7 @@ def parse_aero3(rw, ed):
         el.offsets.add()
         el.offsets[5].value = Vector(( float(rw[20]), float(rw[21]), float(rw[22]) ))
 
-        el.import_function = "add.mbdyn_elem_aero3"
+        el.import_function = "mbdyn.BLENDYN_OT_import_aerodynamic_beam3"
         el.name = el.type + "_" + str(el.int_label)
 
         el.is_imported = True
@@ -219,9 +227,6 @@ def spawn_aero0_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_aero0_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
 
     n1OBJ = bpy.data.objects[n1]
@@ -285,18 +290,12 @@ def spawn_aero2_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
         n1OBJ = bpy.data.objects[n1]
     except KeyError:
-        print("Blendyn::spawn_aero2_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
 
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
         n2OBJ = bpy.data.objects[n2]
     except KeyError:
-        print("Blendyn::spawn_aero2_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
 
     # name of the plane object
@@ -355,27 +354,18 @@ def spawn_aero3_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
         n1OBJ = bpy.data.objects[n1]
     except KeyError:
-        print("Blendyn::spawn_aero3_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
 
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
         n2OBJ = bpy.data.objects[n2]
     except KeyError:
-        print("Blendyn::spawn_aero3_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
 
     try:
         n3 = nd['node_' + str(elem.nodes[2].int_label)].blender_object
         n3OBJ = bpy.data.objects[n3]
     except KeyError:
-        print("Blendyn::spawn_aero3_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[2].int_label))
         return {'NODE3_NOTFOUND'}
 
     # name of the plane object
@@ -437,9 +427,9 @@ def spawn_aero3_element(elem, context):
 # -----------------------------------------------------------
 # end of spawn_aero3_element() function
 
-# Imports an Aerodynamic Body in the scene
-class Scene_OT_MBDyn_Import_Aerodynamic_Body_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_aero0"
+class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
+    """ Imports an Aerodynamic Body in the scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_aerodynamic_body"
     bl_label = "MBDyn aerodynamic body element importer"
     int_label = bpy.props.IntProperty()
 
@@ -455,25 +445,24 @@ class Scene_OT_MBDyn_Import_Aerodynamic_Body_Element(bpy.types.Operator):
             elem = ed['aero0_' + str(self.int_label)]
             retval = spawn_aero0_element(elem, context)
             if retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            else:
+            else if retval == {'FINISHED'}:
+                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
                 return retval
+            else:
+                # Should not be reached
+                return retval
+                
         except KeyError:
-            message = "Element aero0_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Aerodynamic_Body_Element class
+# end of BLENDYN_OT_import_aerodynamic_body class
 
-# Imports an Aerodynamic Beam2 in the scene
-class Scene_OT_MBDyn_Import_Aerodynamic_Beam2_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_aero2"
+class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
+    """ Imports an Aerodynamic Beam2 in the scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_aerodynamic_beam2"
     bl_label = "MBDyn two-node aerodynamic beam element importer"
     int_label = bpy.props.IntProperty()
 
@@ -489,32 +478,26 @@ class Scene_OT_MBDyn_Import_Aerodynamic_Beam2_Element(bpy.types.Operator):
             elem = ed['aero2_' + str(self.int_label)]
             retval = spawn_aero2_element(elem, context)
             if retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[1].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem) 
+                return retval
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element aero2_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Aerodynamic_Beam2_Element class
+# end of BLENDYN_OT_import_aerodynamic_beam2class
 
-# Imports an Aerodynamic Beam2 in the scene
-class Scene_OT_MBDyn_Import_Aerodynamic_Beam3_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_aero3"
+class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
+    """ Imports an Aerodynamic Beam2 in the scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_aerodynamic_beam3"
     bl_label = "MBDyn three-node aerodynamic beam element importer"
     int_label = bpy.props.IntProperty()
 
@@ -530,32 +513,22 @@ class Scene_OT_MBDyn_Import_Aerodynamic_Beam3_Element(bpy.types.Operator):
             elem = ed['aero3_' + str(self.int_label)]
             retval = spawn_aero3_element(elem, context)
             if retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[1].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[2].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                return retval
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element aero3_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+                eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Aerodynamic_Beam3_Element class
+# end of BLENDYN_OT_import_aerodynamic_beam3 class

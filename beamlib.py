@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file beamlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -24,9 +24,6 @@
 
 import bpy
 import numpy as np
-import csv
-
-import logging
 
 from mathutils import *
 from math import *
@@ -34,18 +31,19 @@ from math import *
 from bpy.app.handlers import persistent
 from .utilslib import *
 
-# helper function to parse beam2
-def parse_beam2(rw, ed):
- 
-    ret_val = True
+import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
-    # Debug message
-    print("Blendyn::parse_beam2(): Parsing beam2 " + rw[1])
+# helper function to parse beam2
+def parse_beam2(rw, ed): 
+    ret_val = True
     try:
         el = ed['beam2_' + rw[1]]
-        print("Blendyn::parse_beam2(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it.")
         
+        eldbmsg('PARSE_ELEM', 'BLENDYN::parse_beam2()', el)
+        eldbmsg('FOUND_DICT', "BLENDYN::parse_beam2()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
         
@@ -59,13 +57,16 @@ def parse_beam2(rw, ed):
         el.is_imported = True
 
         pass
+
     except KeyError:
-        print("Blendyn::parse_beam2(): didn't find entry in elements dictionary. Creating one.")
-        
+
         el = ed.add()
         el.mbclass = 'elem.beam'
         el.type = 'beam2'
         el.int_label = int(rw[1])
+
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_beam2()", el)
+        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_beam2()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -79,7 +80,7 @@ def parse_beam2(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
-        el.import_function = "add.mbdyn_elem_beam2"
+        el.import_function = "BLENDYN_OT_import_beam2"
         el.info_draw = "beam2_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         
@@ -93,15 +94,14 @@ def parse_beam2(rw, ed):
 def parse_beam3(rw, ed):
     
     ret_val = True 
-    # Debug message
-    print("Blendyn::parse_beam3(): Parsing beam3 " + rw[1])
-    
     try:
-
         el = ed['beam3_' + rw[1]]
+        
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_beam3()", el)
+        eldbmsg('FOUND_IN_DICT', "BLENDYN::parse_beam3()", el)
+        
         el.is_imported = False
-        print("Blendyn::parse_beam3(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it.")
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
         el.nodes[2].int_label = int(rw[10])
@@ -117,14 +117,15 @@ def parse_beam3(rw, ed):
         el.is_imported = True
 
         pass
-    except KeyError:
-        print("Blendyn::parse_beam3(): didn't find entry in elements dictionary. Creating one.")
-        
+    except KeyError: 
         el = ed.add() 
         el.mbclass = 'elem.beam'
         el.type = 'beam3'
         el.int_label = int(rw[1])
         
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_beam3()", el)
+        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_beam3()", EL)
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
         
@@ -143,7 +144,7 @@ def parse_beam3(rw, ed):
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
         
-        el.import_function = "add.mbdyn_elem_beam3"
+        el.import_function = "BLENDYN_OT_import_beam3"
         el.info_draw = "beam3_info_draw"
         el.update = "update_beam3"
         el.name = el.type + "_" + str(el.int_label)
@@ -261,27 +262,17 @@ def spawn_beam2_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_beam2_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
-        return{'CANCELLED'}
  
     # try to find Blender objects associated with the nodes that 
     # the element connects
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_beam2_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
     
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_beam2_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
    
     # nodes' objects
@@ -388,10 +379,6 @@ def spawn_beam3_element(elem, context):
 
     nd = context.scene.mbdyn.nodes
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-        return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_beam3_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
         return{'CANCELLED'}
 
     # try to find Blender objects associated with the nodes that 
@@ -400,25 +387,16 @@ def spawn_beam3_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_beam3_element()): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
     
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_beam3_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
     
     try:
         n3 = nd['node_' + str(elem.nodes[2].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_beam3_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[2].int_label))
         return {'NODE3_NOTFOUND'}
 
     # Create the NURBS order 3 curve
@@ -585,8 +563,6 @@ def update_beam3(elem, insert_keyframe = False):
         n2 = bpy.data.objects[nd['node_' + str(elem.nodes[1].int_label)].blender_object]
         n3 = bpy.data.objects[nd['node_' + str(elem.nodes[2].int_label)].blender_object]
     except KeyError:
-        print("Blendyn::update_beam3(): Could not find a Blender object " + \
-                str(elem.nodes[1].int_label))
         return {'OBJECTS_NOTFOUND'}
 
     # offsets
@@ -656,11 +632,10 @@ def update_beam3(elem, insert_keyframe = False):
 # -----------------------------------------------------------
 # end of update_beam3() function
 
-
 ## Imports a Beam 2 element in the scene as a line joining two nodes
-class Scene_OT_MBDyn_Elems_Import_Beam2(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_beam2"
-    bl_label = "MBDyn rod element importer"
+class BLENDYN_OT_import_beam2(bpy.types.Operator):
+    bl_idname = "mbdyn.BLENDYN_OT_import_beam2"
+    bl_label = "Imports a beam2 element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -674,41 +649,32 @@ class Scene_OT_MBDyn_Elems_Import_Beam2(bpy.types.Operator):
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+                eldbmsg(retval, 'BLENDYN_OT_import_beam2::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object" + \
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
+                eldbmsg(retval, 'BLENDYN_OT_import_beam2::execute()', elem)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not import element: Blender object" + \
-                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, 'BLENDYN_OT_import_beam2::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg('IMPORT_SUCCESS', 'BLENDYN_OT_import_beam2::execute()', elem)
             else:
                 return retval
 
         except KeyError:
-            message = "Element beam2_" + str(elem.int_label) + "not found."
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg('DICT_ERROR', 'BLENDYN_OT_import_beam2::execute()', elem)
             return {'CANCELLED'}
             
         return {'FINISHED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Elems_Import_Beam2 class
+# end of BLENDYN_OT_import_beam2 class
 
 ## Imports a Beam 3 element in the scene as a line joining two nodes
-class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_beam3"
-    bl_label = "MBDyn rod element importer"
+class BLENDYN_OT_import_beam3(bpy.types.Operator):
+    bl_idname = "BLENDYN_OT_import_beam3"
+    bl_label = "Imports a beam3 element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -721,55 +687,44 @@ class Scene_OT_MBDyn_Elems_Import_Beam3(bpy.types.Operator):
             elem = ed['beam3_' + str(self.int_label)]
             retval = spawn_beam3_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                        "associated to Node " + str(elem.nodes[2].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
             else:
+                # Should not be reached
                 return retval
 
         except KeyError:
-            message = "Element beam3_" + str(elem.int_label) + "not found."
-            self.report({'ERROR'}, message)
-            logging.error(message)
+                eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
             
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Elems_Import_Beam3 class
+# end of BLENDYN_OT_import_beam3 class
 
-class Object_OT_MBDyn_update_beam3(bpy.types.Operator):
+class BLENDYN_OT_update_beam3(bpy.types.Operator):
     """ Calls the update_beam3() function to update the current configuration
         of the curve representing the beam3 element """
-    bl_idname = "update.mbdyn_beam3"
+    bl_idname = "mbdyn.BLENDYN_OT_update_beam3"
     bl_label = "Updates beam3 curve configuration"
 
     def execute(self, context):
         ed = context.scene.mbdyn.elems
         ret_val = update_beam3(ed[context.object.name])
         if ret_val == 'OBJECTS_NOTFOUND':
-            message = "Unable to find Blender objects needed"
+            message = type(self).__name__ + "::execute(): " \
+                    + "Unable to find Blender objects to update"
             self.report({'ERROR'}, message)
-            logging.error(message)
+            baseLogger.error(message)
             return {'CANCELLED'}
         else:
             return ret_val

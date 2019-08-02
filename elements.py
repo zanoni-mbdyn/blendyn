@@ -22,14 +22,13 @@
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
-# TODO: check for unnecessary stuff
-import bpy, bmesh
+import bpy
 from bpy.types import Operator, Panel
 from bpy.props import *
-from bpy_extras.io_utils import ImportHelper
-from bpy.app.handlers import persistent
 
 import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -179,8 +178,8 @@ bpy.utils.register_class(BLENDYN_PG_elems_dictionary)
 class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
     """ Imports all the elements selected (by type and label range) into a single
         mesh Blender Object. Currently useful only for shell4 elements. """
-    bl_idname =  "BLENDYN_OT_import_elements_as_mesh"
     bl_label = "Import MBDyn elements as single mesh"
+    bl_idname = "mbdyn.BLENDYN_OT_import_elments_asmesh" 
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -208,11 +207,11 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
                 try:
                     verts.append(bpy.data.objects[nd[node].blender_object].location)
                 except KeyError:
-                    message = "BLENDYN_OT_import_elements_as_mesh::execute(): "\
+                    message = type(self).__name__ + "::execute(): "\
                               + "Could not find Blender Objects for " \
                               + elem.name + " import"
                     self.report({'ERROR'}, message)
-                    logging.error(message)
+                    baseLogger.error(message)
         
         node_to_vert = dict(zip((node_set), range(len(verts))))
 
@@ -249,10 +248,10 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
 
             return {'FINISHED'}
         else:
-            message = "BLENDYN_OT_import_elements_as_mesh::execute(): "\
+            message = type(self).__name__ + "::execute(): "\
                       + "No mesh data was created"
             self.report({'WARNING'}, message)
-            logging.warranty(message)
+            baseLogger.warning(message)
             return {'CANCELLED'}
 # end of BLENDYN_OT_import_elements_as_mesh class
 bpy.utils.register_class(BLENDYN_OT_import_elements_as_mesh)

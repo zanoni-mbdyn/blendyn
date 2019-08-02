@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file baselib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -26,17 +26,16 @@ from mathutils import *
 from math import *
 
 import bpy
-from bpy.types import Operator, Panel
 from bpy.props import *
-from bpy_extras.io_utils import ImportHelper
 
 import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 import numpy as np
+from bpy_extras.io_utils import ImportHelper
 
-import ntpath, os, csv, math, atexit, re
-
-from collections import namedtuple
+import os, csv, atexit, re
 
 from .nodelib import *
 from .elementlib import *
@@ -50,12 +49,13 @@ try:
 except ImportError:
     pass
 
-import os, time
 try:
     from netCDF4 import Dataset
 except ImportError:
-    print("Blendyn: could not find netCDF4 module. NetCDF import "\
-        + "will be disabled.")
+    message = "BLENDYN: could not find netCDF4 module. NetCDF import "\
+            + "will be disabled."
+    print(message)
+    baseLogger.warning(message)
     pass
 
 def parse_input_file(context):
@@ -132,10 +132,10 @@ def setup_import(filepath, context):
                 eigsol.iNVec = nc.dimensions[NVecs[ii]].size
                 eigsol.curr_eigmode = 1
         except KeyError:
-            message = 'MBDynSelectOutputFile::setup_import() INFO: ' + \
+            message = 'BLENDYN::setup_import(): ' + \
                     'no valid eigenanalysis results found'
             print(message)
-            logging.warning(message)
+            baseLogger.info(message)
             pass
 
         get_plot_vars_glob(context)
@@ -508,24 +508,43 @@ def update_label(self, context):
                 ret_val = update_parametrization(obj)
 
             if ret_val == 'ROT_NOT_SUPPORTED':
-                message = "Rotation parametrization not supported, node " \
+                message = type(self)__name__ + "::update_label(): "\
+                        + "Rotation parametrization not supported, node " \
                 + obj.mbdyn.string_label
                 self.report({'ERROR'}, message)
-                logging.error(message)
+                baseLogger.error(message)
 
             elif ret_val == 'LOG_NOT_FOUND':
-                message = "MBDyn .log file not found"
+                message = type(self)__name__ + "::update_label(): "\
+                        + "MBDyn .log file not found"
                 self.report({'ERROR'}, message)
-                logging.error(message)
+                baseLogger.error(message)
 
         except KeyError:
-            message = "Node not found"
+            message = type(self)__name__ + "::update_label(): "\
+                    + "Node not found"
             self.report({'ERROR'}, message)
-            logging.error(message)
+            baseLogger.error(message)
             pass
     return
 # -----------------------------------------------------------
 # end of update_label() function
+
+def update_end_time(context):
+    mbs = context.scene.mbdyn
+
+    if mbs.end_time > mbs.num_timesteps * mbs.time_step:
+        mbs.end_time = mbs.num_timesteps * mbs.time_step
+# -----------------------------------------------------------
+# end of update_end_time() function
+
+def update_start_time(context):
+    mbs = context.scene.mbdyn
+
+    if mbs.start_time >= mbs.num_timesteps * mbs.time_step:
+        mbs.start_time = (mbs.num_timesteps - 1) * mbs.time_step
+# -----------------------------------------------------------
+# end of update_start_time() function
 
 ## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
@@ -928,11 +947,11 @@ def log_messages(mbs, baseLogger, saved_blend):
 	        global logFile
 	        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
 	
-	        fh = logging.FileHandler(logFile)
-	        fh.setFormatter(logging.Formatter(formatter, datefmt))
+	        fh = baseLogger.FileHandler(logFile)
+	        fh.setFormatter(baseLogger.Formatter(formatter, datefmt))
 	
 	        custom = BlenderHandler()
-	        custom.setFormatter(logging.Formatter(formatter, datefmt))
+	        custom.setFormatter(baseLogger.Formatter(formatter, datefmt))
 	
 	        baseLogger.addHandler(fh)
 	        baseLogger.addHandler(custom)
@@ -955,14 +974,14 @@ def delete_log():
             pass
 
 def logging_shutdown():
-    print("Blendyn::logging_shutdown()::INFO: shutting down logs.")
+    print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
 
-    print("Blendyn::logging_shutdown()::INFO: removing handlers.")
+    print("BLENDYN::logging_shutdown()::INFO: removing handlers.")
     logger = logging.getLogger()
     for handler in logger.handlers:
         logger.removeHandler(handler)
-    print("Blendyn::logging_shutdown()::INFO: done.")
+    print("BLENDYN::logging_shutdown()::INFO: done.")
 
 atexit.register(delete_log)
 atexit.register(logging_shutdown)
