@@ -36,23 +36,22 @@ def parse_reference_frame(rw, rd):
     ret_val = True
 
     # Debug message
+    eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_reference_frame()", el)
+        
     print("Blendyn::parse_reference_frame(): Parsing Reference Frame " + rw[0])
 
     try:
         ref = rd['ref_' + str(rw[0]).strip()]
-        print("Blendyn::parse_reference_frame(): found existing entry in references dictionary." \
-                + " Updating it.")
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_reference_frame()", ref) 
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
-    except KeyError:
-        print("Blendyn::parse_reference_frame(): didn't found an entry in elements dictionary." \
-                + " Creating one.")
-        
+    except KeyError: 
         ref = rd.add()
         ref.int_label = int(rw[0].strip())
         ref.name = 'ref_' + str(rw[0]).strip()
         ret_val = False
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_reference_frame()", ref) 
         pass
 
     ref.pos = Vector(( float(rw[1]), float(rw[2]), float(rw[3]) ))
@@ -71,9 +70,6 @@ def spawn_reference_frame(ref, context):
     mbs = context.scene.mbdyn
 
     if any(obj == ref.blender_object for obj in bpy.data.objects.keys()):
-        print("Blendyn::spawn_reference_frame(): Reference already imported. \
-            Remove the Blender object or rename it \
-            before re-importing the element.")
         return {'OBJECT_EXISTS'}
 
     bpy.ops.object.empty_add(type = 'ARROWS', location = ref.pos)
@@ -94,9 +90,11 @@ def spawn_reference_frame(ref, context):
 # end of spawn_reference_frame(ref, context) function
 
 # Imports a Reference Frame in the scene
-class Scene_OT_MBDyn_Import_Reference(bpy.types.Operator):
-    bl_idname = "add.mbdyn_reference"
-    bl_label = "MBDyn reference importer"
+class BLENDYN_OT_import_reference(bpy.types.Operator):
+    """ Imports a reference frame into the Blender scene
+        as an Empty of type AXES"""
+    bl_idname = "mbdyn.BLENDYN_OT_import_reference"
+    bl_label = "Imports a reference"
     int_label = bpy.props.IntProperty()
     
     def draw(self, context):
@@ -110,20 +108,18 @@ class Scene_OT_MBDyn_Import_Reference(bpy.types.Operator):
             ref = rd['ref_' + str(self.int_label)]
             retval = spawn_reference_frame(ref, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "Found the Object " + ref.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', ref)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', ref)
+                return retval
             else:
                 return retval
         except KeyError:
-            message = "Reference ref_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', ref)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Reference class
+# end of BLENDYN_OT_import_reference class
 
 def reference_info_draw(ref, layout):
 

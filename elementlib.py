@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file elementlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -22,7 +22,6 @@
 # ***** END GPL LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
-# TODO: check for unnecessary stuff
 import bpy
 from mathutils import *
 from math import *
@@ -31,6 +30,10 @@ from bpy.props import *
 
 import ntpath, os, csv, math
 from collections import namedtuple
+
+import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from .aerolib import *
 from .beamlib import *
@@ -104,8 +107,11 @@ def parse_elements(context, jnt_type, rw):
     try:
         ret_val = joint_types[jnt_type](rw, ed)
     except KeyError:
-        print("Blendyn::parse_elements(): Element type " + jnt_type + " not implemented yet. \
-                Skipping...")
+        message = "BLENDYN::parse_elements(): " \
+                + "Element type " + jnt_type + " not implemented yet. \
+                Skipping..."
+        print(message)
+        baseLogger.warning(message)
         ret_val = True
         pass
     return ret_val
@@ -197,9 +203,9 @@ def fmax(x):
 # end of fmax function
 
 ## Bevel object panel, for curves
-class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
-    """ Beam operators panel in data properties panel """
-    bl_label = "MBDyn props"
+class BLENDYN_PT_bevel(bpy.types.Panel):
+    """ Bevel section panel in data properties """
+    bl_label = "Curve section"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'data'
@@ -215,10 +221,10 @@ class Data_OT_MBDyn_Elems_Beams(bpy.types.Panel):
 
         try:
             if ed[context.object.name].type in eltypes:
-                col.operator(Object_OT_MBDyn_load_section.bl_idname, text="Load profile (Selig)")
+                col.operator(BLENDYN_OT_load_section.bl_idname, text="Load profile (Selig)")
                 if ed[context.object.name].type == 'beam3':
-                    col.operator(Object_OT_MBDyn_update_beam3.bl_idname, text="Update configuration")
+                    col.operator(BLENDYN_OT_update_beam3.bl_idname, text="Update configuration")
         except KeyError:
             pass
 # -----------------------------------------------------------
-# end of Data_OT_MBDyn_Elems_Beams class
+# end of BLENDYN_PT_bevel class

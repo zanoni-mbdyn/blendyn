@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file angularjlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -25,11 +25,8 @@
 import bpy
 import os
 
-import logging
-
 from mathutils import *
 from math import *
-from bpy.props import *
 
 from .utilslib import parse_rotmat
 from .utilslib import parenting
@@ -37,12 +34,11 @@ from .utilslib import parenting
 # helper function to parse angularvelocity joints
 def parse_angularvelocity(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_angularvelocity(): Parsing angularvelocity joint " + rw[1])
     try:
         el = ed['angularvelocity_' + str(rw[1])]
-
-        print("Blendyn::parse_angularvelocity(): found existing entry in elements dictionary. Updating it.")
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularvelocity()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_angularvelocity()", el)
 
         el.nodes[0].int_label = int(rw[2])
         
@@ -57,11 +53,13 @@ def parse_angularvelocity(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("Blendyn::parse_angularvelocity(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.mbclass = 'elem.joint'
         el.type = 'angularvelocity'
         el.int_label = int(rw[1])
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularvelocity()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_angularvelocity()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -69,7 +67,7 @@ def parse_angularvelocity(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        el.import_function = "add.mbdyn_elem_angularvelocity"
+        el.import_function = "mbdyn.BLENDYN_OT_import_angularvelocity"
         # el.info_draw = "angularvelocity_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -82,12 +80,11 @@ def parse_angularvelocity(rw, ed):
 # helper function to parse angularacceleration joints
 def parse_angularacceleration(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_angularacceleration(): Parsing angularacceleration joint " + rw[1])
     try:
         el = ed['angularacceleration_' + str(rw[1])]
-
-        print("Blendyn::parse_angularacceleration(): found existing entry in elements dictionary. Updating it.")
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularacceleration()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_angularacceleration()", el)
 
         el.nodes[0].int_label = int(rw[2])
         
@@ -102,11 +99,13 @@ def parse_angularacceleration(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("Blendyn::parse_angularacceleration(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.mbclass = 'elem.joint'
         el.type = 'angularacceleration'
         el.int_label = int(rw[1])
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularacceleration()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_angularacceleration()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -114,7 +113,7 @@ def parse_angularacceleration(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        el.import_function = "add.mbdyn_elem_angularacceleration"
+        el.import_function = "mbdyun.BLENDYN_OT_import_angularacceleration"
         # el.info_draw = "angularacceleration_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -180,17 +179,10 @@ def spawn_angularvelocity_element(elem, context):
         # Should disappear in future versions
         bpy.data.objects[elem.blender_object].mbdyn.mbclass = 'elem.joint'
         return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_angularvelocity_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
-        return {'CANCELLED'}
 
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_angularvelocity_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
 
     # nodes' objects
@@ -248,17 +240,10 @@ def spawn_angularacceleration_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_angularacceleration_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
-        return {'CANCELLED'}
 
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_angularacceleration_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
 
     # nodes objects
@@ -308,8 +293,10 @@ def spawn_angularacceleration_element(elem, context):
 # end of spawn_angularacceleration_element(elem, context) function
 
 # Imports a angularvelocity Joint in the scene
-class Scene_OT_MBDyn_Import_angularvelocity_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_angularvelocity"
+class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
+    """ Imports an angularvelocity joint element 
+        into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_angularvelocity"
     bl_label = "MBDyn angularvelocity joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -324,38 +311,32 @@ class Scene_OT_MBDyn_Import_angularvelocity_Joint_Element(bpy.types.Operator):
         try:
             elem = ed['angularvelocity_' + str(self.int_label)]
             retval = spawn_angularvelocity_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+            if retval == {'OBJECT_EXISTS'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == 'LIBRARY_ERROR':
-                message = "Could not import element: could not " +\
-                        "load library object"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element angularvelocity_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_angularvelocity_Joint_Element class. Creates the object representing a angularvelocity joint element
+# end of BLENDYN_OT_import_angularvelocity class.
 
 # Imports a angularacceleration Joint in the scene
-class Scene_OT_MBDyn_Import_angularacceleration_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_angularacceleration"
+class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
+    """ Imports an angularacceleration joint element 
+        into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_angularacceleration"
     bl_label = "MBDyn angularacceleration joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -370,31 +351,22 @@ class Scene_OT_MBDyn_Import_angularacceleration_Joint_Element(bpy.types.Operator
         try:
             elem = ed['angularacceleration_' + str(self.int_label)]
             retval = spawn_angularacceleration_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+            if retval == {'OBJECT_EXISTS'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
-                message = "Could not import element: could not " +\
-                        "load library object"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'LIBRARY_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element angularacceleration_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_angularacceleration_Joint_Element class. Creates the object representing a angularacceleration joint element
+# end of BLENDYN_OT_import_angularacceleration class. 

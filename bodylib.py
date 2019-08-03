@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file bodylib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -38,8 +38,8 @@ def parse_body(rw, ed):
     try:
         el = ed['body_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_body()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_body()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_body()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_body()", el)
         
         el.nodes[0].int_label = int(rw[2])
         el.magnitude = float(rw[3])     # mass
@@ -67,8 +67,8 @@ def parse_body(rw, ed):
         el.type = 'body'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_body()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_body()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_body()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_body()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -182,12 +182,12 @@ class BLENDYN_OT_import_body(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_body class

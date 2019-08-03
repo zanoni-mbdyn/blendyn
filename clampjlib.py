@@ -36,8 +36,8 @@ def parse_clamp(rw, ed):
     try:
         el = ed['clamp_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_clamp()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_clamp()", el) 
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_clamp()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_clamp()", el) 
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -67,8 +67,8 @@ def parse_clamp(rw, ed):
         el.type = 'clamp'
         el.int_label = int(rw[1])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_clamp()", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_clamp()", el)  
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_clamp()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_clamp()", el)  
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -162,8 +162,9 @@ def spawn_clamp_element(elem, context):
 
 # Imports a Clamp Joint in the scene
 class BLENDYN_OT_import_clamp(bpy.types.Operator):
+    """ Imports a clamp joint element into the Blender scene """
     bl_idname = "mbdyn.BLENDYN_OT_import_clamp"
-    bl_label = "MBDyn clamp joint element importer"
+    bl_label = "Imports a clamp joint element"
     int_label = bpy.props.IntProperty()
     
     def draw(self, context):
@@ -187,12 +188,12 @@ class BLENDYN_OT_import_clamp(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_clamp class

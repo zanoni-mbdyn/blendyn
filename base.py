@@ -46,7 +46,7 @@ import json
 try:
     from netCDF4 import Dataset
 except ImportError as ierr:
-    print("Blendyn:: could not enable the netCDF module. NetCDF import "\
+    print("BLENDYN::base.py: could not enable the netCDF module. NetCDF import "\
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))
 
@@ -55,7 +55,7 @@ try:
     import psutil
     HAVE_PSUTIL = True
 except ImportError as ierr:
-    print("Blendyn:: could not enable the MBDyn control module. "\
+    print("BLENDYN::base.py: could not enable the MBDyn control module. "\
             + "Stopping MBDyn from the Blender UI will be disabled.")
     print("{0}".format(ierr))
 
@@ -72,12 +72,12 @@ try:
     HAVE_PLOT = True
     from .plotlib import *
 except (ImportError, OSError) as ierr:
-    print("Blendyn:: could not enable the plotting module. Plotting  "\
+    print("BLENDYN::base.py: could not enable the plotting module. Plotting  "\
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))
     
 ## Nodes Dictionary: contains nodes informations
-class MBDynNodesDictionary(bpy.types.PropertyGroup):
+class BLENDYN_PG_nodes_dictionary(bpy.types.PropertyGroup):
     mbclass = StringProperty(
             name = "Class of MBDyn element",
             description  = ""
@@ -129,10 +129,10 @@ class MBDynNodesDictionary(bpy.types.PropertyGroup):
         description = "Flag set to true at the end of the import process"
         )
 # -----------------------------------------------------------
-# end of MBDynNodesDictionary class
-bpy.utils.register_class(MBDynNodesDictionary)
+# end of BLENDYN_PG_nodes_dictionary class
+bpy.utils.register_class(BLENDYN_PG_nodes_dictionary)
 
-class MBDynRefsDictionary(bpy.types.PropertyGroup):
+class BLENDYN_PG_refence_dictionary(bpy.types.PropertyGroup):
     int_label = IntProperty(
             name = "reference integer label",
             description = "Reference integer label"
@@ -184,76 +184,76 @@ class MBDynRefsDictionary(bpy.types.PropertyGroup):
             )
 
 # -----------------------------------------------------------
-# end of MBDynRefsDictionary class
-bpy.utils.register_class(MBDynRefsDictionary)
+# end of BLENDYN_PG_refence_dictionary class
+bpy.utils.register_class(BLENDYN_PG_refence_dictionary)
 
 ## Time PropertyGroup for animation
-class MBDynTime(bpy.types.PropertyGroup):
+class BLENDYN_PG_mbtime(bpy.types.PropertyGroup):
     time = FloatProperty(
             name = "simulation time",
             description = "simulation time of animation frame"
             )
 # -----------------------------------------------------------
-# end of MBDynTime class
-bpy.utils.register_class(MBDynTime)
+# end of BLENDYN_PG_mbtime class
+    bpy.utils.register_class(BLENDYN_PG_mbtime)
 
-## PropertyGroup of Render Variables
-class MBDynRenderVarsDictionary(bpy.types.PropertyGroup):
-    idx = IntProperty(
-        name = "Render Variable index",
-        description = "Index of the NetCDF variable to be set for display in rendering"
-    )
-    varname = StringProperty(
-        name = "Display name",
-        description = "Display name of the rendered variable"
-    )
-    variable = StringProperty(
-        name = "NetCDF variable",
-        description = "NetCDF variable to be rendered"
-    )
-    components = BoolVectorProperty(
-        name = "Components",
-        description = "Components of the variable to be displayed",
-        size = 9
-    )
-# -----------------------------------------------------------
-# end of MBDynRenderVarsDictionary class
-bpy.utils.register_class(MBDynRenderVarsDictionary)
+    ## PropertyGroup of Render Variables
+    class BLENDYN_PG_render_vars_dictionary(bpy.types.PropertyGroup):
+        idx = IntProperty(
+            name = "Render Variable index",
+            description = "Index of the NetCDF variable to be set for display in rendering"
+        )
+        varname = StringProperty(
+            name = "Display name",
+            description = "Display name of the rendered variable"
+        )
+        variable = StringProperty(
+            name = "NetCDF variable",
+            description = "NetCDF variable to be rendered"
+        )
+        components = BoolVectorProperty(
+            name = "Components",
+            description = "Components of the variable to be displayed",
+            size = 9
+        )
+    # -----------------------------------------------------------
+    # end of BLENDYN_PG_render_vars_dictionary class
+    bpy.utils.register_class(BLENDYN_PG_render_vars_dictionary)
 
-## PropertyGroup of Driver Variables
-class MBDynDriverVarsDictionary(bpy.types.PropertyGroup):
-    variable = StringProperty(
-        name = "Variable",
-        description = "NetCDF variable to be rendered"
-    )
-    components = BoolVectorProperty(
-        name = "Components",
-        description = "Components of the variable to be displayed",
-        size = 9
-    )
-    values = FloatVectorProperty(
-        name = "Values",
-        description = "Values of the variable at current frame"
-    )
-# -----------------------------------------------------------
-# end of MBDynDriverVarsDictionary class
-bpy.utils.register_class(MBDynDriverVarsDictionary)
+    ## PropertyGroup of Driver Variables
+    class BLENDYN_PG_driver_vars_dictionary(bpy.types.PropertyGroup):
+        variable = StringProperty(
+            name = "Variable",
+            description = "NetCDF variable to be rendered"
+        )
+        components = BoolVectorProperty(
+            name = "Components",
+            description = "Components of the variable to be displayed",
+            size = 9
+        )
+        values = FloatVectorProperty(
+            name = "Values",
+            description = "Values of the variable at current frame"
+        )
+    # -----------------------------------------------------------
+    # end of BLENDYN_PG_driver_vars_dictionary class
+    bpy.utils.register_class(BLENDYN_PG_driver_vars_dictionary)
 
-class MBDynDisplayVarsDictionary(bpy.types.PropertyGroup):
+    class BLENDYN_PG_display_vars_dictionary(bpy.types.PropertyGroup):
     name = StringProperty(
 	name = "Group of Display Variables",
 	description = ""
     )
     group = CollectionProperty(
 	name = "Actual collection group",
-	type = MBDynRenderVarsDictionary
+	type = BLENDYN_PG_render_vars_dictionary
     )
 # -----------------------------------------------------------
-# end of MBDynDisplayVarsDictionary class
-bpy.utils.register_class(MBDynDisplayVarsDictionary)
+# end of BLENDYN_PG_display_vars_dictionary class
+bpy.utils.register_class(BLENDYN_PG_display_vars_dictionary)
 
 ## PropertyGroup of Environment Variables
-class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
+class BLENDYN_PG_environment_vars_dictionary(bpy.types.PropertyGroup):
     variable = StringProperty(
             name = "Environment variables",
             description = 'Variables to be set'
@@ -263,11 +263,11 @@ class MBDynEnvVarsDictionary(bpy.types.PropertyGroup):
             description = "Values of variables to be set"
             )
 # -----------------------------------------------------------
-# end of MBDynEnvVarsDictionary class
-bpy.utils.register_class(MBDynEnvVarsDictionary)
+# end of BLENDYN_PG_environment_vars_dictionary class
+bpy.utils.register_class(BLENDYN_PG_environment_vars_dictionary)
 
 ## PropertyGroup of MBDyn plottable variables
-class MBDynPlotVars(bpy.types.PropertyGroup):
+class BLENDYN_PG_plot_vars(bpy.types.PropertyGroup):
     name = StringProperty(
             name = "Plottable variable"
             )
@@ -313,11 +313,11 @@ class MBDynPlotVars(bpy.types.PropertyGroup):
             default = 0.0
             )
 # -----------------------------------------------------------
-# end of MBDynPlotVars class
-bpy.utils.register_class(MBDynPlotVars)
+# end of BLENDYN_PG_plot_vars class
+bpy.utils.register_class(BLENDYN_PG_plot_vars)
 
 ## Set scene properties
-class MBDynSettingsScene(bpy.types.PropertyGroup):
+class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
 
     # Base path of the module
     addon_path = StringProperty(
@@ -434,18 +434,18 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     render_vars = CollectionProperty(
         name = "RenderVars",
         description = "MBDyn render variables collection",
-        type = MBDynRenderVarsDictionary
+        type = BLENDYN_PG_render_vars_dictionary
     )
 
     driver_vars = CollectionProperty(
         name = "DriverVars",
         description = "Variables set to track NetCDF variables",
-        type = MBDynDriverVarsDictionary
+        type = BLENDYN_PG_driver_vars_dictionary
     )
 
     display_vars_group = CollectionProperty(
         name = "MBDyn Display variables group collection",
-        type = MBDynDisplayVarsDictionary
+        type = BLENDYN_PG_display_vars_dictionary
     )
 
     display_enum_group = EnumProperty(
@@ -465,314 +465,314 @@ class MBDynSettingsScene(bpy.types.PropertyGroup):
     # Collection of Environment variables and corresponding values
     env_vars = CollectionProperty(
             name = "MBDyn environment variables collection",
-            type = MBDynEnvVarsDictionary
-        )
+                type = BLENDYN_PG_environment_vars_dictionary
+            )
 
-    # Environment Variables index, holds the index for displaying the Envrionment variables in a list
-    env_index = IntProperty(
-            name = "MBDyn Environment variables collection index",
+        # Environment Variables index, holds the index for displaying the Envrionment variables in a list
+        env_index = IntProperty(
+                name = "MBDyn Environment variables collection index",
+                default = 0
+            )
+
+        render_index = IntProperty(
+            name = "MBDyn Render Variables collection index",
             default = 0
         )
 
-    render_index = IntProperty(
-        name = "MBDyn Render Variables collection index",
-        default = 0
-    )
+        # Name of the Environment Variable
+        env_variable = StringProperty(
+                name = "MBDyn environment variables",
+                description = "Environment variables used in MBDyn simulation"
+                )
 
-    # Name of the Environment Variable
-    env_variable = StringProperty(
-            name = "MBDyn environment variables",
-            description = "Environment variables used in MBDyn simulation"
+        # Value associated with the Environment Variable
+        env_value = StringProperty(
+                name = "Values of MBDyn environment values",
+                description = "Values of the environment variables used in MBDyn simulation"
             )
 
-    # Value associated with the Environment Variable
-    env_value = StringProperty(
-            name = "Values of MBDyn environment values",
-            description = "Values of the environment variables used in MBDyn simulation"
-        )
+        # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
+        num_rows = IntProperty(
+                name = "MBDyn .mov file number of rows",
+                description = "Total number of rows in MBDyn .mov file, corresponding (total time steps * number of nodes)"
+                )
 
-    # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
-    num_rows = IntProperty(
-            name = "MBDyn .mov file number of rows",
-            description = "Total number of rows in MBDyn .mov file, corresponding (total time steps * number of nodes)"
-            )
+        # Load frequency: if different than 1, the .mov file is read every N time steps
+        load_frequency = FloatProperty(
+                name = "frequency",
+                description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
+                min = 1.0,
+                default = 1.0
+                )
 
-    # Load frequency: if different than 1, the .mov file is read every N time steps
-    load_frequency = FloatProperty(
-            name = "frequency",
-            description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
-            min = 1.0,
-            default = 1.0
-            )
-
-    #Start time
-    start_time = FloatProperty(
-        name = "Start Time",
-        description = "If this value is X, different than 0, the import starts at X seconds",
-        min = 0.0,
-        default = 0.0
-        update = update_start_time
-        )
-
-    end_time = FloatProperty(
-        name = "End Time",
-        description = "If this value is X, different than total simulation time, the import stops at X seconds",
-        min = 0.0
-        update = update_end_time
-        )
-
-    time_step = FloatProperty(
-        name = "Time Step",
-        description = "Simulation time step"
-        )
-
-    # Reference dictionary -- holds the associations between MBDyn references and blender
-    # objects
-    references = CollectionProperty(
-            name = "MBDyn references",
-            type = MBDynRefsDictionary
-            )
-
-    # Reference dictionary index -- holds the index for displaying the Reference
-    # Dictionary in a UI List
-    ref_index = IntProperty(
-            name = "References collection index",
-            default = 0
-            )
-
-    disabled_output = StringProperty(
-            name = "Nodes for which Output is disabled",
-            default = ''
-    )
-
-    # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
-    nodes = CollectionProperty(
-            name = "MBDyn nodes",
-            type = MBDynNodesDictionary
-            )
-
-    # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
-    nd_index = IntProperty(
-            name = "MBDyn nodes collection index",
-            default = 0
-            )
-
-    # Default object representing a node, when imported automatically
-    node_object = EnumProperty(
-            items = [("ARROWS", "Arrows", "Empty - arrows", 'OUTLINER_OB_EMPTY', 1),\
-                     ("AXES", "Axes", "Empty - axes", 'EMPTY_DATA', 2),\
-                     ("CUBE", "Cube", "", 'MESH_CUBE', 3),\
-                     ("UVSPHERE", "UV Sphere", "", 'MESH_UVSPHERE', 4),\
-                     ("NSPHERE", "Nurbs Sphere", "", 'SURFACE_NSPHERE', 5),\
-                     ("CONE", "Cone", "", 'MESH_CONE', 6)],
-            name = "Import nodes as",
-            default = "ARROWS"
-            )
-
-    missing = EnumProperty(
-            items = [("DO NOTHING", "Do Nothing","","" ,1),\
-                     ("HIDE", "Hide", "","" ,2),\
-                     ("DELETE", "Delete", "", "", 3)],
-            name = "Handling of missing nodes/elements",
-            default = "HIDE"
-            )
-
-    # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
-    mesh_import_mode = EnumProperty(
-            items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
-                     ("SINGLE MESH", "Joined in single mesh", "", 'LINKED', 2)],
-            name = "Mesh objects",
-            default = "SEPARATED OBJECTS"
-            )
-
-    # Elements dictionary -- holds the collection of the elements found in the .log file
-    elems = CollectionProperty(
-            name = "MBDyn elements collection",
-            type = MBDynElemsDictionary
-            )
-
-    # Elements to be updated -- holds the keys to elements that need to update their configuration
-    #                           when the scene changes
-    elems_to_update = CollectionProperty(
-            type = MBDynElemToBeUpdated,
-            name = "Elements that require update",
-            description = "Collection of indexes of the elements that need to be updated when \
-                            the scene is changed"
-        )
-
-    # Current Simulation Time
-    simtime = CollectionProperty(
-            name = "MBDyn simulation time",
-            type = MBDynTime
-            )
-
-    # Current simulation time
-    time = FloatProperty(
-            name = "time: ",
-            description = "Current MBDyn simulation time",
+        #Start time
+        start_time = FloatProperty(
+            name = "Start Time",
+            description = "If this value is X, different than 0, the import starts at X seconds",
+            min = 0.0,
             default = 0.0
+            update = update_start_time
             )
 
-    # Elements dictionary index -- holds the index for displaying the Elements Dictionary in a
-    # UI List
-    ed_index = IntProperty(
-            name = "MBDyn elements collection index",
-            default = 0
+        end_time = FloatProperty(
+            name = "End Time",
+            description = "If this value is X, different than total simulation time, the import stops at X seconds",
+            min = 0.0
+            update = update_end_time
             )
 
-    # MBDyn's node count
-    num_nodes = IntProperty(
-            name = "MBDyn nodes number",
-            description = "MBDyn node count"
+        time_step = FloatProperty(
+            name = "Time Step",
+            description = "Simulation time step"
             )
 
-    # MBDyn's time steps count
-    num_timesteps = IntProperty(
-            name = "MBDyn time steps",
-            description = "MBDyn time steps count"
-            )
-
-    # Flag that indicates if we are to use NETCDF results format
-    use_netcdf = BoolProperty(
-            name = "Use netCDF",
-            description = "Import results in netCDF format",
-            default = False
-            )
-
-    # Flag that indicates if the .mov (or .nc) file is loaded correctly and the
-    # nodes dictionary is ready, used to indicate that all is ready for the object's
-    # to be animated
-    is_ready = BoolProperty(
-            name = "ready to animate",
-            description = "True if .mov (or .nc) file and nodes dictionary loaded correctly",
-            )
-
-    # If we want to hook vertices in creating mesh from nodes
-    is_vertshook = BoolProperty(
-            name = "Hook vertices",
-            description = "Hook directly the vertices to the nodes in creating a mesh object?",
-            default = False
-            )
-
-    # Lower limit of range import for nodes
-    min_node_import = IntProperty(
-            name = "first node to import",
-            description = "Lower limit of integer labels for range import for nodes",
-            default = 0
-            )
-
-    # Higher limit of range import for nodes
-    max_node_import = IntProperty(
-            name = "last node to import",
-            description = "Higher limit of integer labels for range import for nodes",
-            default = 0
-            )
-
-    node_scale_slider = FloatProperty(
-            name = "Value of Scaling",
-            default = 1.0
-    )
-
-    # Type filter for elements import
-    elem_type_import = EnumProperty(
-            items  = get_elems_types,
-            name = "Elements to import",
-            )
-
-    elem_scale_slider = FloatProperty(
-            name = "Scaling Factor",
-            default = 1.0
-    )
-
-    elem_type_scale = EnumProperty(
-            items = get_elems_types,
-            name = "Elements to scale",
-    )
-    # Lower limit of range import for elemens
-    min_elem_import = IntProperty(
-            name = "first element to import",
-            description = "Lower limit of integer labels for range import for elements",
-            default = 0
-            )
-
-    # Higher limit of range import for elements
-    max_elem_import = IntProperty(
-            name = "last element to import",
-            description = "Higher limit of integer labels for range import for elements",
-            default = 2**31 - 1
-            )
-    # True if output contains at least one eigensolution
-    eigensolutions = CollectionProperty(
-            name = "Eigensolutions",
-            description = "Parameters of the eigensolutions found in the MBDyn output",
-            type = MBDynEigenanalysisProps
-            )
-
-    curr_eigsol = IntProperty(
-            name = "current eigensolution",
-            description = "Index of the currently selected eigensolution",
-            default = 0,
-            update = update_curr_eigsol
-            )
-
-    plot_vars = CollectionProperty(
-            name = "MBDyn variables available for plotting",
-            type = MBDynPlotVars
-            )
-
-    plot_var_index = IntProperty(
-            name = "Plot variable index",
-            description = "index of the current variable to be plotted",
-            default = 0
-            )
-
-    if HAVE_PLOT:
-
-        plot_sxy_varX = StringProperty(
-                name = "Cross-spectrum X variable",
-                description = "variable to be used as input in cross-spectrum",
-                default = "none"
+        # Reference dictionary -- holds the associations between MBDyn references and blender
+        # objects
+        references = CollectionProperty(
+                name = "MBDyn references",
+                type = BLENDYN_PG_refence_dictionary
                 )
 
-        plot_sxy_varY = StringProperty(
-                name = "Cross-spectrum Y variable",
-                description = "variable to be used as output in cross-spectrum",
-                default = "none"
+        # Reference dictionary index -- holds the index for displaying the Reference
+        # Dictionary in a UI List
+        ref_index = IntProperty(
+                name = "References collection index",
+                default = 0
                 )
-# -----------------------------------------------------------
-# end of MBDynSettingsScene class
-bpy.utils.register_class(MBDynSettingsScene)
 
-## MBDynSettings for Blender Object
-class MBDynSettingsObject(bpy.types.PropertyGroup):
-    """ Properties of the current Blender Object related to MBDyn """
-    # Type of MBDyn entity
-    type = StringProperty(
-            name = "MBDyn entity type",
-            description = "Type of MBDyn entity associated with object",
-            default = 'none'
+        disabled_output = StringProperty(
+                name = "Nodes for which Output is disabled",
+                default = ''
+        )
+
+        # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
+        nodes = CollectionProperty(
+                name = "MBDyn nodes",
+                type = BLENDYN_PG_nodes_dictionary
+                )
+
+        # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
+        nd_index = IntProperty(
+                name = "MBDyn nodes collection index",
+                default = 0
+                )
+
+        # Default object representing a node, when imported automatically
+        node_object = EnumProperty(
+                items = [("ARROWS", "Arrows", "Empty - arrows", 'OUTLINER_OB_EMPTY', 1),\
+                         ("AXES", "Axes", "Empty - axes", 'EMPTY_DATA', 2),\
+                         ("CUBE", "Cube", "", 'MESH_CUBE', 3),\
+                         ("UVSPHERE", "UV Sphere", "", 'MESH_UVSPHERE', 4),\
+                         ("NSPHERE", "Nurbs Sphere", "", 'SURFACE_NSPHERE', 5),\
+                         ("CONE", "Cone", "", 'MESH_CONE', 6)],
+                name = "Import nodes as",
+                default = "ARROWS"
+                )
+
+        missing = EnumProperty(
+                items = [("DO NOTHING", "Do Nothing","","" ,1),\
+                         ("HIDE", "Hide", "","" ,2),\
+                         ("DELETE", "Delete", "", "", 3)],
+                name = "Handling of missing nodes/elements",
+                default = "HIDE"
+                )
+
+        # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
+        mesh_import_mode = EnumProperty(
+                items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
+                         ("SINGLE MESH", "Joined in single mesh", "", 'LINKED', 2)],
+                name = "Mesh objects",
+                default = "SEPARATED OBJECTS"
+                )
+
+        # Elements dictionary -- holds the collection of the elements found in the .log file
+        elems = CollectionProperty(
+                name = "MBDyn elements collection",
+                type = MBDynElemsDictionary
+                )
+
+        # Elements to be updated -- holds the keys to elements that need to update their configuration
+        #                           when the scene changes
+        elems_to_update = CollectionProperty(
+                type = MBDynElemToBeUpdated,
+                name = "Elements that require update",
+                description = "Collection of indexes of the elements that need to be updated when \
+                                the scene is changed"
             )
 
-    # Dictionary key
-    dkey = StringProperty(
-            name = "MBDyn dictionary index",
-            description = "Index of the entry of the MBDyn dictionary relative to the object",
-            default = 'none' 
-            )
-    # Specific for plotting
-    if HAVE_PLOT:
+        # Current Simulation Time
+        simtime = CollectionProperty(
+                name = "MBDyn simulation time",
+                type = BLENDYN_PG_mbtime
+                )
+
+        # Current simulation time
+        time = FloatProperty(
+                name = "time: ",
+                description = "Current MBDyn simulation time",
+                default = 0.0
+                )
+
+        # Elements dictionary index -- holds the index for displaying the Elements Dictionary in a
+        # UI List
+        ed_index = IntProperty(
+                name = "MBDyn elements collection index",
+                default = 0
+                )
+
+        # MBDyn's node count
+        num_nodes = IntProperty(
+                name = "MBDyn nodes number",
+                description = "MBDyn node count"
+                )
+
+        # MBDyn's time steps count
+        num_timesteps = IntProperty(
+                name = "MBDyn time steps",
+                description = "MBDyn time steps count"
+                )
+
+        # Flag that indicates if we are to use NETCDF results format
+        use_netcdf = BoolProperty(
+                name = "Use netCDF",
+                description = "Import results in netCDF format",
+                default = False
+                )
+
+        # Flag that indicates if the .mov (or .nc) file is loaded correctly and the
+        # nodes dictionary is ready, used to indicate that all is ready for the object's
+        # to be animated
+        is_ready = BoolProperty(
+                name = "ready to animate",
+                description = "True if .mov (or .nc) file and nodes dictionary loaded correctly",
+                )
+
+        # If we want to hook vertices in creating mesh from nodes
+        is_vertshook = BoolProperty(
+                name = "Hook vertices",
+                description = "Hook directly the vertices to the nodes in creating a mesh object?",
+                default = False
+                )
+
+        # Lower limit of range import for nodes
+        min_node_import = IntProperty(
+                name = "first node to import",
+                description = "Lower limit of integer labels for range import for nodes",
+                default = 0
+                )
+
+        # Higher limit of range import for nodes
+        max_node_import = IntProperty(
+                name = "last node to import",
+                description = "Higher limit of integer labels for range import for nodes",
+                default = 0
+                )
+
+        node_scale_slider = FloatProperty(
+                name = "Value of Scaling",
+                default = 1.0
+        )
+
+        # Type filter for elements import
+        elem_type_import = EnumProperty(
+                items  = get_elems_types,
+                name = "Elements to import",
+                )
+
+        elem_scale_slider = FloatProperty(
+                name = "Scaling Factor",
+                default = 1.0
+        )
+
+        elem_type_scale = EnumProperty(
+                items = get_elems_types,
+                name = "Elements to scale",
+        )
+        # Lower limit of range import for elemens
+        min_elem_import = IntProperty(
+                name = "first element to import",
+                description = "Lower limit of integer labels for range import for elements",
+                default = 0
+                )
+
+        # Higher limit of range import for elements
+        max_elem_import = IntProperty(
+                name = "last element to import",
+                description = "Higher limit of integer labels for range import for elements",
+                default = 2**31 - 1
+                )
+        # True if output contains at least one eigensolution
+        eigensolutions = CollectionProperty(
+                name = "Eigensolutions",
+                description = "Parameters of the eigensolutions found in the MBDyn output",
+                type = BLENDYN_PG_eigenanalysis
+                )
+
+        curr_eigsol = IntProperty(
+                name = "current eigensolution",
+                description = "Index of the currently selected eigensolution",
+                default = 0,
+                update = update_curr_eigsol
+                )
+
+        plot_vars = CollectionProperty(
+                name = "MBDyn variables available for plotting",
+                type = BLENDYN_PG_plot_vars
+                )
+
         plot_var_index = IntProperty(
                 name = "Plot variable index",
                 description = "index of the current variable to be plotted",
                 default = 0
-            )
+                )
+
+        if HAVE_PLOT:
+
+            plot_sxy_varX = StringProperty(
+                    name = "Cross-spectrum X variable",
+                    description = "variable to be used as input in cross-spectrum",
+                    default = "none"
+                    )
+
+            plot_sxy_varY = StringProperty(
+                    name = "Cross-spectrum Y variable",
+                    description = "variable to be used as output in cross-spectrum",
+                    default = "none"
+                    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_settings_scene class
+bpy.utils.register_class(BLENDYN_PG_settings_scene)
+
+## MBDynSettings for Blender Object
+class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
+""" Properties of the current Blender Object related to MBDyn """
+# Type of MBDyn entity
+type = StringProperty(
+        name = "MBDyn entity type",
+        description = "Type of MBDyn entity associated with object",
+        default = 'none'
+        )
+
+# Dictionary key
+dkey = StringProperty(
+        name = "MBDyn dictionary index",
+        description = "Index of the entry of the MBDyn dictionary relative to the object",
+        default = 'none' 
+        )
+# Specific for plotting
+if HAVE_PLOT:
+    plot_var_index = IntProperty(
+            name = "Plot variable index",
+            description = "index of the current variable to be plotted",
+            default = 0
+        )
 
 # -----------------------------------------------------------
-# end of MBDynSettingsObject class
-bpy.utils.register_class(MBDynSettingsObject)
+# end of BLENDYN_PG_settings_object class
+bpy.utils.register_class(BLENDYN_PG_settings_object)
 
-bpy.types.Scene.mbdyn = PointerProperty(type=MBDynSettingsScene)
-bpy.types.Object.mbdyn = PointerProperty(type=MBDynSettingsObject)
+bpy.types.Scene.mbdyn = PointerProperty(type=BLENDYN_PG_settings_scene)
+bpy.types.Object.mbdyn = PointerProperty(type=BLENDYN_PG_settings_object)
 
 # Handler to update the current time of simulation
 @persistent
@@ -1830,7 +1830,7 @@ class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "dCoef", slider = False)
             col.enabled = False
             row = layout.row()
-            row.operator(BLENDYN_OT_mbdyn_eigen_geometry.bl_idname, \
+            row.operator(BLENDYN_OT_eigen_geometry.bl_idname, \
                     text = "Reference configuration")
 
             row = layout.row()
@@ -1852,7 +1852,7 @@ class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
             col.label(text = "Animation parameters")
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_scale")
             col.prop(mbs.eigensolutions[mbs.curr_eigsol], "anim_frames")
-            col.operator(BLENDYN_OT_mbdyn_animate_eigenmode.bl_idname, \
+            col.operator(BLENDYN_OT_animate_eigenmode.bl_idname, \
                     text = "Visualize mode")
 
 # -----------------------------------------------------------

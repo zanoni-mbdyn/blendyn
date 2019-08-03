@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file brakejlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -25,25 +25,19 @@
 import bpy
 import os
 
-import logging
-
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
 
 from .utilslib import *
 
 # helper function to parse brake joints
 def parse_brake(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_brake(): Parsing brake joint " + rw[1])
     try:
         el = ed['brake_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_brake()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_brake()", el) 
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_brake()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_brake()", el) 
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -74,8 +68,8 @@ def parse_brake(rw, ed):
         el.type = 'brake'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_body()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_body()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_body()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_body()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -246,8 +240,9 @@ def spawn_brake_element(elem, context):
 
 # Imports a brake Joint in the scene
 class BLENDYN_OT_import_brake(bpy.types.Operator):
+    """ Import a brake joint element into the Blender scene """
     bl_idname = "mbdyn.BLENDYN_OT_import_brake"
-    bl_label = "MBDyn brake joint element importer"
+    bl_label = "Import a brake joint element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -261,26 +256,25 @@ class BLENDYN_OT_import_brake(bpy.types.Operator):
         try:
             elem = ed['brake_' + str(self.int_label)]
             retval = spawn_brake_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
-                eldbmsg(retval, type(self).__name__ + ':execute()', elem)
+            if retval == {'OBJECT_EXISTS'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
-                eldbmsg(retval, type(self).__name__ + ':execute()', elem)
-                logging.error(message)
+            elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE2_NOTFOUND':
-                eldbmsg(retval, type(self).__name__ + ':execute()', elem)
+            elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
-                eldbmsg(retval, type(self).__name__ + ':execute()', elem)
+            elif retval == {'LIBRARY_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + ':execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + ':execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_import_brake class. Creates the object representing a brake joint element
+# end of BLENDYN_OT_import_brake class.

@@ -41,8 +41,8 @@ def parse_beam2(rw, ed):
     try:
         el = ed['beam2_' + rw[1]]
         
-        eldbmsg('PARSE_ELEM', 'BLENDYN::parse_beam2()', el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_beam2()", el)
+        eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_beam2()', el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_beam2()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
@@ -65,8 +65,8 @@ def parse_beam2(rw, ed):
         el.type = 'beam2'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_beam2()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_beam2()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam2()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_beam2()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -80,7 +80,7 @@ def parse_beam2(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
-        el.import_function = "BLENDYN_OT_import_beam2"
+        el.import_function = "mbdyn.BLENDYN_OT_import_beam2"
         el.info_draw = "beam2_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         
@@ -97,8 +97,8 @@ def parse_beam3(rw, ed):
     try:
         el = ed['beam3_' + rw[1]]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_beam3()", el)
-        eldbmsg('FOUND_IN_DICT', "BLENDYN::parse_beam3()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
+        eldbmsg({'FOUND_IN_DICT'}, "BLENDYN::parse_beam3()", el)
         
         el.is_imported = False
         
@@ -123,8 +123,8 @@ def parse_beam3(rw, ed):
         el.type = 'beam3'
         el.int_label = int(rw[1])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_beam3()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_beam3()", EL)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_beam3()", EL)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -144,7 +144,7 @@ def parse_beam3(rw, ed):
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
         
-        el.import_function = "BLENDYN_OT_import_beam3"
+        el.import_function = "mbdyn.BLENDYN_OT_import_beam3"
         el.info_draw = "beam3_info_draw"
         el.update = "update_beam3"
         el.name = el.type + "_" + str(el.int_label)
@@ -379,7 +379,7 @@ def spawn_beam3_element(elem, context):
 
     nd = context.scene.mbdyn.nodes
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-        return{'CANCELLED'}
+        return{'OBJECT_EXISTS'}
 
     # try to find Blender objects associated with the nodes that 
     # the element connects
@@ -634,6 +634,7 @@ def update_beam3(elem, insert_keyframe = False):
 
 ## Imports a Beam 2 element in the scene as a line joining two nodes
 class BLENDYN_OT_import_beam2(bpy.types.Operator):
+    """ Imports a beam2 element into the Blender scene """
     bl_idname = "mbdyn.BLENDYN_OT_import_beam2"
     bl_label = "Imports a beam2 element"
     int_label = bpy.props.IntProperty()
@@ -649,22 +650,22 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
-                eldbmsg(retval, 'BLENDYN_OT_import_beam2::execute()', elem)
+                eldbmsg(retval, type(self)__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
-                eldbmsg(retval, 'BLENDYN_OT_import_beam2::execute()', elem)
+                eldbmsg(retval, type(self)__name__ + '::execute()', elem)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                eldbmsg(retval, 'BLENDYN_OT_import_beam2::execute()', elem)
+                eldbmsg(retval, type(self)__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', 'BLENDYN_OT_import_beam2::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, 'BLENDYN_OT_import_beam2::execute()', elem)
             else:
                 return retval
 
         except KeyError:
-            eldbmsg('DICT_ERROR', 'BLENDYN_OT_import_beam2::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, 'BLENDYN_OT_import_beam2::execute()', elem)
             return {'CANCELLED'}
             
         return {'FINISHED'}
@@ -699,13 +700,13 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
                 # Should not be reached
                 return retval
 
         except KeyError:
-                eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
             
 # -----------------------------------------------------------
@@ -720,7 +721,7 @@ class BLENDYN_OT_update_beam3(bpy.types.Operator):
     def execute(self, context):
         ed = context.scene.mbdyn.elems
         ret_val = update_beam3(ed[context.object.name])
-        if ret_val == 'OBJECTS_NOTFOUND':
+        if ret_val == {'OBJECTS_NOTFOUND'}:
             message = type(self).__name__ + "::execute(): " \
                     + "Unable to find Blender objects to update"
             self.report({'ERROR'}, message)

@@ -328,6 +328,7 @@ class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                return retval
             else:
                 return retval
         except KeyError:

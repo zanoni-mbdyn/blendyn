@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file nodelib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -25,13 +25,10 @@
 import bpy
 from mathutils import *
 from math import *
-# from bpy.types import Operator, Panel
-# from bpy.props import *
 
 import logging
-
-import ntpath, os, csv, math
-from collections import namedtuple
+baseLogger = logging.getLogger()
+baseLogger.seLevel(logging.DEBUG)
 
 axes = {'1': 'X', '2': 'Y', '3': 'Z'}
 
@@ -69,9 +66,9 @@ def set_obj_locrot_mov(obj, rw):
     parametrization = dictobj.parametrization
     
     if parametrization[0:5] == 'EULER':
-        obj.rotation_euler = Euler(Vector(( math.radians(rw[4]),\
-                                            math.radians(rw[5]),\
-                                            math.radians(rw[6]))),\
+        obj.rotation_euler = Euler(Vector(( radians(rw[4]),\
+                                            radians(rw[5]),\
+                                            radians(rw[6]))),\
                      axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]])
         obj.keyframe_insert(data_path = "rotation_euler")
     elif parametrization == 'PHI':
@@ -89,8 +86,10 @@ def set_obj_locrot_mov(obj, rw):
         obj.keyframe_insert(data_path = "rotation_quaternion")
     else:
         # Should not be reached
-        print("Blendyn::Error: unsupported rotation parametrization")
-
+        message = "BLENDYN::set_obj_locrot_mov(): "\
+                + "unsupported rotation parametrization"
+        print(message)
+        baseLogger.error(message)
     return
 # -----------------------------------------------------------
 # end of set_obj_locrot_mov() function 
@@ -109,8 +108,11 @@ def update_parametrization(obj):
         obj.rotation_mode = 'QUATERNION'
         ret_val = 'FINISHED'
     else:
-        # Should not be reached ...
-        print("Blendyn::Error: unsupported rotation parametrization")
+        # Should not be reached
+        message = "BLENDYN::set_obj_locrot_mov(): "\
+                + "unsupported rotation parametrization"
+        print(message)
+        baseLogger.error(message)
         ret_val = 'ROT_NOT_SUPPORTED'
 
     return ret_val
@@ -155,12 +157,17 @@ def parse_node(context, rw):
         else:
             raise RotKeyError("Error: rotation mode " + type + " not recognised")
 
-    print("Blendyn::parse_node(): Parsing node " + rw[2])
+    message = "BLENDYN::parse_node(): Parsing node " + rw[2]
+    print(message)
+    baseLogger.info(message)
     try:
         node = nd['node_' + str(rw[2])]
         node.is_imported = True
-        print("Blendyn::parse_node(): found existing entry in nodes dictionary for node " + rw[2]\
-                + ". Updating it.")
+        message = "BLENDYN::parse_node(): "\
+                + "Found existing entry in nodes dictionary for node " + rw[2]\
+                + ". Updating it."
+        print(message)
+        baseLogger.info(message)
 
         # FIXME: this is here to enhance backwards compatibility: should disappear 
         # in the future
@@ -175,8 +182,12 @@ def parse_node(context, rw):
             pass
         ret_val = True
     except KeyError:
-        print("Blendyn::parse_node(): didn't find an existing entry in nodes dictionary for node " + rw[2]\
-                + ". Creating it.")
+        message = "BLENDYN::parse_node(): "\
+                + "Existing entry in nodes dictionary for node " + rw[2]\
+                + "not found. Creating it.."
+        print(message)
+        baseLogger.info(message)
+
         node = nd.add()
         node.mbclass = 'node.struct'
         node.is_imported = True

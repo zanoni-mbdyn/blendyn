@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file prismjlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -25,25 +25,20 @@
 import bpy
 import os
 
-import logging
-
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
 
 from .utilslib import *
 
 # helper function to parse prismatic joints
 def parse_prismatic(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_prismatic(): Parsing prismatic joint " + rw[1])
     try:
         el = ed['prismatic_' + str(rw[1])]
-
-        print("Blendyn::parse_prismatic(): found existing entry in elements dictionary. Updating it.")
-
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_prismatic()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_prismatic()", el) 
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
          
@@ -64,11 +59,13 @@ def parse_prismatic(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("Blendyn::parse_prismatic(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.mbclass = 'elem.joint'
         el.type = 'prismatic'
         el.int_label = int(rw[1])
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_prismatic()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_prismatic()", el)  
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -85,7 +82,7 @@ def parse_prismatic(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_prismatic"
+        el.import_function = "mbdyn.BLENDYN_OT_import_prismatic"
         el.info_draw = "prism_info_draw"
 
         el.name = el.type + "_" + str(el.int_label)
@@ -148,25 +145,15 @@ def spawn_prismatic_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_prismatic_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
-        return {'CANCELLED'}
 
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_prismatic_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
     
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_prismatic_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
 
     # nodes' objects
@@ -230,8 +217,8 @@ def spawn_prismatic_element(elem, context):
 # end of spawn_prismatic_element(elem, context) function
 
 # Imports a Prismatic Joint in the scene
-class Scene_OT_MBDyn_Import_Prismatic_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_prismatic"
+class BLENDYN_OT_import_prismatic(bpy.types.Operator):
+    bl_idname = "mbdyn.BLENDYN_OT_import_prismatic"
     bl_label = "MBDyn prismatic joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -247,36 +234,25 @@ class Scene_OT_MBDyn_Import_Prismatic_Joint_Element(bpy.types.Operator):
             elem = ed['prismatic_' + str(self.int_label)]
             retval = spawn_prismatic_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not import element: Blender object " +\
-                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
-                message = "Could not import element: could not " +\
-                        "load library object"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                return retval
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element prismatic_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Prismatic_Joint_Element class. Creates the object representing a prismatic joint element
+# end of BLENDYN_OT_import_prismatic class. 

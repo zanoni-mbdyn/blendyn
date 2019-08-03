@@ -36,9 +36,9 @@ from bpy_extras.io_utils import ImportHelper
 
 import csv
 
-class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
-    """ Loads NACA airfoil profile in Selig format """
-    bl_idname = "load.mbdyn_naca_selig"
+class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
+    """ Loads profile to assign to curve bevel, in Selig format """
+    bl_idname = "mbdyn.BLENDYN_OT_load_section"
     bl_label = "Load NACA profile in Selig format"
 
     filter_glob = bpy.props.StringProperty(
@@ -82,9 +82,10 @@ class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
                         if jj != kk:
                             obj.layers[jj] = False
                 except IndexError:
-                    message = "Couldn't find an empty layer. Using the active layer"
+                    message = "BLENDYN_OT_load_section::execute(): "\
+                            + "Couldn't find an empty layer. Using the active layer"
                     self.report({'INFO'}, message)
-                    logging.info(message)
+                    baseLogger.info(message)
                     pass
                 
                 # context.curve.bevel_object = obj
@@ -98,17 +99,19 @@ class Object_OT_MBDyn_load_section(bpy.types.Operator, ImportHelper):
 
                 return {'FINISHED'}
         except IOError:
-           message = 'Could not locate file'
-           self.report({'ERROR'}, message)
-           logging.error(message)
-           return {'CANCELLED'}
+            message = "BLENDYN_OT_load_section::execute(): "\
+                    + "Could not locate the selected file"
+            self.report({'ERROR'}, message)
+            baseLogger.error(message)
+            return {'CANCELLED'}
         except StopIteration:
-            message = 'Reached the end of file'
+            message = "BLENDYN_OT_load_section::execute(): "\
+                    + "Unespected end of file"
             self.report({'WARNING'}, message)
-            logging.warning(message)
+            baseLogger.warning(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of fmin function Object_OT_MBDyn_load_section class
+# end of fmin function BLENDYN_OT_load_section class
 
 
 ## Utility functions
@@ -261,18 +264,18 @@ def eldbmsg(msg, who, elem):
         return message
 
    # map messages
-   messages = {'PARSE_ELEM' : parse,
-               'FOUND_DICT' : foundid,
-               'NOTFOUND_DICT' : notfoundid,
-               'OBJECT_EXISTS' : objexists,
-               'OBJECTS_NOTFOUND' : objsnotfound,
-               'NODE1_NOTFOUND' : n1notfound,
-               'NODE2_NOTFOUND' : n2notfound,
-               'NODE3_NOTFOUND' : n3notfound,
-               'NODE4_NOTFOUND' : n4notfound,
-               'LIBRARY_ERROR' : libraryerror,
-               'DICT_ERROR' : dicterror,
-               'IMPORT_SUCCESS' : importsuccess
+   messages = {{'PARSE_ELEM'} : parse,
+               {'FOUND_DICT'} : foundid,
+               {'NOTFOUND_DICT'} : notfoundid,
+               {'OBJECT_EXISTS'} : objexists,
+               {'OBJECTS_NOTFOUND'} : objsnotfound,
+               {'NODE1_NOTFOUND'} : n1notfound,
+               {'NODE2_NOTFOUND'} : n2notfound,
+               {'NODE3_NOTFOUND'} : n3notfound,
+               {'NODE4_NOTFOUND'} : n4notfound,
+               {'LIBRARY_ERROR'} : libraryerror,
+               {'DICT_ERROR'} : dicterror,
+               {'IMPORT_SUCCESS'} : importsuccess
    }
 
    message = who + ": "

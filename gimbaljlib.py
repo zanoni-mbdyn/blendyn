@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file gimbaljlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -25,24 +25,19 @@
 import bpy
 import os
 
-import logging
-
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
 
 from .utilslib import *
 
 # helper function to parse gimbal joints
 def parse_gimbal(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_gimbal(): Parsing gimbal joint " + rw[1])
     try:
         el = ed['gimbal_' + str(rw[1])]
 
-        print("Blendyn::parse_gimbal(): found existing entry in elements dictionary. Updating it.")
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_gimbal():", el)
+        eldbmsg('FOUND_DICT', "BLENDYN::parse_gimbal():", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -68,11 +63,13 @@ def parse_gimbal(rw, ed):
         el.is_imported = True
         pass
     except KeyError:
-        print("Blendyn::parse_gimbal(): didn't find an entry in elements dictionary. Creating one.")
         el = ed.add()
         el.mbclass = 'elem.joint'
         el.type = 'gimbal'
         el.int_label = int(rw[1])
+
+        eldbmsg('PARSE_ELEM', "BLENDYN::parse_gimbal():", el)
+        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_gimbal():", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -95,7 +92,7 @@ def parse_gimbal(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "add.mbdyn_elem_gimbal"
+        el.import_function = "mbdyn.BLENDYN_OT_import_gimbal"
         el.info_draw = "gimbal_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -156,25 +153,15 @@ def spawn_gimbal_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_gimbal_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
-        return {'CANCELLED'}
 
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_gimbal_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
 
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_gimbal_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
 
     # nodes' objects
@@ -248,9 +235,10 @@ def spawn_gimbal_element(elem, context):
 # end of spawn_gimbal_element(elem, context) function
 
 # Imports a gimbal Joint in the scene
-class Scene_OT_MBDyn_Import_gimbal_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_gimbal"
-    bl_label = "MBDyn gimbal joint element importer"
+class BLENDYN_OT_import_gimbal(bpy.types.Operator):
+    """ Imports a gimbal joint element into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_gimbal"
+    bl_label = "Imports a gimbal joint element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -264,37 +252,26 @@ class Scene_OT_MBDyn_Import_gimbal_Joint_Element(bpy.types.Operator):
         try:
             elem = ed['gimbal_' + str(self.int_label)]
             retval = spawn_gimbal_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+            if retval == {'OBJECT_EXISTS'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE2_NOTFOUND':
-                message = "Could not import element: Blender object " +\
-                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
-                message = "Could not import element: could not " +\
-                        "load library object"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'LIBRARY_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                return retval
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element gimbal_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_gimbal_Joint_Element class. Creates the object representing a gimbal joint element
+# end of BLENDYN_OT_import_gimbal class.

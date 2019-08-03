@@ -37,8 +37,8 @@ def parse_aero0(rw, ed):
     try: 
         el = ed['aero0_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_aero0()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_aero0()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -58,8 +58,8 @@ def parse_aero0(rw, ed):
         el.type = 'aero0'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_aero0()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_aero0()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -93,8 +93,8 @@ def parse_aero2(rw, ed):
     try: 
         el = ed['aero2_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero2()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_aero2()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero2()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_aero2()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -116,9 +116,9 @@ def parse_aero2(rw, ed):
         el.type = 'aero2'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_aero0()", el)
-       
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_aero0()", el)
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
 
@@ -152,8 +152,8 @@ def parse_aero3(rw, ed):
     try: 
         el = ed['aero3_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero2()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_aero2()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero2()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_aero2()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
@@ -178,8 +178,8 @@ def parse_aero3(rw, ed):
         el.type = 'aero3'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_aero0()", el)
-        eldbmsg('NOTFOUND_IN_DICT', "BLENDYN::parse_aero0()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_aero0()", el)
        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -448,14 +448,14 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             else if retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
                 
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_aerodynamic_body class
@@ -490,7 +490,7 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_aerodynamic_beam2class
@@ -522,13 +522,13 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-                eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_aerodynamic_beam3 class
