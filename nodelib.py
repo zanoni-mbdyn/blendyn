@@ -27,8 +27,6 @@ from mathutils import *
 from math import *
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 axes = {'1': 'X', '2': 'Y', '3': 'Z'}
 
@@ -89,7 +87,7 @@ def set_obj_locrot_mov(obj, rw):
         message = "BLENDYN::set_obj_locrot_mov(): "\
                 + "unsupported rotation parametrization"
         print(message)
-        baseLogger.error(message)
+        logging.error(message)
     return
 # -----------------------------------------------------------
 # end of set_obj_locrot_mov() function 
@@ -112,7 +110,7 @@ def update_parametrization(obj):
         message = "BLENDYN::set_obj_locrot_mov(): "\
                 + "unsupported rotation parametrization"
         print(message)
-        baseLogger.error(message)
+        logging.error(message)
         ret_val = 'ROT_NOT_SUPPORTED'
 
     return ret_val
@@ -159,7 +157,7 @@ def parse_node(context, rw):
 
     message = "BLENDYN::parse_node(): Parsing node " + rw[2]
     print(message)
-    baseLogger.info(message)
+    logging.info(message)
     try:
         node = nd['node_' + str(rw[2])]
         node.is_imported = True
@@ -167,7 +165,7 @@ def parse_node(context, rw):
                 + "Found existing entry in nodes dictionary for node " + rw[2]\
                 + ". Updating it."
         print(message)
-        baseLogger.info(message)
+        logging.info(message)
 
         # FIXME: this is here to enhance backwards compatibility: should disappear 
         # in the future
@@ -184,9 +182,9 @@ def parse_node(context, rw):
     except KeyError:
         message = "BLENDYN::parse_node(): "\
                 + "Existing entry in nodes dictionary for node " + rw[2]\
-                + "not found. Creating it.."
+                + " not found. Creating it.."
         print(message)
-        baseLogger.info(message)
+        logging.info(message)
 
         node = nd.add()
         node.mbclass = 'node.struct'

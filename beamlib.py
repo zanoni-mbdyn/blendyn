@@ -66,7 +66,7 @@ def parse_beam2(rw, ed):
         el.int_label = int(rw[1])
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam2()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_beam2()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam2()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -124,7 +124,7 @@ def parse_beam3(rw, ed):
         el.int_label = int(rw[1])
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_beam3()", EL)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam3()", EL)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -674,7 +674,7 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
 
 ## Imports a Beam 3 element in the scene as a line joining two nodes
 class BLENDYN_OT_import_beam3(bpy.types.Operator):
-    bl_idname = "BLENDYN_OT_import_beam3"
+    bl_idname = "blendyn.import_beam3"
     bl_label = "Imports a beam3 element"
     int_label = bpy.props.IntProperty()
 

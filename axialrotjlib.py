@@ -25,10 +25,6 @@
 import bpy
 import os
 
-import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
-
 from mathutils import *
 from math import *
 from bpy.props import *

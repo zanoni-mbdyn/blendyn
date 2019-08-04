@@ -28,8 +28,6 @@
 import bpy
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -41,14 +39,14 @@ def parse_reference_frame(rw, rd):
     message = "BLENDYN::parse_reference_frame(): " \
             + "parsing reference frame " + rw[0]
     print(message)
-    baseLogger.info(message)
+    logging.info(message)
 
     try:
         ref = rd['ref_' + str(rw[0]).strip()]
         message = "BLENDYN::parse_reference_frame(): "\
                 + "found entry in dictionary. Updating it."
         print(message)
-        baseLogger.info(message)
+        logging.info(message)
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
@@ -60,7 +58,7 @@ def parse_reference_frame(rw, rd):
         message = "BLENDYN::parse_reference_frame(): "\
                 + "did not find entry in dictionary. Creating it."
         print(message)
-        baseLogger.info(message)
+        logging.info(message)
         pass
 
     ref.pos = Vector(( float(rw[1]), float(rw[2]), float(rw[3]) ))
@@ -102,7 +100,7 @@ def spawn_reference_frame(ref, context):
 class BLENDYN_OT_import_reference(bpy.types.Operator):
     """ Imports a reference frame into the Blender scene
         as an Empty of type AXES"""
-    bl_idname = "mbdyn.BLENDYN_OT_import_reference"
+    bl_idname = "blendyn.import_reference"
     bl_label = "Imports a reference"
     int_label = bpy.props.IntProperty()
     
@@ -120,13 +118,13 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
                 message = "BLENDYN::parse_reference_frame(): "\
                 + "object already exists. Remove it before re-importing."
                 print(message)
-                baseLogger.error(message)
+                logging.error(message)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 message = "BLENDYN::parse_reference_frame(): "\
                 + "Imported reference frame " + str(rfm.int_label)
                 print(message)
-                baseLogger.info(message)
+                logging.info(message)
                 return retval
             else:
                 return retval
@@ -135,7 +133,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
             + "Did not find a dictionary entry for reference frame " 
             + str(rfm.int_label)
             print(message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_reference class

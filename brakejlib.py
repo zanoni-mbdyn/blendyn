@@ -69,7 +69,7 @@ def parse_brake(rw, ed):
         el.int_label = int(rw[1])
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_body()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_body()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_body()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])

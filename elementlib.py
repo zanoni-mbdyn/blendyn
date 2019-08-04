@@ -32,8 +32,6 @@ import ntpath, os, csv, math
 from collections import namedtuple
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from .aerolib import *
 from .beamlib import *
@@ -106,12 +104,12 @@ def parse_elements(context, jnt_type, rw):
  
     try:
         ret_val = joint_types[jnt_type](rw, ed)
-    except KeyError:
+    except KeyError as kerr:
         message = "BLENDYN::parse_elements(): " \
-                + "Element type " + jnt_type + " not implemented yet. \
-                Skipping..."
+                + "Element type " + jnt_type \
+                + " not implemented yet. Skipping..."
         print(message)
-        baseLogger.warning(message)
+        logging.warning(message)
         ret_val = True
         pass
     return ret_val

@@ -29,8 +29,6 @@ import bpy
 from bpy.props import *
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 import numpy as np
 from bpy_extras.io_utils import ImportHelper
@@ -55,7 +53,7 @@ except ImportError:
     message = "BLENDYN: could not find netCDF4 module. NetCDF import "\
             + "will be disabled."
     print(message)
-    baseLogger.warning(message)
+    logging.warning(message)
     pass
 
 def parse_input_file(context):
@@ -109,6 +107,19 @@ def get_plot_vars_glob(context):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var
 
+def update_driver_variables(self, context):
+    mbs = bpy.context.scene.mbdyn
+    pvar = mbs.plot_vars[mbs.plot_var_index]
+
+    if pvar.as_driver:
+        dvar = mbs.driver_vars.add()
+        dvar.name = pvar.name
+        dvar.variable = pvar.name
+        dvar.components = pvar.plot_comps
+    else:
+        idx = [idx for idx in range(len(mbs.driver_vars)) if mbs.driver_vars[idx].name == pvar.name]
+        mbs.driver_vars.remove(idx[0])
+
 ## Function that sets up the data for the import process
 def setup_import(filepath, context):
     mbs = context.scene.mbdyn
@@ -135,7 +146,7 @@ def setup_import(filepath, context):
             message = 'BLENDYN::setup_import(): ' + \
                     'no valid eigenanalysis results found'
             print(message)
-            baseLogger.info(message)
+            logging.info(message)
             pass
 
         get_plot_vars_glob(context)
@@ -512,25 +523,25 @@ def update_label(self, context):
                         + "Rotation parametrization not supported, node " \
                         + obj.mbdyn.string_label
                 self.report({'ERROR'}, message)
-                baseLogger.error(message)
+                logging.error(message)
 
             elif ret_val == 'LOG_NOT_FOUND':
                 message = type(self).__name__ + "::update_label(): "\
                         + "MBDyn .log file not found"
                 self.report({'ERROR'}, message)
-                baseLogger.error(message)
+                logging.error(message)
 
         except KeyError:
             message = type(self).__name__ + "::update_label(): "\
                     + "Node not found"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             pass
     return
 # -----------------------------------------------------------
 # end of update_label() function
 
-def update_end_time(context):
+def update_end_time(self, context):
     mbs = context.scene.mbdyn
 
     if mbs.end_time > mbs.num_timesteps * mbs.time_step:
@@ -538,7 +549,7 @@ def update_end_time(context):
 # -----------------------------------------------------------
 # end of update_end_time() function
 
-def update_start_time(context):
+def update_start_time(self, context):
     mbs = context.scene.mbdyn
 
     if mbs.start_time >= mbs.num_timesteps * mbs.time_step:
@@ -947,11 +958,11 @@ def log_messages(mbs, baseLogger, saved_blend):
 	        global logFile
 	        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
 	
-	        fh = baseLogger.FileHandler(logFile)
-	        fh.setFormatter(baseLogger.Formatter(formatter, datefmt))
+	        fh = logging.FileHandler(logFile)
+	        fh.setFormatter(logging.Formatter(formatter, datefmt))
 	
 	        custom = BlenderHandler()
-	        custom.setFormatter(baseLogger.Formatter(formatter, datefmt))
+	        custom.setFormatter(logging.Formatter(formatter, datefmt))
 	
 	        baseLogger.addHandler(fh)
 	        baseLogger.addHandler(custom)

@@ -59,7 +59,7 @@ def parse_aero0(rw, ed):
         el.int_label = int(rw[1])
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_aero0()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -86,10 +86,6 @@ def parse_aero0(rw, ed):
 ## Parses two-node aerodynamic beam element entry in .log file
 def parse_aero2(rw, ed):
     ret_val = True
-    # Debug message
-    message = "Blendyn::parse_aero2(): Parsing two-node aerodynamic beam" + rw[1]
-    print(message)
-    baseLogger.info(message)
     try: 
         el = ed['aero2_' + str(rw[1])]
         
@@ -117,7 +113,7 @@ def parse_aero2(rw, ed):
         el.int_label = int(rw[1])
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_aero0()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -179,7 +175,7 @@ def parse_aero3(rw, ed):
         el.int_label = int(rw[1])
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_aero0()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_aero0()", el)
        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])

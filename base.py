@@ -360,14 +360,14 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Input File Path",
             description = "Path of MBDyn input files",
             default = "not yet selected"
-        )
+            )
 
     # MBDyn input file (to run simulation from Blender)
     input_basename = StringProperty(
             name = "Input File basename",
             description = "Base name of Input File",
             default = "not yet selected"
-        )
+            )
 
     # String representing path of MBDyn Installation
     install_path = StringProperty(
@@ -386,17 +386,17 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     final_time = FloatProperty(
             name = "Previous State of Simulation",
             default = 0.0
-        )
+            )
 
     ui_time = FloatProperty(
-        name = "Final time from user",
-        default = 0.0
-        )
+            name = "Final time from user",
+            default = 0.0
+            )
 
     mbdyn_running = BoolProperty(
             name = 'MBDyn running',
             default = False
-        )
+            )
 
     sim_status = IntProperty(
             name = "Progress of Simulation",
@@ -422,45 +422,45 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             )
 
     render_nc_vars = EnumProperty(
-        items = get_render_vars,
-        name = 'Text overlay variables',
-    )
+            items = get_render_vars,
+            name = 'Text overlay variables',
+            )
 
     render_var_name = StringProperty(
-        name = 'Name of variable',
-        default = ''
-    )
+            name = 'Name of variable',
+            default = ''
+            )
 
     render_vars = CollectionProperty(
-        name = "RenderVars",
-        description = "MBDyn render variables collection",
-        type = BLENDYN_PG_render_vars_dictionary
-    )
+            name = "RenderVars",
+            description = "MBDyn render variables collection",
+            type = BLENDYN_PG_render_vars_dictionary
+            )
 
     driver_vars = CollectionProperty(
-        name = "DriverVars",
-        description = "Variables set to track NetCDF variables",
-        type = BLENDYN_PG_driver_vars_dictionary
-    )
+            name = "DriverVars",
+            description = "Variables set to track NetCDF variables",
+            type = BLENDYN_PG_driver_vars_dictionary
+            )
 
     display_vars_group = CollectionProperty(
-        name = "MBDyn Display variables group collection",
-        type = BLENDYN_PG_display_vars_dictionary
-    )
+            name = "MBDyn Display variables group collection",
+            type = BLENDYN_PG_display_vars_dictionary
+            )
 
     display_enum_group = EnumProperty(
-        items = get_display_group,
-        name = 'Display Enum Group'
-    )
+            items = get_display_group,
+            name = 'Display Enum Group'
+            )
 
     group_name = StringProperty(
-        name = "Name of Display Variables Group"
-    )
+            name = "Name of Display Variables Group"
+            )
 
     plot_group = BoolProperty(
-        name = "Plot List of variables as group",
-        default = False
-        )
+            name = "Plot List of variables as group",
+            default = False
+            )
 
     # Collection of Environment variables and corresponding values
     env_vars = CollectionProperty(
@@ -475,8 +475,8 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
         )
 
     render_index = IntProperty(
-        name = "MBDyn Render Variables collection index",
-        default = 0
+            name = "MBDyn Render Variables collection index",
+            default = 0
     )
 
     # Name of the Environment Variable
@@ -489,7 +489,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     env_value = StringProperty(
             name = "Values of MBDyn environment values",
             description = "Values of the environment variables used in MBDyn simulation"
-        )
+            )
 
     # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
     num_rows = IntProperty(
@@ -507,24 +507,24 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
 
     #Start time
     start_time = FloatProperty(
-        name = "Start Time",
-        description = "If this value is X, different than 0, the import starts at X seconds",
-        min = 0.0,
-        default = 0.0,
-        update = update_start_time
-    )
+            name = "Start Time",
+            description = "If this value is X, different than 0, the import starts at X seconds",
+            min = 0.0,
+            default = 0.0,
+            update = update_start_time
+            )
 
     end_time = FloatProperty(
-        name = "End Time",
-        description = "If this value is X, different than total simulation time, the import stops at X seconds",
-        min = 0.0,
-        update = update_end_time
-        )
+            name = "End Time",
+            description = "If this value is X, different than total simulation time, the import stops at X seconds",
+            min = 0.0,
+            update = update_end_time
+            )
     
     time_step = FloatProperty(
-        name = "Time Step",
-        description = "Simulation time step"
-        )
+            name = "Time Step",
+            description = "Simulation time step"
+            )
 
     # Reference dictionary -- holds the associations between MBDyn references and blender
     # objects
@@ -588,13 +588,13 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     # Elements dictionary -- holds the collection of the elements found in the .log file
     elems = CollectionProperty(
             name = "MBDyn elements collection",
-            type = MBDynElemsDictionary
+            type = BLENDYN_PG_elems_dictionary
             )
 
     # Elements to be updated -- holds the keys to elements that need to update their configuration
     #                           when the scene changes
     elems_to_update = CollectionProperty(
-            type = MBDynElemToBeUpdated,
+            type = BLENDYN_PG_elem_to_be_updated,
             name = "Elements that require update",
             description = "Collection of indexes of the elements that need to be updated when \
                             the scene is changed"
@@ -743,7 +743,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
 # end of BLENDYN_PG_settings_scene class
 bpy.utils.register_class(BLENDYN_PG_settings_scene)
 
-## MBDynSettings for Blender Object
+## MBDyn Settings for Blender Object
 class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
     """ Properties of the current Blender Object related to MBDyn """
     # Type of MBDyn entity
@@ -876,9 +876,9 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            bpy.ops.animate.read_mbdyn_log_file('EXEC_DEFAULT')
-            bpy.ops.add.mbdynnode_all('EXEC_DEFAULT')
-            bpy.ops.add.mbdyn_elems_all('EXEC_DEFAULT')
+            bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT')
+            bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
+            bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
         except RuntimeError as re:
             message = "BLENDYN_OT_standard_import: something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
@@ -1504,8 +1504,8 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 # -----------------------------------------------------------
-# end of BLENDYN_OT_DeleteAllRenderVariables class
-bpy.utils.register_class(BLENDYN_OT_DeleteAllRenderVariables)
+# end of BLENDYN_OT_delete_all_render_variables class
+bpy.utils.register_class(BLENDYN_OT_delete_all_render_variables)
 
 class BLENDYN_OT_show_display_group(bpy.types.Operator):
     bl_idname = "blendyn.show_display_group"
@@ -1743,7 +1743,7 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
         col.enabled = False
 
         col = layout.column(align = True)
-        col.operator(BLENDYN_OT_SelectMBDynInputFile.bl_idname, \
+        col.operator(BLENDYN_OT_select_mbdyn_input_file.bl_idname, \
                 text = 'Select input file')
         
         col = layout.column(align = True)
@@ -2115,14 +2115,14 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
             if mbs.elem_type_import in ['shell4']:
                 col.prop(mbs, "mesh_import_mode")
             if mbs.mesh_import_mode == 'SEPARATED OBJECTS':
-                col.operator('BLENDYN_OT_import_elements_by_type', \
+                col.operator(BLENDYN_OT_import_elements_by_type.bl_idname, \
                         text="Import elements by type")
             elif mbs.mesh_import_mode == 'SINGLE MESH':
-                col.operator('BLENDYN_OT_import_elements_as_mesh', \
+                col.operator(BLENDYN_OT_import_elements_as_mesh.bl_idname, \
                         text="Import elements by type")
 
             col = layout.column()
-            col.operator('BLENDYN_OT_elements_import_all')
+            col.operator(BLENDYN_OT_elements_import_all.bl_idna.bl_idnamee)
 # -----------------------------------------------------------
 # end of BLENDYN_PT_elems_scene class
 bpy.utils.register_class(BLENDYN_PT_elems_scene)

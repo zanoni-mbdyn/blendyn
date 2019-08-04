@@ -27,8 +27,6 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -211,7 +209,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
                               + "Could not find Blender Objects for " \
                               + elem.name + " import"
                     self.report({'ERROR'}, message)
-                    baseLogger.error(message)
+                    logging.error(message)
         
         node_to_vert = dict(zip((node_set), range(len(verts))))
 
@@ -251,7 +249,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
             message = type(self).__name__ + "::execute(): "\
                       + "No mesh data was created"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            logging.warning(message)
             return {'CANCELLED'}
 # end of BLENDYN_OT_import_elements_as_mesh class
 bpy.utils.register_class(BLENDYN_OT_import_elements_as_mesh)

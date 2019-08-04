@@ -63,6 +63,7 @@ def parse_clamp(rw, ed):
         el.is_imported = True
 
     except KeyError:
+        el = ed.add()
         el.mbclass = 'elem.joint'
         el.type = 'clamp'
         el.int_label = int(rw[1])

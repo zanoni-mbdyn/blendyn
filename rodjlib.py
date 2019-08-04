@@ -25,8 +25,6 @@
 import bpy
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -463,7 +461,7 @@ class BLENDYN_OT_write_rod_input(Operator):
         message = "Input file contribute for element written. See " +\
                         rbtext.name + " in text editor"
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        logging.info(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_write_rod_input class

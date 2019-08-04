@@ -29,8 +29,6 @@ import numpy as np
 from bpy.props import IntProperty, FloatProperty
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from .nodelib import axes
 
@@ -181,7 +179,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
             message = "BLENDYN_OT_eigen_geometry::execute(): "\
                     + "Nodes not imported yet."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
     
         for ndx in anim_nodes:
@@ -197,7 +195,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                         + "Output for node " + str(nd[ndx].int_label) + " not found. "\
                         + "It will not be animated"
                 self.report({'WARNING'}, message)
-                baseLogger.error(message)
+                logging.error(message)
                 pass
             else:
                 obj.keyframe_insert(data_path = "location")
@@ -232,7 +230,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                     message = "BLENDYN_OT_eigen_geometry::execute(): "\
                             + "Unrecognised rotation parametrization"
                     self.report({'ERROR'}, message)
-                    baseLogger.error(message)
+                    logging.error(message)
             
             obj.select = False
 
@@ -265,14 +263,14 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                 + " animating mode " + str(cem)
         print(message)
-        baseLogger.info(message)
+        logging.info(message)
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
         if all(idx < 0):
             message = "BLENDYN_OT_animate_eigenmode::execute(): eig.idx is empty."\
                     + " Activate \"output geometry\" in eigenanalysis card."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
    
         try:
@@ -284,7 +282,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                     + "The eigenanalysis output is incomplete. Aborting."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
         
         eigvec_phase = np.arctan2(eigvec_im, eigvec_re)
@@ -302,7 +300,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                     + "Nodes not imported yet."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
     
         wm.progress_begin(1, len(anim_nodes))
@@ -321,12 +319,12 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
                 message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                         + " skipped Object " + nd[ndx].blender_object \
                         + " with (dummy) node_idx = " + str(node_idx)
-                baseLogger.warning(message)
+                logging.warning(message)
                 print(message)
             else:
                 message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                         + " animating Object with node_idx = " + str(node_idx)
-                baseLogger.info(message)
+                logging.info(message)
                 print(message)
 
                 ref_pos = obj.location.copy()

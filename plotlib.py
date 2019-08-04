@@ -31,8 +31,6 @@ import cairosvg
 import numpy as np
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from .nodelib import *
 from .elementlib import *
@@ -83,7 +81,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
             else:
                 message = 'Invalid range for abscissa'
                 self.report({'ERROR'}, message)
-                baseLogger.error("BLENDYN_OT_plot_var_sxx_scene::execute(): " + message)
+                logging.error("BLENDYN_OT_plot_var_sxx_scene::execute(): " + message)
         chart = pygal.XY(config)
 
         # calculate autospectra and plot them
@@ -157,7 +155,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
             message = "BLENDYN_OT_plot_var_sxx_scene::execute() : "\
                     + "Please save current Blender file first"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
  
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
@@ -220,7 +218,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
                 message = "BLENDYN_OT_plot_var_sxx_object::execute(): "\
                         + "Invalid range for abscissa"
                 self.report({'ERROR'}, message)
-                baseLogger.error(message)
+                logging.error(message)
 
         chart = pygal.XY(config)
 
@@ -290,7 +288,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
             message = "BLENDYN_OT_plot_var_sxx_object::execute(): "\
                     + "Please save current Blender file first"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
@@ -313,7 +311,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
         message = "BLENDYN_OT_plot_var_sxx_object::execute(): "\
                 + "Variable " + pvar.name + " plotted"
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        logging.info(message)
         return {'FINISHED'}
 # -------------------------------------------------- 
 # end of BLENDYN_OT_plot_var_sxx_object class
@@ -330,7 +328,7 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
             message = "BLENDYN_OT_plot_variables_list::execute() "\
                     + "Please save current Blender file first"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
 
         # set up pygal
@@ -418,7 +416,7 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
         message = "BLENDYN_OT_plot_variables_list::execute() "\
                 + "Variable " + pvar.name + " plotted"
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        logging.info(message)
         return {'FINISHED'}
 # -------------------------------------------------- 
 # end of BLENDYN_OT_plot_variables_list class
@@ -441,7 +439,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
             message = "BLENDYN_OT_plot_var_scene::execute() "\
                     + "Please save current Blender file first"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
 
         # get requested netCDF variable
@@ -516,7 +514,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
         message = "BLENDYN_OT_plot_var_scene::execute() "\
                 + "Variable " + pvar.name + " plotted"
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        logging.info(message)
         return {'FINISHED'}
 # --------------------------------------------------
 # end of BLENDYN_OT_plot_var_scene class
@@ -585,7 +583,7 @@ class BLENDYN_OT_plot_var_object(bpy.types.Operator):
             message = "BLENDYN_OT_plot_var_object::execute() "\
                     + "Please save current Blender file first"
             self.report({'ERROR'}, message)
-            baseLogger.error( message)
+            logging.error( message)
             return {'CANCELLED'}
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
@@ -655,7 +653,7 @@ class BLENDYN_OT_set_render_variable(bpy.types.Operator):
             message = "BLENDYN_OT_set_render_variable::execute() "\
                     + "Variable already set for display"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            logging.warning(message)
             return {'CANCELLED'}
 
     def invoke(self, context, event):
@@ -678,7 +676,7 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
                 + "Deleted render variable"\
                 + mbs.render_vars[mbs.render_index].varname
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        logging.info(message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -700,7 +698,7 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
         message = "BLENDYN_OT_delete_all_render_variables::execute() "\
                 + "Deleted all render variables"
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        logging.info(message)
 
         return {'FINISHED'}
 
@@ -722,7 +720,7 @@ class BLENDYN_OT_show_display_group(bpy.types.Operator):
             message = "BLENDYN_OT_show_display_group::execute() "\
                     + "No Groups set"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
 
         mbs.render_vars.clear()
 

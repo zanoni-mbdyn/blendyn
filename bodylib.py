@@ -68,7 +68,7 @@ def parse_body(rw, ed):
         el.int_label = int(rw[1])
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_body()", el)
-        eldbmsg({'NOTFOUND_IN_DICT'}, "BLENDYN::parse_body()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_body()", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -86,7 +86,7 @@ def parse_body(rw, ed):
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[13]), float(rw[14]), float(rw[15]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_body"
+        el.import_function = "blendyn.import_body"
         el.info_draw = "body_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -157,7 +157,7 @@ def spawn_body_element(elem, context):
 
 # Imports a Body in the scene
 class BLENDYN_OT_import_body(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_body"
+    bl_idname = "blendyn.import_body"
     bl_label = "Imports a body"
     int_label = bpy.props.IntProperty()
     

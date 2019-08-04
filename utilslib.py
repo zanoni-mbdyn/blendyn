@@ -25,8 +25,6 @@
 import bpy
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -85,7 +83,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     message = "BLENDYN_OT_load_section::execute(): "\
                             + "Couldn't find an empty layer. Using the active layer"
                     self.report({'INFO'}, message)
-                    baseLogger.info(message)
+                    logging.info(message)
                     pass
                 
                 # context.curve.bevel_object = obj
@@ -102,13 +100,13 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
             message = "BLENDYN_OT_load_section::execute(): "\
                     + "Could not locate the selected file"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
         except StopIteration:
             message = "BLENDYN_OT_load_section::execute(): "\
                     + "Unespected end of file"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            logging.warning(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of fmin function BLENDYN_OT_load_section class
@@ -179,106 +177,105 @@ def grouping(context, elem_obj, obj_list):
 def eldbmsg(msg, who, elem):
     # Prints various standard debug messages for element import.
 
-    def parse(message):
-       message = message + "Parsing " + elem.type \
+    def parse(whomsg):
+       message = whomsg + "Parsing " + elem.type \
                + " " + str(elem.int_label)
-       baseLogger.info(message)
+       logging.info(message)
        return message
 
-    def foundid(message):
-        message = message + \
+    def foundid(whomsg):
+        message = whomsg \
                 + "found existing entry in elements dictionary for "\
                 + elem.type + " " + str(elem.int_label) + ". Updating it."
-        baseLogger.info(message)
+        logging.info(message)
         return message
 
-    def notfoundid(message):
-        message = message + \
+    def notfoundid(whomsg):
+        message = whomsg \
                 + "didn't find entry in elements dictionary for "\
-                + elem.type + " " + str(elem.int_label) + ". Creating it."
-        baseLogger.info(message)
+                + "{0} {1}. Creating it.".format(elem.type, elem.int_label)
+        logging.info(message)
         return message
 
-    def objexists(message):
-        message = message + \
+    def objexists(whomsg):
+        message = whomsg \
                 + "Element " + elem.type + " " + str(elem.int_label) \
                 + " is already imported. Remove the Blender object "\
                 + "or rename it before re-importing the element."
-        baseLogger.error(message)
+        logging.error(message)
         return message
 
-    def objsnotfound(message):
-        message = message + \
+    def objsnotfound(whomsg):
+        message = whomsg \
                 + "Could not find Blender objects"
-        baseLogger.error(message)
+        logging.error(message)
         return message
 
-    def n1notfound(message):
-        message = message + \
+    def n1notfound(whomsg):
+        message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[0].int_label)
-        baseLogger.error(message)
+        logging.error(message)
         return message 
 
-    def n2notfound(message):
-        message = message + \
+    def n2notfound(whomsg):
+        message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[1].int_label)
-        baseLogger.error(message)
+        logging.error(message)
         return message 
 
-    def n3notfound(message):
-        message = message + \
+    def n3notfound(whomsg):
+        message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[2].int_label)
-        baseLogger.error(message)
+        logging.error(message)
         return message 
 
-    def n4notfound(message):
-        message = message + \
+    def n4notfound(whomsg):
+        message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[3].int_label)
-        baseLogger.error(message)
+        logging.error(message)
         return message 
     
-    def libraryerror(message):
-        message = message + \
+    def libraryerror(whomsg):
+        message = whomsg \
                 + "Could not import " \
                 + elem.type + " " + str(elem.int_label) \
                 + ": could not load library object"
-        baseLogger.error(message)
+        logging.error(message)
         return message
 
-    def dicterror(message):
-        message = message + \
+    def dicterror(whomsg):
+        message = whomsg \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
                 + "not found."
-        baseLogger.error(message)
+        logging.error(message)
         return message
 
-    def importsuccess(message):
-        message = message + \
+    def importsuccess(whomsg):
+        message = whomsg \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
                 + "imported correcly."
-        baseLogger.info(message)
+        logging.info(message)
         return message
 
     # map messages
-    messages = {{'PARSE_ELEM'} : parse,
-                {'FOUND_DICT'} : foundid,
-                {'NOTFOUND_DICT'} : notfoundid,
-                {'OBJECT_EXISTS'} : objexists,
-                {'OBJECTS_NOTFOUND'} : objsnotfound,
-                {'NODE1_NOTFOUND'} : n1notfound,
-                {'NODE2_NOTFOUND'} : n2notfound,
-                {'NODE3_NOTFOUND'} : n3notfound,
-                {'NODE4_NOTFOUND'} : n4notfound,
-                {'LIBRARY_ERROR'} : libraryerror,
-                {'DICT_ERROR'} : dicterror,
-                {'IMPORT_SUCCESS'} : importsuccess,
-                {'WRITE_SUCCESS'} : writesuccess
+    messages = {'PARSE_ELEM' : parse,
+                'FOUND_DICT' : foundid,
+                'NOTFOUND_DICT' : notfoundid,
+                'OBJECT_EXISTS' : objexists,
+                'OBJECTS_NOTFOUND' : objsnotfound,
+                'NODE1_NOTFOUND' : n1notfound,
+                'NODE2_NOTFOUND' : n2notfound,
+                'NODE3_NOTFOUND' : n3notfound,
+                'NODE4_NOTFOUND' : n4notfound,
+                'LIBRARY_ERROR' : libraryerror,
+                'DICT_ERROR' : dicterror,
+                'IMPORT_SUCCESS' : importsuccess,
     }
 
-    message = who + ": "
-    message = messages[msg](message)
+    whomsg = who + ": "
+    message = messages[msg.pop()](whomsg)
     print(message)
