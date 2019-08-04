@@ -92,7 +92,7 @@ def parse_inplane(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_inplane"
+        el.import_function = "blendyn.import_inplane"
         el.info_draw = "inplane_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -228,7 +228,7 @@ def spawn_inplane_element(elem, context):
 
 # Imports a inplane Joint in the scene
 class BLENDYN_OT_import_inplane(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_inplane"
+    bl_idname = "blendyn.import_inplane"
     bl_label = "MBDyn inplane joint element importer"
     int_label = bpy.props.IntProperty()
 

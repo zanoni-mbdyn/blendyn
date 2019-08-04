@@ -28,7 +28,7 @@ from math import *
 
 import logging
 baseLogger = logging.getLogger()
-baseLogger.seLevel(logging.DEBUG)
+baseLogger.setLevel(logging.DEBUG)
 
 axes = {'1': 'X', '2': 'Y', '3': 'Z'}
 

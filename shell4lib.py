@@ -71,7 +71,7 @@ def parse_shell4(rw, ed):
         el.nodes.add()
         el.nodes[3].int_label = int(rw[5])
         
-        el.import_function = "mbdyn.BLENDYN_OT_import_shell4"
+        el.import_function = "blendyn.import_shell4"
         el.info_draw = "shell4_info_draw"
         el.name = el.type + '_' + str(el.int_label)
 
@@ -213,7 +213,7 @@ def shell4_info_draw(elem, layout):
 
 class BLENDYN_OT_import_shell4(bpy.types.Operator):
     """ Imports a shell4 element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_shell4"
+    bl_idname = "blendyn.import_shell4"
     bl_label = "Imports a shell4 element"
     int_label = bpy.props.IntProperty()
 
@@ -242,13 +242,14 @@ class BLENDYN_OT_import_shell4(bpy.types.Operator):
             elif retval == {'NODE4_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == {'FINISHED'}
+            elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval 
             else:
                 # Should not be reached
                 return retval
         except KeyError:
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # --------------------------------------------------------------
 # end of BLENDYN_OT_import_shell4 class

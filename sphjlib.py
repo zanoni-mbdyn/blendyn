@@ -31,7 +31,7 @@ from math import *
 from .utilslib import *
 
 def parse_spherical_hinge(rw, ed):
-""" Parses a spherical hinge joint .log file entry """
+    """ Parses a spherical hinge joint .log file entry """
     ret_val = True
     try:
         el = ed['spherical_hinge_' + str(rw[1])]
@@ -91,7 +91,7 @@ def parse_spherical_hinge(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_spherical_hinge"
+        el.import_function = "blendyn.import_spherical_hinge"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -145,7 +145,7 @@ def parse_spherical_pin(rw, ed):
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_spherical_pin"
+        el.import_function = "blendyn.import_spherical_pin"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -296,7 +296,7 @@ def spawn_spherical_pin_element(elem, context):
 
 ## Imports a Spherical Joint element in the scene
 class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_spherical_hinge"
+    bl_idname = "blendyn.import_spherical_hinge"
     bl_label = "MBDyn spherical joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -337,7 +337,7 @@ class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
 
 ## Imports a Spherical Pin Joint element in the scene
 class BLENDYN_OT_import_spherical_pin(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_spherical_pin"
+    bl_idname = "blendyn.import_spherical_pin"
     bl_label = "MBDyn spherical joint element importer"
     int_label = bpy.props.IntProperty()
 

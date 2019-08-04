@@ -77,7 +77,7 @@ def parse_rod(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
-        el.import_function = "mbdyn.BLENDYN_OT_import_rod"
+        el.import_function = "blendyn.import_rod"
         el.update_info_operator = "update.rod"
         el.info_draw = "rod_info_draw"
         el.write_operator = "write.rod"
@@ -327,7 +327,7 @@ class RodUpdate(Operator):
 ## Imports a Rob element in the scene as a line joining two nodes
 class BLENDYN_OT_import_rod(bpy.types.Operator):
     """ Imports a rod element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_rod"
+    bl_idname = "blendyn.import_rod"
     bl_label = "Imports a rod element"
     int_label = bpy.props.IntProperty()
 
@@ -414,7 +414,7 @@ class BLENDYN_OT_import_rod(bpy.types.Operator):
 
 class BLENDYN_OT_write_rod_input(Operator):
     """ Writes the input for Rod Element in the text editor """
-    bl_idname = "mbdyn.BLENDYN_OT_write_rod_input"
+    bl_idname = "blendyn.write_rod_input"
     bl_label = "Write updated input for rod"
     elem_key = bpy.props.StringProperty()
 

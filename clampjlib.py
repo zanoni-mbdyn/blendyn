@@ -91,7 +91,7 @@ def parse_clamp(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_clamp"
+        el.import_function = "blendyn.import_clamp"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -163,7 +163,7 @@ def spawn_clamp_element(elem, context):
 # Imports a Clamp Joint in the scene
 class BLENDYN_OT_import_clamp(bpy.types.Operator):
     """ Imports a clamp joint element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_clamp"
+    bl_idname = "blendyn.import_clamp"
     bl_label = "Imports a clamp joint element"
     int_label = bpy.props.IntProperty()
     

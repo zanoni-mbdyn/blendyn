@@ -51,7 +51,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
         and optionally save it as .svg in the 'plots' directory.
         The user can choose among all the variables of all the 
         MBDyn entitites found in the output NetCDF file."""
-    bl_idname = "mbdyn.BLENDYN_OT_plot_var_sxx_scene"
+    bl_idname = "blendyn.plot_var_sxx_scene"
     bl_label = "Plot the selected MBDyn var autospectrum"
 
     var_index = bpy.props.IntProperty()
@@ -177,7 +177,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
         cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
-        message = "BLENDYN_OT_plot_var_sxx_scene::execute(): "\ 
+        message = "BLENDYN_OT_plot_var_sxx_scene::execute(): "\
                 + "Variable " + pvar.name + " autospectrum plotted"
         self.report({'INFO'}, message)
         baeLogger.info(message)
@@ -188,7 +188,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
 class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
     """ Plots the object's selected variable autospectrum in the image editor 
         and optionally save it as .svg in the 'plots' directory """
-    bl_idname = "mbdyn.BLENDYN_OT_plot_var_sxx_object"
+    bl_idname = "blendyn.plot_var_sxx_object"
     bl_label = "Plot the selected MBDyn var"
 
     def execute(self, context):
@@ -320,7 +320,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
 
 class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
     """ Plot all the variables in the Variables List """
-    bl_idname = "mbdyn.BLENDYN_OT_plot_variables_list"
+    bl_idname = "blendyn.plot_variables_list"
     bl_label = "Plot all the variables in Variables List"
 
     def execute(self, context):
@@ -429,7 +429,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
         and optionally save it as .svg in the 'plots' directory.
         The user can choose among all the variables of all the
         MBDyn entitites found in the output NetCDF fila."""
-    bl_idname = "mbdyn.BLENDYN_OT_plot_var_scene"
+    bl_idname = "blendyn.plot_var_scene"
     bl_label = "Plot the selected MBDyn var"
 
     var_index = bpy.props.IntProperty()
@@ -513,7 +513,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
         cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
         bpy.ops.image.open(filepath = outfname + ".png")
 
-        message = "BLENDYN_OT_plot_var_scene::execute() "\ 
+        message = "BLENDYN_OT_plot_var_scene::execute() "\
                 + "Variable " + pvar.name + " plotted"
         self.report({'INFO'}, message)
         baseLogger.info(message)
@@ -524,7 +524,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
 class BLENDYN_OT_plot_var_object(bpy.types.Operator):
     """ Plots the object's selected variable in the image editor 
         and optionally save it as .svg in the 'plots' directory """
-    bl_idname = "mbdyn.BLENDYN_OT_plot_var_scene"
+    bl_idname = "blendyn.plot_var_scene"
     bl_label = "Plot the selected MBDyn var"
 
     def execute(self, context):
@@ -617,7 +617,7 @@ class BLENDYN_OT_plot_var_object(bpy.types.Operator):
 class BLENDYN_OT_set_plot_freq(bpy.types.Operator):
     """ Sets the plot frequency for the current object plot variable equal
         to the import frequency of the MBDyn results """
-    bl_idname = "mbdyn.BLENDYN_OT_set_plot_freq"
+    bl_idname = "blendyn.set_plot_freq"
     bl_label = "Sets the plot frequency for the scene equal to the load frequency"
     is_object = bpy.props.BoolProperty()
 
@@ -638,7 +638,7 @@ class BLENDYN_OT_set_render_variable(bpy.types.Operator):
     """ Sets the NetCDF variables to be\
         displayed in the rendered frame """
 
-    bl_idname = "mbdyn.BLENDYN_OT_set_render_variable"
+    bl_idname = "blendyn.set_render_variable"
     bl_label = "Set Render Variable"
 
     def execute(self, context):
@@ -666,7 +666,7 @@ class BLENDYN_OT_set_render_variable(bpy.types.Operator):
 # FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
     """ Delete a render variable """
-    bl_idname = "mbdyn.BLENDYN_OT_delete_render_variable"
+    bl_idname = "blendyn.delete_render_variable"
     bl_label = "Delete Render Variable"
 
     def execute(self, context):
@@ -675,7 +675,7 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
         mbs.render_vars.remove(mbs.render_index)
 
         message = "BLENDYN_OT_delete_render_variable::execute() "\
-                + "Deleted render variable" 
+                + "Deleted render variable"\
                 + mbs.render_vars[mbs.render_index].varname
         self.report({'INFO'}, message)
         baseLogger.info(message)
@@ -689,7 +689,7 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
 # FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
     """ Deleted all variables set for display in render frames """
-    bl_idname = "mbdyn.BLENDYN_OT_delete_all_render_variables"
+    bl_idname = "blendyn.delete_all_render_variables"
     bl_label = "Delete all Render variables"
 
     def execute(self, context):
@@ -712,7 +712,7 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
 # FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_show_display_group(bpy.types.Operator):
     """ Shows the selected display group """
-    bl_idname = "mbdyn.BLENDYN_OT_show_display_group"
+    bl_idname = "blendyn.show_display_group"
     bl_label = "Show display group"
 
     def execute(self, context):

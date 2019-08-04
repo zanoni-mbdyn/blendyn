@@ -80,7 +80,7 @@ def parse_beam2(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
-        el.import_function = "mbdyn.BLENDYN_OT_import_beam2"
+        el.import_function = "blendyn.import_beam2"
         el.info_draw = "beam2_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         
@@ -144,7 +144,7 @@ def parse_beam3(rw, ed):
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
         
-        el.import_function = "mbdyn.BLENDYN_OT_import_beam3"
+        el.import_function = "blendyn.import_beam3"
         el.info_draw = "beam3_info_draw"
         el.update = "update_beam3"
         el.name = el.type + "_" + str(el.int_label)
@@ -635,7 +635,7 @@ def update_beam3(elem, insert_keyframe = False):
 ## Imports a Beam 2 element in the scene as a line joining two nodes
 class BLENDYN_OT_import_beam2(bpy.types.Operator):
     """ Imports a beam2 element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_beam2"
+    bl_idname = "blendyn.import_beam2"
     bl_label = "Imports a beam2 element"
     int_label = bpy.props.IntProperty()
 
@@ -650,14 +650,14 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
-                eldbmsg(retval, type(self)__name__ + '::execute()', elem)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
-                eldbmsg(retval, type(self)__name__ + '::execute()', elem)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 logging.error(message)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                eldbmsg(retval, type(self)__name__ + '::execute()', elem)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, 'BLENDYN_OT_import_beam2::execute()', elem)
@@ -706,7 +706,7 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
                 return retval
 
         except KeyError:
-                eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
             
 # -----------------------------------------------------------
@@ -715,7 +715,7 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
 class BLENDYN_OT_update_beam3(bpy.types.Operator):
     """ Calls the update_beam3() function to update the current configuration
         of the curve representing the beam3 element """
-    bl_idname = "mbdyn.BLENDYN_OT_update_beam3"
+    bl_idname = "blendyn.update_beam3"
     bl_label = "Updates beam3 curve configuration"
 
     def execute(self, context):

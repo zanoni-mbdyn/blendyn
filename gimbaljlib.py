@@ -92,7 +92,7 @@ def parse_gimbal(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_gimbal"
+        el.import_function = "blendyn.import_gimbal"
         el.info_draw = "gimbal_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -237,7 +237,7 @@ def spawn_gimbal_element(elem, context):
 # Imports a gimbal Joint in the scene
 class BLENDYN_OT_import_gimbal(bpy.types.Operator):
     """ Imports a gimbal joint element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_gimbal"
+    bl_idname = "blendyn.import_gimbal"
     bl_label = "Imports a gimbal joint element"
     int_label = bpy.props.IntProperty()
 

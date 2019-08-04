@@ -30,7 +30,7 @@ from math import *
 from .utilslib import *
 
 def parse_total(rw, ed):
-""" Parses a total joint entry in .log file """
+    """ Parses a total joint entry in .log file """
     ret_val = True
     try:
         el = ed['total_joint_' + str(rw[1])]
@@ -147,7 +147,7 @@ def parse_total(rw, ed):
         el.offsets.add()
         el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
         
-        el.import_function = "mbdyn.BLENDYN_OT_import_total"
+        el.import_function = "blendyn.import_total"
         el.info_draw = "total_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -159,7 +159,7 @@ def parse_total(rw, ed):
 
 
 def parse_total_pin(rw, ed):
-""" Parses a total pin joint entry in the .log file """
+    """ Parses a total pin joint entry in the .log file """
     ret_val = True
     try:
         el = ed['total_pin_joint_' + str(rw[1])]
@@ -247,7 +247,7 @@ def parse_total_pin(rw, ed):
         el.offsets.add()
         el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_total_pin"
+        el.import_function = "blendyn.import_total_pin"
         el.info_draw = "total_pin_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -524,7 +524,7 @@ def spawn_total_pin_joint_element(elem, context):
 
 
 def total_info_draw(elem, layout):
-""" Displays total joint infos in the tools panel """
+    """ Displays total joint infos in the tools panel """
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align = True)
@@ -647,7 +647,7 @@ def total_info_draw(elem, layout):
 
 
 def total_pin_info_draw(elem, layout):
-""" Displays total pin joint infos in the tools panel """
+    """ Displays total pin joint infos in the tools panel """
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -744,7 +744,7 @@ def total_pin_info_draw(elem, layout):
 
 class BLENDYN_OT_import_total(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_total"
+    bl_idname = "blendyn.import_total"
     bl_label = "Imports a total joint element"
     int_label = bpy.props.IntProperty()
 
@@ -785,7 +785,7 @@ class BLENDYN_OT_import_total(bpy.types.Operator):
 
 class BLENDYN_OT_import_total_pin(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene"""
-    bl_idname = "mbdyn.BLENDYN_OT_import_total_pin"
+    bl_idname = "blendyn.import_total_pin"
     bl_label = "Imports a total joint element"
     int_label = bpy.props.IntProperty()
 

@@ -74,7 +74,7 @@ def parse_drive_displacement(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_drive_displacement"
+        el.import_function = "blendyn.import_drive_displacement"
         el.info_draw = "drive_displacement_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -274,7 +274,7 @@ def spawn_drive_displacement_element(elem, context):
 
 # Imports a drive_displacement Joint in the scene
 class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_drive_displacement"
+    bl_idname = "blendyn.import_drive_displacement"
     bl_label = "MBDyn drive_displacement joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -301,9 +301,9 @@ class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval {'FINISHED'}:
+            elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
-                return retval  
+                return retval
             else:
                 # Should not be reached
                 return retval

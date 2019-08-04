@@ -73,7 +73,7 @@ def parse_aero0(rw, ed):
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[12]), float(rw[13]), float(rw[14]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_aerodynamic_body"
+        el.import_function = "blendyn.import_aerodynamic_body"
         el.name = el.type + "_" + str(el.int_label)
 
         el.is_imported = True
@@ -135,7 +135,7 @@ def parse_aero2(rw, ed):
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[13]), float(rw[14]), float(rw[15]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_aerodynamic_beam2"
+        el.import_function = "blendyn.import_aerodynamic_beam2"
         el.name = el.type + "_" + str(el.int_label)
 
         el.is_imported = True
@@ -205,7 +205,7 @@ def parse_aero3(rw, ed):
         el.offsets.add()
         el.offsets[5].value = Vector(( float(rw[20]), float(rw[21]), float(rw[22]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_aerodynamic_beam3"
+        el.import_function = "blendyn.import_aerodynamic_beam3"
         el.name = el.type + "_" + str(el.int_label)
 
         el.is_imported = True
@@ -429,7 +429,7 @@ def spawn_aero3_element(elem, context):
 
 class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
     """ Imports an Aerodynamic Body in the scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_aerodynamic_body"
+    bl_idname = "blendyn.import_aerodynamic_body"
     bl_label = "MBDyn aerodynamic body element importer"
     int_label = bpy.props.IntProperty()
 
@@ -447,7 +447,7 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
             if retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            else if retval == {'FINISHED'}:
+            elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
@@ -462,7 +462,7 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
 
 class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
     """ Imports an Aerodynamic Beam2 in the scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_aerodynamic_beam2"
+    bl_idname = "blendyn.import_aerodynamic_beam2"
     bl_label = "MBDyn two-node aerodynamic beam element importer"
     int_label = bpy.props.IntProperty()
 
@@ -497,7 +497,7 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
 
 class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
     """ Imports an Aerodynamic Beam2 in the scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_aerodynamic_beam3"
+    bl_idname = "blendyn.import_aerodynamic_beam3"
     bl_label = "MBDyn three-node aerodynamic beam element importer"
     int_label = bpy.props.IntProperty()
 
@@ -529,6 +529,6 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
                 return retval
         except KeyError:
                 eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
-            return {'CANCELLED'}
+                return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_aerodynamic_beam3 class

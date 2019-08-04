@@ -92,7 +92,7 @@ def parse_revolute_hinge(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_revolute_hinge"
+        el.import_function = "blendyn.import_revolute_hinge"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -145,7 +145,7 @@ def parse_revolute_pin(rw, ed):
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_revolute_pin"
+        el.import_function = "blendyn.import_revolute_pin"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -216,7 +216,7 @@ def parse_revolute_rot(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_revolute_rotation"
+        el.import_function = "blendyn.import_revolute_rotation"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -308,7 +308,7 @@ def spawn_revolute_hinge_element(elem, context):
 # Imports a Revolute Hinge Joint in the scene
 class BLENDYN_OT_import_revolute_hinge(bpy.types.Operator):
     """ Imports a revolute hinge joint element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_revolute_hinge"
+    bl_idname = "blendyn.import_revolute_hinge"
     bl_label = "MBDyn revolute hinge joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -407,7 +407,7 @@ def spawn_revolute_pin_element(elem, context):
 
 # Imports a Revolute Pin Joint in the scene
 class BLENDYN_OT_import_revolute_pin(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_revolute_pin"
+    bl_idname = "blendyn.import_revolute_pin"
     bl_label = "MBDyn revolute pin joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -527,7 +527,7 @@ def spawn_revolute_rot_element(elem, context):
 
 # Imports a Revolute Rotation Joint in the scene
 class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_revolute_pin"
+    bl_idname = "blendyn.import_revolute_pin"
     bl_label = "MBDyn revolute joint element importer"
     int_label = bpy.props.IntProperty()
 

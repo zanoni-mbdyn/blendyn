@@ -67,7 +67,7 @@ def parse_angularvelocity(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_angularvelocity"
+        el.import_function = "blendyn.import_angularvelocity"
         # el.info_draw = "angularvelocity_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -296,7 +296,7 @@ def spawn_angularacceleration_element(elem, context):
 class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
     """ Imports an angularvelocity joint element 
         into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_angularvelocity"
+    bl_idname = "blendyn.import_angularvelocity"
     bl_label = "MBDyn angularvelocity joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -336,7 +336,7 @@ class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
 class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
     """ Imports an angularacceleration joint element 
         into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_angularacceleration"
+    bl_idname = "blendyn.import_angularacceleration"
     bl_label = "MBDyn angularacceleration joint element importer"
     int_label = bpy.props.IntProperty()
 

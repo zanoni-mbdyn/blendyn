@@ -76,7 +76,7 @@ def parse_structural_absolute_force(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_structural_absolute_force"
+        el.import_function = "blendyn.import_structural_absolute_force"
         el.update = "update_structural_force"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -123,7 +123,7 @@ def parse_structural_follower_force(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_structural_follower_force"
+        el.import_function = "blendyn.import_structural_follower_force"
         el.update = "update_structural_force"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -170,7 +170,7 @@ def parse_structural_absolute_couple(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_structural_absolute_couple"
+        el.import_function = "blendyn.import_structural_absolute_couple"
         el.update = "update_structural_couple"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -217,7 +217,7 @@ def parse_structural_follower_couple(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_structural_follower_couple"
+        el.import_function = "blendyn.import_structural_follower_couple"
         el.update = "update_structural_couple"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -348,7 +348,7 @@ def spawn_structural_couple_element(elem, context):
 class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
     """ Imports a structural absolute force element 
         into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_structural_absolute_force"
+    bl_idname = "blendyn.import_structural_absolute_force"
     bl_label = "Imports a structural absolute force element"
     int_label = bpy.props.IntProperty()
     
@@ -387,7 +387,7 @@ class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
 # Imports a Structural Follower Force Element in the scene
 class BLENDYN_OT_import_structural_follower_force(bpy.types.Operator):
     """ Imports a structural follower force element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_structural_follower_force"
+    bl_idname = "blendyn.import_structural_follower_force"
     bl_label = "Imports a structural follower force element"
     int_label = bpy.props.IntProperty()
     
@@ -426,7 +426,7 @@ class BLENDYN_OT_import_structural_follower_force(bpy.types.Operator):
 # Imports a Structural Absolute Couple Element in the scene
 class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
     """ Imports a structural absolute couple element """
-    bl_idname = "mbdyn.BLENDYN_OT_import_structural_absolute_couple"
+    bl_idname = "blendyn.import_structural_absolute_couple"
     bl_label = "Imports a structural absolute couple element"
     int_label = bpy.props.IntProperty()
     
@@ -465,7 +465,7 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
 # Imports a Structural Follower Couple Element in the scene
 class BLENDYN_OT_import_structural_follower_couple(bpy.types.Operator):
     """ Imports a structural follower couple element """
-    bl_idname = "mbdyn.BLENDYN_OT_import_structural_follower_couple"
+    bl_idname = "blendyn.import_structural_follower_couple"
     bl_label = "Imports a structural follower couple element"
     int_label = bpy.props.IntProperty()
     

@@ -93,7 +93,7 @@ def parse_cardano_hinge(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_cardano_hinge"
+        el.import_function = "blendyn.import_cardano_hinge"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -148,7 +148,7 @@ def parse_cardano_pin(rw, ed):
         parse_rotmat(rw, 6, R1)
         el.rotoffsets[0].value = R1.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_cardano_pin"
+        el.import_function = "blendyn.import_cardano_pin"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
         ret_val = False
@@ -297,7 +297,7 @@ def spawn_cardano_pin_elem(elem, context):
 
 # Imports a Cardano Hinge Joint in the scene
 class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_cardano_hinge"
+    bl_idname = "blendyn.import_cardano_hinge"
     bl_label = "Imports a cardano hinge"
     int_label = bpy.props.IntProperty()
 
@@ -339,7 +339,7 @@ class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
 
 # Imports a Cardano Pin Joint in the scene
 class BLENDYN_OT_import_cardano_pin(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_cardano_pin"
+    bl_idname = "blendyn.import_cardano_pin"
     bl_label = "MBDyn Cardano Pin joint element importer"
     int_label = bpy.props.IntProperty()
 

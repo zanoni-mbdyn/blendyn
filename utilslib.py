@@ -38,7 +38,7 @@ import csv
 
 class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
     """ Loads profile to assign to curve bevel, in Selig format """
-    bl_idname = "mbdyn.BLENDYN_OT_load_section"
+    bl_idname = "blendyn.load_section"
     bl_label = "Load NACA profile in Selig format"
 
     filter_glob = bpy.props.StringProperty(
@@ -196,8 +196,8 @@ def eldbmsg(msg, who, elem):
         message = message + \
                 + "didn't find entry in elements dictionary for "\
                 + elem.type + " " + str(elem.int_label) + ". Creating it."
-       baseLogger.info(message)
-       return message
+        baseLogger.info(message)
+        return message
 
     def objexists(message):
         message = message + \
@@ -249,36 +249,36 @@ def eldbmsg(msg, who, elem):
         baseLogger.error(message)
         return message
 
-    def dicterror(message).
-        message = message +
+    def dicterror(message):
+        message = message + \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
                 + "not found."
         baseLogger.error(message)
         return message
 
-    def importsuccess(message)
+    def importsuccess(message):
         message = message + \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
                 + "imported correcly."
         baseLogger.info(message)
         return message
 
-   # map messages
-   messages = {{'PARSE_ELEM'} : parse,
-               {'FOUND_DICT'} : foundid,
-               {'NOTFOUND_DICT'} : notfoundid,
-               {'OBJECT_EXISTS'} : objexists,
-               {'OBJECTS_NOTFOUND'} : objsnotfound,
-               {'NODE1_NOTFOUND'} : n1notfound,
-               {'NODE2_NOTFOUND'} : n2notfound,
-               {'NODE3_NOTFOUND'} : n3notfound,
-               {'NODE4_NOTFOUND'} : n4notfound,
-               {'LIBRARY_ERROR'} : libraryerror,
-               {'DICT_ERROR'} : dicterror,
-               {'IMPORT_SUCCESS'} : importsuccess,
-               {'WRITE_SUCCESS'} : writesuccess
-   }
+    # map messages
+    messages = {{'PARSE_ELEM'} : parse,
+                {'FOUND_DICT'} : foundid,
+                {'NOTFOUND_DICT'} : notfoundid,
+                {'OBJECT_EXISTS'} : objexists,
+                {'OBJECTS_NOTFOUND'} : objsnotfound,
+                {'NODE1_NOTFOUND'} : n1notfound,
+                {'NODE2_NOTFOUND'} : n2notfound,
+                {'NODE3_NOTFOUND'} : n3notfound,
+                {'NODE4_NOTFOUND'} : n4notfound,
+                {'LIBRARY_ERROR'} : libraryerror,
+                {'DICT_ERROR'} : dicterror,
+                {'IMPORT_SUCCESS'} : importsuccess,
+                {'WRITE_SUCCESS'} : writesuccess
+    }
 
-   message = who + ": "
-   message = messages[msg](message)
-   print(message)
+    message = who + ": "
+    message = messages[msg](message)
+    print(message)

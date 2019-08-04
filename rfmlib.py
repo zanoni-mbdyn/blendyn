@@ -131,11 +131,11 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
             else:
                 return retval
         except KeyError:
-                message = "BLENDYN::parse_reference_frame(): "\
-                + "Did not find a dictionary entry for reference frame " 
-                + str(rfm.int_label)
-                print(message)
-                baseLogger.error(message)
+            message = "BLENDYN::parse_reference_frame(): "\
+            + "Did not find a dictionary entry for reference frame " 
+            + str(rfm.int_label)
+            print(message)
+            baseLogger.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_reference class

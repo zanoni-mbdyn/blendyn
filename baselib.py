@@ -508,20 +508,20 @@ def update_label(self, context):
                 ret_val = update_parametrization(obj)
 
             if ret_val == 'ROT_NOT_SUPPORTED':
-                message = type(self)__name__ + "::update_label(): "\
+                message = type(self).__name__ + "::update_label(): "\
                         + "Rotation parametrization not supported, node " \
-                + obj.mbdyn.string_label
+                        + obj.mbdyn.string_label
                 self.report({'ERROR'}, message)
                 baseLogger.error(message)
 
             elif ret_val == 'LOG_NOT_FOUND':
-                message = type(self)__name__ + "::update_label(): "\
+                message = type(self).__name__ + "::update_label(): "\
                         + "MBDyn .log file not found"
                 self.report({'ERROR'}, message)
                 baseLogger.error(message)
 
         except KeyError:
-            message = type(self)__name__ + "::update_label(): "\
+            message = type(self).__name__ + "::update_label(): "\
                     + "Node not found"
             self.report({'ERROR'}, message)
             baseLogger.error(message)

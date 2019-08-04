@@ -71,7 +71,7 @@ def parse_linearvelocity(rw, ed):
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_linearvelocity"
+        el.import_function = "blendyn.import_linearvelocity"
         # el.info_draw = "linearvelocity_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -113,7 +113,7 @@ def parse_linearacceleration(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_linearacceleration"
+        el.import_function = "blendyn.import_linearacceleration"
         # el.info_draw = "linearacceleration_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -288,7 +288,7 @@ def spawn_linearacceleration_element(elem, context):
 class BLENDYN_OT_import_linearvelocity(bpy.types.Operator):
     """ Imports a linearvelocity joint element into the
         Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_linearvelocity"
+    bl_idname = "blendyn.import_linearvelocity"
     bl_label = "Import a linearvelocity joint element"
     int_label = bpy.props.IntProperty()
 
@@ -328,7 +328,7 @@ class BLENDYN_OT_import_linearvelocity(bpy.types.Operator):
 class BLENDYN_OT_import_linearacceleration(bpy.types.Operator):
     """ Imports a linearacceleration joint element
         into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_linearacceleration"
+    bl_idname = "blendyn.import_linearacceleration"
     bl_label = "Imports a linearacceleration joint element"
     int_label = bpy.props.IntProperty()
 

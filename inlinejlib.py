@@ -31,7 +31,7 @@ from math import *
 from .utilslib import *
 
 def parse_inline(rw, ed):
-""" Parses an inline joint entry in .log file """
+    """ Parses an inline joint entry in .log file """
     ret_val = True
     try:
         el = ed['inline_' + str(rw[1])]
@@ -92,7 +92,7 @@ def parse_inline(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_inline"
+        el.import_function = "blendyn.import_inline"
         el.info_draw = "inline_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -218,7 +218,7 @@ def spawn_inline_element(elem, context):
 # Imports a inline Joint in the scene
 class BLENDYN_OT_import_inline(bpy.types.Operator):
     """ Imports an inline joint element into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_inline"
+    bl_idname = "blendyn.import_inline"
     bl_label = "Imports an inline joint element"
     int_label = bpy.props.IntProperty()
 
@@ -253,6 +253,6 @@ class BLENDYN_OT_import_inline(bpy.types.Operator):
                 return retval
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
-            eturn {'CANCELLED'}
+            return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_inline class.

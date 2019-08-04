@@ -98,7 +98,7 @@ def parse_axialrot(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_axialrot"
+        el.import_function = "blendyn.import_axialrot"
         el.info_draw = "axialrot_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -225,7 +225,7 @@ def spawn_axialrot_element(elem, context):
 class BLENDYN_OT_import_axialrot(bpy.types.Operator):
     """ Imports and axialrot joint element 
         into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_axialrot"
+    bl_idname = "blendyn.import_axialrot"
     bl_label = "Imports and axialrot joint element"
     int_label = bpy.props.IntProperty()
 

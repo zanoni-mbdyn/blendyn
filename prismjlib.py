@@ -82,7 +82,7 @@ def parse_prismatic(rw, ed):
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_prismatic"
+        el.import_function = "blendyn.import_prismatic"
         el.info_draw = "prism_info_draw"
 
         el.name = el.type + "_" + str(el.int_label)
@@ -218,7 +218,7 @@ def spawn_prismatic_element(elem, context):
 
 # Imports a Prismatic Joint in the scene
 class BLENDYN_OT_import_prismatic(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_import_prismatic"
+    bl_idname = "blendyn.import_prismatic"
     bl_label = "MBDyn prismatic joint element importer"
     int_label = bpy.props.IntProperty()
 

@@ -195,59 +195,59 @@ class BLENDYN_PG_mbtime(bpy.types.PropertyGroup):
             )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_mbtime class
-    bpy.utils.register_class(BLENDYN_PG_mbtime)
+bpy.utils.register_class(BLENDYN_PG_mbtime)
 
-    ## PropertyGroup of Render Variables
-    class BLENDYN_PG_render_vars_dictionary(bpy.types.PropertyGroup):
-        idx = IntProperty(
-            name = "Render Variable index",
-            description = "Index of the NetCDF variable to be set for display in rendering"
-        )
-        varname = StringProperty(
-            name = "Display name",
-            description = "Display name of the rendered variable"
-        )
-        variable = StringProperty(
-            name = "NetCDF variable",
-            description = "NetCDF variable to be rendered"
-        )
-        components = BoolVectorProperty(
-            name = "Components",
-            description = "Components of the variable to be displayed",
-            size = 9
-        )
-    # -----------------------------------------------------------
-    # end of BLENDYN_PG_render_vars_dictionary class
-    bpy.utils.register_class(BLENDYN_PG_render_vars_dictionary)
+## PropertyGroup of Render Variables
+class BLENDYN_PG_render_vars_dictionary(bpy.types.PropertyGroup):
+    idx = IntProperty(
+        name = "Render Variable index",
+        description = "Index of the NetCDF variable to be set for display in rendering"
+    )
+    varname = StringProperty(
+        name = "Display name",
+        description = "Display name of the rendered variable"
+    )
+    variable = StringProperty(
+        name = "NetCDF variable",
+        description = "NetCDF variable to be rendered"
+    )
+    components = BoolVectorProperty(
+        name = "Components",
+        description = "Components of the variable to be displayed",
+        size = 9
+    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_render_vars_dictionary class
+bpy.utils.register_class(BLENDYN_PG_render_vars_dictionary)
 
-    ## PropertyGroup of Driver Variables
-    class BLENDYN_PG_driver_vars_dictionary(bpy.types.PropertyGroup):
-        variable = StringProperty(
-            name = "Variable",
-            description = "NetCDF variable to be rendered"
-        )
-        components = BoolVectorProperty(
-            name = "Components",
-            description = "Components of the variable to be displayed",
-            size = 9
-        )
-        values = FloatVectorProperty(
-            name = "Values",
-            description = "Values of the variable at current frame"
-        )
-    # -----------------------------------------------------------
-    # end of BLENDYN_PG_driver_vars_dictionary class
-    bpy.utils.register_class(BLENDYN_PG_driver_vars_dictionary)
+## PropertyGroup of Driver Variables
+class BLENDYN_PG_driver_vars_dictionary(bpy.types.PropertyGroup):
+    variable = StringProperty(
+        name = "Variable",
+        description = "NetCDF variable to be rendered"
+    )
+    components = BoolVectorProperty(
+        name = "Components",
+        description = "Components of the variable to be displayed",
+        size = 9
+    )
+    values = FloatVectorProperty(
+        name = "Values",
+        description = "Values of the variable at current frame"
+    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_driver_vars_dictionary class
+bpy.utils.register_class(BLENDYN_PG_driver_vars_dictionary)
 
-    class BLENDYN_PG_display_vars_dictionary(bpy.types.PropertyGroup):
+class BLENDYN_PG_display_vars_dictionary(bpy.types.PropertyGroup):
     name = StringProperty(
-	name = "Group of Display Variables",
-	description = ""
+        name = "Group of Display Variables",
+        description = ""
     )
     group = CollectionProperty(
 	name = "Actual collection group",
 	type = BLENDYN_PG_render_vars_dictionary
-    )
+    )   
 # -----------------------------------------------------------
 # end of BLENDYN_PG_display_vars_dictionary class
 bpy.utils.register_class(BLENDYN_PG_display_vars_dictionary)
@@ -468,98 +468,98 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
                 type = BLENDYN_PG_environment_vars_dictionary
             )
 
-        # Environment Variables index, holds the index for displaying the Envrionment variables in a list
-        env_index = IntProperty(
-                name = "MBDyn Environment variables collection index",
-                default = 0
-            )
-
-        render_index = IntProperty(
-            name = "MBDyn Render Variables collection index",
+    # Environment Variables index, holds the index for displaying the Envrionment variables in a list
+    env_index = IntProperty(
+            name = "MBDyn Environment variables collection index",
             default = 0
         )
 
-        # Name of the Environment Variable
-        env_variable = StringProperty(
-                name = "MBDyn environment variables",
-                description = "Environment variables used in MBDyn simulation"
-                )
+    render_index = IntProperty(
+        name = "MBDyn Render Variables collection index",
+        default = 0
+    )
 
-        # Value associated with the Environment Variable
-        env_value = StringProperty(
-                name = "Values of MBDyn environment values",
-                description = "Values of the environment variables used in MBDyn simulation"
+    # Name of the Environment Variable
+    env_variable = StringProperty(
+            name = "MBDyn environment variables",
+            description = "Environment variables used in MBDyn simulation"
             )
 
-        # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
-        num_rows = IntProperty(
-                name = "MBDyn .mov file number of rows",
-                description = "Total number of rows in MBDyn .mov file, corresponding (total time steps * number of nodes)"
-                )
-
-        # Load frequency: if different than 1, the .mov file is read every N time steps
-        load_frequency = FloatProperty(
-                name = "frequency",
-                description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
-                min = 1.0,
-                default = 1.0
-                )
-
-        #Start time
-        start_time = FloatProperty(
-            name = "Start Time",
-            description = "If this value is X, different than 0, the import starts at X seconds",
-            min = 0.0,
-            default = 0.0
-            update = update_start_time
-            )
-
-        end_time = FloatProperty(
-            name = "End Time",
-            description = "If this value is X, different than total simulation time, the import stops at X seconds",
-            min = 0.0
-            update = update_end_time
-            )
-
-        time_step = FloatProperty(
-            name = "Time Step",
-            description = "Simulation time step"
-            )
-
-        # Reference dictionary -- holds the associations between MBDyn references and blender
-        # objects
-        references = CollectionProperty(
-                name = "MBDyn references",
-                type = BLENDYN_PG_refence_dictionary
-                )
-
-        # Reference dictionary index -- holds the index for displaying the Reference
-        # Dictionary in a UI List
-        ref_index = IntProperty(
-                name = "References collection index",
-                default = 0
-                )
-
-        disabled_output = StringProperty(
-                name = "Nodes for which Output is disabled",
-                default = ''
+    # Value associated with the Environment Variable
+    env_value = StringProperty(
+            name = "Values of MBDyn environment values",
+            description = "Values of the environment variables used in MBDyn simulation"
         )
 
-        # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
-        nodes = CollectionProperty(
-                name = "MBDyn nodes",
-                type = BLENDYN_PG_nodes_dictionary
-                )
+    # Number of rows (output time steps * number of nodes) in MBDyn's .mov file
+    num_rows = IntProperty(
+            name = "MBDyn .mov file number of rows",
+            description = "Total number of rows in MBDyn .mov file, corresponding (total time steps * number of nodes)"
+            )
 
-        # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
-        nd_index = IntProperty(
-                name = "MBDyn nodes collection index",
-                default = 0
-                )
+    # Load frequency: if different than 1, the .mov file is read every N time steps
+    load_frequency = FloatProperty(
+            name = "frequency",
+            description = "If this value is X, different than 1, then the MBDyn output is loaded every X time steps",
+            min = 1.0,
+            default = 1.0
+            )
 
-        # Default object representing a node, when imported automatically
-        node_object = EnumProperty(
-                items = [("ARROWS", "Arrows", "Empty - arrows", 'OUTLINER_OB_EMPTY', 1),\
+    #Start time
+    start_time = FloatProperty(
+        name = "Start Time",
+        description = "If this value is X, different than 0, the import starts at X seconds",
+        min = 0.0,
+        default = 0.0,
+        update = update_start_time
+    )
+
+    end_time = FloatProperty(
+        name = "End Time",
+        description = "If this value is X, different than total simulation time, the import stops at X seconds",
+        min = 0.0,
+        update = update_end_time
+        )
+    
+    time_step = FloatProperty(
+        name = "Time Step",
+        description = "Simulation time step"
+        )
+
+    # Reference dictionary -- holds the associations between MBDyn references and blender
+    # objects
+    references = CollectionProperty(
+            name = "MBDyn references",
+            type = BLENDYN_PG_refence_dictionary
+            )
+    
+    # Reference dictionary index -- holds the index for displaying the Reference
+    # Dictionary in a UI List
+    ref_index = IntProperty(
+            name = "References collection index",
+            default = 0
+            )
+    
+    disabled_output = StringProperty(
+            name = "Nodes for which Output is disabled",
+            default = ''
+    )
+    
+    # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
+    nodes = CollectionProperty(
+            name = "MBDyn nodes",
+            type = BLENDYN_PG_nodes_dictionary
+            )
+    
+    # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
+    nd_index = IntProperty(
+            name = "MBDyn nodes collection index",
+            default = 0
+            )
+    
+    # Default object representing a node, when imported automatically
+    node_object = EnumProperty(
+            items = [("ARROWS", "Arrows", "Empty - arrows", 'OUTLINER_OB_EMPTY', 1),\
                          ("AXES", "Axes", "Empty - axes", 'EMPTY_DATA', 2),\
                          ("CUBE", "Cube", "", 'MESH_CUBE', 3),\
                          ("UVSPHERE", "UV Sphere", "", 'MESH_UVSPHERE', 4),\
@@ -569,199 +569,199 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
                 default = "ARROWS"
                 )
 
-        missing = EnumProperty(
-                items = [("DO NOTHING", "Do Nothing","","" ,1),\
-                         ("HIDE", "Hide", "","" ,2),\
-                         ("DELETE", "Delete", "", "", 3)],
-                name = "Handling of missing nodes/elements",
-                default = "HIDE"
-                )
-
-        # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
-        mesh_import_mode = EnumProperty(
-                items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
-                         ("SINGLE MESH", "Joined in single mesh", "", 'LINKED', 2)],
-                name = "Mesh objects",
-                default = "SEPARATED OBJECTS"
-                )
-
-        # Elements dictionary -- holds the collection of the elements found in the .log file
-        elems = CollectionProperty(
-                name = "MBDyn elements collection",
-                type = MBDynElemsDictionary
-                )
-
-        # Elements to be updated -- holds the keys to elements that need to update their configuration
-        #                           when the scene changes
-        elems_to_update = CollectionProperty(
-                type = MBDynElemToBeUpdated,
-                name = "Elements that require update",
-                description = "Collection of indexes of the elements that need to be updated when \
-                                the scene is changed"
+    missing = EnumProperty(
+            items = [("DO NOTHING", "Do Nothing","","" ,1),\
+                     ("HIDE", "Hide", "","" ,2),\
+                     ("DELETE", "Delete", "", "", 3)],
+            name = "Handling of missing nodes/elements",
+            default = "HIDE"
             )
 
-        # Current Simulation Time
-        simtime = CollectionProperty(
-                name = "MBDyn simulation time",
-                type = BLENDYN_PG_mbtime
-                )
+    # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
+    mesh_import_mode = EnumProperty(
+            items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
+                     ("SINGLE MESH", "Joined in single mesh", "", 'LINKED', 2)],
+            name = "Mesh objects",
+            default = "SEPARATED OBJECTS"
+            )
 
-        # Current simulation time
-        time = FloatProperty(
-                name = "time: ",
-                description = "Current MBDyn simulation time",
-                default = 0.0
-                )
+    # Elements dictionary -- holds the collection of the elements found in the .log file
+    elems = CollectionProperty(
+            name = "MBDyn elements collection",
+            type = MBDynElemsDictionary
+            )
 
-        # Elements dictionary index -- holds the index for displaying the Elements Dictionary in a
-        # UI List
-        ed_index = IntProperty(
-                name = "MBDyn elements collection index",
-                default = 0
-                )
-
-        # MBDyn's node count
-        num_nodes = IntProperty(
-                name = "MBDyn nodes number",
-                description = "MBDyn node count"
-                )
-
-        # MBDyn's time steps count
-        num_timesteps = IntProperty(
-                name = "MBDyn time steps",
-                description = "MBDyn time steps count"
-                )
-
-        # Flag that indicates if we are to use NETCDF results format
-        use_netcdf = BoolProperty(
-                name = "Use netCDF",
-                description = "Import results in netCDF format",
-                default = False
-                )
-
-        # Flag that indicates if the .mov (or .nc) file is loaded correctly and the
-        # nodes dictionary is ready, used to indicate that all is ready for the object's
-        # to be animated
-        is_ready = BoolProperty(
-                name = "ready to animate",
-                description = "True if .mov (or .nc) file and nodes dictionary loaded correctly",
-                )
-
-        # If we want to hook vertices in creating mesh from nodes
-        is_vertshook = BoolProperty(
-                name = "Hook vertices",
-                description = "Hook directly the vertices to the nodes in creating a mesh object?",
-                default = False
-                )
-
-        # Lower limit of range import for nodes
-        min_node_import = IntProperty(
-                name = "first node to import",
-                description = "Lower limit of integer labels for range import for nodes",
-                default = 0
-                )
-
-        # Higher limit of range import for nodes
-        max_node_import = IntProperty(
-                name = "last node to import",
-                description = "Higher limit of integer labels for range import for nodes",
-                default = 0
-                )
-
-        node_scale_slider = FloatProperty(
-                name = "Value of Scaling",
-                default = 1.0
+    # Elements to be updated -- holds the keys to elements that need to update their configuration
+    #                           when the scene changes
+    elems_to_update = CollectionProperty(
+            type = MBDynElemToBeUpdated,
+            name = "Elements that require update",
+            description = "Collection of indexes of the elements that need to be updated when \
+                            the scene is changed"
         )
 
-        # Type filter for elements import
-        elem_type_import = EnumProperty(
-                items  = get_elems_types,
-                name = "Elements to import",
+    # Current Simulation Time
+    simtime = CollectionProperty(
+            name = "MBDyn simulation time",
+            type = BLENDYN_PG_mbtime
+            )
+
+    # Current simulation time
+    time = FloatProperty(
+            name = "time: ",
+            description = "Current MBDyn simulation time",
+            default = 0.0
+            )
+
+    # Elements dictionary index -- holds the index for displaying the Elements Dictionary in a
+    # UI List
+    ed_index = IntProperty(
+            name = "MBDyn elements collection index",
+            default = 0
+            )
+
+    # MBDyn's node count
+    num_nodes = IntProperty(
+            name = "MBDyn nodes number",
+            description = "MBDyn node count"
+            )
+
+    # MBDyn's time steps count
+    num_timesteps = IntProperty(
+            name = "MBDyn time steps",
+            description = "MBDyn time steps count"
+            )
+
+    # Flag that indicates if we are to use NETCDF results format
+    use_netcdf = BoolProperty(
+            name = "Use netCDF",
+            description = "Import results in netCDF format",
+            default = False
+            )
+
+    # Flag that indicates if the .mov (or .nc) file is loaded correctly and the
+    # nodes dictionary is ready, used to indicate that all is ready for the object's
+    # to be animated
+    is_ready = BoolProperty(
+            name = "ready to animate",
+            description = "True if .mov (or .nc) file and nodes dictionary loaded correctly",
+            )
+
+    # If we want to hook vertices in creating mesh from nodes
+    is_vertshook = BoolProperty(
+            name = "Hook vertices",
+            description = "Hook directly the vertices to the nodes in creating a mesh object?",
+            default = False
+            )
+
+    # Lower limit of range import for nodes
+    min_node_import = IntProperty(
+            name = "first node to import",
+            description = "Lower limit of integer labels for range import for nodes",
+            default = 0
+            )
+
+    # Higher limit of range import for nodes
+    max_node_import = IntProperty(
+            name = "last node to import",
+            description = "Higher limit of integer labels for range import for nodes",
+            default = 0
+            )
+
+    node_scale_slider = FloatProperty(
+            name = "Value of Scaling",
+            default = 1.0
+    )
+
+    # Type filter for elements import
+    elem_type_import = EnumProperty(
+            items  = get_elems_types,
+            name = "Elements to import",
+            )
+
+    elem_scale_slider = FloatProperty(
+            name = "Scaling Factor",
+            default = 1.0
+    )
+
+    elem_type_scale = EnumProperty(
+            items = get_elems_types,
+            name = "Elements to scale",
+    )
+    # Lower limit of range import for elemens
+    min_elem_import = IntProperty(
+            name = "first element to import",
+            description = "Lower limit of integer labels for range import for elements",
+            default = 0
+            )
+
+    # Higher limit of range import for elements
+    max_elem_import = IntProperty(
+            name = "last element to import",
+            description = "Higher limit of integer labels for range import for elements",
+            default = 2**31 - 1
+            )
+    # True if output contains at least one eigensolution
+    eigensolutions = CollectionProperty(
+            name = "Eigensolutions",
+            description = "Parameters of the eigensolutions found in the MBDyn output",
+            type = BLENDYN_PG_eigenanalysis
+            )
+
+    curr_eigsol = IntProperty(
+            name = "current eigensolution",
+            description = "Index of the currently selected eigensolution",
+            default = 0,
+            update = update_curr_eigsol
+            )
+
+    plot_vars = CollectionProperty(
+            name = "MBDyn variables available for plotting",
+            type = BLENDYN_PG_plot_vars
+            )
+
+    plot_var_index = IntProperty(
+            name = "Plot variable index",
+            description = "index of the current variable to be plotted",
+            default = 0
+            )
+
+    if HAVE_PLOT:
+
+        plot_sxy_varX = StringProperty(
+                name = "Cross-spectrum X variable",
+                description = "variable to be used as input in cross-spectrum",
+                default = "none"
                 )
 
-        elem_scale_slider = FloatProperty(
-                name = "Scaling Factor",
-                default = 1.0
-        )
-
-        elem_type_scale = EnumProperty(
-                items = get_elems_types,
-                name = "Elements to scale",
-        )
-        # Lower limit of range import for elemens
-        min_elem_import = IntProperty(
-                name = "first element to import",
-                description = "Lower limit of integer labels for range import for elements",
-                default = 0
+        plot_sxy_varY = StringProperty(
+                name = "Cross-spectrum Y variable",
+                description = "variable to be used as output in cross-spectrum",
+                default = "none"
                 )
-
-        # Higher limit of range import for elements
-        max_elem_import = IntProperty(
-                name = "last element to import",
-                description = "Higher limit of integer labels for range import for elements",
-                default = 2**31 - 1
-                )
-        # True if output contains at least one eigensolution
-        eigensolutions = CollectionProperty(
-                name = "Eigensolutions",
-                description = "Parameters of the eigensolutions found in the MBDyn output",
-                type = BLENDYN_PG_eigenanalysis
-                )
-
-        curr_eigsol = IntProperty(
-                name = "current eigensolution",
-                description = "Index of the currently selected eigensolution",
-                default = 0,
-                update = update_curr_eigsol
-                )
-
-        plot_vars = CollectionProperty(
-                name = "MBDyn variables available for plotting",
-                type = BLENDYN_PG_plot_vars
-                )
-
-        plot_var_index = IntProperty(
-                name = "Plot variable index",
-                description = "index of the current variable to be plotted",
-                default = 0
-                )
-
-        if HAVE_PLOT:
-
-            plot_sxy_varX = StringProperty(
-                    name = "Cross-spectrum X variable",
-                    description = "variable to be used as input in cross-spectrum",
-                    default = "none"
-                    )
-
-            plot_sxy_varY = StringProperty(
-                    name = "Cross-spectrum Y variable",
-                    description = "variable to be used as output in cross-spectrum",
-                    default = "none"
-                    )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_settings_scene class
 bpy.utils.register_class(BLENDYN_PG_settings_scene)
 
 ## MBDynSettings for Blender Object
 class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
-""" Properties of the current Blender Object related to MBDyn """
-# Type of MBDyn entity
-type = StringProperty(
+    """ Properties of the current Blender Object related to MBDyn """
+    # Type of MBDyn entity
+    type = StringProperty(
         name = "MBDyn entity type",
         description = "Type of MBDyn entity associated with object",
         default = 'none'
         )
 
-# Dictionary key
-dkey = StringProperty(
+    # Dictionary key
+    dkey = StringProperty(
         name = "MBDyn dictionary index",
         description = "Index of the entry of the MBDyn dictionary relative to the object",
         default = 'none' 
         )
-# Specific for plotting
-if HAVE_PLOT:
-    plot_var_index = IntProperty(
+    # Specific for plotting
+    if HAVE_PLOT:
+        plot_var_index = IntProperty(
             name = "Plot variable index",
             description = "index of the current variable to be plotted",
             default = 0
@@ -871,7 +871,7 @@ bpy.app.handlers.save_post.append(rename_log)
 
 class BLENDYN_OT_standard_import(bpy.types.Operator):
     """ Standard Import Process """
-    bl_idname = "mbdyn.BLENDYN_OT_standard_import"
+    bl_idname = "blendyn.standard_import"
     bl_label = "MBDyn Standard Import"
 
     def execute(self, context):
@@ -897,7 +897,7 @@ bpy.utils.register_class(BLENDYN_OT_standard_import)
 
 class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
-    bl_idname = "mbdyn.BLENDYN_OT_read_mbdyn_log_file"
+    bl_idname = "blendyn.read_mbdyn_log_file"
     bl_label = "MBDyn .log file parsing"
 
     def execute(self, context):
@@ -982,7 +982,7 @@ bpy.utils.register_class(BLENDYN_OT_read_mbdyn_log)
 
 class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
     """ Sets MBDyn's output files path and basename """
-    bl_idname = "mbdyn.BLENDYN_OT_select_output_file"
+    bl_idname = "blendyn.select_output_file"
     bl_label = "Select MBDyn results file"
 
     filter_glob = StringProperty(
@@ -1025,7 +1025,7 @@ bpy.utils.register_class(BLENDYN_OT_select_output_file)
 class BLENDYN_OT_assign_labels(bpy.types.Operator):
     """ Assigns 'recognisable' labels to MBDyn nodes and elements by
         parsing the .log file """
-    bl_idname = "mbdyn.BLENDYN_OT_assign_labels"
+    bl_idname = "blendyn.assign_labels"
     bl_label = "Import labels of MBDyn objects"
 
     def execute(self, context):
@@ -1061,7 +1061,7 @@ bpy.utils.register_class(BLENDYN_OT_assign_labels)
 class BLENDYN_OT_clear_data(bpy.types.Operator):
     """ Clears MBDyn elements and nodes dictionaries, essentially\
     'cleaning' the scene of all MBDyn related data"""
-    bl_idname = "mbdyn.BLENDYN_OT_clear_data"
+    bl_idname = "blendyn.clear_data"
     bl_label = "Clear MBDyn Data"
 
     def execute(self, context):
@@ -1087,7 +1087,7 @@ bpy.utils.register_class(BLENDYN_OT_clear_data)
 class BLENDYN_OT_set_mbdyn_install_path(bpy.types.Operator):
     """Sets the Installation Path of MBDyn to be used\
         in running simulation"""
-    bl_idname = "mbdyn.BLENDYN_OT_set_mbdyn_install_path"
+    bl_idname = "blendyn.set_mbdyn_install_path"
     bl_label = "Set installation path of MBDyn"
 
     def execute(self, context):
@@ -1095,7 +1095,7 @@ class BLENDYN_OT_set_mbdyn_install_path(bpy.types.Operator):
         mbdyn_path = mbs.install_path
         config = {'mbdyn_path': mbdyn_path}
         message = "BLENDYN_OT_set_mbdyn_install_path::execute(): "\
-                + "MBDyn install path set to "
+                + "MBDyn install path set to "\
                 + mbdyn_path
         baseLogger.info(message)
 
@@ -1113,7 +1113,7 @@ bpy.utils.register_class(BLENDYN_OT_set_mbdyn_install_path)
 class BLENDYN_OT_mbdyn_default_install_path(bpy.types.Operator):
     """Sets the Installation path of MBDyn to the value\
         found in the system $PATH variable"""
-    bl_idname = "mbdyn.BLENDYN_OT_mbdyn_default_install_path"
+    bl_idname = "blendyn.mbdyn_default_install_path"
     bl_label = "Set Default Path for MBDyn"
 
     def execute(self, context):
@@ -1143,7 +1143,7 @@ bpy.utils.register_class(BLENDYN_OT_mbdyn_default_install_path)
 class BLENDYN_OT_config_mbdyn_install_path(bpy.types.Operator):
     """Sets the Installation path of MBDyn to the value\
         found in config.json"""
-    bl_idname = "mbdyn.BLENDYN_OT_config_mbdyn_install_path"
+    bl_idname = "blendyn.config_mbdyn_install_path"
     bl_label = "Set config.json Path for MBDyn"
 
     def execute(self, context):
@@ -1172,7 +1172,7 @@ bpy.utils.register_class(BLENDYN_OT_config_mbdyn_install_path)
 class BLENDYN_OT_select_mbdyn_input_file(bpy.types.Operator, ImportHelper):
     """Set input file's path and basename\
         to be used in MBDyn simulation"""
-    bl_idname = "mbdyn.BLENDYN_OT_select_mbdyn_input_file"
+    bl_idname = "blendyn.select_mbdyn_input_file"
     bl_label = "MBDyn input file"
 
     def execute(self, context):
@@ -1202,7 +1202,7 @@ bpy.utils.register_class(BLENDYN_OT_select_mbdyn_input_file)
 class BLENDYN_OT_set_env_variable(bpy.types.Operator):
     """Sets an environment variable to be\
         used in MBDyn simulation"""
-    bl_idname = "mbdyn.BLENDYN_OT_set_env_variable"
+    bl_idname = "blendyn.set_env_variable"
     bl_label = "Set Environment Variable"
 
     def execute(self, context):
@@ -1220,7 +1220,7 @@ class BLENDYN_OT_set_env_variable(bpy.types.Operator):
             env.value = mbs.env_value
 
         message = "BLENDYN_OT_set_env_variable::execute(): "\
-                + "Set environment variable " 
+                + "Set environment variable "\
                 + env.variable + " = " + env.value
         baseLogger.info(message)
         return {'FINISHED'}
@@ -1233,14 +1233,14 @@ bpy.utils.register_class(BLENDYN_OT_set_env_variable)
 
 class BLENDYN_OT_delete_env_variable(bpy.types.Operator):
     """Delete Environment variable"""
-    bl_idname = "mbdyn.BLENDYN_OT_delete_env_variable"
+    bl_idname = "blendyn.delete_env_variable"
     bl_label = "Delete Environment Variable"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
 
         message = "BLENDYN_OT_delete_env_variable::execute(): "\
-                + "Removing environment variable "
+                + "Removing environment variable "\
                 + mbs.env_vars[mbs.env_index]
         mbs.env_vars.remove(mbs.env_index)
 
@@ -1254,7 +1254,7 @@ bpy.utils.register_class(BLENDYN_OT_delete_env_variable)
 
 class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
     """Runs the MBDyn Simulation in background"""
-    bl_idname = "mbdyn.BLENDYN_OT_run_mbdyn_simulation"
+    bl_idname = "blendyn.run_mbdyn_simulation"
     bl_label = "Run MBDyn Simulation"
 
     timer = None
@@ -1377,7 +1377,7 @@ bpy.utils.register_class(BLENDYN_OT_run_mbdyn_simulation)
 
 class BLENDYN_OT_stop_mbdyn_simulation(bpy.types.Operator):
     """Stops the MBDyn simulation"""
-    bl_idname = "mbdyn.BLENDYN_OT_stop_mbdyn_simulation"
+    bl_idname = "blendyn.stop_mbdyn_simulation"
     bl_label = "Stop MBDyn Simulation"
 
     def execute(self, context):
@@ -1401,7 +1401,7 @@ bpy.utils.register_class(BLENDYN_OT_stop_mbdyn_simulation)
 
 class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
     """ Sets the motion path for all the objects that have an assigned MBDyn's node """
-    bl_idname = "mbdyn.BLENDYN_OT_set_motion_paths"
+    bl_idname = "blendyn.set_motion_paths"
     bl_label = "MBDyn Motion Path setter"
 
     def execute(self, context):
@@ -1414,7 +1414,7 @@ class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
         else:
             ret_val = set_motion_paths_netcdf(context)
         if ret_val == 'CANCELLED':
-            message = "BLENDYN_OT_set_motion_paths::execute()"
+            message = "BLENDYN_OT_set_motion_paths::execute()"\
                     + "MBDyn results file not loaded"
             self.report({'WARNING'}, message)
             baseLogger.warning(message) 
@@ -1429,7 +1429,7 @@ bpy.utils.register_class(BLENDYN_OT_set_motion_paths)
 class BLENDYN_OT_set_import_freq_auto(bpy.types.Operator):
     """ Sets the import frequency automatically in order to match the Blender
         time and the simulation time, based on the current render fps """
-    bl_idname = "mbdyn.BLENDYN_OT_set_import_freq_auto"
+    bl_idname = "blendyn.set_import_freq_auto"
     bl_label = "Import frequency: auto"
 
     def execute(self, context):
@@ -1445,7 +1445,7 @@ bpy.utils.register_class(BLENDYN_OT_set_import_freq_auto)
 
 class BLENDYN_OT_set_render_variables(bpy.types.Operator):
     """ Sets the Variables to be displayed in rendered view """
-    bl_idname = "mbdyn.BLENDYN_OT_set_render_variables"
+    bl_idname = "blendyn.set_render_variables"
     bl_label = "Set Render Variable"
 
     def execute(self, context):
@@ -1474,7 +1474,7 @@ bpy.utils.register_class(BLENDYN_OT_set_render_variables)
 
 class BLENDYN_OT_delete_render_variables(bpy.types.Operator):
     """Delete Render variables"""
-    bl_idname = "mbdyn.BLENDYN_OT_delete_render_variables"
+    bl_idname = "blendyn.delete_render_variables"
     bl_label = "Delete Render Variable"
 
     def execute(self, context):
@@ -1491,7 +1491,7 @@ class BLENDYN_OT_delete_render_variables(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_delete_render_variables)
 
 class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_delete_all_render_variables"
+    bl_idname = "blendyn.delete_all_render_variables"
     bl_label = "Delete all Render variables"
 
     def execute(self, context):
@@ -1508,7 +1508,7 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
 bpy.utils.register_class(BLENDYN_OT_DeleteAllRenderVariables)
 
 class BLENDYN_OT_show_display_group(bpy.types.Operator):
-    bl_idname = "mbdyn.BLENDYN_OT_show_display_group"
+    bl_idname = "blendyn.show_display_group"
     bl_label = "show display group"
 
     def execute(self, context):
@@ -1538,7 +1538,7 @@ bpy.utils.register_class(BLENDYN_OT_show_display_group)
 
 class BLENDYN_OT_set_display_group(bpy.types.Operator):
     """Delete Render variables"""
-    bl_idname = "mbdyn.BLENDYN_OT_set_display_group"
+    bl_idname = "blendyn.set_display_group"
     bl_label = "Set Display Group"
 
     def execute(self, context):
@@ -2035,7 +2035,7 @@ class BLENDYN_PT_nodes_scene(bpy.types.Panel):
         nd = mbs.nodes
         layout = self.layout
         row = layout.row()
-        row.template_list('BLENDYN_UL_mbdyn_nodes_list', \   
+        row.template_list('BLENDYN_UL_mbdyn_nodes_list', \
                 "MBDyn nodes list", \
                 mbs, "nodes",\
                 mbs, "nd_index")
@@ -2252,7 +2252,7 @@ bpy.utils.register_class(BLENDYN_PT_obj_select)
 
 class BLENDYN_OT_node_import_all(bpy.types.Operator):
     """ Imports all the MBDyn nodes into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_node_import_all"
+    bl_idname = "blendyn.node_import_all"
     bl_label = "Add MBDyn nodes to scene"
 
     def execute(self, context):
@@ -2306,7 +2306,7 @@ bpy.utils.register_class(BLENDYN_OT_node_import_all)
 class BLENDYN_OT_single_node_import(bpy.types.Operator):
     """ Imports a single MBDyn node, selected by the user in the UI,
         into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_single_node_import"
+    bl_idname = "blendyn.single_node_import"
     bl_label = "Add selected MBDyn node to scene"
     int_label = bpy.props.IntProperty()
 
@@ -2364,7 +2364,7 @@ bpy.utils.register_class(BLENDYN_OT_single_node_import)
 
 class BLENDYN_OT_references_import_all(bpy.types.Operator):
     """ Imports all the MBDyn references into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_references_import_all"
+    bl_idname = "blendyn.references_import_all"
     bl_label = "Add MBDyn references to scene"
 
     def execute(self, context):
@@ -2388,7 +2388,7 @@ bpy.utils.register_class(BLENDYN_OT_references_import_all)
 class BLENDYN_OT_references_import_single(bpy.types.Operator):
     """ Import a single reference frame, selected by
         the user in the UI, into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_references_import_single"
+    bl_idname = "blendyn.references_import_single"
     bl_label = "Add MBDyn reference to scene"
 
     int_label = IntProperty()
@@ -2414,7 +2414,7 @@ bpy.utils.register_class(BLENDYN_OT_references_import_single)
 
 class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
     """ Selects all the objects associated to  MBDyn nodes"""
-    bl_idname = "mbdyn.BLENDYN_OT_select_all_nodes"
+    bl_idname = "blendyn.select_all_nodes"
     bl_label = "Select all MBDyn Node Objects"
 
     def execute(self, context):
@@ -2432,7 +2432,7 @@ bpy.utils.register_class(BLENDYN_OT_select_all_nodes)
 class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
     """ Select all the objects associated to MBDyn elements
         of a specified type """
-    bl_idname = "mbdyn.BLENDYN_OT_select_elements_by_type"
+    bl_idname = "blendyn.select_elements_by_type"
     bl_label = "Select all MBDyn objects"
 
     def execute(self, context):
@@ -2451,7 +2451,7 @@ bpy.utils.register_class(BLENDYN_OT_select_elements_by_type)
 class BLENDYN_OT_scale_node(bpy.types.Operator):
     """ Scales the selected object, associated with
         an MBDyn node """
-    bl_idname = "mbdyn.BLENDYN_OT_scale_node"
+    bl_idname = "blendyn.scale_node"
     bl_label = "Scale active node"
 
     def execute(self, context):
@@ -2472,7 +2472,7 @@ bpy.utils.register_class(BLENDYN_OT_scale_node)
 class BLENDYN_OT_scale_sel_nodes(bpy.types.Operator):
     """ Scales the selected objects, associated with
         MBDyn nodes """
-    bl_idname = "mbdyn.BLENDYN_OT_scale_sel_nodes"
+    bl_idname = "blendyn.scale_sel_nodes"
     bl_label = "Scale all sected nodes"
 
     def execute(self, context):
@@ -2493,7 +2493,7 @@ bpy.utils.register_class(BLENDYN_OT_scale_sel_nodes)
 class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
     """ Scales the objects associated with MBDyn elements of
         the selected type """
-    bl_idname = "mbdyn.BLENDYN_OT_scale_elements_by_type"
+    bl_idname = "blendyn.scale_elements_by_type"
     bl_label = "Scale all elements of selected type"
 
     def execute(self, context):
@@ -2514,7 +2514,7 @@ bpy.utils.register_class(BLENDYN_OT_scale_elements_by_type)
 
 class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
     """ Imports the MBDyn elements of the selected type in the blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_elements_by_type"
+    bl_idname = "blendyn.import_elements_by_type"
     bl_label = "Add all elements of selected type to scene"
 
     def execute(self, context):
@@ -2551,7 +2551,7 @@ bpy.utils.register_class(BLENDYN_OT_import_elements_by_type)
 
 class BLENDYN_OT_elements_import_all(bpy.types.Operator):
     """ Imports all the supported MBDyn elements into the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_elements_import_all"
+    bl_idname = "blendyn.elements_import_all"
     bl_label = "Add all the elements to the scene"
 
     def execute(self, context):
@@ -2597,7 +2597,7 @@ bpy.utils.register_class(BLENDYN_OT_elements_import_all)
 
 class BLENDYN_OT_obj_select_node(bpy.types.Operator):
     """ Selects the objects associated with an MBDyn node """
-    bl_idname = "mbdyn.BLENDYN_OT_obj_select_node"
+    bl_idname = "blendyn.obj_select_node"
     bl_label = "MBDyn Node Select Button"
     ndx = bpy.props.StringProperty()
 
@@ -2648,7 +2648,7 @@ bpy.utils.register_class(BLENDYN_OT_obj_select_node)
 class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
     """ Creates a mesh in which the vertices are hooked to
         the motion of MBDyn nodes """
-    bl_idname = "mbdyn.BLENDYN_OT_create_vertices_from_nodes"
+    bl_idname = "blendyn.create_vertices_from_nodes"
     bl_label = "Create vertices from nodes"
 
     def draw(self, context):
@@ -2735,7 +2735,7 @@ bpy.utils.register_class(BLENDYN_OT_create_vertices_from_nodes)
 class BLENDYN_OT_delete_override(bpy.types.Operator):
     """ Overrides the delete function of Blender Objects to remove
         the related elements in MBDyn dictionaries """
-    bl_idname = "mbdyn.BLENDYN_OT_delete_override"
+    bl_idname = "blendyn.delete_override"
     bl_label = "Object Delete Operator"
     use_global = BoolProperty()
 

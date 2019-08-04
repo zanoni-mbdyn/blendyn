@@ -158,7 +158,7 @@ bpy.utils.register_class(BLENDYN_PG_eigenanalysis)
 
 class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
     """ Visualizes the reference geometry for the current eigensolution  """ 
-    bl_idname = "mbdyn.BLENDYN_OT__eigen_geometry"
+    bl_idname = "blendyn._eigen_geometry"
     bl_label = "Visualize reference geometry for current eigensolution"
 
     def execute(self, context):
@@ -246,7 +246,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
 
 class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
     """ Animates the model to show the currently selected eigenmode """
-    bl_idname = "mbdyn.BLENDYN_OT_animate_eigenmode"
+    bl_idname = "blendyn.animate_eigenmode"
     bl_label = "Visualize the currently selected eigenmode"
 
     def execute(self, context):
@@ -262,7 +262,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode
         
-        message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "
+        message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                 + " animating mode " + str(cem)
         print(message)
         baseLogger.info(message)
@@ -281,7 +281,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
             eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx) + 12)])
         except KeyError:
-            message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "
+            message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                     + "The eigenanalysis output is incomplete. Aborting."
             self.report({'ERROR'}, message)
             baseLogger.error(message)
@@ -299,7 +299,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
                 anim_nodes.append(node.name)
 
         if not(anim_nodes):
-            message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "
+            message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                     + "Nodes not imported yet."
             self.report({'ERROR'}, message)
             baseLogger.error(message)
@@ -318,13 +318,13 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             node_idx = idx[np.where(nodes == nd[ndx].int_label)[0][0]]
 
             if node_idx < 0:
-                message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "
+                message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                         + " skipped Object " + nd[ndx].blender_object \
                         + " with (dummy) node_idx = " + str(node_idx)
                 baseLogger.warning(message)
                 print(message)
             else:
-                message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "
+                message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                         + " animating Object with node_idx = " + str(node_idx)
                 baseLogger.info(message)
                 print(message)

@@ -74,7 +74,7 @@ def parse_distance(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
 
-        el.import_function = "mbdyn.BLENDYN_OT_import_distance"
+        el.import_function = "blendyn.import_distance"
         el.info_draw = "distance_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
@@ -268,7 +268,7 @@ def spawn_distance_element(elem, context):
 
 class BLENDYN_OT_import_distance(bpy.types.Operator):
     """ Imports a distance Joint in the Blender scene """
-    bl_idname = "mbdyn.BLENDYN_OT_import_distance"
+    bl_idname = "blendyn.import_distance"
     bl_label = "Import a distance joint element"
     int_label = bpy.props.IntProperty()
 

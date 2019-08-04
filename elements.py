@@ -179,7 +179,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
     """ Imports all the elements selected (by type and label range) into a single
         mesh Blender Object. Currently useful only for shell4 elements. """
     bl_label = "Import MBDyn elements as single mesh"
-    bl_idname = "mbdyn.BLENDYN_OT_import_elments_asmesh" 
+    bl_idname = "blendyn.import_elments_asmesh" 
 
     def execute(self, context):
         mbs = context.scene.mbdyn
