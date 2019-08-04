@@ -45,8 +45,8 @@ def parse_structural_absolute_force(rw, ed):
     try:
         el = ed['structural_absolute_force_' + str(rw[3])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_absolute_force():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_structural_absolute_force():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_force():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_force():", el)
         
         el.nodes[0].int_label = int(rw[4])
         
@@ -67,8 +67,8 @@ def parse_structural_absolute_force(rw, ed):
         el.type = 'structural_absolute_force'
         el.int_label = int(rw[3])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_absolute_force():", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_structural_absolute_force():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_force():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_absolute_force():", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
@@ -92,8 +92,8 @@ def parse_structural_follower_force(rw, ed):
     try:
         el = ed['structural_follower_force_' + str(rw[3])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_follower_force():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_structural_follower_force():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_force():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_force():", el)
         
         el.nodes[0].int_label = int(rw[4])
         
@@ -114,8 +114,8 @@ def parse_structural_follower_force(rw, ed):
         el.type = 'structural_follower_force'
         el.int_label = int(rw[3])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_follower_force():", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_structural_follower_force():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_force():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_follower_force():", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
@@ -139,8 +139,8 @@ def parse_structural_absolute_couple(rw, ed):
     try:
         el = ed['structural_absolute_couple_' + str(rw[3])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_absolute_couple():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_structural_absolute_couple():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
         
         el.nodes[0].int_label = int(rw[4])
         
@@ -161,8 +161,8 @@ def parse_structural_absolute_couple(rw, ed):
         el.type = 'structural_absolute_couple'
         el.int_label = int(rw[3])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_absolute_couple():", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_structural_absolute_couple():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
@@ -186,8 +186,8 @@ def parse_structural_follower_couple(rw, ed):
     try:
         el = ed['structural_follower_couple_' + str(rw[3])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_follower_couple():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_structural_follower_couple():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
         
         el.nodes[0].int_label = int(rw[4])
         
@@ -208,8 +208,8 @@ def parse_structural_follower_couple(rw, ed):
         el.type = 'structural_follower_couple'
         el.int_label = int(rw[3])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_structural_follower_couple():", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_structural_follower_couple():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
@@ -373,13 +373,13 @@ class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_structural_absolute_force class
@@ -412,13 +412,13 @@ class BLENDYN_OT_import_structural_follower_force(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_structural_follower_force class
@@ -451,13 +451,13 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval            
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_structural_absolute_couple class
@@ -490,12 +490,12 @@ class BLENDYN_OT_import_structural_follower_couple(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_structural_follower_couple class

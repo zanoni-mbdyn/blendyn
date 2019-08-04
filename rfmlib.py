@@ -28,6 +28,8 @@
 import bpy
 
 import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -36,13 +38,17 @@ def parse_reference_frame(rw, rd):
     ret_val = True
 
     # Debug message
-    eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_reference_frame()", el)
-        
-    print("Blendyn::parse_reference_frame(): Parsing Reference Frame " + rw[0])
+    message = "BLENDYN::parse_reference_frame(): " \
+            + "parsing reference frame " + rw[0]
+    print(message)
+    baseLogger.info(message)
 
     try:
         ref = rd['ref_' + str(rw[0]).strip()]
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_reference_frame()", ref) 
+        message = "BLENDYN::parse_reference_frame(): "\
+                + "found entry in dictionary. Updating it."
+        print(message)
+        baseLogger.info(message)
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
@@ -51,7 +57,10 @@ def parse_reference_frame(rw, rd):
         ref.int_label = int(rw[0].strip())
         ref.name = 'ref_' + str(rw[0]).strip()
         ret_val = False
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_reference_frame()", ref) 
+        message = "BLENDYN::parse_reference_frame(): "\
+                + "did not find entry in dictionary. Creating it."
+        print(message)
+        baseLogger.info(message)
         pass
 
     ref.pos = Vector(( float(rw[1]), float(rw[2]), float(rw[3]) ))
@@ -108,15 +117,25 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
             ref = rd['ref_' + str(self.int_label)]
             retval = spawn_reference_frame(ref, context)
             if retval == {'OBJECT_EXISTS'}:
-                eldbmsg(retval, type(self).__name__ + '::execute()', ref)
+                message = "BLENDYN::parse_reference_frame(): "\
+                + "object already exists. Remove it before re-importing."
+                print(message)
+                baseLogger.error(message)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', ref)
+                message = "BLENDYN::parse_reference_frame(): "\
+                + "Imported reference frame " + str(rfm.int_label)
+                print(message)
+                baseLogger.info(message)
                 return retval
             else:
                 return retval
         except KeyError:
-            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', ref)
+                message = "BLENDYN::parse_reference_frame(): "\
+                + "Did not find a dictionary entry for reference frame " 
+                + str(rfm.int_label)
+                print(message)
+                baseLogger.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_reference class

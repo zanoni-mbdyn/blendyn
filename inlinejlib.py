@@ -30,14 +30,14 @@ from math import *
 
 from .utilslib import *
 
-# helper function to parse inline joints
 def parse_inline(rw, ed):
+""" Parses an inline joint entry in .log file """
     ret_val = True
     try:
         el = ed['inline_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_inline():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_inline():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inline():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_inline():", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -68,8 +68,8 @@ def parse_inline(rw, ed):
         el.type = 'inline'
         el.int_label = int(rw[1])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_inline():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_inline():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inline():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_inline():", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -246,13 +246,13 @@ class BLENDYN_OT_import_inline(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             eturn {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_inline class.

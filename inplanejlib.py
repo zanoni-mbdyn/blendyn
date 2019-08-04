@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file inplanejlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -36,8 +36,8 @@ def parse_inplane(rw, ed):
     try:
         el = ed['inplane_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_inplane()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_inplane()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inplane()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_inplane()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -68,8 +68,8 @@ def parse_inplane(rw, ed):
         el.type = 'inplane'
         el.int_label = int(rw[1])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_inplane()", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_inplane()", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inplane()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_inplane()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -252,7 +252,7 @@ class BLENDYN_OT_import_inplane(bpy.types.Operator):
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
+            elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:

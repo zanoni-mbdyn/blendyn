@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file distancejlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -36,8 +36,8 @@ def parse_distance(rw, ed):
     try:
         el = ed['distance_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_distance()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_distance()", el)  
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_distance()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_distance()", el)  
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
@@ -60,8 +60,8 @@ def parse_distance(rw, ed):
         el.type = 'distance'
         el.int_label = int(rw[1])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_distance()", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_distance()", el)  
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_distance()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_distance()", el)  
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -266,10 +266,10 @@ def spawn_distance_element(elem, context):
 # -----------------------------------------------------------
 # end of spawn_distance_element(elem, context) function
 
-# Imports a distance Joint in the scene
 class BLENDYN_OT_import_distance(bpy.types.Operator):
+    """ Imports a distance Joint in the Blender scene """
     bl_idname = "mbdyn.BLENDYN_OT_import_distance"
-    bl_label = "MBDyn distance joint element importer"
+    bl_label = "Import a distance joint element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -283,26 +283,26 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
         try:
             elem = ed['distance_' + str(self.int_label)]
             retval = spawn_distance_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
+            if retval == {'OBJECT_EXISTS'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
+            elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE2_NOTFOUND':
+            elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
+            elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_distance class.

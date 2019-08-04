@@ -36,8 +36,8 @@ def parse_gimbal(rw, ed):
     try:
         el = ed['gimbal_' + str(rw[1])]
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_gimbal():", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_gimbal():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_gimbal():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_gimbal():", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -68,8 +68,8 @@ def parse_gimbal(rw, ed):
         el.type = 'gimbal'
         el.int_label = int(rw[1])
 
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_gimbal():", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_gimbal():", el)
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_gimbal():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_gimbal():", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -265,13 +265,13 @@ class BLENDYN_OT_import_gimbal(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
                 return retval
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self).__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_gimbal class.

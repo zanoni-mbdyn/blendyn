@@ -343,16 +343,16 @@ class BLENDYN_OT_import_linearacceleration(bpy.types.Operator):
         try:
             elem = ed['linearacceleration_' + str(self.int_label)]
             retval = spawn_linearacceleration_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
+            if retval == {'OBJECT_EXISTS'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
+            elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
+            elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == {'FINISHED'}:
+            elif retval == {'FINISHED'}: 
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:

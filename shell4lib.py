@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file shell4lib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -24,22 +24,19 @@
 
 import bpy, bmesh
 
-import logging
-
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
 
-## Parses Revolute Hinge joint entry in the .log file
 def parse_shell4(rw, ed):
+    """ Parses a shell4 element entry in the .log file """
+
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_shell4(): Parsing shell4" + rw[1])
     try:
         el = ed['shell4_' + str(rw[1])]
-        print("Blendyn::parse_shell4(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it")
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_shell4()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_shell4()", el)  
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[3])
         el.nodes[2].int_label = int(rw[4])
@@ -53,12 +50,14 @@ def parse_shell4(rw, ed):
             el.blender_object = el.name
             el.is_imported = True
     except KeyError:
-        print("Blendyn::parse_shell4(): didn't find entry in elements dictionary. Creating one.")
         
         el = ed.add()
         el.mbclass = 'elem.shell'
         el.type = 'shell4'
         el.int_label = int(rw[1])
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_shell4()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_shell4()", el)   
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -72,7 +71,7 @@ def parse_shell4(rw, ed):
         el.nodes.add()
         el.nodes[3].int_label = int(rw[5])
         
-        el.import_function = "add.mbdyn_elem_shell4"
+        el.import_function = "mbdyn.BLENDYN_OT_import_shell4"
         el.info_draw = "shell4_info_draw"
         el.name = el.type + '_' + str(el.int_label)
 
@@ -212,9 +211,10 @@ def shell4_info_draw(elem, layout):
 # -----------------------------------------------------------
 # end of shell4_info_draw(elem, layout) function
 
-class Scene_OT_MBDyn_Import_Shell4_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_shell4"
-    bl_label = "MBDyn shell4 element importer"
+class BLENDYN_OT_import_shell4(bpy.types.Operator):
+    """ Imports a shell4 element into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_shell4"
+    bl_label = "Imports a shell4 element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -228,39 +228,27 @@ class Scene_OT_MBDyn_Import_Shell4_Element(bpy.types.Operator):
             elem = ed['shell4_' + str(self.int_label)]
             retval = spawn_shell4_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "Element is already imported. Remove the Blender " +\
-                            "object before re-importing"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
-                message = "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[0].int_label)
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
-                message = "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[1].int_label)
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
-                message = "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[2].int_label)
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE4_NOTFOUND'}:
-                message = "Could not find a Blender object associated to Node " \
-                        + str(elem.nodes[3].int_label)
-                self.report({'ERROR'}, message)
-                logging.error(message)
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                return retval 
             else:
+                # Should not be reached
                 return retval
         except KeyError:
-            message = "Element shell4_" + str(elem.int_label) + "not found"
-            self.report({'ERROR'}, message)
-            logging.error(message)
             return {'CANCELLED'}
+# --------------------------------------------------------------
+# end of BLENDYN_OT_import_shell4 class

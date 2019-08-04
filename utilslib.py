@@ -256,7 +256,7 @@ def eldbmsg(msg, who, elem):
         baseLogger.error(message)
         return message
 
-    def importsuccess(message):
+    def importsuccess(message)
         message = message + \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
                 + "imported correcly."
@@ -275,7 +275,8 @@ def eldbmsg(msg, who, elem):
                {'NODE4_NOTFOUND'} : n4notfound,
                {'LIBRARY_ERROR'} : libraryerror,
                {'DICT_ERROR'} : dicterror,
-               {'IMPORT_SUCCESS'} : importsuccess
+               {'IMPORT_SUCCESS'} : importsuccess,
+               {'WRITE_SUCCESS'} : writesuccess
    }
 
    message = who + ": "

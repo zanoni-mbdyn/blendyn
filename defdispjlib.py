@@ -35,8 +35,8 @@ def parse_deformable_displacement(rw, ed):
     try:
         el = ed['deformable_displacement_' + str(rw[1])]
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_deformable_displacement()", el)
-        eldbmsg('FOUND_DICT', "BLENDYN::parse_deformable_displacement()", el) 
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_deformable_displacement()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_deformable_displacement()", el) 
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -65,8 +65,8 @@ def parse_deformable_displacement(rw, ed):
         el.type = 'deformable_displacement'
         el.int_label = int(rw[1])
         
-        eldbmsg('PARSE_ELEM', "BLENDYN::parse_deformable_displacement()", el)
-        eldbmsg('NOTFOUND_DICT', "BLENDYN::parse_deformable_displacement()", el)  
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_deformable_displacement()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_deformable_displacement()", el)  
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -122,7 +122,7 @@ class BLENDYN_OT_import_deformable_displacement(bpy.types.Operator):
             elem = ed['defdispj_' + str(self.int_label)]
             return spawn_defdispj_element(elem, context)
         except KeyError:
-            eldbmsg('DICT_ERROR', type(self)__name__ + '::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self)__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_deformable_displacement class

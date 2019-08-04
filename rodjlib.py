@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file rodlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -25,26 +25,23 @@
 import bpy
 
 import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
-from bpy.types import Operator, Panel
-from bpy.props import *
 
 from .utilslib import *
 
 ## Parses rod joint entry in the .log file
 def parse_rod(rw, ed):
     ret_val = True
-    # Debug message
-    print("Blendyn::parse_rod(): Parsing rod " + rw[1])
-
     try:
         el = ed['rod_' + str(rw[1])]
-
-        print("Blendyn::parse_rod(): found existing entry in elements dictionary for element "\
-                + rw[1] + ". Updating it.")
-
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_rod()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_rod()", el) 
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
         
@@ -60,14 +57,13 @@ def parse_rod(rw, ed):
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
     except KeyError:
-        
-        print("Blendyn::parse_rod(): didn't find entry in elements dictionary. Creating one.")
-        
         el = ed.add()
         el.mbclass = 'elem.joint'
-        el.type = 'rod'
-        
+        el.type = 'rod'    
         el.int_label = int(rw[1])
+        
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_rod()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_rod()", el)  
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -81,7 +77,7 @@ def parse_rod(rw, ed):
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         
-        el.import_function = "add.mbdyn_elem_rod"
+        el.import_function = "mbdyn.BLENDYN_OT_import_rod"
         el.update_info_operator = "update.rod"
         el.info_draw = "rod_info_draw"
         el.write_operator = "write.rod"
@@ -329,9 +325,10 @@ class RodUpdate(Operator):
 ## end of RodBezierUpdate class
 
 ## Imports a Rob element in the scene as a line joining two nodes
-class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
-    bl_idname = "add.mbdyn_elem_rod"
-    bl_label = "MBDyn rod element importer"
+class BLENDYN_OT_import_rod(bpy.types.Operator):
+    """ Imports a rod element into the Blender scene """
+    bl_idname = "mbdyn.BLENDYN_OT_import_rod"
+    bl_label = "Imports a rod element"
     int_label = bpy.props.IntProperty()
 
     def draw(self, context):
@@ -344,37 +341,28 @@ class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
         try: 
             elem = ed['rod_' + str(self.int_label)]
             retval = spawn_rod_element(elem, context)
-            if retval == 'OBJECT_EXISTS':
-                message = "Found the Object " + elem.blender_object + \
-                    " remove or rename it to re-import the element!"
-                self.report({'WARNING'}, message)
-                logging.warning(message)
+            if retval == {'OBJECT_EXISTS'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
-                message = "Could not import element: Blender object " +\
-                    "associated to Node " + str(elem.nodes[0].int_label) \
-                    + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE2_NOTFOUND':
-                message = "Could not import element: Blender object " +\
-                        "associated to Node " + str(elem.nodes[1].int_label) + " not found"
-                self.report({'ERROR'}, message)
-                logging.error(message)
+            elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                return retval
             else:
                 return retval
 
         except KeyError:
-            message = "Element rod_" + str(elem.int_label) + "not found."
-            self.report({'ERROR'}, message)
-            logging.error(message)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
             
         return {'FINISHED'}
 # -----------------------------------------------------------
-# end of Scene_OT_MBDyn_Import_Rod_Joint_Element class
+# end of BLENDYN_OT_import_rod class
 
 ### Helps import a Rob Bezier element in the scene
 #class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
@@ -424,10 +412,10 @@ class Scene_OT_MBDyn_Import_Rod_Joint_Element(bpy.types.Operator):
 ## end of Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element class
 
 
-## Writes the input for Rod Element in the text panel
-class RodWrite(Operator):
-    bl_idname = "write.rod"
-    bl_label = "MBDyn Rod input writer"
+class BLENDYN_OT_write_rod_input(Operator):
+    """ Writes the input for Rod Element in the text editor """
+    bl_idname = "mbdyn.BLENDYN_OT_write_rod_input"
+    bl_label = "Write updated input for rod"
     elem_key = bpy.props.StringProperty()
 
     def execute(self, context):
@@ -475,10 +463,10 @@ class RodWrite(Operator):
         message = "Input file contribute for element written. See " +\
                         rbtext.name + " in text editor"
         self.report({'INFO'}, message)
-        logging.info(message)
+        baseLogger.info(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
-# end of RodWrite class
+# end of BLENDYN_OT_write_rod_input class
          
 ### Writes the input for Bezier Rod Element in text panel
 #class RodBezierWrite(Operator):
@@ -552,10 +540,6 @@ def spawn_rod_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
-        print("Blendyn::spawn_rod_element(): Element is already imported. \
-                Remove the Blender object or rename it \
-                before re-importing the element.")
-        return{'CANCELLED'}
  
     # try to find Blender objects associated with the nodes that 
     # the element connects
@@ -563,17 +547,11 @@ def spawn_rod_element(elem, context):
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_rod_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[0].int_label))
         return {'NODE1_NOTFOUND'}
     
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
-        print("Blendyn::spawn_rod_element(): Could not find a Blender \
-                object associated to Node " + \
-                str(elem.nodes[1].int_label))
         return {'NODE2_NOTFOUND'}
 
 
