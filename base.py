@@ -1596,24 +1596,22 @@ class BLENDYN_PT_import(bpy.types.Panel):
         ed = mbs.elems
 
         # MBDyn output file selection
-        row = layout.row()
-        row.label(text = "MBDyn simulation results")
-
         col = layout.column(align = True)
+        col.label(text = "MBDyn simulation results")
         col.operator(BLENDYN_OT_select_output_file.bl_idname, \
                 text = "Select results file")
 
         row = layout.row()
-        row.label(text = "MBDyn Standard Import")
+        
         col = layout.column(align = True)
+        col.label(text = "MBDyn Standard Import")
         col.operator(BLENDYN_OT_standard_import.bl_idname,\
                 text = "Standard Import")
+        
         # Display MBDyn file basename and info
         row = layout.row()
-
-        row.label(text = "Loaded results file")
-
         col = layout.column(align = True)
+        col.label(text = "Loaded results file")
         col.prop(mbs, "file_basename", text = "")
         col.prop(mbs, "num_nodes", text = "nodes total")
 
@@ -1636,24 +1634,22 @@ class BLENDYN_PT_import(bpy.types.Panel):
                 text = "Load .log file")
 
         # Assign MBDyn labels to elements in dictionaries
-        col = layout.column(align = True)
         col.operator(BLENDYN_OT_assign_labels.bl_idname, \
                 text = "Load MBDyn labels")
 
         # Set action to be taken for missing nodes/elements
         row = layout.row()
-        row.label(text = "Missing nodes/elements")
-        row = layout.row()
-        row.prop(mbs, "missing", text = "")
+        col = layout.column(align = True)
+        col.label(text = "Missing nodes/elements")
+        col.prop(mbs, "missing", text = "")
 
         row = layout.row()
         col = layout.column(align = True)
         col.prop(mbs, "del_log", text = "Delete Log Files on Exit")
 
         # Clear MBDyn data for scene
-        row = layout.row()
-        row.label(text = "Erase MBDyn data in scene")
         col = layout.column(align = True)
+        col.label(text = "Erase MBDyn data in scene")
         col.operator(BLENDYN_OT_clear_data.bl_idname, \
                 text = "CLEAR MBDYN DATA")
 
@@ -1708,11 +1704,12 @@ bpy.utils.register_class(BLENDYN_PT_animate)
 class BLENDYN_PT_simulation(bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "BLENDYN_PT_simulation"
-    bl_label = "Run Simulation"
+    bl_label = "Run simulation"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
     bl_category = 'MBDyn'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
 
@@ -1740,9 +1737,6 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
         col = layout.column(align = True)
         col.label(text = "Selected input file")
         col.prop(mbs, "input_path", text = '')
-        col.enabled = False
-
-        col = layout.column(align = True)
         col.operator(BLENDYN_OT_select_mbdyn_input_file.bl_idname, \
                 text = 'Select input file')
         
@@ -1756,8 +1750,6 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
 
         col = layout.column(align = True)
         col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
-
-        col = layout.column(align = True)
         col.prop(mbs, "force_text_import", text = "Always load text output")
 
         col = layout.column(align = True)
@@ -1786,14 +1778,10 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
 
         col = layout.column(align = True)
         col.prop(mbs, "sim_status", text = 'Simulation Status [compl. %]')
-
-
-        col = layout.column(align = True)
         col.operator(BLENDYN_OT_run_mbdyn_simulation.bl_idname, \
                 text = 'Run Simulation')
 
         if HAVE_PSUTIL:
-            col = layout.column(align = True)
             col.operator(BLENDYN_OT_stop_mbdyn_simulation.bl_idname, \
                     text = 'Stop Simulaton')
 
@@ -1809,6 +1797,7 @@ class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
     bl_category = 'MBDyn'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
 
@@ -1867,6 +1856,7 @@ class BLENDYN_PT_active_object(bpy.types.Panel):
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
     bl_category = 'MBDyn'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
 
