@@ -35,11 +35,11 @@ bl_info = {
 
 if "bpy" in locals():
     import imp
-    if "base" in locals():
-        imp.reload(base)
+    if "blendyn" in locals():
+        imp.reload(blendyn)
 else:
     import bpy
-    from . import base
+    from . import blendyn
 
 
 def register():
