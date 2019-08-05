@@ -34,28 +34,28 @@ from collections import namedtuple
 import logging
 
 from .aerolib import *
+from .angularjlib import *
+from .axialrotjlib import *
 from .beamlib import *
 from .bodylib import *
+from .brakejlib import *
 from .carjlib import *
 from .clampjlib import *
 from .defdispjlib import *
+from .distjlib import *
+from .drivejlib import *
 from .forcelib import *
+from .gimbaljlib import *
+from .inlinejlib import *
+from .inplanejlib import *
+from .linearjlib import *
+from .prismjlib import *
 from .revjlib import *
 from .rodjlib import *
 from .shell4lib import *
 from .sphjlib import *
-from .prismjlib import *
-from .inplanejlib import *
-from .inlinejlib import *
 from .totjlib import *
 from .utilslib import *
-from .axialrotjlib import *
-from .distjlib import *
-from .gimbaljlib import *
-from .brakejlib import *
-from .linearjlib import *
-from .angularjlib import *
-from .drivejlib import *
 
 ## Function that parses the single row of the .log file and stores
 #  the element definition in elems

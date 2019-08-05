@@ -803,7 +803,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r')
-            row.template_list("MBDynPlotVar_Object_UL_List", \
+            row.template_list('BLENDYN_UL_object_plot_var_list' \
                     "MBDyn variable to plot", mbs, "plot_vars", \
                     mbo, "plot_var_index")
             row = layout.row()
@@ -876,7 +876,6 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
             row.label(text = "is not supported yet.")
 # -----------------------------------------------------
 # end of BLENDYN_PT_object_plot class
-bpy.utils.register_class(BLENDYN_PT_object_plot)
 
 ## Panel in Scene toolbar
 class BLENDYN_PT_plot_scene(bpy.types.Panel):
@@ -900,7 +899,8 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r')
-            row.template_list("MBDynPlotVar_UL_List", "MBDyn variable to plot", mbs, "plot_vars",
+            row.template_list('BLENDYN_UL_plot_var_list', \
+                    "MBDyn variable to plot", mbs, "plot_vars",
                     mbs, "plot_var_index")
             try:
                 dim = len(nc.variables[pvar.name].shape)
@@ -1007,4 +1007,3 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
             row.label(text = "is not supported yet.")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_plot_scene class
-bpy.utils.register_class(BLENDYN_PT_plot_scene)

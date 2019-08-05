@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file rfmlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -22,8 +22,6 @@
 #
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
-
-# TODO: check for unnecessary stuff
 
 import bpy
 

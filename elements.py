@@ -11,7 +11,7 @@
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    Blendyn  is distributed in the hope that it will be useful,
+#    Blendynis distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
@@ -45,7 +45,6 @@ class BLENDYN_PG_elem_pos_offset(bpy.types.PropertyGroup):
 	)
 # -----------------------------------------------------------
 # end of BLENDYN_PG_elem_pos_offset class 
-bpy.utils.register_class(BLENDYN_PG_elem_pos_offset)
 
 class BLENDYN_PG_elem_rot_offset(bpy.types.PropertyGroup):
     value = FloatVectorProperty(
@@ -56,7 +55,6 @@ class BLENDYN_PG_elem_rot_offset(bpy.types.PropertyGroup):
         )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_elem_rot_offset class 
-bpy.utils.register_class(BLENDYN_PG_elem_rot_offset)
 
 class BLENDYN_PG_nodes_collection(bpy.types.PropertyGroup):
     int_label = IntProperty(
@@ -65,7 +63,6 @@ class BLENDYN_PG_nodes_collection(bpy.types.PropertyGroup):
         )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_nodes_collection class 
-bpy.utils.register_class(BLENDYN_PG_nodes_collection)
 
 class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
     dkey = StringProperty(
@@ -74,7 +71,6 @@ class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
             )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_elem_to_be_updated class 
-bpy.utils.register_class(BLENDYN_PG_elem_to_be_updated)
 
 class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
     mbclass = StringProperty(
@@ -166,10 +162,8 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             description = "Function that updates the visualization of the element",
             default = 'none'
             )
-
 # -----------------------------------------------------------
 # end of BLENDYN_PG_elems_dictionary class 
-bpy.utils.register_class(BLENDYN_PG_elems_dictionary)
 
 # Override delete operator to remove element from elements dictionary
 # when the related object is deleted
@@ -251,5 +245,5 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
             self.report({'WARNING'}, message)
             logging.warning(message)
             return {'CANCELLED'}
+# -----------------------------------------------------------
 # end of BLENDYN_OT_import_elements_as_mesh class
-bpy.utils.register_class(BLENDYN_OT_import_elements_as_mesh)
