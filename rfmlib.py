@@ -127,6 +127,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
                 logging.info(message)
                 return retval
             else:
+                # Should not be reached
                 return retval
         except KeyError:
             message = "BLENDYN::parse_reference_frame(): "\

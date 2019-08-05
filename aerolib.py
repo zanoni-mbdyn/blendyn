@@ -480,7 +480,7 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg('IMPORT_SUCCESS', type(self).__name__ + '::execute()', elem) 
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem) 
                 return retval
             else:
                 # Should not be reached

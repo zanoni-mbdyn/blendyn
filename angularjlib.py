@@ -314,15 +314,15 @@ class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
             if retval == {'OBJECT_EXISTS'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'NODE1_NOTFOUND':
+            elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
-            elif retval == 'LIBRARY_ERROR':
+            elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
-                return {'CANCELLED'}
+                return retval
             else:
                 # Should not be reached
                 return retval
@@ -362,6 +362,7 @@ class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                return retval
             else:
                 # Should not be reached
                 return retval

@@ -2122,7 +2122,7 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
                         text="Import elements by type")
 
             col = layout.column()
-            col.operator(BLENDYN_OT_elements_import_all.bl_idna.bl_idnamee)
+        col.operator(BLENDYN_OT_elements_import_all.bl_idname)
 # -----------------------------------------------------------
 # end of BLENDYN_PT_elems_scene class
 bpy.utils.register_class(BLENDYN_PT_elems_scene)
@@ -2422,8 +2422,15 @@ class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
         nd = mbs.nodes
         bpy.ops.object.select_all(action = 'DESELECT')
         for var in nd.keys():
-            obj = bpy.data.objects[var]
-            obj.select = True
+                try:
+                    obj = bpy.data.objects[var]
+                    obj.select = True
+                except KeyError:
+                    message = "BLENDYN_OT_select_all_nodes::execute() "\
+                            + "Could not find object for node "\
+                            + var
+                    self.report({'WARNING'}, message)
+                    logging.warning(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_select_all_nodes class
@@ -2433,7 +2440,7 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
     """ Select all the objects associated to MBDyn elements
         of a specified type """
     bl_idname = "blendyn.select_elements_by_type"
-    bl_label = "Select all MBDyn objects"
+    bl_label = "Select objects related to selected element type"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -2441,8 +2448,15 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
         bpy.ops.object.select_all(action = 'DESELECT')
         for var in ed.keys():
             if mbs.elem_type_scale in var:
-                obj = bpy.data.objects[var]
-                obj.select = True
+                try:
+                    obj = bpy.data.objects[var]
+                    obj.select = True
+                except KeyError:
+                    message = "BLENDYN_OT_select_elements_by_type::execute() "\
+                            + "Could not find object for element "\
+                            + var
+                    self.report({'WARNING'}, message)
+                    logging.warning(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_select_elements_by_type class

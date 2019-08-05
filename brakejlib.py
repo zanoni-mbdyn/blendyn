@@ -270,6 +270,7 @@ class BLENDYN_OT_import_brake(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                return retval
             else:
                 # Should not be reached
                 return retval

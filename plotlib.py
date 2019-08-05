@@ -22,8 +22,6 @@
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-# TODO: check for unnecessary stuff
-
 import bpy
 
 import pygal
@@ -522,7 +520,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
 class BLENDYN_OT_plot_var_object(bpy.types.Operator):
     """ Plots the object's selected variable in the image editor 
         and optionally save it as .svg in the 'plots' directory """
-    bl_idname = "blendyn.plot_var_scene"
+    bl_idname = "blendyn.plot_var_object"
     bl_label = "Plot the selected MBDyn var"
 
     def execute(self, context):
@@ -670,13 +668,14 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        mbs.render_vars.remove(mbs.render_index)
-
         message = "BLENDYN_OT_delete_render_variable::execute() "\
-                + "Deleted render variable"\
+                + "Deleting render variable "\
                 + mbs.render_vars[mbs.render_index].varname
         self.report({'INFO'}, message)
         logging.info(message)
+        
+        mbs.render_vars.remove(mbs.render_index)
+
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -861,12 +860,13 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                 row.prop(pvar, "plot_xrange_max")
                 row = layout.row()
                 if pvar.plot_type == "TIME HISTORY":
-                    row.operator(BLENDYN_OT_object_plot_var.bl_idname, text = "Plot variable")
+                    row.operator(BLENDYN_OT_plot_var_object.bl_idname,
+                            text = "Plot variable")
                 elif pvar.plot_type == "AUTOSPECTRUM":
                     row = layout.row()
                     row.prop(pvar, "fft_remove_mean")
                     row = layout.row()
-                    row.operator(BLENDYN_OT_object_plot_var_sxx.bl_idname,
+                    row.operator(BLENDYN_OT_plot_var_sxx_object.bl_idname,
                         text = "Plot variable Autospectrum")
             except KeyError:
                 pass
@@ -955,13 +955,13 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                     row.prop(pvar, "plot_xrange_max")
                     row = layout.row()
                     if pvar.plot_type == "TIME HISTORY":
-                        row.operator(BLENDYN_OT_scene_plot_var.bl_idname, 
+                        row.operator(BLENDYN_OT_plot_var_scene.bl_idname, 
                                 text="Plot variable")
                     elif mbs.plot_type == "AUTOSPECTRUM":
                         row = layout.row()
                         row.prop(mbs, "fft_remove_mean")
                         row = layout.row()
-                        row.operator(BLENDYN_OT_scene_plot_var_sxx.bl_idname,
+                        row.operator(BLENDYN_OT_plot_var_sxx_scene.bl_idname,
                                 text = "Plot variable Autospectrum")
             except IndexError:
                 pass

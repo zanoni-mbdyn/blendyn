@@ -796,7 +796,7 @@ def parse_render_string(var, components):
     else:
         return '{:.2f}'.format(var)
 
-def comp_repr(components, value, context):
+def comp_repr(components, variable, context):
     mbs = context.scene.mbdyn
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
@@ -846,7 +846,6 @@ def set_motion_paths_netcdf(context):
     mbs.time_step = nctime[1]
 
     freq = mbs.load_frequency
-    # scene.frame_end = len(nctime)/freq - 1
 
     scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
     scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
@@ -876,14 +875,15 @@ def set_motion_paths_netcdf(context):
 
     kk = 0
     for ndx in anim_nodes:
-
-        if str(nd[ndx].int_label) in mbs.disabled_output.split(' '):
+    
+        dictobj = nd[ndx]
+        if str(dictobj.int_label) in mbs.disabled_output.split(' '):
             continue
 
-        obj = bpy.data.objects[nd[ndx].blender_object]
+        obj = bpy.data.objects[dictobj.blender_object]
         obj.select = True
-        node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
-        if obj.mbdyn.parametrization[0:5] == 'EULER':
+        node_var = 'node.struct.' + str(dictobj.int_label) + '.'
+        if dictobj.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -894,11 +894,11 @@ def set_motion_paths_netcdf(context):
                 answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
                 obj.rotation_euler = \
                         Euler( Vector((answer)),
-                                axes[obj.mbdyn.parametrization[7]] +\
-                                axes[obj.mbdyn.parametrization[6]] +\
-                                axes[obj.mbdyn.parametrization[5]] )
+                                axes[dictobj.parametrization[7]] +\
+                                axes[dictobj.parametrization[6]] +\
+                                axes[dictobj.parametrization[5]] )
                 obj.keyframe_insert(data_path = "rotation_euler")
-        elif obj.mbdyn.parametrization == 'PHI':
+        elif dictobj.parametrization == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -912,7 +912,7 @@ def set_motion_paths_netcdf(context):
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif obj.mbdyn.parametrization == 'MATRIX':
+        elif dictobj.parametrization == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -925,7 +925,7 @@ def set_motion_paths_netcdf(context):
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
-            print("Blendyn::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+            print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
             return {'CANCELLED'}
         obj.select = False
         kk = kk + 1
