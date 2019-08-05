@@ -2122,7 +2122,7 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
                         text="Import elements by type")
 
             col = layout.column()
-        col.operator(BLENDYN_OT_elements_import_all.bl_idname)
+            col.operator(BLENDYN_OT_elements_import_all.bl_idname)
 # -----------------------------------------------------------
 # end of BLENDYN_PT_elems_scene class
 bpy.utils.register_class(BLENDYN_PT_elems_scene)
