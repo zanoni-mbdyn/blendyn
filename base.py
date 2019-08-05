@@ -1577,14 +1577,15 @@ class BLENDYN_OT_set_display_group(bpy.types.Operator):
 # end of BLENDYN_OT_set_display_group class
 bpy.utils.register_class(BLENDYN_OT_set_display_group)
 
-class BLENDYN_PT_import(bpy.types.Panel):
+class BLENDYN_PT_physics:
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'physics'
+
+class BLENDYN_PT_import(BLENDYN_PT_physics, bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "BLENDYN_PT_import"
     bl_label = "Load results"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_context = 'objectmode'
-    bl_category = 'MBDyn'
 
     def draw(self, context):
 
@@ -1655,17 +1656,12 @@ class BLENDYN_PT_import(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of BLENDYN_PT_import class
-bpy.utils.register_class(BLENDYN_PT_import)
 
 
-class BLENDYN_PT_animate(bpy.types.Panel):
+class BLENDYN_PT_animate(BLENDYN_PT_physics, bpy.types.Panel):
     """ Create animation of simulation results - Toolbar Panel """
     bl_idname = "BLENDYN_PT_animate"
     bl_label = "Create animation"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_context = 'objectmode'
-    bl_category = 'MBDyn'
 
     def draw(self, context):
 
@@ -1698,17 +1694,12 @@ class BLENDYN_PT_animate(bpy.types.Panel):
         col.prop(mbs, "time")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_animate class
-bpy.utils.register_class(BLENDYN_PT_animate)
 
 
-class BLENDYN_PT_simulation(bpy.types.Panel):
+class BLENDYN_PT_simulation(BLENDYN_PT_physics, bpy.types.Panel):
     """ Imports results of MBDyn simulation - Toolbar Panel """
     bl_idname = "BLENDYN_PT_simulation"
     bl_label = "Run simulation"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_context = 'objectmode'
-    bl_category = 'MBDyn'
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -1787,16 +1778,11 @@ class BLENDYN_PT_simulation(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of BLENDYN_PT_simulation class
-bpy.utils.register_class(BLENDYN_PT_simulation)
 
-class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
+class BLENDYN_PT_eigenanalysis(BLENDYN_PT_physics, bpy.types.Panel):
     """ Visualizes the results of an eigenanalysis - Toolbar Panel """
     bl_idname = "BLENDYN_PT_eigenanalysis"
     bl_label = "Eigenanalysis"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_context = 'objectmode'
-    bl_category = 'MBDyn'
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -1846,16 +1832,11 @@ class BLENDYN_PT_eigenanalysis(bpy.types.Panel):
 
 # -----------------------------------------------------------
 # end of BLENDYN_PT_eigenanalysis class
-bpy.utils.register_class(BLENDYN_PT_eigenanalysis)
 
-class BLENDYN_PT_active_object(bpy.types.Panel):
+class BLENDYN_PT_active_object(BLENDYN_PT_physics, bpy.types.Panel):
     """ Visualizes MBDyn data relative to the current active object - Toolbar Panel """
     bl_idname = "BLENDYN_PT_active_object"
     bl_label = "Active Object info"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_context = 'objectmode'
-    bl_category = 'MBDyn'
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
