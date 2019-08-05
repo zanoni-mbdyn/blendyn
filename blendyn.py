@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------
-# Blendyn -- file base.py
+# Blendyn -- file blendyn.py
 # Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
