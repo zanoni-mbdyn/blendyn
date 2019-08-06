@@ -540,8 +540,8 @@ def spawn_beam3_element(elem, context):
     grouping(context, beamOBJ, [n1OBJ, n2OBJ, n3OBJ, obj2, obj3])
     elem.is_imported = True
 
-    obj2.hide = True
-    obj3.hide = True
+    obj2.hide_viewport = True
+    obj3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
     return {'FINISHED'}

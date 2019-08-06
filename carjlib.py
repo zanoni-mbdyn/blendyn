@@ -220,7 +220,7 @@ def spawn_cardano_hinge_element(elem, context):
         RF2.scale = .33*carjOBJ.scale
         RF2.name = carjOBJ.name + '_RF2'
         parenting(RF2, carjOBJ)
-        RF2.hide = True
+        RF2.hide_viewport = True
 
         # set parenting of wireframe obj
         parenting(carjOBJ, n1OBJ)

@@ -636,8 +636,8 @@ def spawn_rod_element(elem, context):
     bpy.ops.group.create(name = rodOBJ.name)
     grouping(context, rodOBJ, [p1OBJ, n1OBJ, p2OBJ, n2OBJ])
     n2OBJ.select = True
-    p1OBJ.hide = True
-    p2OBJ.hide = True
+    p1OBJ.hide_viewport = True
+    p2OBJ.hide_viewport = True
 
     elem.is_imported = True
     return{'FINISHED'}

@@ -356,7 +356,7 @@ def spawn_total_joint_element(elem, context):
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
     parenting(RF1p, n1OBJ)
-    RF1p.hide = True
+    RF1p.hide_viewport = True
 
     # create an object representing the RF used to express the relative
     # orientation w.r.t. node 1, for model debugging
@@ -367,7 +367,7 @@ def spawn_total_joint_element(elem, context):
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
     parenting(RF1r, n1OBJ)
-    RF1r.hide = True
+    RF1r.hide_viewport = True
 
     # create an object representing the RF used to express the relative
     # position w.r.t. node 2, for model debugging
@@ -378,7 +378,7 @@ def spawn_total_joint_element(elem, context):
     RF2p.scale = .33*totjOBJ.scale
     RF2p.name = totjOBJ.name + '_RF2_pos'
     parenting(RF2p, n2OBJ)
-    RF2p.hide = True
+    RF2p.hide_viewport = True
 
     # create an object representing the RF used to express the relative
     # orientation w.r.t. node 2, for model debugging
@@ -389,7 +389,7 @@ def spawn_total_joint_element(elem, context):
     RF2r.scale = .33*totjOBJ.scale
     RF2r.name = totjOBJ.name + '_RF2_rot'
     parenting(RF2r, n2OBJ)
-    RF2r.hide = True
+    RF2r.hide_viewport = True
 
     # set parenting of wireframe obj
     parenting(totjOBJ, n1OBJ)
@@ -496,7 +496,7 @@ def spawn_total_pin_joint_element(elem, context):
     RF1p.scale = .33*totjOBJ.scale
     RF1p.name = totjOBJ.name + '_RF1_pos'
     parenting(RF1p, n1OBJ)
-    RF1p.hide = True
+    RF1p.hide_viewport = True
 
     # create an object representing the RF used to express the relative
     # orientation w.r.t. node 1, for model debugging
@@ -507,7 +507,7 @@ def spawn_total_pin_joint_element(elem, context):
     RF1r.scale = .33*totjOBJ.scale
     RF1r.name = totjOBJ.name + '_RF1_rot'
     parenting(RF1r, n1OBJ)
-    RF1r.hide = True
+    RF1r.hide_viewport = True
 
     # set parenting of wireframe obj
     parenting(totjOBJ, n1OBJ)
