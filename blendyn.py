@@ -1996,7 +1996,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                     baseLogger.error(message)
                     return {'CANCELLED'}
 
-                obj = context.scene.objects.active
+                obj = context.active_object
                 obj.mbdyn.type = 'node'
                 obj.mbdyn.dkey = node.name
                 obj.rotation_mode = 'QUATERNION'
@@ -2052,7 +2052,7 @@ class BLENDYN_OT_single_node_import(bpy.types.Operator):
                     self.report({'ERROR'}, message)
                     baseLogger.error(message)
                     return {'CANCELLED'}
-                obj = context.scene.objects.active
+                obj = context.active_object
                 obj.mbdyn.type = 'node'
                 obj.mbdyn.dkey = node.name
                 obj.rotation_mode = 'QUATERNION'
@@ -2197,7 +2197,7 @@ class BLENDYN_OT_scale_node(bpy.types.Operator):
         mbs = context.scene.mbdyn
         nd = mbs.nodes
         s = mbs.node_scale_slider
-        actobj = bpy.context.scene.objects.active
+        actobj = bpy.context.active_object
         for node in nd:
             if node.blender_object == actobj.name:
                 actobj.scale = Vector((s, s, s))
@@ -2220,7 +2220,7 @@ class BLENDYN_OT_scale_sel_nodes(bpy.types.Operator):
         s = mbs.node_scale_slider
         for node in nd:
             scaleOBJ = bpy.data.objects[node.blender_object]
-            bpy.context.scene.objects.active = scaleOBJ
+            bpy.context.view_layer.objects.active = scaleOBJ
             scaleOBJ.scale = Vector((s, s, s))
             # bpy.ops.object.transform_apply(location = False, \
             #        rotation = False, scale = True)
@@ -2242,7 +2242,7 @@ class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
         for elem in ed:
             if elem.type == mbs.elem_type_scale:
                 scaleOBJ = bpy.data.objects[elem.blender_object]
-                bpy.context.scene.objects.active = scaleOBJ 
+                bpy.context.view_layer.objects.active = scaleOBJ 
                 scaleOBJ.scale = Vector((s, s, s))
              #   bpy.ops.object.transform_apply(location = False, \
              #           rotation = False, scale = True)
@@ -2421,7 +2421,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
             bpy.context.scene.objects.link(vert_obj)
 
             vert_obj.select=True
-            bpy.context.scene.objects.active = vert_obj
+            bpy.context.view_layer.objects.active = vert_obj
             bpy.context.scene.update()
 
 

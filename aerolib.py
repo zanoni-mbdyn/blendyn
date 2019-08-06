@@ -236,7 +236,7 @@ def spawn_aero0_element(elem, context):
 
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
-    aero0OBJ = bpy.context.scene.objects.active
+    aero0OBJ = bpy.context.view_layer.objects.active
     aero0OBJ.name = elem.name
     aero0OBJ.mbdyn.type = 'element'
     aero0OBJ.mbdyn.dkey = elem.name
@@ -303,7 +303,7 @@ def spawn_aero2_element(elem, context):
 
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
-    aero2OBJ = bpy.context.scene.objects.active
+    aero2OBJ = bpy.context.view_layer.objects.active
     aero2OBJ.name = elem.name
     aero2OBJ.mbdyn.type = 'element'
     aero2OBJ.mbdyn.dkey = elem.name
@@ -317,7 +317,7 @@ def spawn_aero2_element(elem, context):
 
     bpy.ops.object.select_all(action = 'DESELECT')
     aero2OBJ.select = True
-    bpy.context.scene.objects.active = aero2OBJ
+    bpy.context.view_layer.objects.active = aero2OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
     # add hooks
@@ -373,7 +373,7 @@ def spawn_aero3_element(elem, context):
 
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
-    aero3OBJ = bpy.context.scene.objects.active
+    aero3OBJ = bpy.context.view_layer.objects.active
     aero3OBJ.name = elem.name
     aero3OBJ.mbdyn.type = 'element'
     aero3OBJ.mbdyn.dkey = elem.name
@@ -381,7 +381,7 @@ def spawn_aero3_element(elem, context):
 
     bpy.ops.object.select_all(action = 'DESELECT')
     aero3OBJ.select = True
-    bpy.context.scene.objects.active = aero3OBJ
+    bpy.context.view_layer.objects.active = aero3OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     
     bm = bmesh.from_edit_mesh(aero3OBJ.data)
@@ -402,7 +402,7 @@ def spawn_aero3_element(elem, context):
  
     bpy.ops.object.select_all(action = 'DESELECT')
     aero3OBJ.select = True
-    bpy.context.scene.objects.active = aero3OBJ
+    bpy.context.view_layer.objects.active = aero3OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
     # add hooks

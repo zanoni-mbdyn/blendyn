@@ -218,7 +218,7 @@ def spawn_gimbal_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     gimbal_childobj.select = True    
     gimbaljOBJ.select = True
-    bpy.context.scene.objects.active = gimbaljOBJ
+    bpy.context.view_layer.objects.active = gimbaljOBJ
     bpy.ops.object.join()
 
     # set parenting of wireframe obj

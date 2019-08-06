@@ -195,7 +195,7 @@ def spawn_linearvelocity_element(elem, context):
         
         linearvelocityjOBJ.name = elem.name
         linearvelocityjOBJv.name = elem.name + '.v'
-        bpy.context.scene.objects.active = linearvelocityjOBJ
+        bpy.context.view_layer.objects.active = linearvelocityjOBJ
 
         # automatic scaling
         s = (1.0/sqrt(3.))*(n1OBJ.scale.magnitude)

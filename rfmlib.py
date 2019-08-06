@@ -78,7 +78,7 @@ def spawn_reference_frame(ref, context):
         return {'OBJECT_EXISTS'}
 
     bpy.ops.object.empty_add(type = 'ARROWS', location = ref.pos)
-    obj = context.scene.objects.active
+    obj = context.view_layer.objects.active
     obj.mbdyn.type = 'reference'
     obj.mbdyn.dkey = ref.name
     obj.rotation_mode = 'QUATERNION'

@@ -202,7 +202,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     bpy.data.objects[drvdispOBJ.name + '_child1'].select = True
     drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
@@ -210,7 +210,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     bpy.data.objects[drvdispOBJ.name + '_child2'].select = True
     drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     #hooking of the line ends to the Blender objects
@@ -219,7 +219,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
     drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     drvdispOBJ.data.splines[0].points[0].select = True
@@ -230,7 +230,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n2OBJ.select = True
     drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     drvdispOBJ.data.splines[0].points[1].select = True
@@ -243,7 +243,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
     bpy.data.objects[drvdispOBJ.name + '_child1'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[drvdispOBJ.name + '_child1']
+    bpy.context.view_layer.objects.active = bpy.data.objects[drvdispOBJ.name + '_child1']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -252,7 +252,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n2OBJ.select = True
     bpy.data.objects[drvdispOBJ.name + '_child2'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[drvdispOBJ.name + '_child2']
+    bpy.context.view_layer.objects.active = bpy.data.objects[drvdispOBJ.name + '_child2']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -264,7 +264,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
     drvdispOBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
+    bpy.context.view_layer.objects.active = n1OBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     elem.is_imported = True

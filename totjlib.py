@@ -316,7 +316,7 @@ def spawn_total_joint_element(elem, context):
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
             
             totjOBJ.select = True
-            bpy.context.scene.objects.active = totjOBJ
+            bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
     # display rotation arrows
@@ -336,7 +336,7 @@ def spawn_total_joint_element(elem, context):
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
             totjOBJ.select = True
-            bpy.context.scene.objects.active = totjOBJ
+            bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
 
@@ -458,7 +458,7 @@ def spawn_total_pin_joint_element(elem, context):
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
             
             totjOBJ.select = True
-            bpy.context.scene.objects.active = totjOBJ
+            bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
     rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
@@ -477,7 +477,7 @@ def spawn_total_pin_joint_element(elem, context):
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
             totjOBJ.select = True
-            bpy.context.scene.objects.active = totjOBJ
+            bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
 

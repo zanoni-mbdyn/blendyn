@@ -123,7 +123,7 @@ def spawn_shell4_element(elem, context):
 
     # create the mesh plane
     bpy.ops.mesh.primitive_plane_add(location = avg_location)
-    shellOBJ = bpy.context.scene.objects.active
+    shellOBJ = bpy.context.view_layer.objects.active
     shellOBJ.name = elem.name
     shellOBJ.mbdyn.type = 'element'
     shellOBJ.mbdyn.dkey = elem.name
@@ -138,7 +138,7 @@ def spawn_shell4_element(elem, context):
     # create hooks
     bpy.ops.object.select_all(action = 'DESELECT')
     shellOBJ.select = True
-    bpy.context.scene.objects.active = shellOBJ
+    bpy.context.view_layer.objects.active = shellOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
     # vertex 1 hook

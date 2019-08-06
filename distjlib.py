@@ -211,7 +211,7 @@ def spawn_distance_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
     distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     distOBJ.data.splines[0].points[0].select = True
@@ -222,7 +222,7 @@ def spawn_distance_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n2OBJ.select = True
     distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     distOBJ.data.splines[0].points[1].select = True
@@ -235,7 +235,7 @@ def spawn_distance_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
     bpy.data.objects[distOBJ.name + '_child1'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child1']
+    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child1']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -244,7 +244,7 @@ def spawn_distance_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     n2OBJ.select = True
     bpy.data.objects[distOBJ.name + '_child2'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child2']
+    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child2']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)

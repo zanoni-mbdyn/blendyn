@@ -499,7 +499,7 @@ def assign_labels(context):
 def update_label(self, context):
 
     # utility renaming
-    obj = context.scene.objects.active
+    obj = context.view_layer.objects.active
     nd = context.scene.mbdyn.nodes
 
     # Search for int label and assign corresponding string label, if found.
