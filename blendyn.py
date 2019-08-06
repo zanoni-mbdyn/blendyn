@@ -1364,140 +1364,6 @@ class BLENDYN_OT_set_import_freq_auto(bpy.types.Operator):
 # end of BLENDYN_OT_set_import_freq_auto class
 
 
-class BLENDYN_OT_set_render_variables(bpy.types.Operator):
-    """ Sets the Variables to be displayed in rendered view """
-    bl_idname = "blendyn.set_render_variables"
-    bl_label = "Set Render Variable"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-
-        exist_render_vars = [mbs.render_vars[var].variable for var in range(len(mbs.render_vars))]
-
-        try:
-            index = exist_render_vars.index(mbs.plot_vars[mbs.plot_var_index].name)
-            mbs.render_vars[index].varname = mbs.render_var_name
-            mbs.render_vars[index].components = mbs.plot_comps
-
-        except ValueError:
-            rend = mbs.render_vars.add()
-            rend.varname = mbs.render_var_name
-            rend.variable = mbs.plot_vars[mbs.plot_var_index].name
-            rend.components = mbs.plot_comps
-
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_set_render_variables class
-
-
-class BLENDYN_OT_delete_render_variables(bpy.types.Operator):
-    """Delete Render variables"""
-    bl_idname = "blendyn.delete_render_variables"
-    bl_label = "Delete Render Variable"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-
-        mbs.render_vars.remove(mbs.render_index)
-
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_delete_render_variables class
-
-
-class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
-    bl_idname = "blendyn.delete_all_render_variables"
-    bl_label = "Delete all Render variables"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-
-        mbs.render_vars.clear()
-
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_delete_all_render_variables class
-
-
-class BLENDYN_OT_show_display_group(bpy.types.Operator):
-    bl_idname = "blendyn.show_display_group"
-    bl_label = "show display group"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-
-        if mbs.display_enum_group is '':
-            message = "BLENDYN_OT_show_display_group::execute(): "\
-                    + "No Groups set"
-            self.report({'ERROR'}, message)
-            logging.error(message)
-
-        mbs.render_vars.clear()
-
-        for var in mbs.display_vars_group[mbs.display_enum_group].group:
-            rend = mbs.render_vars.add()
-            rend.variable = var.variable
-            rend.value = var.value
-            rend.components = var.components
-
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_show_display_group class
-
-
-class BLENDYN_OT_set_display_group(bpy.types.Operator):
-    """Delete Render variables"""
-    bl_idname = "blendyn.set_display_group"
-    bl_label = "Set Display Group"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-
-        exist_display_groups = [mbs.display_vars_group[var].name for var in range(len(mbs.display_vars_group))]
-
-        try:
-            index = exist_display_groups.index(mbs.group_name)
-            mbs.display_vars_group[index].group.clear()
-
-            diaplaygroup = mbs.display_vars_group[mbs.group_name]
-
-            for ii in list(range(len(mbs.render_vars))):
-                rend = displaygroup.group.add()
-                rend.variable = mbs.render_vars[ii].variable
-                rend.value = mbs.render_vars[ii].value
-                rend.components = mbs.render_vars[ii].components
-
-
-        except ValueError:
-            displaygroup = mbs.display_vars_group.add()
-            displaygroup.name = mbs.group_name
-
-            for ii in list(range(len(mbs.render_vars))):
-                rend = displaygroup.group.add()
-                rend.variable = mbs.render_vars[ii].variable
-                rend.value = mbs.render_vars[ii].value
-                rend.components = mbs.render_vars[ii].components
-
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_set_display_group class
-
-
 class BLENDYN_PT_tool_bar:
     bl_category = 'Blendyn'
     bl_space_type = 'VIEW_3D'
@@ -1835,10 +1701,10 @@ class BLENDYN_UL_mbdyn_nodes_list(bpy.types.UIList):
         custom_icon = 'OUTLINER_OB_EMPTY'
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(item.name, icon = custom_icon)
+            layout.label(text = item.name, icon = custom_icon)
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label('', icon = custom_icon)
+            layout.label(text = '', icon = custom_icon)
 # -----------------------------------------------------------
 # end of BLENDYN_UL_mbdyn_nodes_list class
 bpy.utils.register_class(BLENDYN_UL_mbdyn_nodes_list)
@@ -1849,68 +1715,32 @@ class BLENDYN_UL_elements_list(bpy.types.UIList):
         custom_icon = 'CONSTRAINT'
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(item.name, icon = custom_icon)
+            layout.label(text = item.name, icon = custom_icon)
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label('', icon = custom_icon)
+            layout.label(text = '', icon = custom_icon)
 # -----------------------------------------------------------
 # end of BLENDYN_UL_elements_list class
 bpy.utils.register_class(BLENDYN_UL_elements_list)
 
 
-class BLENDYN_UL_plot_var_list(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.label(item.name)
-# -----------------------------------------------------------
-# end of BLENDYN_UL_plot_var_list class
-
-
-class BLENDYN_UL_object_plot_var_list(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.label(item.name)
-    def filter_items(self, context, data, propname):
-        items = getattr(data, propname)
-        obj = context.object
-        hf = bpy.types.UI_UL_list
-        try:
-            dictitem = get_dict_item(context, obj)
-            flt_flags = hf.filter_items_by_name(dictitem.mbclass + '.' + \
-                    str(dictitem.int_label), self.bitflag_filter_item, items)
-            return flt_flags, []
-        except KeyError:
-            return [], []
-        except AttributeError:
-            return [], []
-
-# -----------------------------------------------------------
-# end of BLENDYN_UL_object_plot_var_list class
-
-
-class BLENDYN_UL_render_vars_list(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.label(item.varname)
-        layout.label(item.variable + comp_repr(item.components, item.variable, context))
-# -----------------------------------------------------------
-# end of BLENDYN_UL_render_vars_list class
-
-
 class BLENDYN_UL_env_vars_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.label(item.varname)
-        layout.label(item.variable)
+        layout.label(text = item.varname)
+        layout.label(text = item.variable)
 # -----------------------------------------------------------
 # end of BLENDYN_UL_env_vars_list class
-
+bpy.utils.register_class(BLENDYN_UL_env_vars_list)
 
 class BLENDYN_UL_refs_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         custom_icon = 'OUTLINER_DATA_EMPTY'
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(item.name, icon = custom_icon)
+            layout.label(text = item.name, icon = custom_icon)
         elif self.layout_type in {'GRID'}:
             layout.aligment = 'CENTER'
-            layout.label('', icon = custom_icon) 
+            layout.label(text = '', icon = custom_icon) 
 # -----------------------------------------------------------
 # end of BLENDYN_UL_refs_list
 bpy.utils.register_class(BLENDYN_UL_refs_list)

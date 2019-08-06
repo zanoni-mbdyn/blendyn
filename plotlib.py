@@ -42,6 +42,43 @@ except ImportError as ierr:
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))
 
+class BLENDYN_UL_plot_var_list(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(text = item.name)
+# -----------------------------------------------------------
+# end of BLENDYN_UL_plot_var_list class
+bpy.utils.register_class(BLENDYN_UL_plot_var_list)
+
+
+class BLENDYN_UL_object_plot_var_list(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(text = item.name)
+    def filter_items(self, context, data, propname):
+        items = getattr(data, propname)
+        obj = context.object
+        hf = bpy.types.UI_UL_list
+        try:
+            dictitem = get_dict_item(context, obj)
+            flt_flags = hf.filter_items_by_name(dictitem.mbclass + '.' + \
+                    str(dictitem.int_label), self.bitflag_filter_item, items)
+            return flt_flags, []
+        except KeyError:
+            return [], []
+        except AttributeError:
+            return [], []
+
+# -----------------------------------------------------------
+# end of BLENDYN_UL_object_plot_var_list class
+bpy.utils.register_class(BLENDYN_UL_object_plot_var_list)
+
+class BLENDYN_UL_render_vars_list(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(text = item.name)
+        layout.label(text = item.variable + comp_repr(item.components, item.variable, context))
+# -----------------------------------------------------------
+# end of BLENDYN_UL_render_vars_list class
+bpy.utils.register_class(BLENDYN_UL_render_vars_list)
+
 class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
     """ Plots the selected variable autospectrum (Sxx) in the image editor 
         and optionally save it as .svg in the 'plots' directory.
@@ -629,7 +666,6 @@ class BLENDYN_OT_set_plot_freq(bpy.types.Operator):
 # --------------------------------------------------
 # end of BLENDYN_OT_set_plot_freq class 
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_set_render_variable(bpy.types.Operator):
     """ Sets the NetCDF variables to be\
         displayed in the rendered frame """
@@ -659,7 +695,6 @@ class BLENDYN_OT_set_render_variable(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_set_render_variable class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
     """ Delete a render variable """
     bl_idname = "blendyn.delete_render_variable"
@@ -683,7 +718,6 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_delete_render_variable class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
     """ Deleted all variables set for display in render frames """
     bl_idname = "blendyn.delete_all_render_variables"
@@ -706,7 +740,6 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_delete_all_render_variables class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_show_display_group(bpy.types.Operator):
     """ Shows the selected display group """
     bl_idname = "blendyn.show_display_group"
@@ -737,7 +770,6 @@ class BLENDYN_OT_show_display_group(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_show_display_group class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_set_display_group(bpy.types.Operator):
     """ Set group of variables to display in rendered frames """
     bl_idname = "sel.set_display_group"
