@@ -314,7 +314,7 @@ def spawn_beam2_element(elem, context):
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'element'
     beamOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.objects.link(beamOBJ)
+    bpy.context.scene.collection.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
     # P1 hook
@@ -476,7 +476,7 @@ def spawn_beam3_element(elem, context):
     ude.dkey = elem.name
     ude.name = elem.name
 
-    bpy.context.scene.objects.link(beamOBJ)
+    bpy.context.scene.collection.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
     beamOBJ.select_set(state = True)
 

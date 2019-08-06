@@ -2418,7 +2418,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
                 bpy.ops.object.select_all()
 
             vert_obj = bpy.data.objects.new("VertsFromNodes", me)
-            bpy.context.scene.objects.link(vert_obj)
+            bpy.context.scene.collection.objects.link(vert_obj)
 
             vert_obj.select=True
             bpy.context.view_layer.objects.active = vert_obj

@@ -593,7 +593,7 @@ def spawn_rod_element(elem, context):
     rodOBJ = bpy.data.objects.new(rodobj_id, cvdata)
     rodOBJ.mbdyn.type = 'element'
     rodOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.objects.link(rodOBJ)
+    bpy.context.scene.collection.objects.link(rodOBJ)
     elem.blender_object = rodOBJ.name
         
     ## hooking of the line ends to the Blender objects 
@@ -717,7 +717,7 @@ def spawn_rod_element(elem, context):
 #        rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
 #        rodOBJ.mbdyn.type = 'element'
 #        rodOBJ.mbdyn.dkey = elem.name
-#        bpy.context.scene.objects.link(rodOBJ)
+#        bpy.context.scene.collection.objects.link(rodOBJ)
 #        elem.blender_object = rodOBJ.name
 #        elem.name = rodOBJ.name
 #        rodOBJ.select = True
