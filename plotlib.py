@@ -32,7 +32,7 @@ import logging
 
 from .nodelib import *
 from .elementlib import *
-from .base import HAVE_PLOT
+from .blendyn import HAVE_PLOT
 import os
 
 try:
