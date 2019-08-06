@@ -304,8 +304,8 @@ def spawn_beam2_element(elem, context):
     # assign coordinates of curve knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2@Vector(( f2[0], f2[1], f2[2] ))
 
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
@@ -429,9 +429,9 @@ def spawn_beam3_element(elem, context):
     n3OBJ = bpy.data.objects[n3]
 
     # refline points in global frame
-    P1 = n1OBJ.matrix_world*Vector(( f1[0], f1[1], f1[1], 1.0 ))
-    P2 = n2OBJ.matrix_world*Vector(( f2[0], f2[1], f2[1], 1.0 ))
-    P3 = n3OBJ.matrix_world*Vector(( f3[0], f3[1], f3[1], 1.0 ))
+    P1 = n1OBJ.matrix_world@Vector(( f1[0], f1[1], f1[1], 1.0 ))
+    P2 = n2OBJ.matrix_world@Vector(( f2[0], f2[1], f2[1], 1.0 ))
+    P3 = n3OBJ.matrix_world@Vector(( f3[0], f3[1], f3[1], 1.0 ))
 
     # define the two intermediate control points
     t1 = -3*P1 + 4*P2 - P3
@@ -573,9 +573,9 @@ def update_beam3(elem, insert_keyframe = False):
     bpy.context.scene.update()
 
     # points on beam
-    P1 = n1.matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
-    P2 = n2.matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
-    P3 = n3.matrix_world*Vector(( f3[0], f3[1], f3[2], 1.0 ))
+    P1 = n1.matrix_world@Vector(( f1[0], f1[1], f1[2], 1.0 ))
+    P2 = n2.matrix_world@Vector(( f2[0], f2[1], f2[2], 1.0 ))
+    P3 = n3.matrix_world@Vector(( f3[0], f3[1], f3[2], 1.0 ))
 
     # redefine the two intermediate control points
     t1 = -3*P1 + 4*P2 - P3
