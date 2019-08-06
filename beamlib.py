@@ -124,7 +124,7 @@ def parse_beam3(rw, ed):
         el.int_label = int(rw[1])
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam3()", EL)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam3()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
