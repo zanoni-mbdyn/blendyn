@@ -137,7 +137,7 @@ def spawn_shell4_element(elem, context):
 
     # create hooks
     bpy.ops.object.select_all(action = 'DESELECT')
-    shellOBJ.select = True
+    shellOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = shellOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
@@ -145,9 +145,9 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[0].select = True
+    mesh.verts[0].select_set(state = True)
     mesh.select_flush(True)
-    n1OBJ.select = True
+    n1OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
     n1OBJ.select = False
 
@@ -155,9 +155,9 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[1].select = True
+    mesh.verts[1].select_set(state = True)
     mesh.select_flush(True)
-    n2OBJ.select = True
+    n2OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
     n2OBJ.select = False
 
@@ -165,9 +165,9 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[2].select = True
+    mesh.verts[2].select_set(state = True)
     mesh.select_flush(True)
-    n4OBJ.select = True
+    n4OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
     n4OBJ.select = False
 
@@ -175,9 +175,9 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[3].select = True
+    mesh.verts[3].select_set(state = True)
     mesh.select_flush(True)
-    n3OBJ.select = True
+    n3OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
     n3OBJ.select = False
 

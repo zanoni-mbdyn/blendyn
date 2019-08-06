@@ -163,10 +163,10 @@ def grouping(context, elem_obj, obj_list):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    elem_obj.select = True
+    elem_obj.select_set(state = True)
 
     for obj in obj_list:
-        obj.select = True
+        obj.select_set(state = True)
 
     bpy.ops.group.create(name = elem_obj.name)
 

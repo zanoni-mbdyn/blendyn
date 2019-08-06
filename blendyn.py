@@ -2149,7 +2149,7 @@ class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
         for var in nd.keys():
                 try:
                     obj = bpy.data.objects[var]
-                    obj.select = True
+                    obj.select_set(state = True)
                 except KeyError:
                     message = "BLENDYN_OT_select_all_nodes::execute() "\
                             + "Could not find object for node "\
@@ -2175,7 +2175,7 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
             if mbs.elem_type_scale in var:
                 try:
                     obj = bpy.data.objects[var]
-                    obj.select = True
+                    obj.select_set(state = True)
                 except KeyError:
                     message = "BLENDYN_OT_select_elements_by_type::execute() "\
                             + "Could not find object for element "\

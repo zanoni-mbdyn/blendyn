@@ -588,7 +588,7 @@ def hide_or_delete(obj_names, missing):
     if missing == "DELETE":
         bpy.ops.object.select_all(action='DESELECT')
         for obj in obj_list:
-            obj.select = True
+            obj.select_set(state = True)
             bpy.ops.object.delete()
 
 ## Function that parses the .mov file and sets the motion paths
@@ -652,7 +652,7 @@ def set_motion_paths_mov(context):
                 if obj_name != 'none':
                     anim_objs[rw[0]] = obj_name
                     obj = bpy.data.objects[obj_name]
-                    obj.select = True
+                    obj.select_set(state = True)
                     set_obj_locrot_mov(obj, rw)
 
             # main for loop, from second frame to last
@@ -677,7 +677,7 @@ def set_motion_paths_mov(context):
                     try:
                         answer = frac*first[ndx] + (1-frac)*second[ndx]
                         obj = bpy.data.objects[anim_objs[round(answer[0])]]
-                        obj.select = True
+                        obj.select_set(state = True)
                         set_obj_locrot_mov(obj, answer)
 
                     except KeyError:
@@ -881,7 +881,7 @@ def set_motion_paths_netcdf(context):
             continue
 
         obj = bpy.data.objects[dictobj.blender_object]
-        obj.select = True
+        obj.select_set(state = True)
         node_var = 'node.struct.' + str(dictobj.int_label) + '.'
         if dictobj.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):

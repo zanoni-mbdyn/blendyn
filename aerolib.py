@@ -265,9 +265,9 @@ def hook_vertices(bm, vidx, obj):
     bpy.ops.mesh.select_all(action = 'DESELECT')
     bm.verts.ensure_lookup_table()
     for ii in vidx:
-        bm.verts[ii].select = True
+        bm.verts[ii].select_set(state = True)
     bm.select_flush(True)
-    obj.select = True
+    obj.select_set(state = True)
     bpy.ops.object.hook_add_selob()
     obj.select = False
 # -----------------------------------------------------------
@@ -316,7 +316,7 @@ def spawn_aero2_element(elem, context):
     mesh.vertices[3].co = n2OBJ.matrix_world*Vector(( elem.offsets[3].value ))
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    aero2OBJ.select = True
+    aero2OBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = aero2OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
@@ -380,7 +380,7 @@ def spawn_aero3_element(elem, context):
     mesh = aero3OBJ.data
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    aero3OBJ.select = True
+    aero3OBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = aero3OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     
@@ -401,7 +401,7 @@ def spawn_aero3_element(elem, context):
     mesh.vertices[3].co = n3OBJ.matrix_world*Vector(( elem.offsets[5].value ))
  
     bpy.ops.object.select_all(action = 'DESELECT')
-    aero3OBJ.select = True
+    aero3OBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = aero3OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 

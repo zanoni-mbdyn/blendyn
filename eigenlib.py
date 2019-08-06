@@ -185,7 +185,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
         for ndx in anim_nodes:
             dictobj = nd[ndx]
             obj = bpy.data.objects[dictobj.blender_object]
-            obj.select = True
+            obj.select_set(state = True)
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
            
             try:
@@ -309,7 +309,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         kk = 0
         for ndx in anim_nodes:
             obj = bpy.data.objects[nd[ndx].blender_object]
-            obj.select = True
+            obj.select_set(state = True)
             obj.rotation_mode = 'AXIS_ANGLE'
 
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'

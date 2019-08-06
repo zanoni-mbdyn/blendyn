@@ -237,7 +237,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
 
             obj = bpy.data.objects.new(objname, mesh)
             context.scene.objects.link(obj)
-            obj.select = True
+            obj.select_set(state = True)
             context.view_layer.objects.active = obj
             
             for node in node_set:

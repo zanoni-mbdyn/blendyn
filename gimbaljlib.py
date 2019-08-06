@@ -216,8 +216,8 @@ def spawn_gimbal_element(elem, context):
             n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    gimbal_childobj.select = True    
-    gimbaljOBJ.select = True
+    gimbal_childobj.select_set(state = True)    
+    gimbaljOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = gimbaljOBJ
     bpy.ops.object.join()
 

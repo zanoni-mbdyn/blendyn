@@ -315,7 +315,7 @@ def spawn_total_joint_element(elem, context):
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
             
-            totjOBJ.select = True
+            totjOBJ.select_set(state = True)
             bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
@@ -335,7 +335,7 @@ def spawn_total_joint_element(elem, context):
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
-            totjOBJ.select = True
+            totjOBJ.select_set(state = True)
             bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
@@ -457,7 +457,7 @@ def spawn_total_pin_joint_element(elem, context):
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
             
-            totjOBJ.select = True
+            totjOBJ.select_set(state = True)
             bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 
@@ -476,7 +476,7 @@ def spawn_total_pin_joint_element(elem, context):
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-            totjOBJ.select = True
+            totjOBJ.select_set(state = True)
             bpy.context.view_layer.objects.active = totjOBJ
             bpy.ops.object.join()
 

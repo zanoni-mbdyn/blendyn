@@ -319,23 +319,23 @@ def spawn_beam2_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    beamOBJ.select = True
+    n1OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[0].select = True
+    beamOBJ.data.splines[0].points[0].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    beamOBJ.select = True
+    n2OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[1].select = True
+    beamOBJ.data.splines[0].points[1].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -478,7 +478,7 @@ def spawn_beam3_element(elem, context):
 
     bpy.context.scene.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
-    beamOBJ.select = True
+    beamOBJ.select_set(state = True)
 
     # Hook control points
     bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M1[0:3])
@@ -493,45 +493,45 @@ def spawn_beam3_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    beamOBJ.select = True
+    n1OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[0].select = True
+    beamOBJ.data.splines[0].points[0].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # M1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    obj2.select = True
-    beamOBJ.select = True
+    obj2.select_set(state = True)
+    beamOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[1].select = True
+    beamOBJ.data.splines[0].points[1].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # M2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    obj3.select = True
-    beamOBJ.select = True
+    obj3.select_set(state = True)
+    beamOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[2].select = True
+    beamOBJ.data.splines[0].points[2].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P3 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n3OBJ.select = True
-    beamOBJ.select = True
+    n3OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[3].select = True
+    beamOBJ.data.splines[0].points[3].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
  
@@ -612,10 +612,10 @@ def update_beam3(elem, insert_keyframe = False):
 
     if insert_keyframe:
         try:
-            cp2.select = True
+            cp2.select_set(state = True)
             cp2.keyframe_insert(data_path = "location")
             
-            cp3.select = True
+            cp3.select_set(state = True)
             cp3.keyframe_insert(data_path = "location")
             
         except RuntimeError as err:
