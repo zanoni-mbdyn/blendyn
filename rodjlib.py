@@ -605,7 +605,7 @@ def spawn_rod_element(elem, context):
     bpy.context.view_layer.objects.active = rodOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    rodOBJ.data.splines[0].points[0].select_set(state = True)
+    rodOBJ.data.splines[0].points[0].select = True
     bpy.ops.object.hook_add_newob()
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     new_objs = bpy.data.objects.keys()
@@ -621,7 +621,7 @@ def spawn_rod_element(elem, context):
     bpy.context.view_layer.objects.active = rodOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    rodOBJ.data.splines[0].points[1].select_set(state = True)
+    rodOBJ.data.splines[0].points[1].select = True
     bpy.ops.object.hook_add_newob()
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     new_objs = bpy.data.objects.keys()
@@ -633,7 +633,6 @@ def spawn_rod_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     # create group for element and hide P1 and P2 objects
-    bpy.ops.group.create(name = rodOBJ.name)
     grouping(context, rodOBJ, [p1OBJ, n1OBJ, p2OBJ, n2OBJ])
     n2OBJ.select_set(state = True)
     p1OBJ.hide_viewport = True

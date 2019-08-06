@@ -265,7 +265,7 @@ def hook_vertices(bm, vidx, obj):
     bpy.ops.mesh.select_all(action = 'DESELECT')
     bm.verts.ensure_lookup_table()
     for ii in vidx:
-        bm.verts[ii].select_set(state = True)
+        bm.verts[ii].select = True
     bm.select_flush(True)
     obj.select_set(state = True)
     bpy.ops.object.hook_add_selob()
@@ -310,10 +310,10 @@ def spawn_aero2_element(elem, context):
     mesh = aero2OBJ.data
 
     # move vertices
-    mesh.vertices[0].co = n1OBJ.matrix_world*Vector(( elem.offsets[0].value ))
-    mesh.vertices[1].co = n1OBJ.matrix_world*Vector(( elem.offsets[1].value ))
-    mesh.vertices[2].co = n2OBJ.matrix_world*Vector(( elem.offsets[2].value ))
-    mesh.vertices[3].co = n2OBJ.matrix_world*Vector(( elem.offsets[3].value ))
+    mesh.vertices[0].co = n1OBJ.matrix_world@Vector(( elem.offsets[0].value ))
+    mesh.vertices[1].co = n1OBJ.matrix_world@Vector(( elem.offsets[1].value ))
+    mesh.vertices[2].co = n2OBJ.matrix_world@Vector(( elem.offsets[2].value ))
+    mesh.vertices[3].co = n2OBJ.matrix_world@Vector(( elem.offsets[3].value ))
 
     bpy.ops.object.select_all(action = 'DESELECT')
     aero2OBJ.select_set(state = True)
@@ -393,12 +393,12 @@ def spawn_aero3_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     # move vertices
-    mesh.vertices[0].co = n1OBJ.matrix_world*Vector(( elem.offsets[0].value ))
-    mesh.vertices[2].co = n1OBJ.matrix_world*Vector(( elem.offsets[1].value ))
-    mesh.vertices[4].co = n2OBJ.matrix_world*Vector(( elem.offsets[2].value ))
-    mesh.vertices[5].co = n2OBJ.matrix_world*Vector(( elem.offsets[3].value ))
-    mesh.vertices[1].co = n3OBJ.matrix_world*Vector(( elem.offsets[4].value ))
-    mesh.vertices[3].co = n3OBJ.matrix_world*Vector(( elem.offsets[5].value ))
+    mesh.vertices[0].co = n1OBJ.matrix_world@Vector(( elem.offsets[0].value ))
+    mesh.vertices[2].co = n1OBJ.matrix_world@Vector(( elem.offsets[1].value ))
+    mesh.vertices[4].co = n2OBJ.matrix_world@Vector(( elem.offsets[2].value ))
+    mesh.vertices[5].co = n2OBJ.matrix_world@Vector(( elem.offsets[3].value ))
+    mesh.vertices[1].co = n3OBJ.matrix_world@Vector(( elem.offsets[4].value ))
+    mesh.vertices[3].co = n3OBJ.matrix_world@Vector(( elem.offsets[5].value ))
  
     bpy.ops.object.select_all(action = 'DESELECT')
     aero3OBJ.select_set(state = True)

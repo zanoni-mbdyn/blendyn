@@ -324,7 +324,7 @@ def spawn_beam2_element(elem, context):
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[0].select_set(state = True)
+    beamOBJ.data.splines[0].points[0].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -335,7 +335,7 @@ def spawn_beam2_element(elem, context):
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[1].select_set(state = True)
+    beamOBJ.data.splines[0].points[1].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -498,7 +498,7 @@ def spawn_beam3_element(elem, context):
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[0].select_set(state = True)
+    beamOBJ.data.splines[0].points[0].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -509,7 +509,7 @@ def spawn_beam3_element(elem, context):
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[1].select_set(state = True)
+    beamOBJ.data.splines[0].points[1].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -520,7 +520,7 @@ def spawn_beam3_element(elem, context):
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[2].select_set(state = True)
+    beamOBJ.data.splines[0].points[2].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -531,7 +531,7 @@ def spawn_beam3_element(elem, context):
     bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[3].select_set(state = True)
+    beamOBJ.data.splines[0].points[3].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
  
