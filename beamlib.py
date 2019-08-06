@@ -124,7 +124,7 @@ def parse_beam3(rw, ed):
         el.int_label = int(rw[1])
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam3()", EL)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam3()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -660,12 +660,12 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg({'IMPORT_SUCCESS'}, 'BLENDYN_OT_import_beam2::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
                 return retval
 
         except KeyError:
-            eldbmsg({'DICT_ERROR'}, 'BLENDYN_OT_import_beam2::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
             
         return {'FINISHED'}
