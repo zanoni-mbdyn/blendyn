@@ -168,7 +168,7 @@ def grouping(context, elem_obj, obj_list):
     for obj in obj_list:
         obj.select_set(state = True)
 
-    bpy.ops.group.create(name = elem_obj.name)
+    bpy.ops.collection.create(name = elem_obj.name)
 
 # -----------------------------------------------------------
 # end of grouping function
