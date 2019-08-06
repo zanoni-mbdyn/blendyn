@@ -100,7 +100,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
         as an Empty of type AXES"""
     bl_idname = "blendyn.import_reference"
     bl_label = "Imports a reference"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout

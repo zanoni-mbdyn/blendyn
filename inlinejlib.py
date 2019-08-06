@@ -220,7 +220,7 @@ class BLENDYN_OT_import_inline(bpy.types.Operator):
     """ Imports an inline joint element into the Blender scene """
     bl_idname = "blendyn.import_inline"
     bl_label = "Imports an inline joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

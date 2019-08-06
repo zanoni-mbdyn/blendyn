@@ -223,7 +223,7 @@ class BLENDYN_OT_import_axialrot(bpy.types.Operator):
         into the Blender scene """
     bl_idname = "blendyn.import_axialrot"
     bl_label = "Imports and axialrot joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

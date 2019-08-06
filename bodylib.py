@@ -159,7 +159,7 @@ def spawn_body_element(elem, context):
 class BLENDYN_OT_import_body(bpy.types.Operator):
     bl_idname = "blendyn.import_body"
     bl_label = "Imports a body"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout

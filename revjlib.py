@@ -310,7 +310,7 @@ class BLENDYN_OT_import_revolute_hinge(bpy.types.Operator):
     """ Imports a revolute hinge joint element into the Blender scene """
     bl_idname = "blendyn.import_revolute_hinge"
     bl_label = "MBDyn revolute hinge joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -409,7 +409,7 @@ def spawn_revolute_pin_element(elem, context):
 class BLENDYN_OT_import_revolute_pin(bpy.types.Operator):
     bl_idname = "blendyn.import_revolute_pin"
     bl_label = "MBDyn revolute pin joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -529,7 +529,7 @@ def spawn_revolute_rot_element(elem, context):
 class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
     bl_idname = "blendyn.import_revolute_pin"
     bl_label = "MBDyn revolute joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

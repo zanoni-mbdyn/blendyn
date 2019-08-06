@@ -637,7 +637,7 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
     """ Imports a beam2 element into the Blender scene """
     bl_idname = "blendyn.import_beam2"
     bl_label = "Imports a beam2 element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -660,12 +660,12 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg({'IMPORT_SUCCESS'}, 'BLENDYN_OT_import_beam2::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
                 return retval
 
         except KeyError:
-            eldbmsg({'DICT_ERROR'}, 'BLENDYN_OT_import_beam2::execute()', elem)
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
             
         return {'FINISHED'}
@@ -676,7 +676,7 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
 class BLENDYN_OT_import_beam3(bpy.types.Operator):
     bl_idname = "blendyn.import_beam3"
     bl_label = "Imports a beam3 element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

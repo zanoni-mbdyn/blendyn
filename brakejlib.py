@@ -243,7 +243,7 @@ class BLENDYN_OT_import_brake(bpy.types.Operator):
     """ Import a brake joint element into the Blender scene """
     bl_idname = "blendyn.import_brake"
     bl_label = "Import a brake joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

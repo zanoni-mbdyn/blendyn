@@ -299,7 +299,7 @@ def spawn_cardano_pin_elem(elem, context):
 class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
     bl_idname = "blendyn.import_cardano_hinge"
     bl_label = "Imports a cardano hinge"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -341,7 +341,7 @@ class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
 class BLENDYN_OT_import_cardano_pin(bpy.types.Operator):
     bl_idname = "blendyn.import_cardano_pin"
     bl_label = "MBDyn Cardano Pin joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

@@ -327,7 +327,7 @@ class BLENDYN_OT_import_rod(bpy.types.Operator):
     """ Imports a rod element into the Blender scene """
     bl_idname = "blendyn.import_rod"
     bl_label = "Imports a rod element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -366,7 +366,7 @@ class BLENDYN_OT_import_rod(bpy.types.Operator):
 #class Scene_OT_MBDyn_Import_Rod_Bezier_Joint_Element(bpy.types.Operator):
 #    bl_idname = "add.mbdyn_elem_rod_bezier"
 #    bl_label = "MBDyn rod element importer"
-#    int_label = bpy.props.IntProperty()
+#    int_label: bpy.props.IntProperty()
 #
 #    def draw(self, context):
 #        layout = self.layout
@@ -414,7 +414,7 @@ class BLENDYN_OT_write_rod_input(Operator):
     """ Writes the input for Rod Element in the text editor """
     bl_idname = "blendyn.write_rod_input"
     bl_label = "Write updated input for rod"
-    elem_key = bpy.props.StringProperty()
+    elem_key: bpy.props.StringProperty()
 
     def execute(self, context):
         elem = bpy.context.scene.mbdyn.elems[self.elem_key]

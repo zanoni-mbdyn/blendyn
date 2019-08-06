@@ -350,7 +350,7 @@ class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
         into the Blender scene """
     bl_idname = "blendyn.import_structural_absolute_force"
     bl_label = "Imports a structural absolute force element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout
@@ -389,7 +389,7 @@ class BLENDYN_OT_import_structural_follower_force(bpy.types.Operator):
     """ Imports a structural follower force element into the Blender scene """
     bl_idname = "blendyn.import_structural_follower_force"
     bl_label = "Imports a structural follower force element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout
@@ -428,7 +428,7 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
     """ Imports a structural absolute couple element """
     bl_idname = "blendyn.import_structural_absolute_couple"
     bl_label = "Imports a structural absolute couple element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout
@@ -467,7 +467,7 @@ class BLENDYN_OT_import_structural_follower_couple(bpy.types.Operator):
     """ Imports a structural follower couple element """
     bl_idname = "blendyn.import_structural_follower_couple"
     bl_label = "Imports a structural follower couple element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout

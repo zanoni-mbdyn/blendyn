@@ -230,7 +230,7 @@ def spawn_inplane_element(elem, context):
 class BLENDYN_OT_import_inplane(bpy.types.Operator):
     bl_idname = "blendyn.import_inplane"
     bl_label = "MBDyn inplane joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

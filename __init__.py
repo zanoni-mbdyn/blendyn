@@ -97,25 +97,9 @@ classes = (
         BLENDYN_OT_set_display_group,
         BLENDYN_PT_object_plot,
         BLENDYN_PT_plot_scene,
-        BLENDYN_PG_eigenanalysis,
         BLENDYN_OT_eigen_geometry,
         BLENDYN_OT_animate_eigenmode,
-        BLENDYN_PG_elem_pos_offset,
-        BLENDYN_PG_elem_rot_offset,
-        BLENDYN_PG_nodes_collection,
-        BLENDYN_PG_elem_to_be_updated,
-        BLENDYN_PG_elems_dictionary,
         BLENDYN_OT_import_elements_as_mesh,
-        BLENDYN_PG_nodes_dictionary,
-        BLENDYN_PG_refence_dictionary,
-        BLENDYN_PG_mbtime,
-        BLENDYN_PG_render_vars_dictionary,
-        BLENDYN_PG_driver_vars_dictionary,
-        BLENDYN_PG_display_vars_dictionary,
-        BLENDYN_PG_environment_vars_dictionary,
-        BLENDYN_PG_plot_vars,
-        BLENDYN_PG_settings_scene,
-        BLENDYN_PG_settings_object,
         BLENDYN_OT_standard_import,
         BLENDYN_OT_read_mbdyn_log,
         BLENDYN_OT_select_output_file,
@@ -133,20 +117,11 @@ classes = (
         BLENDYN_OT_set_import_freq_auto,
         BLENDYN_OT_set_render_variables,
         BLENDYN_OT_delete_render_variables,
-        BLENDYN_OT_delete_all_render_variables,
-        BLENDYN_OT_show_display_group,
-        BLENDYN_OT_set_display_group,
-        BLENDYN_PT_physics,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
         BLENDYN_PT_simulation,
         BLENDYN_PT_eigenanalysis,
         BLENDYN_PT_active_object,
-        BLENDYN_UL_mbdyn_nodes_list,
-        BLENDYN_UL_elements_list,
-        BLENDYN_UL_render_vars_list,
-        BLENDYN_UL_env_vars_list,
-        BLENDYN_UL_refs_lists,
         BLENDYN_PT_nodes_scene,
         BLENDYN_PT_elems_scene,
         BLENDYN_PT_scaling,
@@ -168,4 +143,26 @@ classes = (
         BLENDYN_OT_delete_override
 )
 
-register, unregister = bpy.utils.register_classes_factory(classes)
+register, unregister_fact = bpy.utils.register_classes_factory(classes)
+
+def unregister():
+    bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_elem_to_be_updated)
+    bpy.utils.unregister_class(BLENDYN_PG_nodes_collection)
+    bpy.utils.unregister_class(BLENDYN_PG_elem_rot_offset)
+    bpy.utils.unregister_class(BLENDYN_PG_elem_pos_offset)
+    bpy.utils.unregister_class(BLENDYN_PG_eigenanalysis)
+    bpy.utils.unregister_class(BLENDYN_PG_render_vars_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_settings_object)
+    bpy.utils.unregister_class(BLENDYN_PG_settings_scene)
+    bpy.utils.unregister_class(BLENDYN_PG_plot_vars)
+    bpy.utils.unregister_class(BLENDYN_PG_environment_vars_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_display_vars_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_driver_vars_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_mbtime)
+    bpy.utils.unregister_class(BLENDYN_PG_reference_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_nodes_dictionary)
+    bpy.utils.unregister_class(BLENDYN_UL_mbdyn_nodes_list)
+    bpy.utils.unregister_class(BLENDYN_UL_elements_list)
+    bpy.utils.unregister_class(BLENDYN_UL_refs_list)
+    unregister_fact()

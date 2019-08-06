@@ -215,7 +215,7 @@ class BLENDYN_OT_import_shell4(bpy.types.Operator):
     """ Imports a shell4 element into the Blender scene """
     bl_idname = "blendyn.import_shell4"
     bl_label = "Imports a shell4 element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

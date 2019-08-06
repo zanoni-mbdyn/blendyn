@@ -276,7 +276,7 @@ def spawn_drive_displacement_element(elem, context):
 class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
     bl_idname = "blendyn.import_drive_displacement"
     bl_label = "MBDyn drive_displacement joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

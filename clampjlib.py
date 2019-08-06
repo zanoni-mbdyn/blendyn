@@ -166,7 +166,7 @@ class BLENDYN_OT_import_clamp(bpy.types.Operator):
     """ Imports a clamp joint element into the Blender scene """
     bl_idname = "blendyn.import_clamp"
     bl_label = "Imports a clamp joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
     
     def draw(self, context):
         layout = self.layout

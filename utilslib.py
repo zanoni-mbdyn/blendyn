@@ -39,7 +39,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
     bl_idname = "blendyn.load_section"
     bl_label = "Load NACA profile in Selig format"
 
-    filter_glob = bpy.props.StringProperty(
+    filter_glob: bpy.props.StringProperty(
         default = "*.*",
         options = {'HIDDEN'},
         )

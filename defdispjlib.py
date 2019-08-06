@@ -108,7 +108,7 @@ def spawn_deformable_displacement_element(elem, context):
 class BLENDYN_OT_import_deformable_displacement(bpy.types.Operator):
     bl_idname = "blendyn.import_deformable_displacement"
     bl_label = "MBDyn deformable displacement joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

@@ -746,7 +746,7 @@ class BLENDYN_OT_import_total(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene """
     bl_idname = "blendyn.import_total"
     bl_label = "Imports a total joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -787,7 +787,7 @@ class BLENDYN_OT_import_total_pin(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene"""
     bl_idname = "blendyn.import_total_pin"
     bl_label = "Imports a total joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

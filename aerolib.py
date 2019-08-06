@@ -427,7 +427,7 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
     """ Imports an Aerodynamic Body in the scene """
     bl_idname = "blendyn.import_aerodynamic_body"
     bl_label = "MBDyn aerodynamic body element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -460,7 +460,7 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
     """ Imports an Aerodynamic Beam2 in the scene """
     bl_idname = "blendyn.import_aerodynamic_beam2"
     bl_label = "MBDyn two-node aerodynamic beam element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -495,7 +495,7 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
     """ Imports an Aerodynamic Beam2 in the scene """
     bl_idname = "blendyn.import_aerodynamic_beam3"
     bl_label = "MBDyn three-node aerodynamic beam element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

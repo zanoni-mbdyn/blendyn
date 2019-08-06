@@ -290,7 +290,7 @@ class BLENDYN_OT_import_linearvelocity(bpy.types.Operator):
         Blender scene """
     bl_idname = "blendyn.import_linearvelocity"
     bl_label = "Import a linearvelocity joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -330,7 +330,7 @@ class BLENDYN_OT_import_linearacceleration(bpy.types.Operator):
         into the Blender scene """
     bl_idname = "blendyn.import_linearacceleration"
     bl_label = "Imports a linearacceleration joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

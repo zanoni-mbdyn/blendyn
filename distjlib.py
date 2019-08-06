@@ -270,7 +270,7 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
     """ Imports a distance Joint in the Blender scene """
     bl_idname = "blendyn.import_distance"
     bl_label = "Import a distance joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

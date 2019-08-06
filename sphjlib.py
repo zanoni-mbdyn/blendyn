@@ -298,7 +298,7 @@ def spawn_spherical_pin_element(elem, context):
 class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
     bl_idname = "blendyn.import_spherical_hinge"
     bl_label = "MBDyn spherical joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -339,7 +339,7 @@ class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
 class BLENDYN_OT_import_spherical_pin(bpy.types.Operator):
     bl_idname = "blendyn.import_spherical_pin"
     bl_label = "MBDyn spherical joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

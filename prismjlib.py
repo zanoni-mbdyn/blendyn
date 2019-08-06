@@ -220,7 +220,7 @@ def spawn_prismatic_element(elem, context):
 class BLENDYN_OT_import_prismatic(bpy.types.Operator):
     bl_idname = "blendyn.import_prismatic"
     bl_label = "MBDyn prismatic joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

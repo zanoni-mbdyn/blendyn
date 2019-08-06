@@ -91,40 +91,40 @@ def update_curr_eigsol(self, context):
 class BLENDYN_PG_eigenanalysis(bpy.types.PropertyGroup):
     """ Holds the properties of the eigensolutions found in the MBDyn output """
 
-    index = IntProperty(
+    index: IntProperty(
             name = "index",
             description = "Index of the eigenanalysis"
             )
 
-    step = IntProperty(
+    step: IntProperty(
             name = "step",
             description = "Step number at which the eigenanalysis was performed"
             )
 
-    time = FloatProperty(
+    time: FloatProperty(
             name = "time",
             description = "the time in seconds at which the eigenanalysis was performed",
             precision = 6
             )
 
-    dCoef = FloatProperty(
+    dCoef: FloatProperty(
             name = "dCoef",
             description = "the coefficient used to build the problem matrices"
             )
 
-    iNVec = IntProperty(
+    iNVec: IntProperty(
             name = "eigenvalues",
             description = "number of eigenvalues calculated"
             )
     
-    curr_eigmode = IntProperty(
+    curr_eigmode: IntProperty(
             name = "eigenmode",
             description = "index of the current selected eigenmode",
             update = update_curr_eigmode,
             default = 0
             )
 
-    lambda_damp = IntProperty(
+    lambda_damp: IntProperty(
             subtype = 'PERCENTAGE',
             name = "damping [%]",
             description = "damping factor of current eigenvalue [%]",
@@ -132,18 +132,18 @@ class BLENDYN_PG_eigenanalysis(bpy.types.PropertyGroup):
             max = 100
             )
 
-    lambda_freq = FloatProperty(
+    lambda_freq: FloatProperty(
             name = "frequency [Hz]",
             description = "natural frequency of current eigenvalue [Hz]"
             )
 
-    anim_scale = FloatProperty(
+    anim_scale: FloatProperty(
             name = "Scale factor",
             description = "scale factor for eigenmode visualization",
             default = 1.0
             )
     
-    anim_frames = IntProperty(
+    anim_frames: IntProperty(
             name = "Frames",
             description = "number of frames for eigenmode visualization",
             default = 48,
@@ -152,6 +152,7 @@ class BLENDYN_PG_eigenanalysis(bpy.types.PropertyGroup):
 
 # -----------------------------------------------------------
 # end of BLENDYN_PG_eigenanalysis class
+bpy.utils.register_class(BLENDYN_PG_eigenanalysis)
 
 class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
     """ Visualizes the reference geometry for the current eigensolution  """ 

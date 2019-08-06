@@ -239,7 +239,7 @@ class BLENDYN_OT_import_gimbal(bpy.types.Operator):
     """ Imports a gimbal joint element into the Blender scene """
     bl_idname = "blendyn.import_gimbal"
     bl_label = "Imports a gimbal joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout

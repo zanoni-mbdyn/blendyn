@@ -50,7 +50,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
     bl_idname = "blendyn.plot_var_sxx_scene"
     bl_label = "Plot the selected MBDyn var autospectrum"
 
-    var_index = bpy.props.IntProperty()
+    var_index: bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -428,7 +428,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
     bl_idname = "blendyn.plot_var_scene"
     bl_label = "Plot the selected MBDyn var"
 
-    var_index = bpy.props.IntProperty()
+    var_index: bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -615,7 +615,7 @@ class BLENDYN_OT_set_plot_freq(bpy.types.Operator):
         to the import frequency of the MBDyn results """
     bl_idname = "blendyn.set_plot_freq"
     bl_label = "Sets the plot frequency for the scene equal to the load frequency"
-    is_object = bpy.props.BoolProperty()
+    is_object: bpy.props.BoolProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
