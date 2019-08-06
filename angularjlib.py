@@ -113,7 +113,7 @@ def parse_angularacceleration(rw, ed):
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
-        el.import_function = "mbdyun.BLENDYN_OT_import_angularacceleration"
+        el.import_function = "blendyn.import_angularacceleration"
         # el.info_draw = "angularacceleration_info_draw"
         el.name = el.type + "_" + str(el.int_label)
         el.is_imported = True
