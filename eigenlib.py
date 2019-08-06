@@ -232,7 +232,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                     self.report({'ERROR'}, message)
                     logging.error(message)
             
-            obj.select = False
+            obj.select_set(state = False)
 
         # Triggers the updte of deformable elements
         frame = bpy.context.scene.frame_current
@@ -373,7 +373,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
 
                     obj.keyframe_insert(data_path = "rotation_axis_angle")
            
-                obj.select = False
+                obj.select_set(state = False)
                 kk = kk + 1
                 wm.progress_update(kk)
         wm.progress_end()

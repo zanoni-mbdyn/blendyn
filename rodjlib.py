@@ -601,11 +601,11 @@ def spawn_rod_element(elem, context):
     # P1 hook
     objs = bpy.data.objects.keys()
     bpy.ops.object.select_all(action = 'DESELECT')
-    rodOBJ.select = True
+    rodOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = rodOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    rodOBJ.data.splines[0].points[0].select = True
+    rodOBJ.data.splines[0].points[0].select_set(state = True)
     bpy.ops.object.hook_add_newob()
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     new_objs = bpy.data.objects.keys()
@@ -617,11 +617,11 @@ def spawn_rod_element(elem, context):
     # P2 hook
     objs = bpy.data.objects.keys()
     bpy.ops.object.select_all(action = 'DESELECT')
-    rodOBJ.select = True
+    rodOBJ.select_set(state = True)
     bpy.context.view_layer.objects.active = rodOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    rodOBJ.data.splines[0].points[1].select = True
+    rodOBJ.data.splines[0].points[1].select_set(state = True)
     bpy.ops.object.hook_add_newob()
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     new_objs = bpy.data.objects.keys()
@@ -635,7 +635,7 @@ def spawn_rod_element(elem, context):
     # create group for element and hide P1 and P2 objects
     bpy.ops.group.create(name = rodOBJ.name)
     grouping(context, rodOBJ, [p1OBJ, n1OBJ, p2OBJ, n2OBJ])
-    n2OBJ.select = True
+    n2OBJ.select_set(state = True)
     p1OBJ.hide_viewport = True
     p2OBJ.hide_viewport = True
 
@@ -720,7 +720,7 @@ def spawn_rod_element(elem, context):
 #        bpy.context.scene.collection.objects.link(rodOBJ)
 #        elem.blender_object = rodOBJ.name
 #        elem.name = rodOBJ.name
-#        rodOBJ.select = True
+#        rodOBJ.select_set(state = True)
 #
 #        ## hooking of the line ends to the Blender objects
 #        
@@ -728,7 +728,7 @@ def spawn_rod_element(elem, context):
 #        bpy.ops.object.select_all()
 #        
 #        # select rod, set it to active and enter edit mode
-#        rodOBJ.select = True
+#        rodOBJ.select_set(state = True)
 #        bpy.context.view_layer.objects.active = rodOBJ
 #
 #        # select first control point and its handles and object 1,
@@ -736,22 +736,22 @@ def spawn_rod_element(elem, context):
 #        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 #        
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = True
-#        bpy.data.objects[n1].select = True
+#        bpy.data.objects[n1].select_set(state = True)
 #        bpy.ops.object.hook_add_selob()
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_control_point = False
-#        bpy.data.objects[n1].select = False
+#        bpy.data.objects[n1].select_set(state = False)
 #
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = True
-#        bpy.data.objects[n1].select = True
+#        bpy.data.objects[n1].select_set(state = True)
 #        bpy.ops.object.hook_add_selob()
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_left_handle = False
-#        bpy.data.objects[n1].select = False 
+#        bpy.data.objects[n1].select_set(state = False) 
 #        
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = True
-#        bpy.data.objects[n1].select = True
+#        bpy.data.objects[n1].select_set(state = True)
 #        bpy.ops.object.hook_add_selob()
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[0].select_right_handle = False
-#        bpy.data.objects[n1].select = False
+#        bpy.data.objects[n1].select_set(state = False)
 #
 #        # exit edit mode and deselect all
 #        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -760,27 +760,27 @@ def spawn_rod_element(elem, context):
 #        # select first control point and its handles and object 2,
 #        # then set the hook and deselect object of node 2
 #        
-#        rodOBJ.select = True
+#        rodOBJ.select_set(state = True)
 #        bpy.context.view_layer.objects.active = rodOBJ
 #        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 #        
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = True
-#        bpy.data.objects[n2].select = True
+#        bpy.data.objects[n2].select_set(state = True)
 #        bpy.ops.object.hook_add_selob()
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_control_point = False
-#        bpy.data.objects[n2].select = False
+#        bpy.data.objects[n2].select_set(state = False)
 #
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = True
-#        bpy.data.objects[n2].select = True
+#        bpy.data.objects[n2].select_set(state = True)
 #        bpy.ops.object.hook_add_selob()
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_left_handle = False
-#        bpy.data.objects[n2].select = False 
+#        bpy.data.objects[n2].select_set(state = False) 
 #        
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = True
-#        bpy.data.objects[n2].select = True
+#        bpy.data.objects[n2].select_set(state = True)
 #        bpy.ops.object.hook_add_selob()
 #        bpy.data.curves[rodcv_id].splines[0].bezier_points[1].select_right_handle = False
-#        bpy.data.objects[n2].select = False
+#        bpy.data.objects[n2].select_set(state = False)
 #
 #        # exit edit mode and deselect all
 #        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)

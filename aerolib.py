@@ -269,7 +269,7 @@ def hook_vertices(bm, vidx, obj):
     bm.select_flush(True)
     obj.select_set(state = True)
     bpy.ops.object.hook_add_selob()
-    obj.select = False
+    obj.select_set(state = False)
 # -----------------------------------------------------------
 # end of hook_vertices() function
 

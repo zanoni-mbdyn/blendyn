@@ -927,7 +927,7 @@ def set_motion_paths_netcdf(context):
             # Should not be reached
             print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
             return {'CANCELLED'}
-        obj.select = False
+        obj.select_set(state = False)
         kk = kk + 1
         wm.progress_update(kk)
     wm.progress_end()

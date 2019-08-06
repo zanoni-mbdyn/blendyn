@@ -2408,7 +2408,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
                     me.vertices.add(1)
                     me.vertices[vidx].co = obj.location
                     vidx = vidx + 1
-                    obj.select = False
+                    obj.select_set(state = False)
                     sel_obj.append(obj.name)
 
         if vidx:
@@ -2438,7 +2438,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
                     verts = []
                     verts.append(v.index)
                     vert_obj.vertex_groups['v' + sel_obj[vidx]].add(verts, 1.0, 'ADD')
-                    v.select = False
+                    v.select_set(state = False)
                     vidx = vidx + 1
 
                 # Add the modifiers in edit mode

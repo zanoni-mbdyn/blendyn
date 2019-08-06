@@ -149,7 +149,7 @@ def spawn_shell4_element(elem, context):
     mesh.select_flush(True)
     n1OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
-    n1OBJ.select = False
+    n1OBJ.select_set(state = False)
 
     # vertex 2 hook
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
@@ -159,7 +159,7 @@ def spawn_shell4_element(elem, context):
     mesh.select_flush(True)
     n2OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
-    n2OBJ.select = False
+    n2OBJ.select_set(state = False)
 
     # vertex 3 hook
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
@@ -169,7 +169,7 @@ def spawn_shell4_element(elem, context):
     mesh.select_flush(True)
     n4OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
-    n4OBJ.select = False
+    n4OBJ.select_set(state = False)
 
     # vertex 4 hook
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
@@ -179,7 +179,7 @@ def spawn_shell4_element(elem, context):
     mesh.select_flush(True)
     n3OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
-    n3OBJ.select = False
+    n3OBJ.select_set(state = False)
 
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')

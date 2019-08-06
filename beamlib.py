@@ -484,12 +484,12 @@ def spawn_beam3_element(elem, context):
     bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M1[0:3])
     obj2 = bpy.context.view_layer.objects.active
     obj2.name = beamOBJ.name + '_M1'
-    obj2.select = False
+    obj2.select_set(state = False)
 
     bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M2[0:3])
     obj3 = bpy.context.view_layer.objects.active
     obj3.name = beamOBJ.name + '_M2'
-    obj3.select = False
+    obj3.select_set(state = False)
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
