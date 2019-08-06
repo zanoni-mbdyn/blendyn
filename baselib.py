@@ -239,6 +239,72 @@ def parse_log_file(context):
 
     ret_val = {''}
 
+    # Check if collections are already present (not the first import).
+    # if not, create them
+
+    try:
+        ncol = bpy.data.collections['mbyn.nodes']
+    except KeyError:
+        ncol = bpy.data.collections.new(name = 'mbdyn.nodes')
+        bpy.context.scene.collection.children.link(ncol)
+
+    try:
+        ecol = bpy.data.collections['mbdyn.elements']
+    except KeyError:
+        ecol = bpy.data.collections.new(name = 'mbdyn.elements')
+        bpy.context.scene.collection.children.link(ecol)
+    
+    # create elements children collections if they are not already there
+    try:
+        aecol = ecol.children['aerodynamic']
+    except KeyError:
+        aecol = bpy.data.collections.new(name = 'aerodynamic')
+        ecol.children.link(aecol)
+
+    try:
+        becol = ecol.children['beams']
+    except KeyError:
+        becol = bpy.data.collections.new(name = 'beams')
+        ecol.children.link(becol)
+
+    # beam sections sub-collection
+    try:
+        bescol = becol.children['sections']
+    except KeyError:
+        bescol = bpy.data.collections.new(name = 'sections')
+        becol.children.link(bescol)
+
+    try:
+        bocol = ecol.children['bodies']
+    except KeyError:
+        bocol = bpy.data.collections.new(name = 'bodies')
+        ecol.children.link(bocol)
+    
+    try:
+        fcol = ecol.children['forces']
+    except KeyError:
+        fcol = bpy.data.collections.new(name = 'forces')
+        ecol.children.link(fcol)
+
+    try:
+        jcol = ecol.children['joints']
+    except KeyError:
+        jcol = bpy.data.collections.new(name = 'joints')
+        ecol.children.link(jcol)
+
+    # joint (rods) sections
+    try:
+        jscol = jcol.children['sections']
+    except KeyError:
+        jscol = bpy.data.collections.new(name = 'sections')
+        jcol.children.link(jscol)
+
+    try:
+        pcol = ecol.children['plates']
+    except KeyError:
+        pcol = bpy.data.collections.new(name = 'plates')
+        ecol.children.link(pcol)
+
     try:
         with open(log_file) as lf:
             # open the reader, skipping initial whitespaces
@@ -265,7 +331,8 @@ def parse_log_file(context):
                     b_nodes_consistent = b_nodes_consistent * (parse_node(context, rw))
                 else:
                     print("Blendyn::parse_log_file(): Found " + entry[:-1] + " element.")
-                    b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
+                    b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw) 
+
 
             if (is_init_nd and is_init_ed) or (b_nodes_consistent*b_elems_consistent):
                 ret_val = {'FINISHED'}
@@ -277,6 +344,7 @@ def parse_log_file(context):
                 ret_val = {'ELEMS_INCONSISTENT'}
             else:
                 ret_val = {'FINISHED'}
+
     except IOError:
         print("Blendyn::parse_log_file(): Could not locate the file " + log_file + ".")
         ret_val = {'LOG_NOT_FOUND'}
@@ -355,6 +423,14 @@ def parse_log_file(context):
             for rfm_row in reader:
                 if len(rfm_row) and rfm_row[0].strip() != '#':
                         parse_reference_frame(rfm_row, rd)
+
+        # create the reference frames collection if it is not already there
+        try: 
+            rcol = bpy.data.collections['mbdyn.references']
+        except KeyError:
+            rcol = bpy.data.collections.new(name = 'mbdyn.references')
+            bpy.context.scene.collection.children.link(nrcol)
+
     except StopIteration:
         pass
     except FileNotFoundError:

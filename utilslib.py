@@ -159,20 +159,6 @@ def parenting(child, parent):
 # -----------------------------------------------------------
 # end of parenting function
 
-def grouping(context, elem_obj, obj_list):
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    bpy.ops.object.select_all(action = 'DESELECT')
-
-    elem_obj.select_set(state = True)
-
-    for obj in obj_list:
-        obj.select_set(state = True)
-
-    bpy.ops.collection.create(name = elem_obj.name)
-
-# -----------------------------------------------------------
-# end of grouping function
-
 
 def eldbmsg(msg, who, elem):
     # Prints various standard debug messages for element import.
@@ -279,3 +265,25 @@ def eldbmsg(msg, who, elem):
     whomsg = who + ": "
     message = messages[msg.pop()](whomsg)
     print(message)
+
+def recur_layer_collection(layer_collection, coll_name):
+    """ Recursively traverse layer collection for coll_name """
+    found = None
+    if (layer_collection.name == coll_name):
+        return layer_collection
+    for layer in layer_collection.children:
+        found = recur_layer_collection(layer, coll_name)
+        if found:
+            return found
+# -----------------------------------------------------------
+# end of recur_layer_collection function
+
+
+def change_active_collection(coll_name):
+    """ Changes the active collection to coll_name after searching
+        for it with recur_layer_collection() """
+    curr_layer_collection = bpy.context.view_layer.layer_collection
+    new_layer_collection = recur_layer_collection(curr_layer_collection, coll_name)
+    bpy.context.view_layer.active_layer_collection = new_layer_collection
+# -----------------------------------------------------------
+# end of change_active_collection function

@@ -59,11 +59,12 @@ except ImportError as ierr:
             + "Stopping MBDyn from the Blender UI will be disabled.")
     print("{0}".format(ierr))
 
-from .baselib import *
-from .elements import *
-from .eigenlib import *
-from .rfmlib import *
-from .logwatcher import *
+from . baselib import *
+from . elements import *
+from . eigenlib import *
+from . rfmlib import *
+from . logwatcher import *
+from . utilslib import change_active_collection
 
 HAVE_PLOT = False
 
@@ -1987,6 +1988,10 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
 
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
+                
+                if not (bpy.context.collection == bpy.data.collections['mbdyn.nodes']):
+                    change_active_collection('mbdyn.nodes')
+                
                 if not(spawn_node_obj(context, node)):
                     message = ("BLENDYN_OT_node_import_all::execute(): " \
                               + "Could not spawn the Blender object assigned to node " \
@@ -2007,6 +2012,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                 else:
                     obj.name = node.name
                 node.blender_object = obj.name
+
                 print("BLENDYN_OT_node_import_all::execute(): added node " \
                         + str(node.int_label) \
                         + " to scene and associated with object " + obj.name)
