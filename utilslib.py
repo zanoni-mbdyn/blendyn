@@ -148,7 +148,7 @@ def parse_rotmat(rw, idx, R):
     pass
 
 def parenting(child, parent):
-    bpy.context.scene.objects.active = child
+    bpy.context.view_layer.objects.active = child
     bpy.ops.object.constraint_add(type='CHILD_OF')
     child.constraints["Child Of"].target = parent
 
