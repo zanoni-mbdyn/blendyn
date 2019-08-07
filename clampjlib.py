@@ -118,10 +118,15 @@ def spawn_clamp_element(elem, context):
     # node object
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe joint object from the library
+        app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'clamp')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         clampjOBJ = bpy.context.selected_objects[0]
         clampjOBJ.name = elem.name
@@ -146,18 +151,18 @@ def spawn_clamp_element(elem, context):
         # set parenting of wireframe obj
         parenting(clampjOBJ, n1OBJ)
 
-        # set group
-        grouping(context, clampjOBJ, [n1OBJ])
+        # set collections
+        elcol.objects.link(n1OBJ)
 
         clampOBJ.mbdyn.dkey = elem.name
         clampOBJ.mbdyn.type = 'element'
         elem.blender_object = clampjOBJ.name
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_clamp_elem(elem, layout) function
 
@@ -188,6 +193,8 @@ class BLENDYN_OT_import_clamp(bpy.types.Operator):
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval

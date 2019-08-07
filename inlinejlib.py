@@ -170,10 +170,15 @@ def spawn_inline_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe inline joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe inline joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'inline')
-    if app_retval == {'FINISHED'}:
+
         # the append operator leaves just the imported object selected
         inlinejOBJ = bpy.context.selected_objects[0]
         inlinejOBJ.name = elem.name
@@ -203,15 +208,18 @@ def spawn_inline_element(elem, context):
         # set parenting of wireframe obj
         parenting(inlinejOBJ, n1OBJ)
 
-        grouping(context, inlinejOBJ, [n1OBJ])
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
 
         inlinejOBJ.mbdyn.dkey = elem.name
         inlinejOBJ.mbdyn.type = 'element'
         elem.blender_object = inlinejOBJ.name
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_inline_element(elem, context) function
 

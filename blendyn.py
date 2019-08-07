@@ -64,7 +64,7 @@ from . elements import *
 from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
-from . utilslib import change_active_collection
+from . utilslib import set_active_collection
 
 HAVE_PLOT = False
 
@@ -1990,7 +1990,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
                 
                 if not (bpy.context.collection == bpy.data.collections['mbdyn.nodes']):
-                    change_active_collection('mbdyn.nodes')
+                    set_active_collection('mbdyn.nodes')
                 
                 if not(spawn_node_obj(context, node)):
                     message = ("BLENDYN_OT_node_import_all::execute(): " \
@@ -2270,7 +2270,8 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
                     and (elem.int_label >= mbs.min_elem_import) \
                     and (elem.int_label <= mbs.max_elem_import):
                 try:
-                    eval("spawn_" + elem.type + "_element(elem, context)")
+                    # eval("spawn_" + elem.type + "_element(elem, context)")
+                    eval("bpy.ops." + elem.import_function + "()")
                 except NameError:
                     if ( elem.type == 'structural_absolute_force' ) \
                             or ( elem.type == 'structural_follower_force' ):
@@ -2308,7 +2309,9 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
             if (elem.int_label >= mbs.min_elem_import) \
                     and (elem.int_label <= mbs.max_elem_import):
                 try:
-                    eval("spawn_" + elem.type + "_element(elem, context)")
+                    # eval("spawn_" + elem.type + "_element(elem, context)")
+                    eval("bpy.ops." + elem.import_function \
+                            + "(int_label = " + str(elem.int_label) + ")")
                 except NameError:
                     if ( elem.type == 'structural_absolute_force' ) \
                             or ( elem.type == 'structural_follower_force' ):

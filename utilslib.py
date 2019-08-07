@@ -233,6 +233,13 @@ def eldbmsg(msg, who, elem):
         logging.error(message)
         return message
 
+    def collerror(whomsg):
+        message = whomsg \
+                + "Cannot find the container collection for "\
+                + "element " + elem.type + " " + str(elem.int_label)
+        logging.error(message)
+        return message
+
     def dicterror(whomsg):
         message = whomsg \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
@@ -260,6 +267,7 @@ def eldbmsg(msg, who, elem):
                 'LIBRARY_ERROR' : libraryerror,
                 'DICT_ERROR' : dicterror,
                 'IMPORT_SUCCESS' : importsuccess,
+                'COLLECTION_ERROR' : collerror
     }
 
     whomsg = who + ": "
@@ -279,11 +287,11 @@ def recur_layer_collection(layer_collection, coll_name):
 # end of recur_layer_collection function
 
 
-def change_active_collection(coll_name):
+def set_active_collection(coll_name):
     """ Changes the active collection to coll_name after searching
         for it with recur_layer_collection() """
     curr_layer_collection = bpy.context.view_layer.layer_collection
     new_layer_collection = recur_layer_collection(curr_layer_collection, coll_name)
     bpy.context.view_layer.active_layer_collection = new_layer_collection
 # -----------------------------------------------------------
-# end of change_active_collection function
+# end of set_active_collection function
