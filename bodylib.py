@@ -112,11 +112,16 @@ def spawn_body_element(elem, context):
 
     # node object
     n1OBJ = bpy.data.objects[n1]
-
-    # load the wireframe body object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    
+    try:
+        
+        set_active_collection('bodies')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['bodies'].children.link(elcol)
+        
+        # load the wireframe body object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'other.blend', 'Object'), filename = 'cg')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         bodyOBJ = bpy.context.selected_objects[0]
         bodyOBJ.name = elem.name
@@ -142,16 +147,17 @@ def spawn_body_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(bodyOBJ, n1OBJ)
-
-        # set group
-        grouping(context, bodyOBJ, [n1OBJ])
-
         elem.blender_object = bodyOBJ.name
 
+        # set collections
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-        pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_body_elem(elem, layout) function
 
@@ -180,6 +186,9 @@ class BLENDYN_OT_import_body(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)

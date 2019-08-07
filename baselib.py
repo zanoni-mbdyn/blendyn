@@ -267,12 +267,12 @@ def parse_log_file(context):
         becol = bpy.data.collections.new(name = 'beams')
         ecol.children.link(becol)
 
-    # beam sections sub-collection
+    # elements sections sub-collection
     try:
-        bescol = becol.children['sections']
+        scol = ecol.children['sections']
     except KeyError:
-        bescol = bpy.data.collections.new(name = 'sections')
-        becol.children.link(bescol)
+        scol = bpy.data.collections.new(name = 'sections')
+        ecol.children.link(scol)
 
     try:
         bocol = ecol.children['bodies']
@@ -291,13 +291,6 @@ def parse_log_file(context):
     except KeyError:
         jcol = bpy.data.collections.new(name = 'joints')
         ecol.children.link(jcol)
-
-    # joint (rods) sections
-    try:
-        jscol = jcol.children['sections']
-    except KeyError:
-        jscol = bpy.data.collections.new(name = 'sections')
-        jcol.children.link(jscol)
 
     try:
         pcol = ecol.children['plates']

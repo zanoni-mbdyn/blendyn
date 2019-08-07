@@ -46,6 +46,8 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         try:
+            scol = bpy.data.collections['sections']
+            set_active_collection('sections')
             with open(self.filepath, 'r') as sf:     
                 reader = csv.reader(sf, delimiter=' ', skipinitialspace=True)
                 name = next(reader)
@@ -66,7 +68,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     poly.points[-1].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
 
                 obj = bpy.data.objects.new(name, cvdata)
-                context.scene.collection.objects.link(obj)
+                scol.objects.link(obj)
             
                 kk = 0
                 layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]

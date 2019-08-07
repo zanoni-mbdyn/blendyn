@@ -208,12 +208,13 @@ def spawn_inline_element(elem, context):
         # set parenting of wireframe obj
         parenting(inlinejOBJ, n1OBJ)
 
-        elcol.objects.link(n1OBJ)
-        elcol.objects.link(n2OBJ)
-
         inlinejOBJ.mbdyn.dkey = elem.name
         inlinejOBJ.mbdyn.type = 'element'
         elem.blender_object = inlinejOBJ.name
+        
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
     except FileNotFoundError:
@@ -249,6 +250,9 @@ class BLENDYN_OT_import_inline(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

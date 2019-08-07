@@ -121,6 +121,14 @@ def spawn_shell4_element(elem, context):
     
     avg_location = .25*(n1OBJ.location + n2OBJ.location + n3OBJ.location + n4OBJ.location)
 
+    try:
+        # put it all in the 'plates' collection
+        set_active_collection('plates')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['plates'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     # create the mesh plane
     bpy.ops.mesh.primitive_plane_add(location = avg_location)
     shellOBJ = bpy.context.view_layer.objects.active
@@ -184,9 +192,12 @@ def spawn_shell4_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
 
-
-    # create group for element
-    grouping(context, shellOBJ, [n1OBJ, n2OBJ, n3OBJ, n4])
+    # put them all in the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    elcol.objects.link(n3OBJ)
+    elcol.objects.link(n4OBJ)
+    set_active_collection('Master Collection')
 
     elem.blender_object = shellOBJ.name
     return {'FINISHED'}
@@ -240,6 +251,9 @@ class BLENDYN_OT_import_shell4(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE4_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:

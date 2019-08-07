@@ -281,127 +281,141 @@ def spawn_total_joint_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe total joint object from the library
-    lib_path = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object')
-    app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total')
+    try:
 
-    if app_retval == {'FINISHED'}:
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        
+        # load the wireframe total joint object from the library
+        lib_path = os.path.join(mbs.addon_path,\
+            'library', 'joints.blend', 'Object')
+        bpy.ops.wm.append(directory = lib_path, filename = 'total')
+
         # the append operator leaves just the imported object selected
         totjOBJ = bpy.context.selected_objects[0]
         totjOBJ.name = elem.name
-    else:
+
+        # place the joint object in the position defined relative to node 1
+        totjOBJ.location = elem.offsets[0].value
+        totjOBJ.rotation_mode = 'QUATERNION'
+        totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
+
+        # display traslation arrows
+        pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
+        for kk in range(3):
+            if not(elem.offsets[2].value[kk]):
+                app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
+                if app_retval != {'FINISHED'}:
+                    return {'LIBRARY_ERROR'}
+            
+                obj = bpy.context.selected_objects[0]
+
+                # position it correctly
+                obj.location = elem.offsets[0].value
+
+                # rotate it according to "position orientation" w.r.t. node 1
+                obj.rotation_mode = 'QUATERNION'
+                obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
+            
+                totjOBJ.select_set(state = True)
+                bpy.context.view_layer.objects.active = totjOBJ
+                bpy.ops.object.join()
+
+        # display rotation arrows
+        rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
+        for kk in range(3):
+            if not(elem.offsets[4].value[kk]):
+                app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
+                if app_retval != {'FINISHED'}:
+                    return {'LIBRARY_ERROR'}
+    
+                obj = bpy.context.selected_objects[0]
+    
+                # position it correctly
+                obj.location = elem.offsets[0].value
+                
+                # rotate it according to "rotation orientation" w.r.t. node 1
+                obj.rotation_mode = 'QUATERNION'
+                obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
+                totjOBJ.select_set(state = True)
+                bpy.context.view_layer.objects.active = totjOBJ
+                bpy.ops.object.join()
+    
+    
+        # TODO: display also velocity contraints arrows
+    
+        # automatic scaling
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+                n2OBJ.scale.magnitude)
+        totjOBJ.scale = Vector(( s, s, s ))
+    
+        # create an object representing the RF used to express the relative
+        # position w.r.t. node 1, for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
+        RF1p = bpy.context.selected_objects[0]
+        RF1p.rotation_mode = 'QUATERNION'
+        RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
+        RF1p.scale = .33*totjOBJ.scale
+        RF1p.name = totjOBJ.name + '_RF1_pos'
+        parenting(RF1p, n1OBJ)
+        RF1p.hide_viewport = True
+    
+        # create an object representing the RF used to express the relative
+        # orientation w.r.t. node 1, for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
+        RF1r = bpy.context.selected_objects[0]
+        RF1r.rotation_mode = 'QUATERNION'
+        RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
+        RF1r.scale = .33*totjOBJ.scale
+        RF1r.name = totjOBJ.name + '_RF1_rot'
+        parenting(RF1r, n1OBJ)
+        RF1r.hide_viewport = True
+    
+        # create an object representing the RF used to express the relative
+        # position w.r.t. node 2, for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value)
+        RF2p = bpy.context.selected_objects[0]
+        RF2p.rotation_mode = 'QUATERNION'
+        RF2p.rotation_quaternion = Quaternion(elem.rotoffsets[2].value[0:])
+        RF2p.scale = .33*totjOBJ.scale
+        RF2p.name = totjOBJ.name + '_RF2_pos'
+        parenting(RF2p, n2OBJ)
+        RF2p.hide_viewport = True
+    
+        # create an object representing the RF used to express the relative
+        # orientation w.r.t. node 2, for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value)
+        RF2r = bpy.context.selected_objects[0]
+        RF2r.rotation_mode = 'QUATERNION'
+        RF2r.rotation_quaternion = Quaternion(elem.rotoffsets[3].value[0:])
+        RF2r.scale = .33*totjOBJ.scale
+        RF2r.name = totjOBJ.name + '_RF2_rot'
+        parenting(RF2r, n2OBJ)
+        RF2r.hide_viewport = True
+    
+        # set parenting of wireframe obj
+        parenting(totjOBJ, n1OBJ)
+    
+        # set mbdyn props of object
+        elem.blender_object = totjOBJ.name
+        totjOBJ.mbdyn.dkey = elem.name
+        totjOBJ.mbdyn.type = 'element'
+
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        elcol.objects.link(RF1p)
+        elcol.objects.link(RF1r)
+        elcol.objects.link(RF2p)
+        elcol.objects.link(RF2r)
+        set_active_collection('Master Collection')
+
+        return {'FINISHED'}
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-
-    # place the joint object in the position defined relative to node 1
-    totjOBJ.location = elem.offsets[0].value
-    totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
-
-    # display traslation arrows
-    pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
-    for kk in range(3):
-        if not(elem.offsets[2].value[kk]):
-            app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
-            if app_retval != {'FINISHED'}:
-                return {'LIBRARY_ERROR'}
-            
-            obj = bpy.context.selected_objects[0]
-
-            # position it correctly
-            obj.location = elem.offsets[0].value
-
-            # rotate it according to "position orientation" w.r.t. node 1
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
-            
-            totjOBJ.select_set(state = True)
-            bpy.context.view_layer.objects.active = totjOBJ
-            bpy.ops.object.join()
-
-    # display rotation arrows
-    rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
-    for kk in range(3):
-        if not(elem.offsets[4].value[kk]):
-            app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
-            if app_retval != {'FINISHED'}:
-                return {'LIBRARY_ERROR'}
-
-            obj = bpy.context.selected_objects[0]
-
-            # position it correctly
-            obj.location = elem.offsets[0].value
-            
-            # rotate it according to "rotation orientation" w.r.t. node 1
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
-            totjOBJ.select_set(state = True)
-            bpy.context.view_layer.objects.active = totjOBJ
-            bpy.ops.object.join()
-
-
-    # TODO: display also velocity contraints arrows
-
-    # automatic scaling
-    s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-            n2OBJ.scale.magnitude)
-    totjOBJ.scale = Vector(( s, s, s ))
-
-    # create an object representing the RF used to express the relative
-    # position w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
-    RF1p = bpy.context.selected_objects[0]
-    RF1p.rotation_mode = 'QUATERNION'
-    RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
-    RF1p.scale = .33*totjOBJ.scale
-    RF1p.name = totjOBJ.name + '_RF1_pos'
-    parenting(RF1p, n1OBJ)
-    RF1p.hide_viewport = True
-
-    # create an object representing the RF used to express the relative
-    # orientation w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
-    RF1r = bpy.context.selected_objects[0]
-    RF1r.rotation_mode = 'QUATERNION'
-    RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
-    RF1r.scale = .33*totjOBJ.scale
-    RF1r.name = totjOBJ.name + '_RF1_rot'
-    parenting(RF1r, n1OBJ)
-    RF1r.hide_viewport = True
-
-    # create an object representing the RF used to express the relative
-    # position w.r.t. node 2, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value)
-    RF2p = bpy.context.selected_objects[0]
-    RF2p.rotation_mode = 'QUATERNION'
-    RF2p.rotation_quaternion = Quaternion(elem.rotoffsets[2].value[0:])
-    RF2p.scale = .33*totjOBJ.scale
-    RF2p.name = totjOBJ.name + '_RF2_pos'
-    parenting(RF2p, n2OBJ)
-    RF2p.hide_viewport = True
-
-    # create an object representing the RF used to express the relative
-    # orientation w.r.t. node 2, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value)
-    RF2r = bpy.context.selected_objects[0]
-    RF2r.rotation_mode = 'QUATERNION'
-    RF2r.rotation_quaternion = Quaternion(elem.rotoffsets[3].value[0:])
-    RF2r.scale = .33*totjOBJ.scale
-    RF2r.name = totjOBJ.name + '_RF2_rot'
-    parenting(RF2r, n2OBJ)
-    RF2r.hide_viewport = True
-
-    # set parenting of wireframe obj
-    parenting(totjOBJ, n1OBJ)
-
-    grouping(context, totjOBJ, [n1OBJ, n2OBJ, RF1p, RF1r, RF2p, RF2r])
-
-    # set mbdyn props of object
-    elem.blender_object = totjOBJ.name
-    totjOBJ.mbdyn.dkey = elem.name
-    totjOBJ.mbdyn.type = 'element'
-
-    return {'FINISHED'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_total(elem, context) function
 
@@ -423,102 +437,112 @@ def spawn_total_pin_joint_element(elem, context):
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe total joint object from the library
-    lib_path = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object')
-    app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total.pin')
+    try:
 
-    if app_retval == {'FINISHED'}:
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+    
+        # load the wireframe total joint object from the library
+        lib_path = os.path.join(mbs.addon_path,\
+            'library', 'joints.blend', 'Object')
+        bpy.ops.wm.append(directory = lib_path, filename = 'total.pin')
+
         # the append operator leaves just the imported object selected
         totjOBJ = bpy.context.selected_objects[0]
         totjOBJ.name = elem.name
-    else:
+        # place the joint object in the position defined relative to node 1
+        totjOBJ.location = elem.offsets[0].value
+        totjOBJ.rotation_mode = 'QUATERNION'
+        totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+    
+        # display traslation arrows
+        pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
+        for kk in range(3):
+            if not(elem.offsets[1].value[kk]):
+                app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
+                if app_retval != {'FINISHED'}:
+                    return {'LIBRARY_ERROR'}
+                
+                obj = bpy.context.selected_objects[0]
+    
+                # position it correctly
+                obj.location = elem.offsets[0].value
+                
+                # rotate it according to "position orientation" w.r.t. node 1
+                obj.rotation_mode = 'QUATERNION'
+                obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+                
+                totjOBJ.select_set(state = True)
+                bpy.context.view_layer.objects.active = totjOBJ
+                bpy.ops.object.join()
+    
+        rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
+        for kk in range(3):
+            if not(elem.offsets[3].value[kk]):
+                app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
+                if app_retval != {'FINISHED'}:
+                    return {'LIBRARY_ERROR'}
+    
+                obj = bpy.context.selected_objects[0]
+               
+                # position it correctly
+                obj.location = elem.offsets[0].value
+    
+                # rotate it according to "rotation orientation" w.r.t. node 1
+                obj.rotation_mode = 'QUATERNION'
+                obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+                totjOBJ.select_set(state = True)
+                bpy.context.view_layer.objects.active = totjOBJ
+                bpy.ops.object.join()
+    
+    
+        # TODO: display also velocity contraints arrows
+    
+        # automatic scaling
+        s = (1./sqrt(3.))*n1OBJ.scale.magnitude
+        totjOBJ.scale = Vector(( s, s, s ))
+    
+        # create an object representing the RF used to express the relative
+        # position w.r.t. node 1, for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
+        RF1p = bpy.context.selected_objects[0]
+        RF1p.rotation_mode = 'QUATERNION'
+        RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+        RF1p.scale = .33*totjOBJ.scale
+        RF1p.name = totjOBJ.name + '_RF1_pos'
+        parenting(RF1p, n1OBJ)
+        RF1p.hide_viewport = True
+    
+        # create an object representing the RF used to express the relative
+        # orientation w.r.t. node 1, for model debugging
+        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
+        RF1r = bpy.context.selected_objects[0]
+        RF1r.rotation_mode = 'QUATERNION'
+        RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value)
+        RF1r.scale = .33*totjOBJ.scale
+        RF1r.name = totjOBJ.name + '_RF1_rot'
+        parenting(RF1r, n1OBJ)
+        RF1r.hide_viewport = True
+    
+        # set parenting of wireframe obj
+        parenting(totjOBJ, n1OBJ)
+     
+        elem.blender_object = totjOBJ.name
+        totjOBJ.mbdyn.dkey = elem.name
+        totjOBJ.mbdyn.type = 'element'
+    
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(RF1p)
+        elcol.objects.link(RF1r)
+        set_active_collection('Master Collection')
+
+        return {'FINISHED'}
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-
-    # place the joint object in the position defined relative to node 1
-    totjOBJ.location = elem.offsets[0].value
-    totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-
-    # display traslation arrows
-    pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
-    for kk in range(3):
-        if not(elem.offsets[1].value[kk]):
-            app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
-            if app_retval != {'FINISHED'}:
-                return {'LIBRARY_ERROR'}
-            
-            obj = bpy.context.selected_objects[0]
-
-            # position it correctly
-            obj.location = elem.offsets[0].value
-            
-            # rotate it according to "position orientation" w.r.t. node 1
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-            
-            totjOBJ.select_set(state = True)
-            bpy.context.view_layer.objects.active = totjOBJ
-            bpy.ops.object.join()
-
-    rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
-    for kk in range(3):
-        if not(elem.offsets[3].value[kk]):
-            app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
-            if app_retval != {'FINISHED'}:
-                return {'LIBRARY_ERROR'}
-
-            obj = bpy.context.selected_objects[0]
-           
-            # position it correctly
-            obj.location = elem.offsets[0].value
-
-            # rotate it according to "rotation orientation" w.r.t. node 1
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-            totjOBJ.select_set(state = True)
-            bpy.context.view_layer.objects.active = totjOBJ
-            bpy.ops.object.join()
-
-
-    # TODO: display also velocity contraints arrows
-
-    # automatic scaling
-    s = (1./sqrt(3.))*n1OBJ.scale.magnitude
-    totjOBJ.scale = Vector(( s, s, s ))
-
-    # create an object representing the RF used to express the relative
-    # position w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
-    RF1p = bpy.context.selected_objects[0]
-    RF1p.rotation_mode = 'QUATERNION'
-    RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-    RF1p.scale = .33*totjOBJ.scale
-    RF1p.name = totjOBJ.name + '_RF1_pos'
-    parenting(RF1p, n1OBJ)
-    RF1p.hide_viewport = True
-
-    # create an object representing the RF used to express the relative
-    # orientation w.r.t. node 1, for model debugging
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value)
-    RF1r = bpy.context.selected_objects[0]
-    RF1r.rotation_mode = 'QUATERNION'
-    RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value)
-    RF1r.scale = .33*totjOBJ.scale
-    RF1r.name = totjOBJ.name + '_RF1_rot'
-    parenting(RF1r, n1OBJ)
-    RF1r.hide_viewport = True
-
-    # set parenting of wireframe obj
-    parenting(totjOBJ, n1OBJ)
-
-    grouping(context, totjOBJ, [n1OBJ, RF1p, RF1r])
-
-    elem.blender_object = totjOBJ.name
-    totjOBJ.mbdyn.dkey = elem.name
-    totjOBJ.mbdyn.type = 'element'
-
-    return {'FINISHED'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_total_pin_joint_element(elem, context) function
 
@@ -768,6 +792,9 @@ class BLENDYN_OT_import_total(bpy.types.Operator):
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
@@ -805,6 +832,9 @@ class BLENDYN_OT_import_total_pin(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

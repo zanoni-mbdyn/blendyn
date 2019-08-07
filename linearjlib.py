@@ -185,10 +185,16 @@ def spawn_linearvelocity_element(elem, context):
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe linearvelocity joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe linearvelocity joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
            'library', 'joints.blend', 'Object'), filename = 'linvel.v')
-    if app_retval == {'FINISHED'}:
+        
         # the append operator leaves just the imported object selected
         linearvelocityjOBJv = bpy.context.selected_objects[0]
         linearvelocityjOBJ = bpy.context.selected_objects[1]
@@ -220,10 +226,16 @@ def spawn_linearvelocity_element(elem, context):
         linearvelocityOBJ.mbdyn.dkey = elem.name
         linearvelocityOBJ.mbdyn.type = 'element'
         elem.blender_object = linearvelocityjOBJ.name
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_linearvelocity_element(elem, context) function
 
@@ -245,10 +257,16 @@ def spawn_linearacceleration_element(elem, context):
     # nodes objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe linearacceleration joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe linearacceleration joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'linacc.a')
-    if app_retval == {'FINISHED'}:
+        
         # the append operator leaves just the imported object selected
         linearaccelerationjOBJa = bpy.context.selected_objects[0]
         linearaccelerationjOBJ = bpy.context.selected_objects[1]
@@ -278,9 +296,15 @@ def spawn_linearacceleration_element(elem, context):
 
         elem.blender_object = linearaccelerationjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_linearacceleration_element(elem, context) function
 
@@ -308,6 +332,9 @@ class BLENDYN_OT_import_linearvelocity(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -348,6 +375,9 @@ class BLENDYN_OT_import_linearacceleration(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

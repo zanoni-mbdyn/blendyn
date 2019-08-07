@@ -125,7 +125,7 @@ def spawn_clamp_element(elem, context):
         bpy.data.collections['joints'].children.link(elcol)
 
         # load the wireframe joint object from the library
-        app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'clamp')
         # the append operator leaves just the imported object selected
         clampjOBJ = bpy.context.selected_objects[0]
@@ -151,12 +151,13 @@ def spawn_clamp_element(elem, context):
         # set parenting of wireframe obj
         parenting(clampjOBJ, n1OBJ)
 
-        # set collections
-        elcol.objects.link(n1OBJ)
-
-        clampOBJ.mbdyn.dkey = elem.name
-        clampOBJ.mbdyn.type = 'element'
+        clampjOBJ.mbdyn.dkey = elem.name
+        clampjOBJ.mbdyn.type = 'element'
         elem.blender_object = clampjOBJ.name
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
     except FileNotFoundError:
@@ -195,6 +196,7 @@ class BLENDYN_OT_import_clamp(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'COLLECTION_ERROR'}:
                 eldbmsf(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval

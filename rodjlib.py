@@ -348,6 +348,9 @@ class BLENDYN_OT_import_rod(bpy.types.Operator):
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
@@ -561,6 +564,14 @@ def spawn_rod_element(elem, context):
     rodobj_id = 'rod_' + str(elem.int_label)
     rodcv_id = rodobj_id + '_cvdata'
         
+    try:
+        # put it all in the 'joints' collection
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elem.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+    
     # check if the object is already present. If it is, remove it.
     if rodobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[rodobj_id])
@@ -593,7 +604,7 @@ def spawn_rod_element(elem, context):
     rodOBJ = bpy.data.objects.new(rodobj_id, cvdata)
     rodOBJ.mbdyn.type = 'element'
     rodOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.collection.objects.link(rodOBJ)
+    elcol.objects.link(rodOBJ)
     elem.blender_object = rodOBJ.name
         
     ## hooking of the line ends to the Blender objects 
@@ -632,11 +643,14 @@ def spawn_rod_element(elem, context):
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # create group for element and hide P1 and P2 objects
-    grouping(context, rodOBJ, [p1OBJ, n1OBJ, p2OBJ, n2OBJ])
     n2OBJ.select_set(state = True)
     p1OBJ.hide_viewport = True
     p2OBJ.hide_viewport = True
+ 
+    # put them all in the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return{'FINISHED'}
@@ -716,7 +730,7 @@ def spawn_rod_element(elem, context):
 #        rodOBJ = bpy.data.objects.new("rod_bezier_" + str(elem.int_label), cvdata)
 #        rodOBJ.mbdyn.type = 'element'
 #        rodOBJ.mbdyn.dkey = elem.name
-#        bpy.context.scene.collection.objects.link(rodOBJ)
+#        elcol.objects.link(rodOBJ)
 #        elem.blender_object = rodOBJ.name
 #        elem.name = rodOBJ.name
 #        rodOBJ.select_set(state = True)

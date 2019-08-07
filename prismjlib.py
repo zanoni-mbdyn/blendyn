@@ -160,10 +160,15 @@ def spawn_prismatic_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe prismatic joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe prismatic joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'prismatic')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         prismjOBJ = bpy.context.selected_objects[0]
         prismjOBJ.name = elem.name
@@ -204,15 +209,20 @@ def spawn_prismatic_element(elem, context):
         # set parenting of wireframe obj
         parenting(prismjOBJ, n1OBJ)
 
-        grouping(context, prismjOBJ, [n1OBJ])
-
         prismjOBJ.mbdyn.dkey = elem.name
         prismjOBJ.mbdyn.type = 'element'
         elem.blender_object = prismjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_prismatic_element(elem, context) function
 
@@ -241,6 +251,9 @@ class BLENDYN_OT_import_prismatic(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

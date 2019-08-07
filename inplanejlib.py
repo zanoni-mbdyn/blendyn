@@ -181,10 +181,15 @@ def spawn_inplane_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe inplane joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        
+        # load the wireframe inplane joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'inplane')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         inplanejOBJ = bpy.context.selected_objects[0]
         inplanejOBJ.name = elem.name
@@ -214,15 +219,19 @@ def spawn_inplane_element(elem, context):
         # set parenting of wireframe obj
         parenting(inplanejOBJ, n1OBJ)
 
-        grouping(context, inplanejOBJ, [n1OBJ])
-
         inplanejOBJ.mbdyn.dkey = elem.name
         inplanejOBJ.mbdyn.type = 'element'
         elem.blender_object = inplanejOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_inplane_element(elem, context) function
 
@@ -251,6 +260,9 @@ class BLENDYN_OT_import_inplane(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

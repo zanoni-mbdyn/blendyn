@@ -1970,7 +1970,7 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
                 row.operator(BLENDYN_OT_obj_select_node.bl_idname, \
                         text = "ASSIGN").ndx = nd_entry.name
                 if bpy.data.objects.get(nd_entry.blender_object) == 'none':
-                    row.operator(BLENDYN_OT_single_node_import.bl_idname, \
+                    row.operator(BLENDYN_OT_node_import_single.bl_idname, \
                             text = "ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
@@ -1986,12 +1986,19 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
         nd = mbs.nodes
         added_nodes = 0
 
+        try:
+            ncol = bpy.data.collections['mbdyn.nodes']
+            set_active_collection('mbdyn.nodes')
+        except KeyError:
+            message = "BLENDYN_OT_node_import_all::execute(): "\
+                    + "could not find the 'mbdyn.nodes' collection"
+            print(message)
+            logging.error(message)
+            return {'CANCELLED'}
+
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
-                
-                if not (bpy.context.collection == bpy.data.collections['mbdyn.nodes']):
-                    set_active_collection('mbdyn.nodes')
-                
+                 
                 if not(spawn_node_obj(context, node)):
                     message = ("BLENDYN_OT_node_import_all::execute(): " \
                               + "Could not spawn the Blender object assigned to node " \
@@ -2018,6 +2025,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                         + " to scene and associated with object " + obj.name)
                 added_nodes += 1
 
+        set_active_collection('Master Collection')
         if added_nodes:
             message = ("BLENDYN_OT_node_import_all::execute(): " \
                       + "All MBDyn nodes imported successfully")
@@ -2034,7 +2042,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
 # end of BLENDYN_OT_node_import_all class
 
 
-class BLENDYN_OT_single_node_import(bpy.types.Operator):
+class BLENDYN_OT_node_import_single(bpy.types.Operator):
     """ Imports a single MBDyn node, selected by the user in the UI,
         into the Blender scene """
     bl_idname = "blendyn.single_node_import"
@@ -2047,11 +2055,21 @@ class BLENDYN_OT_single_node_import(bpy.types.Operator):
                 node.blender_object = "none"
 
     def execute(self, context):
+        try:
+            ncol = bpy.data.collections['mbdyn.nodes']
+            set_active_collection('mbdyn.nodes')
+        except KeyError:
+            message = "BLENDYN_OT_node_import_single::execute(): "\
+                    + "could not find the 'mbdyn.nodes' collection"
+            print(message)
+            logging.error(message)
+            return {'CANCELLED'}
+        
         added_node = False
         for node in context.scene.mbdyn.nodes:
             if node.int_label == self.int_label:
                 if not(spawn_node_obj(context, node)):
-                    message = "BLENDYN_OT_single_node_import::execute(): " \
+                    message = "BLENDYN_OT_node_import_single::execute(): " \
                               + "Could not spawn the Blender object assigned to node {}"\
                               .format(node.int_label)
 
@@ -2069,7 +2087,7 @@ class BLENDYN_OT_single_node_import(bpy.types.Operator):
                 else:
                     obj.name = node.name
                 node.blender_object = obj.name
-                message = "BLENDYN_OT_single_node_import::execute(): " \
+                message = "BLENDYN_OT_node_import_single::execute(): " \
                           + "added node " + str(node.int_label)\
                           + " to scene and associated it with object " \
                           + obj.name
@@ -2077,20 +2095,20 @@ class BLENDYN_OT_single_node_import(bpy.types.Operator):
                 baseLogger.info(message)
                 added_node = True
         if added_node:
-            message = "BLENDYN_OT_single_node_import::execute(): " \
+            message = "BLENDYN_OT_node_import_single::execute(): " \
                       + "node " + str(node.int_label)\
                       + " imported to scene "
             self.report({'INFO'}, message)
             baseLogger.info(message)
             return {'FINISHED'}
         else:
-            message = "BLENDYN_OT_single_node_import::execute(): " \
+            message = "BLENDYN_OT_node_import_single::execute(): " \
                       + "Cannot import MBDyn node " + node.string_label
             self.report({'WARNING'}, message) 
             baseLogger.warning(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_single_node_import class
+# end of BLENDYN_OT_node_import_single class
 
 
 class BLENDYN_OT_references_import_all(bpy.types.Operator):
@@ -2273,13 +2291,13 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
                     # eval("spawn_" + elem.type + "_element(elem, context)")
                     eval("bpy.ops." + elem.import_function + "()")
                 except NameError:
-                    if ( elem.type == 'structural_absolute_force' ) \
-                            or ( elem.type == 'structural_follower_force' ):
-                        eval("spawn_structural_force_element(elem, context)")
-                    elif ( elem.type == 'structural_absolute_couple' ) \
-                            or ( elem.type == 'structural_follower_couple' ):
-                        eval("spawn_structural_couple_element(elem, context)")
-                    else:
+#                     if ( elem.type == 'structural_absolute_force' ) \
+#                             or ( elem.type == 'structural_follower_force' ):
+#                         eval("spawn_structural_force_element(elem, context)")
+#                     elif ( elem.type == 'structural_absolute_couple' ) \
+#                             or ( elem.type == 'structural_follower_couple' ):
+#                         eval("spawn_structural_couple_element(elem, context)")
+#                     else:
                         message = "BLENDYN_OT_import_elements_by_type::execute(): " \
                                   + "Could not find the import function for element of type " \
                                   + elem.type + ". Element " + elem.name + " not imported."
@@ -2309,17 +2327,16 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
             if (elem.int_label >= mbs.min_elem_import) \
                     and (elem.int_label <= mbs.max_elem_import):
                 try:
-                    # eval("spawn_" + elem.type + "_element(elem, context)")
                     eval("bpy.ops." + elem.import_function \
                             + "(int_label = " + str(elem.int_label) + ")")
                 except NameError:
-                    if ( elem.type == 'structural_absolute_force' ) \
-                            or ( elem.type == 'structural_follower_force' ):
-                        eval("spawn_structural_force_element(elem, context)")
-                    elif ( elem.type == 'structural_absolute_couple' ) \
-                            or ( elem.type == 'structural_follower_couple' ):
-                        eval("spawn_structural_couple_element(elem, context)")
-                    else:
+#                     if ( elem.type == 'structural_absolute_force' ) \
+#                             or ( elem.type == 'structural_follower_force' ):
+#                         eval("spawn_structural_force_element(elem, context)")
+#                     elif ( elem.type == 'structural_absolute_couple' ) \
+#                             or ( elem.type == 'structural_follower_couple' ):
+#                         eval("spawn_structural_couple_element(elem, context)")
+#                     else:
                         message = "BLENDYN_OT_elements_import_all::execute(): " \
                                   + "Could not find the import function for element of type " \
                                   + elem.type + ". Element " + elem.name + " not imported."

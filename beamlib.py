@@ -283,6 +283,14 @@ def spawn_beam2_element(elem, context):
     beamobj_id = 'beam2_' + str(elem.int_label)
     beamcv_id = beamobj_id + '_cvdata'
 
+    try:
+        # put it all in the 'beams' collection
+        set_active_collection('beams')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['beams'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     # check if the object is already present. If it is, remove it.
     if beamobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[beamobj_id])
@@ -314,7 +322,7 @@ def spawn_beam2_element(elem, context):
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'element'
     beamOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.collection.objects.link(beamOBJ)
+    elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
     # P1 hook
@@ -363,8 +371,10 @@ def spawn_beam2_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # create group for element
-    grouping(context, beamOBJ, [n1OBJ, n2OBJ])
+    # link objects to the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return {'FINISHED'}
@@ -402,6 +412,14 @@ def spawn_beam3_element(elem, context):
     # Create the NURBS order 3 curve
     beamobj_id = 'beam3_' + str(elem.int_label)
     beamcv_id = beamobj_id + '_cvdata'
+   
+    try:
+        # put it all in the 'beams' collection
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['beams'].children.link(elcol)
+        set_active_collection(elem.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 
     # Check if the object is already present. If it is, remove it.
     if beamobj_id in bpy.data.objects.keys():
@@ -433,7 +451,7 @@ def spawn_beam3_element(elem, context):
     P2 = n2OBJ.matrix_world@Vector(( f2[0], f2[1], f2[1], 1.0 ))
     P3 = n3OBJ.matrix_world@Vector(( f3[0], f3[1], f3[1], 1.0 ))
 
-    # define the two intermediate control points
+    # define the two intermediate control points # FIXME: find a more efficient way!!
     t1 = -3*P1 + 4*P2 - P3
     t1.normalize()
 
@@ -476,7 +494,7 @@ def spawn_beam3_element(elem, context):
     ude.dkey = elem.name
     ude.name = elem.name
 
-    bpy.context.scene.collection.objects.link(beamOBJ)
+    elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
     beamOBJ.select_set(state = True)
 
@@ -537,13 +555,18 @@ def spawn_beam3_element(elem, context):
  
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    grouping(context, beamOBJ, [n1OBJ, n2OBJ, n3OBJ, obj2, obj3])
     elem.is_imported = True
 
     obj2.hide_viewport = True
     obj3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
+    
+    # put them all in the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    elcol.objects.link(n3OBJ)
+    set_active_collection('Master Collection')
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_beam3_element(elem, context) function
@@ -570,7 +593,7 @@ def update_beam3(elem, insert_keyframe = False):
     f2 = elem.offsets[1].value
     f3 = elem.offsets[2].value
 
-    bpy.context.scene.update()
+    # bpy.context.scene.update()
 
     # points on beam
     P1 = n1.matrix_world@Vector(( f1[0], f1[1], f1[2], 1.0 ))
@@ -608,7 +631,7 @@ def update_beam3(elem, insert_keyframe = False):
     # cvdata.splines[0].points[2].tilt = t2.to_3d()*(theta2*phi2)
     # cvdata.splines[0].points[3].tilt = t3.to_3d()*(theta3*phi3)
 
-    bpy.context.scene.update()
+    # bpy.context.scene.update()
 
     if insert_keyframe:
         try:
@@ -659,6 +682,9 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
@@ -698,6 +724,9 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)

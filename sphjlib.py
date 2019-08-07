@@ -178,10 +178,15 @@ def spawn_spherical_hinge_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'spherical')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         sphjOBJ = bpy.context.selected_objects[0]
         sphjOBJ.name = elem.name
@@ -222,16 +227,20 @@ def spawn_spherical_hinge_element(elem, context):
         # set parenting of wireframe obj
         parenting(sphjOBJ, n1OBJ)
 
-        grouping(context, sphjOBJ, [n1OBJ])
-
         sphjOBJ.mbdyn.dkey = elem.name
         sphjOBJ.mbdyn.type = 'element'
         elem.blender_object = sphjOBJ.name 
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -------------------------------------------------------------------------- 
 # end of spawn_spherical_hinge_element(element, context) function
 
@@ -254,11 +263,16 @@ def spawn_spherical_pin_element(elem, context):
     # node object
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'spherical.pin')
 
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         sphjOBJ = bpy.context.selected_objects[0]
         sphjOBJ.name = elem.name
@@ -283,14 +297,17 @@ def spawn_spherical_pin_element(elem, context):
         # set parenting of wireframe obj
         parenting(sphjOBJ, n1OBJ)
 
-        grouping(context, sphjOBJ, [n1OBJ])
-
         elem.blender_object = sphjOBJ.name
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -------------------------------------------------------------------------- 
 # end of spawn_spherpical_pin_element(element, context) function
 
@@ -318,6 +335,9 @@ class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
@@ -356,6 +376,9 @@ class BLENDYN_OT_import_spherical_pin(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:

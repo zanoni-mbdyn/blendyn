@@ -244,11 +244,16 @@ def spawn_structural_force_element(elem, context):
     # node object
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe force object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'forces.blend', 'Object'), filename = 'force')
+    try:
 
-    if app_retval == {'FINISHED'}:
+        set_active_collection('forces')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['forces'].children.link(elcol)
+
+        # load the wireframe force object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'library', 'forces.blend', 'Object'), filename = 'force')
+        
         # the append operator leaves just the imported object selected
         forceOBJ = bpy.context.selected_objects[0]
         forceOBJ.name = elem.name
@@ -267,8 +272,6 @@ def spawn_structural_force_element(elem, context):
         # set parenting of wireframe obj
         parenting(forceOBJ, n1OBJ)
 
-        grouping(context, forceOBJ, [n1OBJ])
-
         elem.blender_object = forceOBJ.name
         forceOBJ.mbdyn.dkey = elem.name
         forceOBJ.mbdyn.type = 'element'
@@ -277,11 +280,16 @@ def spawn_structural_force_element(elem, context):
         ude = bpy.context.scene.mbdyn.elems_to_update.add()
         ude.dkey = elem.name
         ude.name = elem.name
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_structural_force_element(elem, layout) function
 
@@ -303,11 +311,13 @@ def spawn_structural_couple_element(elem, context):
     # node object
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe couple object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'forces.blend', 'Object'), filename = 'couple')
+    try:
+        set_active_collection('forces')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['forces'].children.link(elcol)
 
-    if app_retval == {'FINISHED'}:
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'library', 'forces.blend', 'Object'), filename = 'couple')
         # the append operator leaves just the imported object selected
         coupleOBJ = bpy.context.selected_objects[0]
         coupleOBJ.name = elem.name
@@ -326,8 +336,6 @@ def spawn_structural_couple_element(elem, context):
         # set parenting of wireframe obj
         parenting(coupleOBJ, n1OBJ)
 
-        grouping(context, coupleOBJ, [n1OBJ])
-
         elem.blender_object = coupleOBJ.name
         coupleOBJ.mbdyn.dkey = elem.name
         coupleOBJ.mbdyn.type = 'element'
@@ -337,10 +345,15 @@ def spawn_structural_couple_element(elem, context):
         ude.dkey = elem.name
         ude.name = elem.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_structural_couple_element(elem, layout) function
 
@@ -368,6 +381,9 @@ class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -408,6 +424,9 @@ class BLENDYN_OT_import_structural_follower_force(bpy.types.Operator):
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
@@ -446,6 +465,9 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -489,6 +511,9 @@ class BLENDYN_OT_import_structural_follower_couple(bpy.types.Operator):
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
@@ -523,7 +548,7 @@ def update_structural_force(elem, insert_keyframe = False):
        
         try: 
             F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
-            Fl = R0.transposed()*F
+            Fl = R0.transposed()@F
             obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
             obj.scale = Vector(( 1, 1, Fl.magnitude ))
         except IndexError:

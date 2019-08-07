@@ -126,7 +126,7 @@ classes = (
         BLENDYN_PT_reference_scene,
         BLENDYN_PT_obj_select,
         BLENDYN_OT_node_import_all,
-        BLENDYN_OT_single_node_import,
+        BLENDYN_OT_node_import_single,
         BLENDYN_OT_references_import_all,
         BLENDYN_OT_references_import_single,
         BLENDYN_OT_select_all_nodes,

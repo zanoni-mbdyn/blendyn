@@ -181,10 +181,15 @@ def spawn_cardano_hinge_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+        
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol) 
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'cardano')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         carjOBJ = bpy.context.selected_objects[0]
         carjOBJ.name = elem.name
@@ -225,17 +230,20 @@ def spawn_cardano_hinge_element(elem, context):
         # set parenting of wireframe obj
         parenting(carjOBJ, n1OBJ)
 
-        # set group
-        grouping(context, carjOBJ, [n1OBJ])
-
         carjOBJ.mbdyn.dkey = elem.name
         carjOBJ.mbdyn.type = 'element'
         elem.blender_object = carjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_cardano_hinge_elem(elem, layout) function
 
@@ -257,10 +265,17 @@ def spawn_cardano_pin_elem(elem, context):
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'cardano.pin')
-    if app_retval == {'FINISHED'}:
+        
         # the append operator leaves just the imported object selected
         carjOBJ = bpy.context.selected_objects[0]
         carjOBJ.name = elem.name
@@ -285,13 +300,15 @@ def spawn_cardano_pin_elem(elem, context):
         # set parenting of wireframe obj
         parenting(carjOBJ, n1OBJ)
 
-        # set group
-        grouping(context, carjOBJ, [n1OBJ])
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_cardano_pin_elem(elem, layout) function
 
@@ -322,6 +339,9 @@ class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -361,6 +381,9 @@ class BLENDYN_OT_import_cardano_pin(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

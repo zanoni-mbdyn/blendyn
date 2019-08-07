@@ -155,6 +155,14 @@ def spawn_distance_element(elem, context):
     # creation of line representing the dist
     distobj_id = 'dist_' + str(elem.int_label)
     distcv_id = distobj_id + '_cvdata'
+    
+    try:
+        # put it all in the 'joints' collection
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 
     # check if the object is already present. If it is, remove it.
     if distobj_id in bpy.data.objects.keys():
@@ -187,7 +195,7 @@ def spawn_distance_element(elem, context):
     distOBJ = bpy.data.objects.new(distobj_id, cvdata)
     distOBJ.mbdyn.type = 'element'
     distOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.collection.objects.link(distOBJ)
+    elcol.objects.link(distOBJ)
     elem.blender_object = distOBJ.name
 
     # Finishing up
@@ -256,10 +264,13 @@ def spawn_distance_element(elem, context):
     # set parenting
     parenting(distOBJ, n1OBJ)
 
-    # set group
+    # put them all in the element collection
     dist_child1 = bpy.data.objects[distOBJ.name + '_child1']
-    dist_child2 = bpy.data.objects[distOBJ.name + '_child2']
-    grouping(context, distOBJ, [n1OBJ, n2OBJ, dist_child2, dist_child1])
+    dist_child2 = bpy.data.objects[distOBJ.name + '_child2'] 
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    elcol.objects.link(dist_child1)
+    elcol.objects.link(dist_child2)
 
     elem.is_imported = True
     return{'FINISHED'}
@@ -291,6 +302,9 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

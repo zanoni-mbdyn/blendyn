@@ -182,59 +182,62 @@ def spawn_brake_element(elem, context):
     p1 = Vector(( f1[0], f1[1], f1[2] ))
     p2 = Vector(( f2[0], f2[1], f2[2] ))
 
-    # load the wireframe brake joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'brake_disc')
-    if app_retval == {'FINISHED'}:
+    try:        
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe brake joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+                'library', 'joints.blend', 'Object'), filename = 'brake_disc')
         # the append operator leaves just the imported object selected
-        brakejOBJ = bpy.context.selected_objects[0]
-        brakejOBJ.name = elem.name
+        brakejOBJd = bpy.context.selected_objects[0]
+        brakejOBJd.name = elem.name
+    
+        # automatic scaling
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+                n2OBJ.scale.magnitude)
+        brakejOBJd.scale = Vector(( s, s, s ))
+    
+        # place the joint object in the position defined relative to node 2
+        brakejOBJd.location = p2
+        brakejOBJd.rotation_mode = 'QUATERNION'
+        brakejOBJd.rotation_quaternion = Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+    
+        # set parenting of wireframe obj
+        parenting(brakejOBJd, n2OBJ)
+    
+        elem.blender_object = brakejOBJd.name
+ 
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+                        'library', 'joints.blend', 'Object'), filename = 'brake_caliper')
+        # the append operator leaves just the imported object selected
+        brakejOBJc = bpy.context.selected_objects[0]
+        brakejOBJc.name = elem.name + '_caliper'
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
         n2OBJ.scale.magnitude)
-        brakejOBJ.scale = Vector(( s, s, s ))
+        brakejOBJc.scale = Vector(( s, s, s ))
     
-        # place the joint object in the position defined relative to node 2
-        brakejOBJ.location = p1
-        brakejOBJ.rotation_mode = 'QUATERNION'
-        brakejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        # place the joint object in the position defined relative to node 1
+        brakejOBJc.location = p1
+        brakejOBJc.rotation_mode = 'QUATERNION'
+        brakejOBJc.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        parenting(brakejOBJ, n2OBJ)
-
-        elem.blender_object = brakejOBJ.name
-    else:
-        return {'LIBRARY_ERROR'}
-
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-                    'library', 'joints.blend', 'Object'), filename = 'brake_caliper')
-    print(app_retval)
-    if app_retval == {'FINISHED'}:
-        # the append operator leaves just the imported object selected
-        brakejOBJ = bpy.context.selected_objects[0]
-        brakejOBJ.name = elem.name + '_caliper'
-
-        # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)
-        brakejOBJ.scale = Vector(( s, s, s ))
-    
-        # place the joint object in the position defined relative to node 2
-        brakejOBJ.location = p1
-        brakejOBJ.rotation_mode = 'QUATERNION'
-        brakejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
-
-        # set parenting of wireframe obj
-        parenting(brakejOBJ, n1OBJ)
+        parenting(brakejOBJc, n1OBJ)
 
         elem.blender_object = brakejOBJ.name
 
-        grouping(context, bpy.data.objects[elem.name], [n1OBJ, n2OBJ, brakejOBJ, bpy.data.objects[elem.name]])
-
+        # link to the element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_brake_element(elem, context) function
 
@@ -264,6 +267,9 @@ class BLENDYN_OT_import_brake(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

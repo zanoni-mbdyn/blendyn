@@ -77,6 +77,13 @@ def spawn_reference_frame(ref, context):
     if any(obj == ref.blender_object for obj in bpy.data.objects.keys()):
         return {'OBJECT_EXISTS'}
 
+    try:
+        set_active_collection('references')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['references'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     bpy.ops.object.empty_add(type = 'ARROWS', location = ref.pos)
     obj = context.view_layer.objects.active
     obj.mbdyn.type = 'reference'
@@ -90,6 +97,8 @@ def spawn_reference_frame(ref, context):
         obj.name = ref.name
    
     ref.blender_object = obj.name
+    
+    set_active_collection('Master Collection')
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_reference_frame(ref, context) function
@@ -124,6 +133,12 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
                 print(message)
                 logging.info(message)
                 return retval
+            elif retval == {'COLLECTION_ERROR'}:
+                message = "BLENDYN::parse_reference_frame(): "\
+                + "references collection not found "
+                print(message)
+                logging.info(message)
+                return retval 
             else:
                 # Should not be reached
                 return retval

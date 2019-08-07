@@ -156,6 +156,15 @@ def spawn_drive_displacement_element(elem, context):
     drvdispobj_id = 'drvdisp_' + str(elem.int_label)
     drvdispcv_id = drvdispobj_id + '_cvdata'
 
+    try:
+        # put it all in the 'beams' collection
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+        
+
     # check if the object is already present. If it is, remove it.
     if drvdispobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[drvdispobj_id])
@@ -213,8 +222,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-    #hooking of the line ends to the Blender objects
-    
+    # hooking of the line ends to the Blender objects
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select_set(state = True)
@@ -267,6 +275,11 @@ def spawn_drive_displacement_element(elem, context):
     bpy.context.view_layer.objects.active = n1OBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
+    # link objects to the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
+
     elem.is_imported = True
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -297,6 +310,9 @@ class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval ==  {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

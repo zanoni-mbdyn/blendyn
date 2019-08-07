@@ -188,10 +188,15 @@ def spawn_angularvelocity_element(elem, context):
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe angularvelocity joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe angularvelocity joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'angvel.w')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         angularvelocityjOBJw = bpy.context.selected_objects[0]
         angularvelocityjOBJ = angularvelocityjOBJw.constraints[0].target
@@ -224,10 +229,15 @@ def spawn_angularvelocity_element(elem, context):
         elem.blender_object = angularvelocityjOBJ.name
         angularvelocityOBJ.mbdyn.type = 'element'
         angularvelocityOBJ.mbdyn.dkey = elem.name
+        
+        # set collections
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
-        return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_angularvelocity_element(elem, context) function
 
@@ -249,10 +259,16 @@ def spawn_angularacceleration_element(elem, context):
     # nodes objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe angularacceleration joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe angularacceleration joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'angacc.a')
-    if app_retval == {'FINISHED'}:
+        
         # the append operator leaves just the imported object selected
         angularaccelerationjOBJa = bpy.context.selected_objects[0]
         angularaccelerationjOBJ = angularaccelerationjOBJa.constraints[0].target
@@ -279,16 +295,22 @@ def spawn_angularacceleration_element(elem, context):
         angularaccelerationjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularaccelerationjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
-        parenting(angularaccelerationjOBJ, n1OBJ)
+        parenting(angularaccelerationjOBJ, [n1OBJ])
 
         # association with dictionary element
         elem.blender_object = angularaccelerationjOBJ.name
         angularaccelerationjOBJ.mbdyn.type = 'element'
         angularaccelerationjOBJ.mbdyn.dkey = elem.name
 
+        # set collections
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_angularacceleration_element(elem, context) function
 
@@ -319,6 +341,9 @@ class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
@@ -356,6 +381,9 @@ class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

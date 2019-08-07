@@ -172,10 +172,14 @@ def spawn_axialrot_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe axialrot joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+
+        # load the wireframe axialrot joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'axialrot')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         axialrotjOBJ = bpy.context.selected_objects[0]
         axialrotjOBJ.name = elem.name
@@ -205,15 +209,20 @@ def spawn_axialrot_element(elem, context):
         # set parenting of wireframe obj
         parenting(axialrotjOBJ, n1OBJ)
 
-        grouping(context, axialrotjOBJ, [n1OBJ])
-
-        axialrotOBJ.mbdyn.dkey = elem.name
-        axialrotOBJ.mbdyn.type = 'element'
+        axialrotjOBJ.mbdyn.dkey = elem.name
+        axialrotjOBJ.mbdyn.type = 'element'
         elem.blender_object = axialrotjOBJ.name
+        
+        # set collections
+        elcol.objects.link(n1OBJ) 
+        elcol.objects.link(n2OBJ) 
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_axialrot_element(elem, context) function
 
@@ -246,6 +255,9 @@ class BLENDYN_OT_import_axialrot(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:

@@ -234,6 +234,13 @@ def spawn_aero0_element(elem, context):
     if planeobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[planeobj_id])
 
+    try:
+        set_active_collection('aerodynamic')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['aerodynamic'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
     aero0OBJ = bpy.context.view_layer.objects.active
@@ -256,6 +263,10 @@ def spawn_aero0_element(elem, context):
     aero0OBJ.mbdyn.dkey = elem.name
     aero0OBJ.mbdyn.type = 'element'
     elem.blender_object = aero0OBJ.name
+    
+    # set collections
+    elcol.objects.link(n1OBJ)
+    set_current_collection('Master Collection')
 
     return{'FINISHED'}
 # -----------------------------------------------------------
@@ -301,6 +312,13 @@ def spawn_aero2_element(elem, context):
     if planeobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[planeobj_id])
 
+    try:
+        set_active_collection('aerodynamic')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['aerodynamic'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+    
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
     aero2OBJ = bpy.context.view_layer.objects.active
@@ -332,6 +350,11 @@ def spawn_aero2_element(elem, context):
     aero2OBJ.mbdyn.dkey = elem.name
     aero2OBJ.mbdyn.type = 'element'
     elem.blender_object = aero2OBJ.name
+
+    # set collections
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
 
     return{'FINISHED'}
 # -----------------------------------------------------------
@@ -366,6 +389,13 @@ def spawn_aero3_element(elem, context):
 
     # name of the plane object
     planeobj_id = elem.type + "_" + str(elem.int_label)
+    
+    try:
+        set_active_collection('aerodynamic')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['aerodynamic'].children.link(elcol)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 
     # check if the object is already present. If it is, remove it
     if planeobj_id in bpy.data.objects.keys():
@@ -419,6 +449,12 @@ def spawn_aero3_element(elem, context):
     aero3OBJ.mbdyn.type = 'element'
     elem.blender_object = aero3OBJ.name
 
+    # set collections
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    elcol.objects.link(n3OBJ)
+    set_active_collection('Master Collection')
+
     return{'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_aero3_element() function
@@ -443,13 +479,15 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
             if retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
                 return retval
             else:
                 # Should not be reached
-                return retval
-                
+                return retval 
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
@@ -477,6 +515,9 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
@@ -515,6 +556,9 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
