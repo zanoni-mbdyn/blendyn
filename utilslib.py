@@ -69,29 +69,9 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
 
                 obj = bpy.data.objects.new(name, cvdata)
                 scol.objects.link(obj)
-            
-                kk = 0
-                layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
-                try:
-                    while len(layer_objs):
-                        kk = kk + 1
-                        layer_objs.clear()
-                        layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
-                    obj.layers[kk] = True
-                    for jj in range(len(obj.layers)):
-                        if jj != kk:
-                            obj.layers[jj] = False
-                except IndexError:
-                    message = "BLENDYN_OT_load_section::execute(): "\
-                            + "Couldn't find an empty layer. Using the active layer"
-                    self.report({'INFO'}, message)
-                    logging.info(message)
-                    pass
-                
-                # context.curve.bevel_object = obj
-
+             
                 for item in bpy.context.scene.objects:
-                    if ('beam3_' in item.name) and item.select:
+                    if item.select_get():
                         try:
                             item.data.bevel_object = obj
                         except AttributeError:
@@ -109,6 +89,12 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     + "Unespected end of file"
             self.report({'WARNING'}, message)
             logging.warning(message)
+            return {'CANCELLED'}
+        except KeyError:
+            message = "BLENDYN_OT_load_section::execute(): "\
+                    + "Could not finde 'sections' collection"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of fmin function BLENDYN_OT_load_section class
