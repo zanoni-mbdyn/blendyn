@@ -602,7 +602,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             default = 0
     )
     node_scale_slider: FloatProperty(
-            name = "Value of Scaling",
+            name = "Scaling factor",
             default = 1.0
     )
     # Type filter for elements import
@@ -613,10 +613,6 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     elem_scale_slider: FloatProperty(
             name = "Scaling Factor",
             default = 1.0
-    )
-    elem_type_scale: EnumProperty(
-            items = get_elems_types,
-            name = "Elements to scale",
     )
     # Lower limit of range import for elemens
     min_elem_import: IntProperty(
@@ -1770,29 +1766,39 @@ class BLENDYN_PT_nodes_scene(bpy.types.Panel):
         if len(nd):
             item = mbs.nodes[mbs.nd_index]
 
-            col = layout.column()
-
+            box = layout.box()
+            col = box.column()
             col.prop(item, "int_label")
             col.prop(item, "string_label")
             col.prop(item, "blender_object")
             col.enabled = False
 
-            row = layout.row()
-            row.prop(mbs, "node_object")
-
-            col = layout.column()
+            box = layout.box()
+            col = box.column()
+            col.prop(mbs, "node_object")
             col.prop(mbs, "min_node_import")
             col.prop(mbs, "max_node_import")
-            row = layout.row()
-            row.operator(BLENDYN_OT_node_import_all.bl_idname,\
+            col.operator(BLENDYN_OT_node_import_all.bl_idname,\
                     text = "Add nodes to scene")
 
-            row = layout.row()
-            row.operator(BLENDYN_OT_create_vertices_from_nodes.bl_idname,\
+            box = layout.box()
+            col = box.column()
+            col.operator(BLENDYN_OT_select_all_nodes.bl_idname, \
+                    text = "Select All Nodes")
+            
+            box = layout.box()
+            col = box.column(align = True)
+            col.prop(mbs, "node_scale_slider")
+            col.operator(BLENDYN_OT_scale_node.bl_idname, \
+                    text = "Scale Selected Node")
+            col.operator(BLENDYN_OT_scale_sel_nodes.bl_idname, \
+                    text = "Scale All Nodes")
+    
+            box = layout.box()
+            col = box.column()
+            col.operator(BLENDYN_OT_create_vertices_from_nodes.bl_idname,\
                     text = "Create vertex grid from nodes")
-
-            row = layout.row()
-            row.prop(mbs, "is_vertshook", text = "Hook vertices to nodes")
+            col.prop(mbs, "is_vertshook", text = "Hook vertices to nodes")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_nodes_scene class
 
@@ -1819,10 +1825,8 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
         if len(mbs.elems):
             item = mbs.elems[mbs.ed_index]
 
-            row = layout.row()
-            row.separator()
-
-            col = layout.column()
+            box = layout.box()
+            col = box.column()
             col.prop(item, "int_label")
             col.prop(item, "string_label")
             col.prop(item, "blender_object")
@@ -1832,11 +1836,14 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
             row.operator(item.import_function, \
                     text="Add element to the scene").int_label = item.int_label
 
-            col = layout.column()
 
-            row = col.row()
-            row.prop(mbs, "elem_type_import")
-            row = col.row()
+            box = layout.box()
+            col = box.column()
+            col.label(text = "Selected element type")
+            col.prop(mbs, "elem_type_import", text = "")
+
+            box = layout.box()
+            col = box.column()
             col.prop(mbs, "min_elem_import")
             col.prop(mbs, "max_elem_import")
             if mbs.elem_type_import in ['shell4']:
@@ -1847,52 +1854,21 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
             elif mbs.mesh_import_mode == 'SINGLE MESH':
                 col.operator(BLENDYN_OT_import_elements_as_mesh.bl_idname, \
                         text="Import elements by type")
-
-            col = layout.column()
             col.operator(BLENDYN_OT_elements_import_all.bl_idname)
+
+            box = layout.box()
+            col = box.column(align = True)
+            col.operator(BLENDYN_OT_select_elements_by_type.bl_idname, \
+                    text = "Select Elements")
+
+            box = layout.box()
+            col = box.column()
+            col.prop(mbs, "elem_scale_slider")
+            col.operator(BLENDYN_OT_scale_elements_by_type.bl_idname, \
+                    text = "Scale Elements")
+
 # -----------------------------------------------------------
 # end of BLENDYN_PT_elems_scene class
-
-
-class BLENDYN_PT_scaling(bpy.types.Panel):
-    """ List of MBDyn elements: use import button to add \
-            them to the scene  """
-    bl_label = "Scale MBDyn Entities"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "scene"
-
-    def draw(self, context):
-        mbs = context.scene.mbdyn
-        layout = self.layout
-        
-        box = layout.box()
-        row = box.row()
-        row.template_list('BLENDYN_UL_mbdyn_nodes_list', "MBDyn nodes list", mbs, "nodes",\
-                mbs, "nd_index")
-        row = box.row()
-        row.prop(mbs, "node_scale_slider")
-        col = box.column(align = True)
-        col.operator(BLENDYN_OT_select_all_nodes.bl_idname, \
-                text = "Select All Nodes")
-        col.operator(BLENDYN_OT_scale_node.bl_idname, \
-                text = "Scale Selected Node")
-        col.operator(BLENDYN_OT_scale_sel_nodes.bl_idname, \
-                text = "Scale All Nodes")
-
-        box = layout.box()
-        col = box.column()
-        col.label(text = "Elements to scale:")
-        col.prop(mbs, "elem_type_scale", text = "")
-        col = box.column()
-        col.prop(mbs, "elem_scale_slider")
-        col = box.column(align = True)
-        col.operator(BLENDYN_OT_select_elements_by_type.bl_idname, \
-                text = "Select Elements")
-        col.operator(BLENDYN_OT_scale_elements_by_type.bl_idname, \
-                text = "Scale Elements")
-# -----------------------------------------------------------
-# end of BLENDYN_PT_scaling class
 
 
 class BLENDYN_PT_reference_scene(bpy.types.Panel):
@@ -2196,7 +2172,7 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
         ed = mbs.elems
         bpy.ops.object.select_all(action = 'DESELECT')
         for var in ed.keys():
-            if mbs.elem_type_scale in var:
+            if mbs.elem_type_import in var:
                 try:
                     obj = bpy.data.objects[var]
                     obj.select_set(state = True)
@@ -2264,7 +2240,7 @@ class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
         ed = mbs.elems
         s = mbs.elem_scale_slider
         for elem in ed:
-            if elem.type == mbs.elem_type_scale:
+            if elem.type == mbs.elem_type_import:
                 scaleOBJ = bpy.data.objects[elem.blender_object]
                 bpy.context.view_layer.objects.active = scaleOBJ 
                 scaleOBJ.scale = Vector((s, s, s))
@@ -2446,7 +2422,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
             vert_obj = bpy.data.objects.new("VertsFromNodes", me)
             bpy.context.scene.collection.objects.link(vert_obj)
 
-            vert_obj.select=True
+            vert_obj.select_set(state = True)
             bpy.context.view_layer.objects.active = vert_obj
             bpy.context.scene.update()
 

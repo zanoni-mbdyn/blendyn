@@ -122,7 +122,6 @@ classes = (
         BLENDYN_PT_active_object,
         BLENDYN_PT_nodes_scene,
         BLENDYN_PT_elems_scene,
-        BLENDYN_PT_scaling,
         BLENDYN_PT_reference_scene,
         BLENDYN_PT_obj_select,
         BLENDYN_OT_node_import_all,
