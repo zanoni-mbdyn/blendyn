@@ -835,8 +835,9 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r')
-            row.template_list('BLENDYN_UL_object_plot_var_list' \
-                    "MBDyn variable to plot", mbs, "plot_vars", \
+            row.template_list('BLENDYN_UL_object_plot_var_list', \
+                    "MBDyn variable to plot", \
+                    mbs, "plot_vars", \
                     mbo, "plot_var_index")
             row = layout.row()
             row.prop(pvar, "as_driver")
@@ -844,7 +845,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                 dim = len(nc.variables[pvar.name].shape)
                 if dim == 2:     # vec3
                     box = layout.box()
-                    split = box.split(1./3.)
+                    split = box.split(factor = 1./3.)
                     column = split.column()
                     column.prop(pvar, "plot_comps", index = 0, text = "x")
                     column = split.column()
@@ -854,7 +855,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                 elif dim == 3:
                     if pvar.name[-1] == 'R':
                         box = layout.box()
-                        split = box.split(1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
@@ -866,7 +867,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                         column.row().prop(pvar, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
-                        split = box.split(1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column.row().prop(pvar, "plot_comps", index = 3, text = "(2,1)")
@@ -932,13 +933,14 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, 'r')
             row.template_list('BLENDYN_UL_plot_var_list', \
-                    "MBDyn variable to plot", mbs, "plot_vars",
+                    "MBDyn variable to plot", \
+                    mbs, "plot_vars",
                     mbs, "plot_var_index")
             try:
                 dim = len(nc.variables[pvar.name].shape)
                 if dim == 2:     # Vec3
                     box = layout.box()
-                    split = box.split(1./3.)
+                    split = box.split(factor = 1./3.)
                     column = split.column()
                     column.prop(pvar, "plot_comps", index = 0, text = "x")
                     column = split.column()
@@ -948,7 +950,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                 elif dim == 3:  # Mat3x3
                     if pvar.name[-1] == 'R':
                         box = layout.box()
-                        split = box.split(1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
@@ -960,7 +962,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         column.row().prop(pvar, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
-                        split = box.split(1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column.row().prop(pvar, "plot_comps", index = 3, text = "(2,1)")
@@ -1003,7 +1005,8 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
 
             row = layout.row()
             row.template_list('BLENDYN_UL_render_vars_list', \
-                    "MBDyn Variables to Render", mbs, "render_vars",\
+                    "MBDyn Variables to Render", \
+                    mbs, "render_vars",\
                     mbs, "render_index")
             row = layout.row()
             row.prop(mbs, "render_var_name")
