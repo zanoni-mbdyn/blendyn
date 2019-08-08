@@ -820,6 +820,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         mbs = context.scene.mbdyn
@@ -914,10 +915,11 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
 class BLENDYN_PT_plot_scene(bpy.types.Panel):
     """ Plotting of MBDyn NetCDF variables:  
         Scene properties panel"""
-    bl_label = "MBDyn Data Plot"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
+    bl_options = {'DEFAULT_CLOSED'}
+    bl_label = "MBDyn Data Plot"
     
     def draw(self, context):
         mbs = context.scene.mbdyn

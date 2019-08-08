@@ -211,6 +211,7 @@ class BLENDYN_PT_bevel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'data'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         ed = context.scene.mbdyn.elems

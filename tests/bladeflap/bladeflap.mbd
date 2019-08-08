@@ -79,8 +79,8 @@ begin: control data;
 		+1	# ground (clamped)
 		+1	# hub (imposed angular velocity)
 		+1	# blade_tip (hinged to hub, flap only)
-		+1  # blade_middle
-		+1  # blade_flap
+		+1  	# blade_middle
+		+1  	# blade_flap
 	;
 	rigid bodies:
 		+3	# blade discretization
@@ -89,15 +89,18 @@ begin: control data;
 		+1	# ground clamp
 		+1	# imposed angular velocity between hub and ground
 		+1	# flap hinge between hub and blade
-		+1  # deformable hinge
+		+1  	# deformable hinge
+		+2	# nodes imposed motion
 	;
 	beams: 
 		+1	# blade beam
 	;
 
+	/*
 	forces:
 		+1	# perturbation
 	;
+	*/
 
 	output results: netcdf;
 
@@ -136,8 +139,8 @@ reference: HUB,
 	reference, GROUND, null,
 	reference, GROUND, eye,
 	reference, GROUND, null,
-	reference, GROUND, 0., 0., OMEGA;
-	# reference, GROUND, 0., 0., 0.;  # for eigenanalysis
+	# reference, GROUND, 0., 0., OMEGA;
+	reference, GROUND, 0., 0., 0.;  # for eigenanalysis
 
 reference: BLADE1_FLAP,
 	reference, HUB, FLAP_OFFSET, 0., 0.,
@@ -201,17 +204,17 @@ begin: elements;
 	joint: HUB, axial rotation,
 		GROUND,
 			reference, GROUND, null,
-			hinge, reference, GROUND, eye,
-			
+			hinge, reference, GROUND, eye,	
 		HUB,
 			reference, GROUND, null,
 			hinge, reference, GROUND, eye,
-		const, OMEGA;
-		# const, 0.;	# for eigenanalysis
+		# const, OMEGA;
+		const, 0.;	# for eigenanalysis
 
 	/* revolute joint axis about joint's local axis 3
 	 * which corresponds to axis 2 in blade's reference frame
 	 */
+	/*
 	joint: BLADE1_FLAP, revolute hinge,
 		HUB,
 			reference, BLADE1_FLAP, null,
@@ -223,7 +226,21 @@ begin: elements;
 			hinge,
 				1, 1., 0., 0.,	# blade axis unchanged
 				3, 0., 1., 0.;	# axis 3 parallel to chord
-				
+	*/
+
+	joint: BLADE1_FLAP, total joint,
+		HUB,
+			position, reference, BLADE1_FLAP, null,
+			position orientation, reference, BLADE1_FLAP, eye,
+			rotation orientation, reference, BLADE1_FLAP, eye,
+		BLADE1_FLAP,
+			position, reference, BLADE1_FLAP, null,
+			position orientation, reference, BLADE1_FLAP, eye,
+			rotation orientation, reference, BLADE1_FLAP, eye,
+		position constraint, 1, 1, 1, null,
+		# orientation constraint, 1, 0, 1, null;
+		orientation constraint, 1, 0, 0, null;
+
 	joint: BLADE1_FLAP+1, deformable hinge,
 		HUB,
 			hinge,
@@ -262,7 +279,39 @@ begin: elements;
 		same, 
 		same;
 
+	joint: BLADE1_FLAP + 2, total pin joint,
+		BLADE1_FLAP,
+			position, reference, node, null,
+			position orientation, reference, node, eye,
+			rotation orientation, reference, node, eye,
+		# GROUND,
+			position, reference, other node, null,
+			position orientation, reference, other node, eye,
+			rotation orientation, reference, other node, eye,
+		position constraint, 0, 0, 0, null,
+		orientation constraint, 0, 1, 1, 
+			component, 
+				const, 0.,
+				const, 0.,
+				cosine, 0.01, pi, 7.5*pi/180., half, 0.;
 
+	joint: BLADE1_FLAP + 3, total pin joint,
+		BLADE1_TIP,
+			position, reference, node, null,
+			position orientation, reference, node, eye,
+			rotation orientation, reference, node, eye,
+		# GROUND,
+			position, reference, other node, null,
+			position orientation, reference, other node, eye,
+			rotation orientation, reference, other node, eye,
+		position constraint, 1, 1, 1, null,
+		orientation constraint, 0, 1, 1, 
+			component, 
+				const, 0.,
+				const, 0.,
+				cosine, 0.01, pi, -7.5*pi/180., half, 0.;
+
+	/*
 	# perturbation: comment out for eigenanalysis
 	force: BLADE1_TIP, absolute,
 		BLADE1_TIP,
@@ -275,6 +324,7 @@ begin: elements;
 			0.,             # initial value
 			forever,	
 			1.;		# final value
+	*/
 end: elements;
 
 # vim:ft=mbd
