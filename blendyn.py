@@ -1752,6 +1752,7 @@ class BLENDYN_PT_nodes_scene(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         mbs = context.scene.mbdyn
@@ -1812,6 +1813,7 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         mbs = context.scene.mbdyn
@@ -1878,6 +1880,7 @@ class BLENDYN_PT_reference_scene(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         mbs = context.scene.mbdyn
