@@ -2427,8 +2427,8 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
 
             vert_obj.select_set(state = True)
             bpy.context.view_layer.objects.active = vert_obj
-            bpy.context.scene.update()
-
+            dg = bpy.context.evaluated_depsgraph_get()
+            dg.update()
 
             if mbs.is_vertshook:
                 # We want to set an hook to all newly created vertices with
@@ -2443,7 +2443,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
                     verts = []
                     verts.append(v.index)
                     vert_obj.vertex_groups['v' + sel_obj[vidx]].add(verts, 1.0, 'ADD')
-                    v.select_set(state = False)
+                    v.select = False
                     vidx = vidx + 1
 
                 # Add the modifiers in edit mode
