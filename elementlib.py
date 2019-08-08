@@ -162,6 +162,10 @@ def update_elements(scene):
         element = ed[elem.name]
         eval(ed[elem.name].update + "(element, True)")
 
+    # Blender 2.8 way of updating the scene
+    dg = bpy.context.evaluated_depsgraph_get()
+    dg.update()
+
 bpy.app.handlers.frame_change_post.append(update_elements)
 
 # Retrieves the types of elements present in the scene and populates 
