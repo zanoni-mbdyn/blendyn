@@ -243,7 +243,7 @@ def parse_log_file(context):
     # if not, create them
 
     try:
-        ncol = bpy.data.collections['mbyn.nodes']
+        ncol = bpy.data.collections['mbdyn.nodes']
     except KeyError:
         ncol = bpy.data.collections.new(name = 'mbdyn.nodes')
         bpy.context.scene.collection.children.link(ncol)
