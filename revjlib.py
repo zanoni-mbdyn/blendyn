@@ -564,7 +564,7 @@ def spawn_revolute_rot_element(elem, context):
 
 # Imports a Revolute Rotation Joint in the scene
 class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
-    bl_idname = "blendyn.import_revolute_pin"
+    bl_idname = "blendyn.import_revolute_rotation"
     bl_label = "MBDyn revolute joint element importer"
     int_label: bpy.props.IntProperty()
 
@@ -604,4 +604,4 @@ class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_import_revolute_pin class
+# end of BLENDYN_OT_import_revolute_rotation class
