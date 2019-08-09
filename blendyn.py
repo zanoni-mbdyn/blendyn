@@ -122,6 +122,11 @@ class BLENDYN_PG_nodes_dictionary(bpy.types.PropertyGroup):
         name = "Is imported flag",
         description = "Flag set to true at the end of the import process"
     )
+    output: BoolProperty(
+            name = "node output state",
+            description = "False if node output is disabled",
+            default = False
+    )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_nodes_dictionary class
 bpy.utils.register_class(BLENDYN_PG_nodes_dictionary)

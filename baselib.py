@@ -185,13 +185,38 @@ def no_output(context):
                 mbs.file_basename + '.mov')
         try:
             with open(mov_file) as mf:
-                reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
-                list1 = []
-                for ii in range(len(nd)):
+                reader = csv.reader(mf, delimiter = ' ', skipinitialspace = True)
+                rw = next(reader)
+                first_node = int(rw[0])
+                num_nodes = 0
+                while True:
+                    node = [node for node in nd if node.int_label == int(rw[0])]
+                    num_nodes += 1
+                    if node:
+                        node[0].output = True
                     rw = next(reader)
-                    list1.append(rw[0])
+                    if int(rw[0]) == first_node:
+                        break
+                mbs.num_nodes = num_nodes
+        except StopIteration: # EOF
+            pass
 
-                result_nodes = list1
+        try:
+            with open(mov_file) as mf:
+                reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
+                result_nodes = []
+                rw = next(reader)
+                result_nodes.append(rw[0])
+                while True:
+                    rw = next(reader)
+                    if rw[0] != result_nodes[0]:
+                        result_nodes.append(rw[0])
+                    else:
+                        break
+                if len(result_nodes) > mbs.num_nodes:
+                    # some nodes are in the results, but not in the .log file:
+                    # relative frame structural nodes?
+                    mbs.num_nodes = len(result_nodes)
                 log_nodes = list(map(lambda x: x[5:], nd.keys()))
                 difference = set(result_nodes) ^ set(log_nodes)
                 difference = ' '.join(difference)
@@ -361,7 +386,6 @@ def parse_log_file(context):
         no_output(context)
 
     if nn:
-        mbs.num_nodes = nn
         mbs.min_node_import = nd[0].int_label
         mbs.max_node_import = nd[0].int_label
         for ndx in range(1, len(nd)):
@@ -376,7 +400,7 @@ def parse_log_file(context):
             mbs.num_timesteps = len(nc.variables["time"])
         else:
             disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
-            mbs.num_timesteps = mbs.num_rows/(nn - disabled_nodes)
+            mbs.num_timesteps = mbs.num_rows/(mbs.num_nodes - disabled_nodes)
         mbs.is_ready = True
         ret_val = {'FINISHED'}
     else:
@@ -701,54 +725,60 @@ def set_motion_paths_mov(context):
     try:
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
+            
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
 
             disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
-            nodes_iterate = mbs.num_nodes - disabled_nodes
 
-            for ndx in range(int(mbs.start_time * nodes_iterate / mbs.time_step)):
+            # skip to the first timestep to import
+            for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
                 next(reader)
 
             first = []
             second = []
-            for ndx in range(nodes_iterate):
+            for ndx in range(mbs.num_nodes):
                 rw = np.array(next(reader)).astype(np.float)
                 first.append(rw)
                 second.append(rw)
+                
+                try:
+                    obj_name = nd['node_' + str(int(rw[0]))].blender_object
 
-                obj_name = nd['node_' + str(int(rw[0]))].blender_object
-                if obj_name != 'none':
-                    anim_objs[rw[0]] = obj_name
-                    obj = bpy.data.objects[obj_name]
-                    obj.select_set(state = True)
-                    set_obj_locrot_mov(obj, rw)
+                    if obj_name != 'none' and nd['node_' + str(int(rw[0]))].output:
+                        anim_objs[rw[0]] = obj_name
+                        obj = bpy.data.objects[obj_name]
+                        obj.select_set(state = True)
+                        set_obj_locrot_mov(obj, rw)
+                except KeyError:
+                    pass
 
             # main for loop, from second frame to last
             freq = mbs.load_frequency
             Nskip = 0
             if freq > 1:
-                Nskip = (np.ceil(freq) - 1)*nodes_iterate
+                Nskip = int(np.floor(freq)*mbs.num_nodes)
 
             for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                 scene.frame_current += 1
                 frac = np.ceil(frame) - frame
 
                 # skip (freq - 1)*N lines
-                for ii in range(int(Nskip) - (idx%2)*nodes_iterate):
-                    first[ii % nodes_iterate] = np.array(next(reader)).astype(np.float)
+                for ii in range(Nskip):
+                    next(reader)
 
-                for ndx in range(nodes_iterate):
-                    rw = np.array(next(reader)).astype(np.float)
-                    second[ndx] = rw
+                for ndx in range(mbs.num_nodes):
+                    first[ndx] = np.array(next(reader)).astype(np.float)
 
-                for ndx in range(nodes_iterate):
+                for ndx in range(mbs.num_nodes):
+                    second[ndx] = np.array(next(reader)).astype(np.float)
+
+                for ndx in range(mbs.num_nodes):
                     try:
-                        answer = frac*first[ndx] + (1-frac)*second[ndx]
+                        answer = frac*first[ndx] + (1 - frac)*second[ndx]
                         obj = bpy.data.objects[anim_objs[round(answer[0])]]
                         obj.select_set(state = True)
                         set_obj_locrot_mov(obj, answer)
-
                     except KeyError:
                         pass
 
