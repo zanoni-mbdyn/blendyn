@@ -35,17 +35,10 @@ def parse_drive_displacement(rw, ed):
     ret_val = True
     try:
         el = ed['drive_displacement_' + str(rw[1])]
-<<<<<<< Updated upstream
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)  
         
-=======
-
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)
-
->>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
 
