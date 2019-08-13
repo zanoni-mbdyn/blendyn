@@ -31,7 +31,6 @@ from bpy.props import *
 import logging
 
 import numpy as np
-from bpy_extras.io_utils import ImportHelper
 
 import os, csv, atexit, re
 
@@ -251,13 +250,13 @@ def parse_log_file(context):
 
     log_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.log')
-    
+
     out_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.out')
-    
+
     rfm_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.rfm')
-    
+
     # Debug message to console
     print("Blendyn::parse_log_file(): Trying to read nodes and elements from file: "\
             + log_file)
@@ -278,7 +277,7 @@ def parse_log_file(context):
     except KeyError:
         ecol = bpy.data.collections.new(name = 'mbdyn.elements')
         bpy.context.scene.collection.children.link(ecol)
-    
+
     # create elements children collections if they are not already there
     try:
         aecol = ecol.children['aerodynamic']
@@ -304,7 +303,7 @@ def parse_log_file(context):
     except KeyError:
         bocol = bpy.data.collections.new(name = 'bodies')
         ecol.children.link(bocol)
-    
+
     try:
         fcol = ecol.children['forces']
     except KeyError:
@@ -349,7 +348,7 @@ def parse_log_file(context):
                     b_nodes_consistent = b_nodes_consistent * (parse_node(context, rw))
                 else:
                     print("Blendyn::parse_log_file(): Found " + entry[:-1] + " element.")
-                    b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw) 
+                    b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
 
 
             if (is_init_nd and is_init_ed) or (b_nodes_consistent*b_elems_consistent):
@@ -442,7 +441,7 @@ def parse_log_file(context):
                         parse_reference_frame(rfm_row, rd)
 
         # create the reference frames collection if it is not already there
-        try: 
+        try:
             rcol = bpy.data.collections['mbdyn.references']
         except KeyError:
             rcol = bpy.data.collections.new(name = 'mbdyn.references')
@@ -455,7 +454,7 @@ def parse_log_file(context):
         pass
     except IOError:
         print("Blendyn::parse_out_file(): Could not read the file " + rfm_file)
-        pass 
+        pass
 
     mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
 
@@ -725,7 +724,7 @@ def set_motion_paths_mov(context):
     try:
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
-            
+
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
 
@@ -741,7 +740,7 @@ def set_motion_paths_mov(context):
                 rw = np.array(next(reader)).astype(np.float)
                 first.append(rw)
                 second.append(rw)
-                
+
                 try:
                     obj_name = nd['node_' + str(int(rw[0]))].blender_object
 
@@ -974,7 +973,7 @@ def set_motion_paths_netcdf(context):
 
     kk = 0
     for ndx in anim_nodes:
-    
+
         dictobj = nd[ndx]
         if str(dictobj.int_label) in mbs.disabled_output.split(' '):
             continue
@@ -1020,7 +1019,7 @@ def set_motion_paths_netcdf(context):
                 obj.keyframe_insert(data_path = "location")
 
                 obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
-                
+
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
@@ -1051,21 +1050,21 @@ def log_messages(mbs, baseLogger, saved_blend):
 	        blendFile = os.path.basename(bpy.data.filepath) if bpy.data.is_saved \
 	                    else 'untitled.blend'
 	        blendFile = os.path.splitext(blendFile)[0]
-	
+
 	        formatter = '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
 	        datefmt = '%m/%d/%Y %I:%M:%S %p'
 	        global logFile
 	        logFile = ('{0}_{1}.bylog').format(mbs.file_path + blendFile, mbs.file_basename)
-	
+
 	        fh = logging.FileHandler(logFile)
 	        fh.setFormatter(logging.Formatter(formatter, datefmt))
-	
+
 	        custom = BlenderHandler()
 	        custom.setFormatter(logging.Formatter(formatter, datefmt))
-	
+
 	        baseLogger.addHandler(fh)
 	        baseLogger.addHandler(custom)
-	
+
 	        if not saved_blend:
 	            bpy.data.texts.new(os.path.basename(logFile))
         except PermissionError as ex:
