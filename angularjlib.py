@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -36,14 +36,14 @@ def parse_angularvelocity(rw, ed):
     ret_val = True
     try:
         el = ed['angularvelocity_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularvelocity()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_angularvelocity()", el)
 
         el.nodes[0].int_label = int(rw[2])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -61,6 +61,9 @@ def parse_angularvelocity(rw, ed):
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularvelocity()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_angularvelocity()", el)
 
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularvelocity()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_angularvelocity()", el)
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
 
@@ -74,7 +77,7 @@ def parse_angularvelocity(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_angularvelocity(rw, ed) function
 
 # helper function to parse angularacceleration joints
@@ -82,18 +85,18 @@ def parse_angularacceleration(rw, ed):
     ret_val = True
     try:
         el = ed['angularacceleration_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularacceleration()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_angularacceleration()", el)
 
         el.nodes[0].int_label = int(rw[2])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -104,6 +107,9 @@ def parse_angularacceleration(rw, ed):
         el.type = 'angularacceleration'
         el.int_label = int(rw[1])
         
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularacceleration()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_angularacceleration()", el)
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_angularacceleration()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_angularacceleration()", el)
 
@@ -120,7 +126,7 @@ def parse_angularacceleration(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_angularacceleration(rw, ed) function
 
 # function that displays angularvelocity info in panel -- [ optional ]
@@ -205,10 +211,10 @@ def spawn_angularvelocity_element(elem, context):
 
         # joint offsets with respect to nodes
         f1 = elem.offsets[0].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-    
+
         # place the joint object in the position defined relative to node 2
         angularvelocityjOBJ.location = n1OBJ.location
         angularvelocityjOBJ.rotation_mode = 'QUATERNION'
@@ -266,10 +272,10 @@ def spawn_angularacceleration_element(elem, context):
 
         # joint offsets with respect to nodes
         f1 = elem.offsets[0].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-    
+
         # place the joint object in the position defined relative to node 2
         angularaccelerationjOBJ.location = n1OBJ.location
         angularaccelerationjOBJ.rotation_mode = 'QUATERNION'
@@ -279,7 +285,8 @@ def spawn_angularacceleration_element(elem, context):
         angularaccelerationjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularaccelerationjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
-        parenting(angularaccelerationjOBJ, n1OBJ)
+        parenting(angularaccelerationjOBJ, [n1OBJ])
+        grouping(context, angularaccelerationjOBJ, [n1OBJ])
 
         # association with dictionary element
         elem.blender_object = angularaccelerationjOBJ.name
@@ -294,7 +301,7 @@ def spawn_angularacceleration_element(elem, context):
 
 # Imports a angularvelocity Joint in the scene
 class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
-    """ Imports an angularvelocity joint element 
+    """ Imports an angularvelocity joint element
         into the Blender scene """
     bl_idname = "blendyn.import_angularvelocity"
     bl_label = "MBDyn angularvelocity joint element importer"
@@ -307,7 +314,7 @@ class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['angularvelocity_' + str(self.int_label)]
             retval = spawn_angularvelocity_element(elem, context)
@@ -334,7 +341,7 @@ class BLENDYN_OT_import_angularvelocity(bpy.types.Operator):
 
 # Imports a angularacceleration Joint in the scene
 class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
-    """ Imports an angularacceleration joint element 
+    """ Imports an angularacceleration joint element
         into the Blender scene """
     bl_idname = "blendyn.import_angularacceleration"
     bl_label = "MBDyn angularacceleration joint element importer"
@@ -347,7 +354,7 @@ class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['angularacceleration_' + str(self.int_label)]
             retval = spawn_angularacceleration_element(elem, context)
@@ -370,4 +377,4 @@ class BLENDYN_OT_import_angularacceleration(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_import_angularacceleration class. 
+# end of BLENDYN_OT_import_angularacceleration class.

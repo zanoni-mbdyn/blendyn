@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -41,23 +41,23 @@ def parse_clamp(rw, ed):
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
-        
+
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -70,6 +70,9 @@ def parse_clamp(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_clamp()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_clamp()", el)  
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_clamp()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_clamp()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -133,11 +136,11 @@ def spawn_clamp_element(elem, context):
         # joint offsets with respect to nodes
         f1 = elem.offsets[0].value
         q1 = elem.rotoffsets[0].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
-    
+
         # place the joint object in the position defined relative to node 1
         clampjOBJ.location = p1
         clampjOBJ.rotation_mode = 'QUATERNION'
@@ -149,15 +152,13 @@ def spawn_clamp_element(elem, context):
         # set group
         grouping(context, clampjOBJ, [n1OBJ])
 
-        clampOBJ.mbdyn.dkey = elem.name
-        clampOBJ.mbdyn.type = 'element'
+        clampjOBJ.mbdyn.dkey = elem.name
+        clampjOBJ.mbdyn.type = 'element'
         elem.blender_object = clampjOBJ.name
 
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
-    pass
-    pass
 # -----------------------------------------------------------
 # end of spawn_clamp_elem(elem, layout) function
 
@@ -166,8 +167,8 @@ class BLENDYN_OT_import_clamp(bpy.types.Operator):
     """ Imports a clamp joint element into the Blender scene """
     bl_idname = "blendyn.import_clamp"
     bl_label = "Imports a clamp joint element"
-    int_label = bpy.props.IntProperty()
-    
+    int_label =  bpy.props.IntProperty()
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'

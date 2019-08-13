@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -41,19 +41,19 @@ def parse_brake(rw, ed):
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         R2 = Matrix().to_3x3()
-        parse_rotmat(rw, 19, R2) 
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        parse_rotmat(rw, 19, R2)
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -70,7 +70,6 @@ def parse_brake(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_body()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_body()", el)
-        
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
         el.nodes.add()
@@ -99,7 +98,7 @@ def parse_brake(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_brake(rw, ed) function
 
 # function that displays brake info in panel -- [ optional ]
@@ -160,7 +159,7 @@ def spawn_brake_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -192,13 +191,13 @@ def spawn_brake_element(elem, context):
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)
-        brakejOBJ.scale = Vector(( s, s, s ))
-    
+                n2OBJ.scale.magnitude)
+        brakejOBJd.scale = Vector(( s, s, s ))
+
         # place the joint object in the position defined relative to node 2
-        brakejOBJ.location = p1
-        brakejOBJ.rotation_mode = 'QUATERNION'
-        brakejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        brakejOBJd.location = p2
+        brakejOBJd.rotation_mode = 'QUATERNION'
+        brakejOBJd.rotation_quaternion = Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
 
         # set parenting of wireframe obj
         parenting(brakejOBJ, n2OBJ)
@@ -212,21 +211,21 @@ def spawn_brake_element(elem, context):
     print(app_retval)
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
-        brakejOBJ = bpy.context.selected_objects[0]
-        brakejOBJ.name = elem.name + '_caliper'
+        brakejOBJc = bpy.context.selected_objects[0]
+        brakejOBJc.name = elem.name + '_caliper'
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
         n2OBJ.scale.magnitude)
-        brakejOBJ.scale = Vector(( s, s, s ))
-    
-        # place the joint object in the position defined relative to node 2
-        brakejOBJ.location = p1
-        brakejOBJ.rotation_mode = 'QUATERNION'
-        brakejOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        brakejOBJc.scale = Vector(( s, s, s ))
+
+        # place the joint object in the position defined relative to node 1
+        brakejOBJc.location = p1
+        brakejOBJc.rotation_mode = 'QUATERNION'
+        brakejOBJc.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
         # set parenting of wireframe obj
-        parenting(brakejOBJ, n1OBJ)
+        parenting(brakejOBJc, n1OBJ)
 
         elem.blender_object = brakejOBJ.name
 
@@ -252,7 +251,7 @@ class BLENDYN_OT_import_brake(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['brake_' + str(self.int_label)]
             retval = spawn_brake_element(elem, context)

@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -37,25 +37,25 @@ except ImportError as ierr:
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))
 
-## Parses structural absolute force entry in the .log file 
+## Parses structural absolute force entry in the .log file
 #  (see section E.2.22 of input manual for details)
-def parse_structural_absolute_force(rw, ed): 
+def parse_structural_absolute_force(rw, ed):
     ret_val = True
     # Debug message
     try:
         el = ed['structural_absolute_force_' + str(rw[3])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_force():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_force():", el)
-        
+
         el.nodes[0].int_label = int(rw[4])
-        
+
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.force'
-         
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -70,9 +70,12 @@ def parse_structural_absolute_force(rw, ed):
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_force():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_absolute_force():", el)
 
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_force():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_absolute_force():", el)
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
- 
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
@@ -85,24 +88,24 @@ def parse_structural_absolute_force(rw, ed):
 # -----------------------------------------------------------
 # end of parse_structural_absolute_force(rw, ed) function
 
-## Parses structural follower force entry in the .log file 
+## Parses structural follower force entry in the .log file
 #  (see section E.2.22 of input manual for details)
-def parse_structural_follower_force(rw, ed): 
+def parse_structural_follower_force(rw, ed):
     ret_val = True
     try:
         el = ed['structural_follower_force_' + str(rw[3])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_force():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_force():", el)
-        
+
         el.nodes[0].int_label = int(rw[4])
-        
+
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.force'
-         
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -116,10 +119,10 @@ def parse_structural_follower_force(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_force():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_follower_force():", el)
-        
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
- 
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
@@ -132,24 +135,31 @@ def parse_structural_follower_force(rw, ed):
 # -----------------------------------------------------------
 # end of parse_structural_follower_force(rw, ed) function
 
-## Parses structural absolute couple entry in the .log file 
+## Parses structural absolute couple entry in the .log file
 #  (see section E.2.22 of input manual for details)
-def parse_structural_absolute_couple(rw, ed): 
+def parse_structural_absolute_couple(rw, ed):
     ret_val = True
     try:
         el = ed['structural_absolute_couple_' + str(rw[3])]
+<<<<<<< Updated upstream
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
         
+=======
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
+
+>>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[4])
-        
+
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.force'
-         
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -164,9 +174,12 @@ def parse_structural_absolute_couple(rw, ed):
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
 
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
- 
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
@@ -179,24 +192,31 @@ def parse_structural_absolute_couple(rw, ed):
 # -----------------------------------------------------------
 # end of parse_structural_absolute_couple(rw, ed) function
 
-## Parses structural follower couple entry in the .log file 
+## Parses structural follower couple entry in the .log file
 #  (see section E.2.22 of input manual for details)
-def parse_structural_follower_couple(rw, ed): 
+def parse_structural_follower_couple(rw, ed):
     ret_val = True
     try:
         el = ed['structural_follower_couple_' + str(rw[3])]
+<<<<<<< Updated upstream
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
         
+=======
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
+
+>>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[4])
-        
+
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.force'
-         
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -210,10 +230,14 @@ def parse_structural_follower_couple(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
+<<<<<<< Updated upstream
         
+=======
+
+>>>>>>> Stashed changes
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
- 
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
 
@@ -244,10 +268,8 @@ def spawn_structural_force_element(elem, context):
     # node object
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe force object from the library
     app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'forces.blend', 'Object'), filename = 'force')
-
+        'library', 'forces.blend', 'Object'), filename = 'force')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         forceOBJ = bpy.context.selected_objects[0]
@@ -255,11 +277,11 @@ def spawn_structural_force_element(elem, context):
 
         # offsets with respect to nodes
         f1 = elem.offsets[0].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
-    
+
         # place the joint object in the position defined relative to node 1
         forceOBJ.location = p1
         forceOBJ.rotation_mode = 'QUATERNION'
@@ -281,7 +303,6 @@ def spawn_structural_force_element(elem, context):
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
-    pass
 # -----------------------------------------------------------
 # end of spawn_structural_force_element(elem, layout) function
 
@@ -314,11 +335,11 @@ def spawn_structural_couple_element(elem, context):
 
         # offsets with respect to nodes
         f1 = elem.offsets[0].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
-    
+
         # place the joint object in the position defined relative to node 1
         coupleOBJ.location = p1
         coupleOBJ.rotation_mode = 'QUATERNION'
@@ -340,18 +361,21 @@ def spawn_structural_couple_element(elem, context):
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
-    pass
 # -----------------------------------------------------------
 # end of spawn_structural_couple_element(elem, layout) function
 
 # Imports a Structural Absolute Force Element in the scene
 class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
+<<<<<<< Updated upstream
     """ Imports a structural absolute force element 
+=======
+    """ Imports a structural absolute force element
+>>>>>>> Stashed changes
         into the Blender scene """
     bl_idname = "blendyn.import_structural_absolute_force"
     bl_label = "Imports a structural absolute force element"
     int_label = bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -390,7 +414,7 @@ class BLENDYN_OT_import_structural_follower_force(bpy.types.Operator):
     bl_idname = "blendyn.import_structural_follower_force"
     bl_label = "Imports a structural follower force element"
     int_label = bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -429,7 +453,7 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
     bl_idname = "blendyn.import_structural_absolute_couple"
     bl_label = "Imports a structural absolute couple element"
     int_label = bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -452,6 +476,12 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+<<<<<<< Updated upstream
+=======
+                return retval
+            else:
+                # Should not be reached
+>>>>>>> Stashed changes
                 return retval
             else:
                 # Should not be reached
@@ -468,7 +498,7 @@ class BLENDYN_OT_import_structural_follower_couple(bpy.types.Operator):
     bl_idname = "blendyn.import_structural_follower_couple"
     bl_label = "Imports a structural follower couple element"
     int_label = bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -507,7 +537,7 @@ def update_structural_force(elem, insert_keyframe = False):
     scene = bpy.context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
-    
+
     if mbs.use_netcdf:
 
         tdx = int(scene.frame_current * mbs.load_frequency)
@@ -518,10 +548,10 @@ def update_structural_force(elem, insert_keyframe = False):
         node = nd['node_' + str(elem.nodes[0].int_label)]
         nodeOBJ = bpy.data.objects[node.blender_object]
         R0 = nodeOBJ.matrix_world.to_3x3().normalized()
-        
+
         obj = bpy.data.objects[elem.blender_object]
-       
-        try: 
+
+        try:
             F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
             Fl = R0.transposed()*F
             obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
@@ -544,7 +574,7 @@ def update_structural_couple(elem, insert_keyframe = False):
     scene = bpy.context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
-    
+
     if mbs.use_netcdf:
 
         tdx = scene.frame_current * mbs.load_frequency
@@ -555,7 +585,7 @@ def update_structural_couple(elem, insert_keyframe = False):
         node = nd['node_' + str(elem.nodes[0].int_label)]
         nodeOBJ = bpy.data.objects[node.blender_object]
         R0 = nodeOBJ.matrix_world.to_3x3().normalized()
-        
+
         obj = bpy.data.objects[elem.blender_object]
 
         try:

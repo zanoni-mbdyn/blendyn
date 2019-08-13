@@ -176,7 +176,7 @@ def parse_aero3(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_aero0()", el)
-        
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
 

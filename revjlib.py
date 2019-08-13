@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -35,25 +35,32 @@ def parse_revolute_hinge(rw, ed):
     ret_val = True
     try:
         el = ed['revolute_hinge_' + str(rw[1])]
+<<<<<<< Updated upstream
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el)
         
+=======
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el)
+
+>>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         R2 = Matrix().to_3x3()
-        parse_rotmat(rw, 19, R2) 
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        parse_rotmat(rw, 19, R2)
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -70,6 +77,9 @@ def parse_revolute_hinge(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el) 
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -98,7 +108,7 @@ def parse_revolute_hinge(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_revolue_hinge(rw, ed) function
 
 # helper function to parse revolute pin joints
@@ -106,21 +116,21 @@ def parse_revolute_pin(rw, ed):
     ret_val = True
     try:
         el = ed['revolute_pin_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_pin()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_pin()", el) 
-        
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_pin()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -133,6 +143,9 @@ def parse_revolute_pin(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_pin()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_pin()", el)  
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_pin()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_pin()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -151,7 +164,7 @@ def parse_revolute_pin(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_revolute_pin(rw, ed) function
 
 # helper function to parse revolute rot joints
@@ -159,9 +172,9 @@ def parse_revolute_rot(rw, ed):
     ret_val = True
     try:
         el = ed['revolute_rot_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_rot()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_rot()", el)  
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_rot()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
@@ -177,7 +190,7 @@ def parse_revolute_rot(rw, ed):
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
         el.rotoffsets[1].value = R2.to_quaternion();
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -194,6 +207,9 @@ def parse_revolute_rot(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_rot()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_rot()", el)  
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_rot()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_rot()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -239,7 +255,7 @@ def spawn_revolute_hinge_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -267,13 +283,13 @@ def spawn_revolute_hinge_element(elem, context):
         f2 = elem.offsets[1].value
         q1 = elem.rotoffsets[0].value
         q2 = elem.rotoffsets[1].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
         p2 = Vector(( f2[0], f2[1], f2[2] ))
-    
+
         # place the joint object in the position defined relative to node 1
         revjOBJ.location = p1
         revjOBJ.rotation_mode = 'QUATERNION'
@@ -293,7 +309,7 @@ def spawn_revolute_hinge_element(elem, context):
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
 
-        grouping(context, revjOBJ, [n1OBJ, n2OBJ])
+        grouping(context, revjOBJ, [n1OBJ, n2OBJ, RF2])
 
         revjOBJ.mbdyn.dkey = elem.name
         revjOBJ.mbdyn.type = 'element'
@@ -319,7 +335,7 @@ class BLENDYN_OT_import_revolute_hinge(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['revolute_hinge_' + str(self.int_label)]
             retval = spawn_revolute_hinge_element(elem, context)
@@ -346,7 +362,7 @@ class BLENDYN_OT_import_revolute_hinge(bpy.types.Operator):
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_revolute_hinge class
- 
+
 # Creates the object representing a revolute joint element
 def spawn_revolute_pin_element(elem, context):
     """ Draws a revolute pin joint element, loading a wireframe
@@ -361,7 +377,7 @@ def spawn_revolute_pin_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
@@ -418,7 +434,7 @@ class BLENDYN_OT_import_revolute_pin(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['revolute_pin_' + str(self.int_label)]
             retval = spawn_revolute_pin_element(elem, context)
@@ -515,7 +531,7 @@ def spawn_revolute_rot_element(elem, context):
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
 
-        grouping(context, revjOBJ, [n1OBJ, n2OBJ])
+        grouping(context, revjOBJ, [n1OBJ, n2OBJ, RF2])
 
         elem.blender_object = revjOBJ.name
 
@@ -527,7 +543,7 @@ def spawn_revolute_rot_element(elem, context):
 
 # Imports a Revolute Rotation Joint in the scene
 class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
-    bl_idname = "blendyn.import_revolute_pin"
+    bl_idname = "blendyn.import_revolute_rotation"
     bl_label = "MBDyn revolute joint element importer"
     int_label = bpy.props.IntProperty()
 
@@ -564,4 +580,8 @@ class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
+<<<<<<< Updated upstream
 # end of BLENDYN_OT_import_revolute_pin class
+=======
+# end of BLENDYN_OT_import_revolute_rotation class
+>>>>>>> Stashed changes

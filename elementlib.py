@@ -32,8 +32,6 @@ import ntpath, os, csv, math
 
 import logging
 
-import logging
-
 from .aerolib import *
 from .angularjlib import *
 from .axialrotjlib import *

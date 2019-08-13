@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -35,21 +35,21 @@ def parse_prismatic(rw, ed):
     ret_val = True
     try:
         el = ed['prismatic_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_prismatic()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_prismatic()", el) 
-        
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_prismatic()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-         
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         R2 = Matrix().to_3x3()
-        parse_rotmat(rw, 19, R2) 
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        parse_rotmat(rw, 19, R2)
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -66,6 +66,9 @@ def parse_prismatic(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_prismatic()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_prismatic()", el)  
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_prismatic()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_prismatic()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -90,7 +93,7 @@ def parse_prismatic(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_prismatic(rw, ed) function
 
 # function that displays prism info in panel -- [ optional ]
@@ -150,7 +153,7 @@ def spawn_prismatic_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -178,13 +181,13 @@ def spawn_prismatic_element(elem, context):
         f2 = Vector(( 0.0, 0.0, 0.0 ))
         q1 = elem.rotoffsets[0].value
         q2 = elem.rotoffsets[1].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
         p2 = Vector(( f2[0], f2[1], f2[2] ))
-    
+
         # place the joint object in the position defined relative to node 2
         prismjOBJ.location = p1
         prismjOBJ.rotation_mode = 'QUATERNION'
@@ -204,7 +207,7 @@ def spawn_prismatic_element(elem, context):
         # set parenting of wireframe obj
         parenting(prismjOBJ, n1OBJ)
 
-        grouping(context, prismjOBJ, [n1OBJ])
+        grouping(context, prismjOBJ, [n1OBJ, n2OBJ, RF2])
 
         prismjOBJ.mbdyn.dkey = elem.name
         prismjOBJ.mbdyn.type = 'element'
@@ -229,7 +232,7 @@ class BLENDYN_OT_import_prismatic(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['prismatic_' + str(self.int_label)]
             retval = spawn_prismatic_element(elem, context)
@@ -255,4 +258,4 @@ class BLENDYN_OT_import_prismatic(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_import_prismatic class. 
+# end of BLENDYN_OT_import_prismatic class.

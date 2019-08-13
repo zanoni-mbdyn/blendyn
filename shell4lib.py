@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy, bmesh
 
@@ -33,10 +33,10 @@ def parse_shell4(rw, ed):
     ret_val = True
     try:
         el = ed['shell4_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_shell4()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_shell4()", el)  
-        
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_shell4()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[3])
         el.nodes[2].int_label = int(rw[4])
@@ -44,33 +44,33 @@ def parse_shell4(rw, ed):
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         el.is_imported = True
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
             el.is_imported = True
     except KeyError:
-        
+
         el = ed.add()
         el.mbclass = 'elem.shell'
         el.type = 'shell4'
         el.int_label = int(rw[1])
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_shell4()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_shell4()", el)   
-        
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_shell4()", el)
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
-        
+
         el.nodes.add()
         el.nodes[1].int_label = int(rw[3])
-        
+
         el.nodes.add()
         el.nodes[2].int_label = int(rw[4])
-        
+
         el.nodes.add()
         el.nodes[3].int_label = int(rw[5])
-        
+
         el.import_function = "blendyn.import_shell4"
         el.info_draw = "shell4_info_draw"
         el.name = el.type + '_' + str(el.int_label)
@@ -81,7 +81,7 @@ def parse_shell4(rw, ed):
 
     return ret_val
 # -----------------------------------------------------------
-# end of parse_shell4(rw, ed) function 
+# end of parse_shell4(rw, ed) function
 
 # Creates the object representing a shell4 element
 def spawn_shell4_element(elem, context):
@@ -92,15 +92,15 @@ def spawn_shell4_element(elem, context):
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
- 
-    # try to find Blender objects associated with the nodes that 
+
+    # try to find Blender objects associated with the nodes that
     # the element connects
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
         n1OBJ = bpy.data.objects[n1]
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
         n2OBJ = bpy.data.objects[n2]
@@ -112,13 +112,13 @@ def spawn_shell4_element(elem, context):
         n3OBJ = bpy.data.objects[n3]
     except KeyError:
         return {'NODE3_NOTFOUND'}
-    
+
     try:
         n4 = nd['node_' + str(elem.nodes[3].int_label)].blender_object
         n4OBJ = bpy.data.objects[n4]
     except KeyError:
         return {'NODE4_NOTFOUND'}
-    
+
     avg_location = .25*(n1OBJ.location + n2OBJ.location + n3OBJ.location + n4OBJ.location)
 
     # create the mesh plane
@@ -186,7 +186,7 @@ def spawn_shell4_element(elem, context):
 
 
     # create group for element
-    grouping(context, shellOBJ, [n1OBJ, n2OBJ, n3OBJ, n4])
+    grouping(context, shellOBJ, [n1OBJ, n2OBJ, n3OBJ, n4OBJ])
 
     elem.blender_object = shellOBJ.name
     return {'FINISHED'}
@@ -196,8 +196,8 @@ def shell4_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
-    
-    try: 
+
+    try:
         for ndx in range(4):
             node = nd['node_' + str(elem.nodes[ndx].int_label)]
             # Display node info
@@ -244,7 +244,7 @@ class BLENDYN_OT_import_shell4(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
-                return retval 
+                return retval
             else:
                 # Should not be reached
                 return retval

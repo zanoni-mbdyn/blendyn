@@ -20,45 +20,45 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 
 from mathutils import *
 from math import *
 
-from .utilslib import *
+from .utilslib import * 
 
 # helper function to parse deformable displacement joints
 def parse_deformable_displacement(rw, ed):
     ret_val = True
     try:
         el = ed['deformable_displacement_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_deformable_displacement()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_deformable_displacement()", el) 
-        
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_deformable_displacement()", el)
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
+        el.rotoffsets[0].value = R1.to_quaternion();
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
-        
+
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
-        el.is_imported = True 
+        el.is_imported = True
     except KeyError:
         el = ed.add()
         el.mbclass = 'elem.joint'
@@ -67,6 +67,9 @@ def parse_deformable_displacement(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_deformable_displacement()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_deformable_displacement()", el)  
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_deformable_displacement()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_deformable_displacement()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -117,7 +120,7 @@ class BLENDYN_OT_import_deformable_displacement(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['deformable_displacement_' + str(self.int_label)]
             return spawn_deformable_displacement_element(elem, context)

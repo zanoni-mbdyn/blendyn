@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -35,25 +35,25 @@ def parse_cardano_hinge(rw, ed):
     ret_val = True
     try:
         el = ed['cardano_hinge_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_cardano_hinge()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_cardano_hinge()", el)
-        
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
-        
+
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R1)
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -113,17 +113,17 @@ def parse_cardano_pin(rw, ed):
         
         el.nodes[0].int_label = int(rw[2])
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -133,10 +133,10 @@ def parse_cardano_pin(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'cardano_pin'
         el.int_label = int(rw[1])
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_cardano_pin()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_cardano_pin()", el)
-        
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
 
@@ -171,7 +171,7 @@ def spawn_cardano_hinge_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -199,13 +199,13 @@ def spawn_cardano_hinge_element(elem, context):
         f2 = elem.offsets[1].value
         q1 = elem.rotoffsets[0].value
         q2 = elem.rotoffsets[1].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
         p2 = Vector(( f2[0], f2[1], f2[2] ))
-    
+
         # place the joint object in the position defined relative to node 1
         carjOBJ.location = p1
         carjOBJ.rotation_mode = 'QUATERNION'
@@ -226,7 +226,7 @@ def spawn_cardano_hinge_element(elem, context):
         parenting(carjOBJ, n1OBJ)
 
         # set group
-        grouping(context, carjOBJ, [n1OBJ])
+        grouping(context, carjOBJ, [n1OBJ, n2OBJ])
 
         carjOBJ.mbdyn.dkey = elem.name
         carjOBJ.mbdyn.type = 'element'
@@ -235,7 +235,6 @@ def spawn_cardano_hinge_element(elem, context):
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
-    pass
 # -----------------------------------------------------------
 # end of spawn_cardano_hinge_elem(elem, layout) function
 
@@ -253,7 +252,7 @@ def spawn_cardano_pin_elem(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
@@ -272,11 +271,11 @@ def spawn_cardano_pin_elem(elem, context):
         # joint offsets with respect to node 1
         f1 = elem.offsets[0].value
         q1 = elem.rotoffsets[0].value
-    
+
         # project offsets
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
-    
+
         # place the joint object in the position defined relative to node 1
         carjOBJ.location = p1
         carjOBJ.rotation_mode = 'QUATERNION'
@@ -291,7 +290,6 @@ def spawn_cardano_pin_elem(elem, context):
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
-    pass
 # -----------------------------------------------------------
 # end of spawn_cardano_pin_elem(elem, layout) function
 
@@ -308,9 +306,9 @@ class BLENDYN_OT_import_cardano_hinge(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
-            
+
             elem = ed['cardano_hinge_' + str(self.int_label)]
             retval = spawn_cardano_hinge_element(elem, context)
 
@@ -350,12 +348,11 @@ class BLENDYN_OT_import_cardano_pin(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
 
             elem = ed['cardano_pin_' + str(self.int_label)]
             retval = spawn_cardano_pin_element(elem, context)
-            
             if retval == {'OBJECT_EXISTS'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
@@ -371,7 +368,6 @@ class BLENDYN_OT_import_cardano_pin(bpy.types.Operator):
             else:
                 # Should not be reached
                 return retval
-        
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name + '::execute()', elem)
             return {'CANCELLED'}

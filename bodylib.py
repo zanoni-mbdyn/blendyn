@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -43,18 +43,18 @@ def parse_body(rw, ed):
         
         el.nodes[0].int_label = int(rw[2])
         el.magnitude = float(rw[3])     # mass
-        
+
         el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-        
-        # FIXME this is the inertia matrix... And this is a (dirty) trick 
+
+        # FIXME this is the inertia matrix... And this is a (dirty) trick
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets[2].value = Vector(( float(rw[10]), float(rw[11]), float(rw[12]) ))
         el.offsets[3].value = Vector(( float(rw[13]), float(rw[14]), float(rw[15]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.body'
-         
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -74,11 +74,11 @@ def parse_body(rw, ed):
         el.nodes[0].int_label = int(rw[2])
 
         el.magnitude = float(rw[3])
-        
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
 
-        # FIXME this is the inertia matrix... And this is a (dirty) trick 
+        # FIXME this is the inertia matrix... And this is a (dirty) trick
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets.add()
@@ -112,9 +112,9 @@ def spawn_body_element(elem, context):
 
     # node object
     n1OBJ = bpy.data.objects[n1]
-
+    
     # load the wireframe body object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    app_retval =  bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'other.blend', 'Object'), filename = 'cg')
     if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
@@ -127,11 +127,11 @@ def spawn_body_element(elem, context):
 
         # element offset with respect to nodes
         f1 = elem.offsets[0].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
-    
+
         # place the body object in the position defined relative to node 1
         bodyOBJ.location = p1
         bodyOBJ.rotation_mode = 'QUATERNION'
@@ -151,7 +151,6 @@ def spawn_body_element(elem, context):
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
-        pass
 # -----------------------------------------------------------
 # end of spawn_body_elem(elem, layout) function
 
@@ -160,7 +159,7 @@ class BLENDYN_OT_import_body(bpy.types.Operator):
     bl_idname = "blendyn.import_body"
     bl_label = "Imports a body"
     int_label = bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -194,9 +193,9 @@ class BLENDYN_OT_import_body(bpy.types.Operator):
 # end of BLENDYN_OT_import_body class
 
 # Displays body element info in the tools panel
-def body_info_draw(elem, layout): 
+def body_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
-    
+
     col = layout.column(align = True)
 
     col.prop(elem, "magnitude", text = "mass")
@@ -220,7 +219,7 @@ def body_info_draw(elem, layout):
 
     row = layout.row()
     row.label(text = "Inertia tensor")
-    
+
     box = layout.box()
     split = box.split(.33)
     column = split.column()

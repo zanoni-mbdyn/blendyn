@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -34,46 +34,46 @@ def parse_total(rw, ed):
     ret_val = True
     try:
         el = ed['total_joint_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_total():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_total():", el)
-        
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[24])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         R1p = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1p)
-        el.rotoffsets[0].value = R1p.to_quaternion(); 
+        el.rotoffsets[0].value = R1p.to_quaternion();
 
         R1r = Matrix().to_3x3()
         parse_rotmat(rw, 15, R1r)
-        el.rotoffsets[1].value = R1r.to_quaternion(); 
-        
+        el.rotoffsets[1].value = R1r.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[25]), float(rw[26]), float(rw[27]) ))
 
         R2p = Matrix().to_3x3()
         parse_rotmat(rw, 28, R2p)
         el.rotoffsets[2].value = R2p.to_quaternion();
-        
+
         R2r = Matrix().to_3x3()
         parse_rotmat(rw, 37, R2r)
         el.rotoffsets[3].value = R2r.to_quaternion();
 
-        # note: this is not really an offset, but a bool vector 
+        # note: this is not really an offset, but a bool vector
         #       indicating which position constraints are active
         el.offsets[2].value = Vector(( float(rw[46]), float(rw[47]), float(rw[48]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which velocity constraints are active
         el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which rotation constraints are active
         el.offsets[4].value = Vector(( float(rw[52]), float(rw[53]), float(rw[54]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which angular velocity constraints are active
         el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
 
@@ -82,7 +82,7 @@ def parse_total(rw, ed):
             el.blender_object = el.name
         el.is_imported = True
 
-         
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -95,6 +95,9 @@ def parse_total(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_total():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_total():", el) 
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_total():", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_total():", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -110,7 +113,7 @@ def parse_total(rw, ed):
         el.rotoffsets[0].value = R1p.to_quaternion();
 
         el.rotoffsets.add()
-        R1r = Matrix().to_3x3() 
+        R1r = Matrix().to_3x3()
         parse_rotmat(rw, 15, R1r)
         el.rotoffsets[1].value = R1r.to_quaternion();
 
@@ -121,32 +124,31 @@ def parse_total(rw, ed):
         R2p = Matrix().to_3x3()
         parse_rotmat(rw, 28, R2p)
         el.rotoffsets[2].value = R2p.to_quaternion();
-        
+
         el.rotoffsets.add()
         R2r = Matrix().to_3x3()
         parse_rotmat(rw, 37, R2r)
         el.rotoffsets[3].value = R2r.to_quaternion();
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which position constraints are active
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[46]), float(rw[47]), float(rw[48]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which velocity constraints are active
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[49]), float(rw[50]), float(rw[51]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which rotation constraints are active
         el.offsets.add()
         el.offsets[4].value = Vector(( float(rw[52]), float(rw[53]), float(rw[54]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which rotation constraints are active
         el.offsets.add()
         el.offsets[5].value = Vector(( float(rw[55]), float(rw[56]), float(rw[57]) ))
-        
         el.import_function = "blendyn.import_total"
         el.info_draw = "total_info_draw"
         el.name = el.type + "_" + str(el.int_label)
@@ -163,42 +165,42 @@ def parse_total_pin(rw, ed):
     ret_val = True
     try:
         el = ed['total_pin_joint_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_total_pin():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_total_pin():", el)
-        
+
         el.nodes[0].int_label = int(rw[2])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
 
         R1p = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1p)
-        el.rotoffsets[0].value = R1p.to_quaternion(); 
+        el.rotoffsets[0].value = R1p.to_quaternion();
 
         R1r = Matrix().to_3x3()
         parse_rotmat(rw, 15, R1r)
-        el.rotoffsets[1].value = R1r.to_quaternion(); 
-        
-        # note: this is not really an offset, but a bool vector 
+        el.rotoffsets[1].value = R1r.to_quaternion();
+
+        # note: this is not really an offset, but a bool vector
         #       indicating which position constraints are active
         el.offsets[1].value = Vector(( float(rw[45]), float(rw[46]), float(rw[47]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which velocity constraints are active
         el.offsets[2].value = Vector(( float(rw[48]), float(rw[49]), float(rw[50]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which rotation constraints are active
         el.offsets[3].value = Vector(( float(rw[51]), float(rw[52]), float(rw[53]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which angular velocity constraints are active
         el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
 
         # FIXME: this is here to enhance backwards compatibility.
         # should disappear in future versions
         el.mbclass = 'elem.joint'
-        
+
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
 
@@ -207,7 +209,7 @@ def parse_total_pin(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'total_pin_joint'
         el.int_label = int(rw[1])
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_total_pin():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_total_pin():", el)
 
@@ -227,22 +229,22 @@ def parse_total_pin(rw, ed):
         parse_rotmat(rw, 15, R1p)
         el.rotoffsets[1].value = R1r.to_quaternion();
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating the position constraints that are active
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[45]), float(rw[46]), float(rw[47]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which velocity constraints are active
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[48]), float(rw[49]), float(rw[50]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which rotation constraints are active
         el.offsets.add()
         el.offsets[3].value = Vector(( float(rw[51]), float(rw[52]), float(rw[53]) ))
 
-        # NOTE: This is not really an offset, but a bool vector 
+        # NOTE: This is not really an offset, but a bool vector
         #       indicating which angular velocity constraints are active
         el.offsets.add()
         el.offsets[4].value = Vector(( float(rw[54]), float(rw[55]), float(rw[56]) ))
@@ -271,7 +273,7 @@ def spawn_total_joint_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -305,7 +307,7 @@ def spawn_total_joint_element(elem, context):
             app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
             if app_retval != {'FINISHED'}:
                 return {'LIBRARY_ERROR'}
-            
+
             obj = bpy.context.selected_objects[0]
 
             # position it correctly
@@ -314,7 +316,7 @@ def spawn_total_joint_element(elem, context):
             # rotate it according to "position orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
-            
+
             totjOBJ.select = True
             bpy.context.scene.objects.active = totjOBJ
             bpy.ops.object.join()
@@ -331,7 +333,7 @@ def spawn_total_joint_element(elem, context):
 
             # position it correctly
             obj.location = elem.offsets[0].value
-            
+
             # rotate it according to "rotation orientation" w.r.t. node 1
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
@@ -543,7 +545,7 @@ def total_info_draw(elem, layout):
             row.label(text = "offset 1 in node 1 R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
+
             # Display position orientation -  node 1
             row = layout.row()
             row.label(text = "pos. orientation node 1 R.F.")
@@ -559,7 +561,7 @@ def total_info_draw(elem, layout):
             layout.separator()
 
         elif node.int_label == elem.nodes[1].int_label:
-            
+
             # Display node 2 info
             col.prop(node, "int_label", text = "Node 2 ID ")
             col.prop(node, "string_label", text = "Node 2 label ")
@@ -571,7 +573,7 @@ def total_info_draw(elem, layout):
             row.label(text = "offset 2 in node 2 R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[1], "value", text = "", slider = False)
-            
+
             # Display position orientation -  node 2
             row = layout.row()
             row.label(text = "pos. orientation node 2 R.F.")
@@ -589,7 +591,7 @@ def total_info_draw(elem, layout):
             # Display total joint active components
             box = layout.box()
             split = box.split(1./8.)
-           
+
             # position
             column = split.column()
             column.row().label(text = "pos.X:")
@@ -629,7 +631,7 @@ def total_info_draw(elem, layout):
                 else:
                     column.row().label(text = "inactive")
 
-            # angular velocity 
+            # angular velocity
             column = split.column()
             column.row().label(text = "angvel.X:")
             column.row().label(text = "angvel.Y:")
@@ -666,7 +668,7 @@ def total_pin_info_draw(elem, layout):
             row.label(text = "offset 1 in node R.F.")
             col = layout.column(align = True)
             col.prop(elem.offsets[0], "value", text = "", slider = False)
-            
+
             # Display position orientation -  node 1
             row = layout.row()
             row.label(text = "pos. orientation node R.F.")
@@ -680,11 +682,11 @@ def total_pin_info_draw(elem, layout):
             col.prop(elem.rotoffsets[1], "value", text = "", slider = False)
 
             layout.separator()
-            
+
             # Display total joint active components
             box = layout.box()
             split = box.split(1./8.)
-           
+
             # position
             column = split.column()
             column.row().label(text = "pos.X:")
@@ -724,7 +726,7 @@ def total_pin_info_draw(elem, layout):
                 else:
                     column.row().label(text = "inactive")
 
-            # angular velocity 
+            # angular velocity
             column = split.column()
             column.row().label(text = "angvel.X:")
             column.row().label(text = "angvel.Y:")
@@ -741,6 +743,83 @@ def total_pin_info_draw(elem, layout):
 # -----------------------------------------------------------
 # end of totpinj_info_draw(elem, layout) function
 
+## Creates the object representing a Total Joint element
+def spawn_total_pin_joint_element(elem, context):
+    """ Draws a total pin joint element, loading a wireframe
+        object from the addon library """
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+
+    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
+        return {'OBJECT_EXISTS'}
+
+    try:
+        n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
+    except KeyError:
+        return {'NODE1_NOTFOUND'}
+
+    # nodes' objects
+    n1OBJ = bpy.data.objects[n1]
+
+    # load the wireframe total joint object from the library
+    lib_path = os.path.join(mbs.addon_path,\
+            'library', 'joints.blend', 'Object')
+    app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total.pin')
+
+    if app_retval == {'FINISHED'}:
+        # the append operator leaves just the imported object selected
+        totjOBJ = bpy.context.selected_objects[0]
+        totjOBJ.name = elem.name
+    else:
+        return {'LIBRARY_ERROR'}
+
+    # place the joint object in the position defined relative to node 1
+    totjOBJ.location = elem.offsets[0].value
+    totjOBJ.rotation_mode = 'QUATERNION'
+    totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+
+    # display traslation arrows
+    pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
+    for kk in range(3):
+        if not(elem.offsets[1].value[kk]):
+            app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
+            if app_retval != {'FINISHED'}:
+                return {'LIBRARY_ERROR'}
+
+            obj = bpy.context.selected_objects[0]
+
+            # position it correctly
+            obj.location = elem.offsets[0].value
+
+            # rotate it according to "position orientation" w.r.t. node 1
+            obj.rotation_mode = 'QUATERNION'
+            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+
+            totjOBJ.select = True
+            bpy.context.scene.objects.active = totjOBJ
+            bpy.ops.object.join()
+
+    rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
+    for kk in range(3):
+        if not(elem.offsets[3].value[kk]):
+            app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
+            if app_retval != {'FINISHED'}:
+                return {'LIBRARY_ERROR'}
+
+            obj = bpy.context.selected_objects[0]
+
+            # position it correctly
+            obj.location = elem.offsets[0].value
+
+            # rotate it according to "rotation orientation" w.r.t. node 1
+            obj.rotation_mode = 'QUATERNION'
+            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
+            totjOBJ.select = True
+            bpy.context.scene.objects.active = totjOBJ
+            bpy.ops.object.join()
+
+
+    # TODO: display also velocity contraints arrows
 
 class BLENDYN_OT_import_total(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene """
@@ -748,9 +827,9 @@ class BLENDYN_OT_import_total(bpy.types.Operator):
     bl_label = "Imports a total joint element"
     int_label = bpy.props.IntProperty()
 
-    def draw(self, context):
-        layout = self.layout
-        layout.alignment = 'LEFT'
+    elem.blender_object = totjOBJ.name
+    totjOBJ.mbdyn.dkey = elem.name
+    totjOBJ.mbdyn.type = 'element'
 
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
@@ -783,6 +862,49 @@ class BLENDYN_OT_import_total(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_total class
 
+
+class BLENDYN_OT_import_total(bpy.types.Operator):
+    """ Imports a total joint element into the Blender scene """
+    bl_idname = "blendyn.import_total"
+    bl_label = "Imports a total joint element"
+    int_label = bpy.props.IntProperty()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        ed = bpy.context.scene.mbdyn.elems
+        nd = bpy.context.scene.mbdyn.nodes
+
+        try:
+            elem = ed['total_joint_' + str(self.int_label)]
+            retval = spawn_total_joint_element(elem, context)
+            if retval == {'OBJECT_EXISTS'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'LIBRARY_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'FINISHED'}:
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                return retval
+            else:
+                # Should not be reached
+                return retval
+        except KeyError:
+            eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
+            return {'CANCELLED'}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_import_total class
+
+
 class BLENDYN_OT_import_total_pin(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene"""
     bl_idname = "blendyn.import_total_pin"
@@ -796,7 +918,7 @@ class BLENDYN_OT_import_total_pin(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-        
+
         try:
             elem = ed['total_pin_joint_' + str(self.int_label)]
             retval = spawn_total_pin_joint_element(elem, context)

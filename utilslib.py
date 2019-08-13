@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 
@@ -46,7 +46,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         try:
-            with open(self.filepath, 'r') as sf:     
+            with open(self.filepath, 'r') as sf:
                 reader = csv.reader(sf, delimiter=' ', skipinitialspace=True)
                 name = next(reader)
                 cvdata = bpy.data.curves.new(' '.join(name), 'CURVE')
@@ -67,7 +67,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
 
                 obj = bpy.data.objects.new(name, cvdata)
                 context.scene.objects.link(obj)
-            
+
                 kk = 0
                 layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
                 try:
@@ -85,7 +85,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     self.report({'INFO'}, message)
                     logging.info(message)
                     pass
-                
+
                 # context.curve.bevel_object = obj
 
                 for item in bpy.context.scene.objects:
@@ -135,7 +135,7 @@ def fmax(x):
 # -----------------------------------------------------------
 # end of fmax function
 
-def parse_rotmat(rw, idx, R): 
+def parse_rotmat(rw, idx, R):
     R[0][0] = float(rw[idx])
     R[0][1] = float(rw[idx + 1])
     R[0][2] = float(rw[idx + 2])
@@ -172,7 +172,6 @@ def grouping(context, elem_obj, obj_list):
 
 # -----------------------------------------------------------
 # end of grouping function
-
 
 def eldbmsg(msg, who, elem):
     # Prints various standard debug messages for element import.
@@ -216,29 +215,29 @@ def eldbmsg(msg, who, elem):
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[0].int_label)
         logging.error(message)
-        return message 
+        return message
 
     def n2notfound(whomsg):
         message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[1].int_label)
         logging.error(message)
-        return message 
+        return message
 
     def n3notfound(whomsg):
         message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[2].int_label)
         logging.error(message)
-        return message 
+        return message
 
     def n4notfound(whomsg):
         message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[3].int_label)
         logging.error(message)
-        return message 
-    
+        return message
+
     def libraryerror(whomsg):
         message = whomsg \
                 + "Could not import " \

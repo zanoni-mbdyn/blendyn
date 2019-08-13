@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file rfmlib.py
-# Copyright (C) 2015 -- 2018 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -22,8 +22,6 @@
 #
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
-
-# TODO: check for unnecessary stuff
 
 import bpy
 
@@ -50,7 +48,7 @@ def parse_reference_frame(rw, rd):
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
-    except KeyError: 
+    except KeyError:
         ref = rd.add()
         ref.int_label = int(rw[0].strip())
         ref.name = 'ref_' + str(rw[0]).strip()
@@ -90,7 +88,7 @@ def spawn_reference_frame(ref, context):
         obj.name = ref.string_label
     else:
         obj.name = ref.name
-   
+
     ref.blender_object = obj.name
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -103,7 +101,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
     bl_idname = "blendyn.import_reference"
     bl_label = "Imports a reference"
     int_label = bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -131,7 +129,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
                 return retval
         except KeyError:
             message = "BLENDYN::parse_reference_frame(): "\
-            + "Did not find a dictionary entry for reference frame " 
+            + "Did not find a dictionary entry for reference frame "
             + str(rfm.int_label)
             print(message)
             logging.error(message)

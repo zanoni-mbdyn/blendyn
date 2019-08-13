@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -35,25 +35,25 @@ def parse_inplane(rw, ed):
     ret_val = True
     try:
         el = ed['inplane_' + str(rw[1])]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inplane()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_inplane()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
-        
+        el.rotoffsets[0].value = R1.to_quaternion();
+
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         R2 = Matrix().to_3x3()
-        parse_rotmat(rw, 19, R2) 
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        parse_rotmat(rw, 19, R2)
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -68,6 +68,9 @@ def parse_inplane(rw, ed):
         el.type = 'inplane'
         el.int_label = int(rw[1])
         
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inplane()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_inplane()", el)
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_inplane()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_inplane()", el)
 
@@ -99,7 +102,7 @@ def parse_inplane(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_inplane(rw, ed) function
 
 # function that displays inplane info in panel -- [ optional ]
@@ -171,7 +174,7 @@ def spawn_inplane_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -199,13 +202,13 @@ def spawn_inplane_element(elem, context):
         f2 = elem.offsets[1].value
         q1 = elem.rotoffsets[0].value
         q2 = elem.rotoffsets[1].value
-    
+
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
         p2 = Vector(( f2[0], f2[1], f2[2] ))
-    
+
         # place the joint object in the position defined relative to node 2
         inplanejOBJ.location = p1
         inplanejOBJ.rotation_mode = 'QUATERNION'
@@ -214,7 +217,7 @@ def spawn_inplane_element(elem, context):
         # set parenting of wireframe obj
         parenting(inplanejOBJ, n1OBJ)
 
-        grouping(context, inplanejOBJ, [n1OBJ])
+        grouping(context, inplanejOBJ, [n1OBJ, n2OBJ])
 
         inplanejOBJ.mbdyn.dkey = elem.name
         inplanejOBJ.mbdyn.type = 'element'
@@ -239,7 +242,7 @@ class BLENDYN_OT_import_inplane(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['inplane_' + str(self.int_label)]
             retval = spawn_inplane_element(elem, context)
@@ -265,4 +268,8 @@ class BLENDYN_OT_import_inplane(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
+<<<<<<< Updated upstream
 # end of BLENDYN_OT_import_inplane class. 
+=======
+# end of BLENDYN_OT_import_inplane class.
+>>>>>>> Stashed changes
