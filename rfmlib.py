@@ -48,7 +48,7 @@ def parse_reference_frame(rw, rd):
 
         if ref.name in bpy.data.objects.keys():
             ref.blender_object = ref.name
-    except KeyError: 
+    except KeyError:
         ref = rd.add()
         ref.int_label = int(rw[0].strip())
         ref.name = 'ref_' + str(rw[0]).strip()
@@ -95,9 +95,9 @@ def spawn_reference_frame(ref, context):
         obj.name = ref.string_label
     else:
         obj.name = ref.name
-   
+
     ref.blender_object = obj.name
-    
+
     set_active_collection('Master Collection')
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -110,7 +110,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
     bl_idname = "blendyn.import_reference"
     bl_label = "Imports a reference"
     int_label: bpy.props.IntProperty()
-    
+
     def draw(self, context):
         layout = self.layout
         layout.alignment = 'LEFT'
@@ -138,13 +138,13 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
                 + "references collection not found "
                 print(message)
                 logging.info(message)
-                return retval 
+                return {'CANCELLED'}
             else:
                 # Should not be reached
                 return retval
         except KeyError:
             message = "BLENDYN::parse_reference_frame(): "\
-            + "Did not find a dictionary entry for reference frame " 
+            + "Did not find a dictionary entry for reference frame "
             + str(rfm.int_label)
             print(message)
             logging.error(message)
