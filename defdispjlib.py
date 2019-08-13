@@ -27,7 +27,7 @@ import bpy
 from mathutils import *
 from math import *
 
-from .utilslib import parse_rotmat
+from .utilslib import *
 
 # helper function to parse deformable displacement joints
 def parse_deformable_displacement(rw, ed):
