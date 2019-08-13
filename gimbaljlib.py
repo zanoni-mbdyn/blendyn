@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -46,14 +46,14 @@ def parse_gimbal(rw, ed):
 
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion(); 
+        el.rotoffsets[0].value = R1.to_quaternion();
 
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         R2 = Matrix().to_3x3()
-        parse_rotmat(rw, 19, R2) 
-        el.rotoffsets[1].value = R2.to_quaternion(); 
-        
+        parse_rotmat(rw, 19, R2)
+        el.rotoffsets[1].value = R2.to_quaternion();
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -99,7 +99,7 @@ def parse_gimbal(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_gimbal(rw, ed) function
 
 # function that displays gimbal info in panel -- [ optional ]
@@ -216,7 +216,7 @@ def spawn_gimbal_element(elem, context):
             n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    gimbal_childobj.select = True    
+    gimbal_childobj.select = True
     gimbaljOBJ.select = True
     bpy.context.scene.objects.active = gimbaljOBJ
     bpy.ops.object.join()
@@ -248,7 +248,7 @@ class BLENDYN_OT_import_gimbal(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['gimbal_' + str(self.int_label)]
             retval = spawn_gimbal_element(elem, context)

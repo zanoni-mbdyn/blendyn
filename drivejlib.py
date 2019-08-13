@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import os
@@ -35,17 +35,24 @@ def parse_drive_displacement(rw, ed):
     ret_val = True
     try:
         el = ed['drive_displacement_' + str(rw[1])]
+<<<<<<< Updated upstream
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)  
         
+=======
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)
+
+>>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -62,6 +69,9 @@ def parse_drive_displacement(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)   
+
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -81,7 +91,7 @@ def parse_drive_displacement(rw, ed):
         ret_val = False
         pass
     return ret_val
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 # end of parse_drive_displacement(rw, ed) function
 
 # function that displays drive_displacement info in panel -- [ optional ]
@@ -142,7 +152,7 @@ def spawn_drive_displacement_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -214,7 +224,7 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     #hooking of the line ends to the Blender objects
-    
+
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select = True
@@ -285,7 +295,7 @@ class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-    
+
         try:
             elem = ed['drive_displacement_' + str(self.int_label)]
             retval = spawn_drive_displacement_element(elem, context)
