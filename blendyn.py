@@ -1405,7 +1405,6 @@ class BLENDYN_OT_set_import_freq_auto(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_set_import_freq_auto class
 
-<<<<<<< Updated upstream:blendyn.py
 class BLENDYN_OT_set_render_variables(bpy.types.Operator):
     """ Sets the Variables to be displayed in rendered view """
     bl_idname = "blendyn.set_render_variables"
