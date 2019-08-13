@@ -11,7 +11,7 @@
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    Blendynis distributed in the hope that it will be useful,
+#    Blendyn is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 from bpy.types import Operator, Panel
@@ -44,7 +44,7 @@ class BLENDYN_PG_elem_pos_offset(bpy.types.PropertyGroup):
         precision = 6
 	)
 # -----------------------------------------------------------
-# end of BLENDYN_PG_elem_pos_offset class 
+# end of BLENDYN_PG_elem_pos_offset class
 bpy.utils.register_class(BLENDYN_PG_elem_pos_offset)
 
 
@@ -56,7 +56,7 @@ class BLENDYN_PG_elem_rot_offset(bpy.types.PropertyGroup):
         precision = 6
         )
 # -----------------------------------------------------------
-# end of BLENDYN_PG_elem_rot_offset class 
+# end of BLENDYN_PG_elem_rot_offset class
 bpy.utils.register_class(BLENDYN_PG_elem_rot_offset)
 
 
@@ -66,7 +66,7 @@ class BLENDYN_PG_nodes_collection(bpy.types.PropertyGroup):
         description = "",
         )
 # -----------------------------------------------------------
-# end of BLENDYN_PG_nodes_collection class 
+# end of BLENDYN_PG_nodes_collection class
 bpy.utils.register_class(BLENDYN_PG_nodes_collection)
 
 
@@ -76,7 +76,7 @@ class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
             description = "",
             )
 # -----------------------------------------------------------
-# end of BLENDYN_PG_elem_to_be_updated class 
+# end of BLENDYN_PG_elem_to_be_updated class
 bpy.utils.register_class(BLENDYN_PG_elem_to_be_updated)
 
 
@@ -171,7 +171,7 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             default = 'none'
             )
 # -----------------------------------------------------------
-# end of BLENDYN_PG_elems_dictionary class 
+# end of BLENDYN_PG_elems_dictionary class
 bpy.utils.register_class(BLENDYN_PG_elems_dictionary)
 
 
@@ -181,7 +181,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
     """ Imports all the elements selected (by type and label range) into a single
         mesh Blender Object. Currently useful only for shell4 elements. """
     bl_label = "Import MBDyn elements as single mesh"
-    bl_idname = "blendyn.import_elments_asmesh" 
+    bl_idname = "blendyn.import_elments_asmesh"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -214,7 +214,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
                               + elem.name + " import"
                     self.report({'ERROR'}, message)
                     logging.error(message)
-        
+
         node_to_vert = dict(zip((node_set), range(len(verts))))
 
         for ekey in elems:
@@ -225,7 +225,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
                     node_to_vert['node_' + str(elem.nodes[2].int_label)],\
                     node_to_vert['node_' + str(elem.nodes[3].int_label)]),\
                     )
-        
+
         if len(verts) and len(faces):
             objname = mbs.elem_type_import + '_' + \
                     str(mbs.min_elem_import) + '_' + \
@@ -239,7 +239,7 @@ class BLENDYN_OT_import_elements_as_mesh(bpy.types.Operator):
             context.scene.collection.objects.link(obj)
             obj.select_set(state = True)
             context.view_layer.objects.active = obj
-            
+
             for node in node_set:
                 vg = obj.vertex_groups.new('v-' + str(node_to_vert[node]))
                 vg.add([node_to_vert[node]], 1.0, 'ADD')
