@@ -119,8 +119,8 @@ class BLENDYN_OT_import_deformable_displacement(bpy.types.Operator):
         nd = bpy.context.scene.mbdyn.nodes
     
         try:
-            elem = ed['defdispj_' + str(self.int_label)]
-            return spawn_defdispj_element(elem, context)
+            elem = ed['deformable_displacement_' + str(self.int_label)]
+            return spawn_deformable_displacement_element(elem, context)
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
