@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 import numpy as np
@@ -32,28 +32,26 @@ from bpy.app.handlers import persistent
 from .utilslib import *
 
 import logging
-baseLogger = logging.getLogger()
-baseLogger.setLevel(logging.DEBUG)
 
 # helper function to parse beam2
-def parse_beam2(rw, ed): 
+def parse_beam2(rw, ed):
     ret_val = True
     try:
         el = ed['beam2_' + rw[1]]
-        
+
         eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_beam2()', el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_beam2()", el)
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
-        
+
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.beam'
-        
+
         el.is_imported = True
 
         pass
@@ -67,41 +65,41 @@ def parse_beam2(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam2()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam2()", el)
-        
+
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
-        
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         el.nodes.add()
         el.nodes[1].int_label = int(rw[6])
-        
+
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        
+
         el.import_function = "blendyn.import_beam2"
         el.info_draw = "beam2_info_draw"
         el.name = el.type + "_" + str(el.int_label)
-        
+
         el.is_imported = True
         ret_val = False
-        pass 
+        pass
     return ret_val
 # -----------------------------------------------------------
 # end of parse_beam2(rw, ed) function
 
 def parse_beam3(rw, ed):
-    
-    ret_val = True 
+
+    ret_val = True
     try:
         el = ed['beam3_' + rw[1]]
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
         eldbmsg({'FOUND_IN_DICT'}, "BLENDYN::parse_beam3()", el)
-        
+
         el.is_imported = False
-        
+
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
         el.nodes[2].int_label = int(rw[10])
@@ -109,7 +107,7 @@ def parse_beam3(rw, ed):
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
         el.offsets[1].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-        
+
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.beam'
@@ -117,38 +115,38 @@ def parse_beam3(rw, ed):
         el.is_imported = True
 
         pass
-    except KeyError: 
-        el = ed.add() 
+    except KeyError:
+        el = ed.add()
         el.mbclass = 'elem.beam'
         el.type = 'beam3'
         el.int_label = int(rw[1])
-        
+
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_beam3()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_beam3()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
-        
+
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-        
+
         el.nodes.add()
         el.nodes[1].int_label = int(rw[6])
-        
+
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        
+
         el.nodes.add()
         el.nodes[2].int_label = int(rw[10])
-        
+
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-        
+
         el.import_function = "blendyn.import_beam3"
         el.info_draw = "beam3_info_draw"
         el.update = "update_beam3"
         el.name = el.type + "_" + str(el.int_label)
-        
+
         el.is_imported = True
         ret_val = False
         pass
@@ -162,14 +160,14 @@ def beam2_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align=True)
 
-    try: 
+    try:
         node = nd['node_' + str(elem.nodes[0].int_label)]
         # Display node 1 info
         col.prop(node, "int_label", text = "Node 1 ID ")
         col.prop(node, "string_label", text = "Node 1 label ")
         col.prop(node, "blender_object", text = "Node 1 Object: ")
         col.enabled = False
-           
+
         # Display offset of node 1 info
         row = layout.row()
         row.label(text = "offset 1 w.r.t. Node " + node.string_label + " R.F.")
@@ -177,13 +175,13 @@ def beam2_info_draw(elem, layout):
         col.prop(elem.offsets[0], "value", text = "", slider = False)
 
         node = nd['node_' + str(elem.nodes[1].int_label)]
-        
+
         # Display node 2 info
         col.prop(node, "int_label", text = "Node 2 ID ")
         col.prop(node, "string_label", text = "Node 2 label ")
         col.prop(node, "blender_object", text = "Node 2 Object: ")
         col.enabled = False
-           
+
         # Display offset of node 2 info
         row = layout.row()
         row.label(text = "offset 2 w.r.t. Node " + node.string_label + " R.F.")
@@ -204,27 +202,27 @@ def beam3_info_draw(elem, layout):
     row = layout.row()
     col = layout.column(align=True)
 
-    try: 
+    try:
         node = nd['node_' + str(elem.nodes[0].int_label)]
         # Display node 1 info
         col.prop(node, "int_label", text = "Node 1 ID ")
         col.prop(node, "string_label", text = "Node 1 label ")
         col.prop(node, "blender_object", text = "Node 1 Object: ")
         col.enabled = False
-           
+
         # Display offset of node 1 info
         row = layout.row()
         row.label(text = "offset 1 w.r.t. Node " + node.string_label + " R.F.")
         col = layout.column(align = True)
         col.prop(elem.offsets[0], "value", text = "", slider = False)
 
-        node = nd['node_' + str(elem.nodes[1].int_label)] 
+        node = nd['node_' + str(elem.nodes[1].int_label)]
         # Display node 2 info
         col.prop(node, "int_label", text = "Node 2 ID ")
         col.prop(node, "string_label", text = "Node 2 label ")
         col.prop(node, "blender_object", text = "Node 2 Object: ")
         col.enabled = False
-           
+
         # Display offset of node 2 info
         row = layout.row()
         row.label(text = "offset 2 w.r.t. Node " + node.string_label + " R.F.")
@@ -232,13 +230,13 @@ def beam3_info_draw(elem, layout):
         col.prop(elem.offsets[1], "value", text = "", slider = False)
         layout.separator()
 
-        node = nd['node_' + str(elem.nodes[2].int_label)] 
+        node = nd['node_' + str(elem.nodes[2].int_label)]
         # Display node 3 info
         col.prop(node, "int_label", text = "Node 3 ID ")
         col.prop(node, "string_label", text = "Node 3 label ")
         col.prop(node, "blender_object", text = "Node 3 Object: ")
         col.enabled = False
-           
+
         # Display offset of node 3 info
         row = layout.row()
         row.label(text = "offset 3 w.r.t. Node " + node.string_label + " R.F.")
@@ -255,26 +253,26 @@ def beam3_info_draw(elem, layout):
 
 # Creates the object representing a beam2 element
 def spawn_beam2_element(elem, context):
-    """ Draws a two node beam element as a line connecting two points 
+    """ Draws a two node beam element as a line connecting two points
         belonging to two objects """
 
     nd = context.scene.mbdyn.nodes
 
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return {'OBJECT_EXISTS'}
- 
-    # try to find Blender objects associated with the nodes that 
+
+    # try to find Blender objects associated with the nodes that
     # the element connects
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
         return {'NODE2_NOTFOUND'}
-   
+
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
@@ -294,7 +292,7 @@ def spawn_beam2_element(elem, context):
     # check if the object is already present. If it is, remove it.
     if beamobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[beamobj_id])
-       
+
     # check if the curve is already present. If it is, remove it.
     if beamcv_id in bpy.data.curves.keys():
         bpy.data.curves.remove(bpy.data.curves[beamcv_id])
@@ -391,19 +389,19 @@ def spawn_beam3_element(elem, context):
     if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
         return{'OBJECT_EXISTS'}
 
-    # try to find Blender objects associated with the nodes that 
+    # try to find Blender objects associated with the nodes that
     # the element connects
 
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-    
+
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
         return {'NODE2_NOTFOUND'}
-    
+
     try:
         n3 = nd['node_' + str(elem.nodes[2].int_label)].blender_object
     except KeyError:
@@ -412,7 +410,7 @@ def spawn_beam3_element(elem, context):
     # Create the NURBS order 3 curve
     beamobj_id = 'beam3_' + str(elem.int_label)
     beamcv_id = beamobj_id + '_cvdata'
-   
+
     try:
         # put it all in the 'beams' collection
         elcol = bpy.data.collections.new(name = elem.name)
@@ -424,7 +422,7 @@ def spawn_beam3_element(elem, context):
     # Check if the object is already present. If it is, remove it.
     if beamobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[beamobj_id])
-    
+
     # check if the curve is already present. If it is, remove it.
     if beamcv_id in bpy.data.curves.keys():
         bpy.data.curves.remove(bpy.data.curves[beamcv_id])
@@ -435,7 +433,7 @@ def spawn_beam3_element(elem, context):
     polydata.points.add(3)
     polydata.order_u = 3
     polydata.use_endpoint_u = True
-    
+
     # get offsets
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
@@ -466,7 +464,7 @@ def spawn_beam3_element(elem, context):
 
     M1 = Vector(( P2 + Vector((d[1]*t2)) ))
     M2 = Vector(( P2 - Vector((d[1]*t2)) ))
-    
+
     polydata.points[0].co = P1
     polydata.points[1].co = M1
     polydata.points[2].co = M2
@@ -480,7 +478,7 @@ def spawn_beam3_element(elem, context):
     # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
     # phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
     # phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
-    
+
     # polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
     # polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
     # polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
@@ -552,7 +550,7 @@ def spawn_beam3_element(elem, context):
     beamOBJ.data.splines[0].points[3].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
- 
+
     bpy.ops.object.select_all(action = 'DESELECT')
 
     elem.is_imported = True
@@ -561,7 +559,7 @@ def spawn_beam3_element(elem, context):
     obj3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    
+
     # put them all in the element collection
     elcol.objects.link(n1OBJ)
     elcol.objects.link(n2OBJ)
@@ -572,7 +570,7 @@ def spawn_beam3_element(elem, context):
 # end of spawn_beam3_element(elem, context) function
 
 def update_beam3(elem, insert_keyframe = False):
-    """ Updates the configuration of a 3-node beam by re-computing 
+    """ Updates the configuration of a 3-node beam by re-computing
         the positions of the two intermediate control points """
 
     cvdata = bpy.data.objects[elem.blender_object].data
@@ -580,8 +578,8 @@ def update_beam3(elem, insert_keyframe = False):
 
     # find nodes' Blender objects
     try:
-        cp2 = bpy.data.objects[elem.blender_object + '_M1'] 
-        cp3 = bpy.data.objects[elem.blender_object + '_M2'] 
+        cp2 = bpy.data.objects[elem.blender_object + '_M1']
+        cp3 = bpy.data.objects[elem.blender_object + '_M2']
         n1 = bpy.data.objects[nd['node_' + str(elem.nodes[0].int_label)].blender_object]
         n2 = bpy.data.objects[nd['node_' + str(elem.nodes[1].int_label)].blender_object]
         n3 = bpy.data.objects[nd['node_' + str(elem.nodes[2].int_label)].blender_object]
@@ -615,7 +613,7 @@ def update_beam3(elem, insert_keyframe = False):
     cp3.location = Vector(( P2 - Vector((d[1]*t2)) )).to_3d()
 
 
-    # FIXME: This is nonsense!!
+    # FIXME: Check this very carefully!
     # set the tilt angles of the sections
     t3 = P3.to_3d() - cp2.location
     t3.normalize()
@@ -623,7 +621,7 @@ def update_beam3(elem, insert_keyframe = False):
     phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
     phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
     phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
-    
+
     cvdata.splines[0].points[0].tilt = t1.to_3d().dot((theta1*phi1))
     cvdata.splines[0].points[1].tilt = t2.to_3d().dot((theta2*phi2))
     cvdata.splines[0].points[2].tilt = t2.to_3d().dot((theta2*phi2))
@@ -633,10 +631,10 @@ def update_beam3(elem, insert_keyframe = False):
         try:
             cp2.select_set(state = True)
             cp2.keyframe_insert(data_path = "location")
-            
+
             cp3.select_set(state = True)
             cp3.keyframe_insert(data_path = "location")
-            
+
         except RuntimeError as err:
             if 'context is incorrect' in str(err):
                 pass
@@ -650,6 +648,7 @@ def update_beam3(elem, insert_keyframe = False):
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of update_beam3() function
+
 
 ## Imports a Beam 2 element in the scene as a line joining two nodes
 class BLENDYN_OT_import_beam2(bpy.types.Operator):
@@ -665,7 +664,7 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-        try: 
+        try:
             elem = ed['beam2_' + str(self.int_label)]
             retval = spawn_beam2_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
@@ -689,7 +688,7 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
-            
+
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_beam2 class
@@ -706,7 +705,7 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
 
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
-        try: 
+        try:
             elem = ed['beam3_' + str(self.int_label)]
             retval = spawn_beam3_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
@@ -734,7 +733,7 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
-            
+
 # -----------------------------------------------------------
 # end of BLENDYN_OT_import_beam3 class
 
@@ -751,9 +750,8 @@ class BLENDYN_OT_update_beam3(bpy.types.Operator):
             message = type(self).__name__ + "::execute(): " \
                     + "Unable to find Blender objects to update"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
         else:
             return ret_val
         pass
-
