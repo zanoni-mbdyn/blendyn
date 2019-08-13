@@ -268,8 +268,4 @@ class BLENDYN_OT_import_inplane(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-<<<<<<< Updated upstream
-# end of BLENDYN_OT_import_inplane class. 
-=======
 # end of BLENDYN_OT_import_inplane class.
->>>>>>> Stashed changes

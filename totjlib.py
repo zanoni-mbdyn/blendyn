@@ -743,93 +743,12 @@ def total_pin_info_draw(elem, layout):
 # -----------------------------------------------------------
 # end of totpinj_info_draw(elem, layout) function
 
-## Creates the object representing a Total Joint element
-def spawn_total_pin_joint_element(elem, context):
-    """ Draws a total pin joint element, loading a wireframe
-        object from the addon library """
-    mbs = context.scene.mbdyn
-    nd = mbs.nodes
-
-    if any(obj == elem.blender_object for obj in context.scene.objects.keys()):
-        return {'OBJECT_EXISTS'}
-
-    try:
-        n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
-    except KeyError:
-        return {'NODE1_NOTFOUND'}
-
-    # nodes' objects
-    n1OBJ = bpy.data.objects[n1]
-
-    # load the wireframe total joint object from the library
-    lib_path = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object')
-    app_retval = bpy.ops.wm.append(directory = lib_path, filename = 'total.pin')
-
-    if app_retval == {'FINISHED'}:
-        # the append operator leaves just the imported object selected
-        totjOBJ = bpy.context.selected_objects[0]
-        totjOBJ.name = elem.name
-    else:
-        return {'LIBRARY_ERROR'}
-
-    # place the joint object in the position defined relative to node 1
-    totjOBJ.location = elem.offsets[0].value
-    totjOBJ.rotation_mode = 'QUATERNION'
-    totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-
-    # display traslation arrows
-    pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
-    for kk in range(3):
-        if not(elem.offsets[1].value[kk]):
-            app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
-            if app_retval != {'FINISHED'}:
-                return {'LIBRARY_ERROR'}
-
-            obj = bpy.context.selected_objects[0]
-
-            # position it correctly
-            obj.location = elem.offsets[0].value
-
-            # rotate it according to "position orientation" w.r.t. node 1
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-
-            totjOBJ.select = True
-            bpy.context.scene.objects.active = totjOBJ
-            bpy.ops.object.join()
-
-    rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
-    for kk in range(3):
-        if not(elem.offsets[3].value[kk]):
-            app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
-            if app_retval != {'FINISHED'}:
-                return {'LIBRARY_ERROR'}
-
-            obj = bpy.context.selected_objects[0]
-
-            # position it correctly
-            obj.location = elem.offsets[0].value
-
-            # rotate it according to "rotation orientation" w.r.t. node 1
-            obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-            totjOBJ.select = True
-            bpy.context.scene.objects.active = totjOBJ
-            bpy.ops.object.join()
-
-
-    # TODO: display also velocity contraints arrows
 
 class BLENDYN_OT_import_total(bpy.types.Operator):
     """ Imports a total joint element into the Blender scene """
     bl_idname = "blendyn.import_total"
     bl_label = "Imports a total joint element"
     int_label = bpy.props.IntProperty()
-
-    elem.blender_object = totjOBJ.name
-    totjOBJ.mbdyn.dkey = elem.name
-    totjOBJ.mbdyn.type = 'element'
 
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems

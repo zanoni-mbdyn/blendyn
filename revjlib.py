@@ -35,17 +35,10 @@ def parse_revolute_hinge(rw, ed):
     ret_val = True
     try:
         el = ed['revolute_hinge_' + str(rw[1])]
-<<<<<<< Updated upstream
-        
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el)
-        
-=======
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el)
 
->>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
 
@@ -580,8 +573,4 @@ class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-<<<<<<< Updated upstream
-# end of BLENDYN_OT_import_revolute_pin class
-=======
 # end of BLENDYN_OT_import_revolute_rotation class
->>>>>>> Stashed changes

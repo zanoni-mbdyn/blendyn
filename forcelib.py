@@ -141,17 +141,10 @@ def parse_structural_absolute_couple(rw, ed):
     ret_val = True
     try:
         el = ed['structural_absolute_couple_' + str(rw[3])]
-<<<<<<< Updated upstream
-        
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
-        
-=======
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_absolute_couple():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_absolute_couple():", el)
 
->>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[4])
 
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
@@ -198,17 +191,10 @@ def parse_structural_follower_couple(rw, ed):
     ret_val = True
     try:
         el = ed['structural_follower_couple_' + str(rw[3])]
-<<<<<<< Updated upstream
-        
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
-        
-=======
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
 
->>>>>>> Stashed changes
         el.nodes[0].int_label = int(rw[4])
 
         el.offsets[0].value = Vector(( float(rw[5]), float(rw[6]), float(rw[7]) ))
@@ -230,11 +216,6 @@ def parse_structural_follower_couple(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_structural_follower_couple():", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_structural_follower_couple():", el)
-<<<<<<< Updated upstream
-        
-=======
-
->>>>>>> Stashed changes
         el.nodes.add()
         el.nodes[0].int_label = int(rw[4])
 
@@ -366,11 +347,7 @@ def spawn_structural_couple_element(elem, context):
 
 # Imports a Structural Absolute Force Element in the scene
 class BLENDYN_OT_import_structural_absolute_force(bpy.types.Operator):
-<<<<<<< Updated upstream
-    """ Imports a structural absolute force element 
-=======
     """ Imports a structural absolute force element
->>>>>>> Stashed changes
         into the Blender scene """
     bl_idname = "blendyn.import_structural_absolute_force"
     bl_label = "Imports a structural absolute force element"
@@ -476,12 +453,6 @@ class BLENDYN_OT_import_structural_absolute_couple(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
-<<<<<<< Updated upstream
-=======
-                return retval
-            else:
-                # Should not be reached
->>>>>>> Stashed changes
                 return retval
             else:
                 # Should not be reached

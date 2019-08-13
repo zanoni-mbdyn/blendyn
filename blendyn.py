@@ -179,6 +179,7 @@ class BLENDYN_PG_reference_dictionary(bpy.types.PropertyGroup):
 # end of BLENDYN_PG_reference_dictionary class
 bpy.utils.register_class(BLENDYN_PG_reference_dictionary)
 
+
 ## Time PropertyGroup for animation
 class BLENDYN_PG_mbtime(bpy.types.PropertyGroup):
     time = FloatProperty(
@@ -503,7 +504,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     # objects
     references = CollectionProperty(
             name = "MBDyn references",
-            type = BLENDYN_PG_refence_dictionary
+            type = BLENDYN_PG_reference_dictionary
             )
     # Reference dictionary index -- holds the index for displaying the Reference
     # Dictionary in a UI List
@@ -1919,7 +1920,7 @@ class BLENDYN_UL_refs_list(bpy.types.UIList):
             layout.label(text = '', icon = custom_icon)
 # -----------------------------------------------------------
 # end of BLENDYN_UL_refs_lists class
-bpy.utils.register_class(BLENDYN_UL_refs_lists)
+bpy.utils.register_class(BLENDYN_UL_refs_list)
 
 
 ## Panel in scene properties toolbar that shows the MBDyn
@@ -2044,65 +2045,6 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
 # end of BLENDYN_PT_elems_scene class
 bpy.utils.register_class(BLENDYN_PT_elems_scene)
 
-class BLENDYN_PT_scaling(bpy.types.Panel):
-    """ List of MBDyn elements: use import button to add \
-            them to the scene  """
-    bl_label = "Scale MBDyn Entities"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "scene"
-
-    def draw(self, context):
-        mbs = context.scene.mbdyn
-        layout = self.layout
-        
-        box = layout.box()
-        row = box.row()
-        row.template_list('BLENDYN_UL_mbdyn_nodes_list', "MBDyn nodes list", mbs, "nodes",\
-                mbs, "nd_index")
-        row = box.row()
-        row.prop(mbs, "node_scale_slider")
-        col = box.column(align = True)
-        col.operator(BLENDYN_OT_select_all_nodes.bl_idname, \
-                text = "Select All Nodes")
-        col.operator(BLENDYN_OT_scale_node.bl_idname, \
-                text = "Scale Selected Node")
-        col.operator(BLENDYN_OT_scale_sel_nodes.bl_idname, \
-                text = "Scale All Nodes")
-
-        box = layout.box()
-        col = box.column()
-        col.label("Elements to scale:")
-        col.prop(mbs, "elem_type_scale", text = "")
-        col = box.column()
-        col.prop(mbs, "elem_scale_slider")
-        col = box.column(align = True)
-        col.operator(BLENDYN_OT_select_elements_by_type.bl_idname, \
-                text = "Select Elements")
-        col.operator(BLENDYN_OT_scale_elements_by_type.bl_idname, \
-                text = "Scale Elements")
-# -----------------------------------------------------------
-# end of BLENDYN_PT_scaling class
-bpy.utils.register_class(BLENDYN_PT_scaling)
-
-## Panel in scene properties toolbar that shows the MBDyn reference found in the .rfm file
-class BLENDYN_PT_reference_scene(bpy.types.Panel):
-    """ List of MBDyn references: use import button to add them to the scene as empty
-        axes objects """
-            box = layout.box()
-            col = box.column(align = True)
-            col.operator(BLENDYN_OT_select_elements_by_type.bl_idname, \
-                    text = "Select Elements")
-
-            box = layout.box()
-            col = box.column()
-            col.prop(mbs, "elem_scale_slider")
-            col.operator(BLENDYN_OT_scale_elements_by_type.bl_idname, \
-                    text = "Scale Elements")
-
-# -----------------------------------------------------------
-# end of BLENDYN_PT_elems_scene class
-
 
 class BLENDYN_PT_reference_scene(bpy.types.Panel):
     """ List of MBDyn references, found in the .rfm file:
@@ -2182,19 +2124,6 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
                 if bpy.data.objects.get(nd_entry.blender_object) == 'none':
                     row.operator(BLENDYN_OT_single_node_import.bl_idname, \
                             text="ADD").int_label = nd_entry.int_label
-# -----------------------------------------------------------
-# end of BLENDYN_PT_obj_select class
-bpy.utils.register_class(BLENDYN_PT_obj_select)
-                row.label(text = nd_entry.blender_object, icon = 'OBJECT_DATA')
-                row.operator(BLENDYN_OT_obj_select_node.bl_idname, \
-                        text = "UNASSIGN").ndx = nd_entry.name
-            else:
-                row.label(text = nd_entry.blender_object)
-                row.operator(BLENDYN_OT_obj_select_node.bl_idname, \
-                        text = "ASSIGN").ndx = nd_entry.name
-                if bpy.data.objects.get(nd_entry.blender_object) == 'none':
-                    row.operator(BLENDYN_OT_node_import_single.bl_idname, \
-                            text = "ADD").int_label = nd_entry.int_label
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
 
