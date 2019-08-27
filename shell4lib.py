@@ -126,6 +126,7 @@ def spawn_shell4_element(elem, context):
         set_active_collection('plates')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['plates'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 

@@ -286,6 +286,7 @@ def spawn_total_joint_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
         
         # load the wireframe total joint object from the library
         lib_path = os.path.join(mbs.addon_path,\
@@ -442,6 +443,7 @@ def spawn_total_pin_joint_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
     
         # load the wireframe total joint object from the library
         lib_path = os.path.join(mbs.addon_path,\

@@ -161,6 +161,7 @@ def spawn_distance_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 
@@ -271,6 +272,8 @@ def spawn_distance_element(elem, context):
     elcol.objects.link(n2OBJ)
     elcol.objects.link(dist_child1)
     elcol.objects.link(dist_child2)
+
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return{'FINISHED'}

@@ -238,6 +238,7 @@ def spawn_aero0_element(elem, context):
         set_active_collection('aerodynamic')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['aerodynamic'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 
@@ -316,6 +317,7 @@ def spawn_aero2_element(elem, context):
         set_active_collection('aerodynamic')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['aerodynamic'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
     
@@ -394,6 +396,7 @@ def spawn_aero3_element(elem, context):
         set_active_collection('aerodynamic')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['aerodynamic'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 

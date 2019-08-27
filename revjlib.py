@@ -254,6 +254,7 @@ def spawn_revolute_hinge_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
@@ -384,6 +385,7 @@ def spawn_revolute_pin_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
@@ -503,6 +505,7 @@ def spawn_revolute_rot_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\

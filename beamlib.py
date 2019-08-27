@@ -286,6 +286,7 @@ def spawn_beam2_element(elem, context):
         set_active_collection('beams')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['beams'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 
@@ -413,9 +414,10 @@ def spawn_beam3_element(elem, context):
 
     try:
         # put it all in the 'beams' collection
+        set_active_collection('beams')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['beams'].children.link(elcol)
-        set_active_collection(elem.name)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 

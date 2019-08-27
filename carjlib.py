@@ -186,6 +186,7 @@ def spawn_cardano_hinge_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol) 
+        set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
@@ -271,6 +272,7 @@ def spawn_cardano_pin_elem(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\

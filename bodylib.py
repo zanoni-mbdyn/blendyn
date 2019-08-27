@@ -118,6 +118,7 @@ def spawn_body_element(elem, context):
         set_active_collection('bodies')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['bodies'].children.link(elcol)
+        set_active_collection(elcol.name)
         
         # load the wireframe body object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\

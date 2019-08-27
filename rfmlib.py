@@ -81,6 +81,7 @@ def spawn_reference_frame(ref, context):
         set_active_collection('references')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['references'].children.link(elcol)
+        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 

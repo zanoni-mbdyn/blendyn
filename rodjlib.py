@@ -566,6 +566,7 @@ def spawn_rod_element(elem, context):
         
     try:
         # put it all in the 'joints' collection
+        set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
         set_active_collection(elem.name)

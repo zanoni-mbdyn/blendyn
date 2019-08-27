@@ -173,6 +173,7 @@ def spawn_gimbal_element(elem, context):
         set_active_collection('joints')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         # load the wireframe gimbal joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\

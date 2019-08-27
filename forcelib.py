@@ -249,6 +249,7 @@ def spawn_structural_force_element(elem, context):
         set_active_collection('forces')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['forces'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         # load the wireframe force object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
@@ -315,6 +316,7 @@ def spawn_structural_couple_element(elem, context):
         set_active_collection('forces')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['forces'].children.link(elcol)
+        set_active_collection(elcol.name)
 
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'forces.blend', 'Object'), filename = 'couple')
