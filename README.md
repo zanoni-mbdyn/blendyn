@@ -21,3 +21,11 @@ the model definition phase.
 
 Please refer to the [wiki pages](https://github.com/zanoni-mbdyn/blendyn/wiki) 
 for the complete documentation.
+
+
+
+## **Update: August, 2019**
+The porting of **Blendyn** to the new Blender 2.80 API has been completed and is now available
+in the `blender2.8` branch. If you are an interested user, please try it out! 
+You can find the main **Blendyn** menu in the Sidbar Panel, accesses by pressing the `N` key.
+Please report any bugs in the [Issues](https://github.com/zanoni-mbdyn/blendyn/issues) section.
