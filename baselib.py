@@ -1005,13 +1005,12 @@ def log_messages(mbs, baseLogger, saved_blend):
 
 def delete_log():
     mbs = bpy.context.scene.mbdyn
-
+    global logFile
     if not(bpy.data.is_saved) or mbs.del_log:
         try:
             os.remove(logFile)
             print("Blendyn::delete_log(): removed file" + logFile)
         except NameError as ex:
-            print("Blendyn::delete_log(): NameError:" + str(e))
             pass
 
 def logging_shutdown():

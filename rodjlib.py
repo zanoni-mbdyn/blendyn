@@ -414,7 +414,7 @@ class BLENDYN_OT_write_rod_input(Operator):
     """ Writes the input for Rod Element in the text editor """
     bl_idname = "blendyn.write_rod_input"
     bl_label = "Write updated input for rod"
-    elem_key: bpy.props.StringProperty()
+    elem_key = bpy.props.StringProperty()
 
     def execute(self, context):
         elem = bpy.context.scene.mbdyn.elems[self.elem_key]
