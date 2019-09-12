@@ -87,7 +87,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
     bl_idname = "blendyn.plot_var_sxx_scene"
     bl_label = "Plot the selected MBDyn var autospectrum"
 
-    var_index: bpy.props.IntProperty()
+    var_index = bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -465,7 +465,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
     bl_idname = "blendyn.plot_var_scene"
     bl_label = "Plot the selected MBDyn var"
 
-    var_index: bpy.props.IntProperty()
+    var_index =  bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
