@@ -256,7 +256,7 @@ def eldbmsg(msg, who, elem):
     def importsuccess(whomsg):
         message = whomsg \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
-                + "imported correcly."
+                + "imported correctly."
         logging.info(message)
         return message
 
