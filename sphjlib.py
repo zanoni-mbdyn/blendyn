@@ -228,12 +228,6 @@ def spawn_spherical_hinge_element(elem, context):
         sphjOBJ.mbdyn.type = 'element'
         elem.blender_object = sphjOBJ.name
 
-        # link objects to element collection
-        elcol.objects.link(n1OBJ)
-        elcol.objects.link(n2OBJ)
-        elcol.objects.link(RF2)
-        set_active_collection('Master Collection')
-
         return {'FINISHED'}
     else:
         return {'LIBRARY_ERROR'}
