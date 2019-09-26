@@ -406,10 +406,6 @@ def spawn_total_joint_element(elem, context):
         # link objects to element collection
         elcol.objects.link(n1OBJ)
         elcol.objects.link(n2OBJ)
-        elcol.objects.link(RF1p)
-        elcol.objects.link(RF1r)
-        elcol.objects.link(RF2p)
-        elcol.objects.link(RF2r)
         set_active_collection('Master Collection')
 
         return {'FINISHED'}
@@ -536,8 +532,6 @@ def spawn_total_pin_joint_element(elem, context):
     
         # link objects to element collection
         elcol.objects.link(n1OBJ)
-        elcol.objects.link(RF1p)
-        elcol.objects.link(RF1r)
         set_active_collection('Master Collection')
 
         return {'FINISHED'}

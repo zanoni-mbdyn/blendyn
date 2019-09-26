@@ -270,8 +270,6 @@ def spawn_distance_element(elem, context):
     dist_child2 = bpy.data.objects[distOBJ.name + '_child2'] 
     elcol.objects.link(n1OBJ)
     elcol.objects.link(n2OBJ)
-    elcol.objects.link(dist_child1)
-    elcol.objects.link(dist_child2)
 
     set_active_collection('Master Collection')
 

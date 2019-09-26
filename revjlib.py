@@ -306,7 +306,6 @@ def spawn_revolute_hinge_element(elem, context):
         # link objects to element collection
         elcol.objects.link(n1OBJ)
         elcol.objects.link(n2OBJ)
-        elcol.objects.link(RF2)
         set_active_collection('Master Collection')
 
         return {'FINISHED'}
@@ -556,7 +555,6 @@ def spawn_revolute_rot_element(elem, context):
         # link objects to element collection
         elcol.objects.link(n1OBJ)
         elcol.objects.link(n2OBJ)
-        elcol.objects.link(RF2)
         set_active_collection('Master Collection')
 
         return {'FINISHED'}
