@@ -422,6 +422,9 @@ def parse_log_file(context):
             while True:
                 if next(reader)[0] == 'Step':
                   mbs.time_step = float(next(reader)[3])
+                  if (mbs.use_netcdf):
+                      mbs.end_time = nc.variables["time"][-1]
+                      mbs.start_time = nc.variables["time"][0]
                   break
     except FileNotFoundError:
         print("Blendyn::parse_log_file(): Could not locate the file " + out_file)
@@ -456,7 +459,8 @@ def parse_log_file(context):
         print("Blendyn::parse_out_file(): Could not read the file " + rfm_file)
         pass
 
-    mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
+    if not(mbs.use_netcdf):
+        mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
 
     return ret_val, obj_names
 # -----------------------------------------------------------
@@ -636,7 +640,13 @@ def update_label(self, context):
 def update_end_time(self, context):
     mbs = context.scene.mbdyn
 
-    if mbs.end_time > mbs.num_timesteps * mbs.time_step:
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r")
+        if mbs.end_time > nc.variables["time"][-1]:
+            mbs.end_time = nc.variables["time"][-1]
+    elif mbs.end_time > mbs.num_timesteps * mbs.time_step:
         mbs.end_time = mbs.num_timesteps * mbs.time_step
 # -----------------------------------------------------------
 # end of update_end_time() function
@@ -644,7 +654,13 @@ def update_end_time(self, context):
 def update_start_time(self, context):
     mbs = context.scene.mbdyn
 
-    if mbs.start_time >= mbs.num_timesteps * mbs.time_step:
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r")
+        if mbs.start_time < nc.variables["time"][0]:
+            mbs.start_time = nc.variables["time"][0]
+    elif mbs.start_time >= mbs.num_timesteps * mbs.time_step:
         mbs.start_time = (mbs.num_timesteps - 1) * mbs.time_step
 # -----------------------------------------------------------
 # end of update_start_time() function
@@ -939,14 +955,16 @@ def set_motion_paths_netcdf(context):
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r")
-    nctime = nc.variables["time"]
-
-    mbs.time_step = nctime[1]
-
     freq = mbs.load_frequency
 
-    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
-    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
+    nctime = nc.variables["time"]
+    mbs.time_step = nctime[1] - nctime[0]
+    if nctime[0] == 0.0:
+        scene.frame_start = int(mbs.start_time/(mbs.time_step*mbs.load_frequency))
+        scene.frame_end = int(mbs.end_time/(mbs.time_step*mbs.load_frequency)) + 1
+    else:
+        scene.frame_start = int((mbs.start_time - nctime[0])/(mbs.time_step*mbs.load_frequency))
+        scene.frame_end = int((mbs.end_time - nctime[0])/(mbs.time_step*mbs.load_frequency)) + 1
 
     anim_nodes = list()
     for node in nd:
