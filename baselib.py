@@ -448,7 +448,7 @@ def parse_log_file(context):
             rcol = bpy.data.collections['mbdyn.references']
         except KeyError:
             rcol = bpy.data.collections.new(name = 'mbdyn.references')
-            bpy.context.scene.collection.children.link(nrcol)
+            bpy.context.scene.collection.children.link(rcol)
 
     except StopIteration:
         pass
