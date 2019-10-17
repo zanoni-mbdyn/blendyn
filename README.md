@@ -26,11 +26,11 @@ for the complete documentation.
 
 ## **Update: August, 2019**
 The porting of **Blendyn** to the new Blender 2.80 API has been completed and is now available
-in the `blender2.8` branch. If you are an interested user, please try it out! 
+in the `blender28` branch. If you are an interested user, please try it out! 
 You can find the main **Blendyn** menu in the Sidbar Panel, accesses by pressing the `N` key.
 Please report any bugs in the [Issues](https://github.com/zanoni-mbdyn/blendyn/issues) section.
 
 *Please note that the documentation is currently lagging a little bit behind the latest code,
-especially in the* `blender2.8` *branch. Basically, you might find some small differences in 
+especially in the* `blender28` *branch. Basically, you might find some small differences in 
 the addon UI with respect to what is described in the Wiki. The hope is that those differences
 are small enough that they are not show-stoppers! The docs will be updated as soon as possible*
