@@ -336,25 +336,25 @@ def spawn_beam2_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # add drivers for bevel section rotation
-    drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
-    xrot_P1 = drv_tilt_P1.driver.variables.new()
-    xrot_P1.name = "xrot_P1"
-    xrot_P1.type = 'TRANSFORMS'
-    xrot_P1.targets[0].id = n1OBJ
-    xrot_P1.targets[0].data_path = 'rotation.x'
-    xrot_P1.targets[0].transform_type = 'ROT_X'
-    xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_P1.driver.expression = "xrot_P1"
+    # drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
+    # xrot_P1 = drv_tilt_P1.driver.variables.new()
+    # xrot_P1.name = "xrot_P1"
+    # xrot_P1.type = 'TRANSFORMS'
+    # xrot_P1.targets[0].id = n1OBJ
+    # xrot_P1.targets[0].data_path = 'rotation.x'
+    # xrot_P1.targets[0].transform_type = 'ROT_X'
+    # xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
+    # drv_tilt_P1.driver.expression = "xrot_P1"
 
-    drv_tilt_P2 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
-    xrot_P2 = drv_tilt_P2.driver.variables.new()
-    xrot_P2.name = "xrot_P2"
-    xrot_P2.type = 'TRANSFORMS'
-    xrot_P2.targets[0].id = n2OBJ
-    xrot_P2.targets[0].data_path = 'rotation.x'
-    xrot_P2.targets[0].transform_type = 'ROT_X'
-    xrot_P2.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_P2.driver.expression = "xrot_P2"
+    # drv_tilt_P2 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
+    # xrot_P2 = drv_tilt_P2.driver.variables.new()
+    # xrot_P2.name = "xrot_P2"
+    # xrot_P2.type = 'TRANSFORMS'
+    # xrot_P2.targets[0].id = n2OBJ
+    # xrot_P2.targets[0].data_path = 'rotation.x'
+    # xrot_P2.targets[0].transform_type = 'ROT_X'
+    # xrot_P2.targets[0].transform_space = 'WORLD_SPACE'
+    # drv_tilt_P2.driver.expression = "xrot_P2"
 
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
@@ -454,15 +454,15 @@ def spawn_beam3_element(elem, context):
     t3 = P3 - M2
     t3.normalize()
 
-    # FIXME: This is nonsense!!
-    # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
-    # phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
-    # phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
+    # FIXME: Check this very carefully!
+    phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
+    phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
+    phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
 
-    # polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
-    # polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
-    # polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
-    # polydata.points[3].tilt = t3.to_3d()*(theta3*phi3)
+    polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
+    polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
+    polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
+    polydata.points[3].tilt = t3.to_3d()*(theta3*phi3)
 
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
