@@ -476,7 +476,7 @@ def spawn_beam3_element(elem, context):
     t3 = P3 - M2
     t3.normalize()
 
-    # FIXME: This is nonsense!!
+    # FIXME: check this very carefully!
     # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
     # phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
     # phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
@@ -617,17 +617,17 @@ def update_beam3(elem, insert_keyframe = False):
 
     # FIXME: Check this very carefully!
     # set the tilt angles of the sections
-    t3 = P3.to_3d() - cp2.location
-    t3.normalize()
+    # t3 = P3.to_3d() - cp2.location
+    # t3.normalize()
 
-    phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
-    phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
-    phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
+    # phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
+    # phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
+    # phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
 
-    cvdata.splines[0].points[0].tilt = t1.to_3d().dot((theta1*phi1))
-    cvdata.splines[0].points[1].tilt = t2.to_3d().dot((theta2*phi2))
-    cvdata.splines[0].points[2].tilt = t2.to_3d().dot((theta2*phi2))
-    cvdata.splines[0].points[3].tilt = t3.to_3d().dot((theta3*phi3))
+    # cvdata.splines[0].points[0].tilt = t1.to_3d().dot((theta1*phi1))
+    # cvdata.splines[0].points[1].tilt = t2.to_3d().dot((theta2*phi2))
+    # cvdata.splines[0].points[2].tilt = t2.to_3d().dot((theta2*phi2))
+    # cvdata.splines[0].points[3].tilt = t3.to_3d().dot((theta3*phi3))
 
     if insert_keyframe:
         try:
