@@ -66,16 +66,15 @@ from . rfmlib import *
 from . logwatcher import *
 from . utilslib import set_active_collection
 
-HAVE_PLOT = False
+HAVE_PLOT = True
 
 try:
-    import pygal
-    HAVE_PLOT = True
     from .plotlib import *
-except (ImportError, OSError) as ierr:
+except (ImportError, OSError, ModuleNotFoundError) as ierr:
     print("BLENDYN::base.py: could not enable the plotting module. Plotting  "\
             + "will be disabled. The reported error was:")
     print("{0}".format(ierr))
+    HAVE_PLOT = False
 
 ## Nodes Dictionary: contains nodes informations
 class BLENDYN_PG_nodes_dictionary(bpy.types.PropertyGroup):

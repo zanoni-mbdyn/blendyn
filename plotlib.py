@@ -26,13 +26,13 @@ import bpy
 
 import pygal
 import cairosvg
+
 import numpy as np
 
 import logging
 
 from .nodelib import *
 from .elementlib import *
-from .blendyn import HAVE_PLOT
 import os
 
 try:
@@ -977,28 +977,28 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         column.row().prop(pvar, "plot_comps", index = 2, text = "(1,3)")
                         column.row().prop(pvar, "plot_comps", index = 5, text = "(2,3)")
                         column.row().prop(pvar, "plot_comps", index = 8, text = "(3,3)")
-                if HAVE_PLOT:
+                # plot controls
+                row = layout.row()
+                col = layout.column()
+                col.prop(pvar, "plot_frequency")
+                col.operator(BLENDYN_OT_set_plot_freq.bl_idname, \
+                        text = "Use Import freq").is_object = False
+                row = layout.row()
+                row.prop(pvar, "plot_type")
+                row = layout.row()
+                row.prop(pvar, "plot_xrange_min")
+                row = layout.row()
+                row.prop(pvar, "plot_xrange_max")
+                row = layout.row()
+                if pvar.plot_type == "TIME HISTORY":
+                    row.operator(BLENDYN_OT_plot_var_scene.bl_idname, 
+                            text="Plot variable")
+                elif mbs.plot_type == "AUTOSPECTRUM":
                     row = layout.row()
-                    col = layout.column()
-                    col.prop(pvar, "plot_frequency")
-                    col.operator(BLENDYN_OT_set_plot_freq.bl_idname, \
-                            text = "Use Import freq").is_object = False
+                    row.prop(mbs, "fft_remove_mean")
                     row = layout.row()
-                    row.prop(pvar, "plot_type")
-                    row = layout.row()
-                    row.prop(pvar, "plot_xrange_min")
-                    row = layout.row()
-                    row.prop(pvar, "plot_xrange_max")
-                    row = layout.row()
-                    if pvar.plot_type == "TIME HISTORY":
-                        row.operator(BLENDYN_OT_plot_var_scene.bl_idname, 
-                                text="Plot variable")
-                    elif mbs.plot_type == "AUTOSPECTRUM":
-                        row = layout.row()
-                        row.prop(mbs, "fft_remove_mean")
-                        row = layout.row()
-                        row.operator(BLENDYN_OT_plot_var_sxx_scene.bl_idname,
-                                text = "Plot variable Autospectrum")
+                    row.operator(BLENDYN_OT_plot_var_sxx_scene.bl_idname,
+                            text = "Plot variable Autospectrum")
             except IndexError:
                 pass
 
@@ -1021,22 +1021,22 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                     text = 'Delete Display Variable')
             row.operator(BLENDYN_OT_delete_all_render_variables.bl_idname, text = 'Clear')
 
-            if HAVE_PLOT:
-                row = layout.row()
-                row.operator(BLENDYN_OT_plot_variables_list.bl_idname, \
-                        text="Plot variables in List")
+            # plot controls
+            row = layout.row()
+            row.operator(BLENDYN_OT_plot_variables_list.bl_idname, \
+                    text="Plot variables in List")
 
-                row.prop(mbs, "plot_group", text = "Plot Group")
-                layout.separator()
-                layout.separator()
+            row.prop(mbs, "plot_group", text = "Plot Group")
+            layout.separator()
+            layout.separator()
 
-                row = layout.row()
-                row.prop(mbs, "group_name")
-                row.operator(BLENDYN_OT_set_display_group.bl_idname, text="Set Display Group")
+            row = layout.row()
+            row.prop(mbs, "group_name")
+            row.operator(BLENDYN_OT_set_display_group.bl_idname, text="Set Display Group")
 
-                row = layout.row()
-                row.prop(mbs, "display_enum_group")
-                row.operator(BLENDYN_OT_show_display_group.bl_idname, text = "Show Display Group")
+            row = layout.row()
+            row.prop(mbs, "display_enum_group")
+            row.operator(BLENDYN_OT_show_display_group.bl_idname, text = "Show Display Group")
 
         else:
             row = layout.row()
