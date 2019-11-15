@@ -39,6 +39,8 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
+import pdb
+
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -644,7 +646,7 @@ def update_end_time(self, context):
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r")
-        if mbs.end_time > nc.variables["time"][-1]:
+        if (mbs.end_time - nc.variables["time"][-1]) > mbs.time_step:
             mbs.end_time = nc.variables["time"][-1]
     elif mbs.end_time > mbs.num_timesteps * mbs.time_step:
         mbs.end_time = mbs.num_timesteps * mbs.time_step
