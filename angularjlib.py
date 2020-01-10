@@ -28,8 +28,7 @@ import os
 from mathutils import *
 from math import *
 
-from .utilslib import parse_rotmat
-from .utilslib import parenting
+from .utilslib import *
 
 # helper function to parse angularvelocity joints
 def parse_angularvelocity(rw, ed):
