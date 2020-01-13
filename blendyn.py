@@ -801,11 +801,12 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT')
+            selftag = 'BLENDYN_OT_standard_import::execute(): ' 
+            bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
             bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
             bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
         except RuntimeError as re:
-            message = "BLENDYN_OT_standard_import: something went wrong during the automatic import. "\
+            message = "BLENDYN_OT_standard_import::execute(): something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
             self.report({'ERROR'}, message)
             baseLogger.error(message)
@@ -829,71 +830,63 @@ class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
         ret_val, obj_names = parse_log_file(context)
 
         missing = context.scene.mbdyn.missing
+        selftag = 'BLENDYN_OT_read_mbdyn_log::execure(): '
         if len(obj_names) > 0:
-            message = "BLENDYN_OT_read_mbdyn_log::execure(): "\
-                    + "Some of the nodes/elements are missing in the new .log file"
+            message = "Some of the nodes/elements are missing in the new .log file"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             hide_or_delete(obj_names, missing)
 
         if len(mbs.disabled_output) > 0:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "No output for nodes " + mbs.disabled_output
+            message = "No output for nodes " + mbs.disabled_output
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
 
         if ret_val == {'LOG_NOT_FOUND'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + ".log file not found"
+            message = ".log file not found"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
 
         elif ret_val == {'NODES_NOT_FOUND'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "The .log file selected does not contain node definitions"
+            message = "The .log file selected does not contain node definitions"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
 
         elif ret_val == {'MODEL_INCONSISTENT'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "Contents of .log file are not onsistent with "\
+            message = "Contents of .log file are not onsistent with "\
                     + "current Blender scene."
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
         elif ret_val == {'NODES_INCONSISTENT'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "Nodes in .log file are not consistent with "\
+            message = "Nodes in .log file are not consistent with "\
                     + "current Blender scene"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
         elif ret_val == {'ELEMS_INCONSISTENT'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "Elements in .log file are not consistent with "\
+            message = "Elements in .log file are not consistent with "\
                     + "curren Blender scene"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
         elif ret_val == {'OUT_NOT_FOUND'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "Could not locate the .out file"
+            message = "Could not locate the .out file"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
         elif ret_val == {'FINISHED'}:
-            message = "BLENDYN_OT_read_mbdyn_log::execute(): "\
-                    + "MBDyn model imported successfully"
+            message = "MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True
             bpy.context.scene.render.use_stamp_note = True
             self.report({'INFO'}, message)
-            baseLogger.info(message)
+            baseLogger.info(selftag + message)
 
             return {'FINISHED'}
 
@@ -922,17 +915,16 @@ class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
 
         si_retval = setup_import(self.filepath, context)
 
+        selftag =  "BLENDYN_OT_select_output_file::execute(): "
         if si_retval == {'NETCDF_ERROR'}:
-            message = "BLENDYN_OT_select_output_file::execute(): "\
-                    + "NetCDF module not imported correctly"
+            message = "NetCDF module not imported correctly"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
         elif si_retval == {'FILE_ERROR'}:
-            message = "BLENDYN_OT_select_output_file::execute(): "\
-                    + "Output file not set correctly (no file selected?)"
+            message = "Output file not set correctly (no file selected?)"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
         elif si_retval == {'FINISHED'}:
             mbs.file_path, mbs.file_basename = path_leaf(self.filepath)
             baseLogger.handlers = []
@@ -953,27 +945,25 @@ class BLENDYN_OT_assign_labels(bpy.types.Operator):
     bl_label = "Import labels of MBDyn objects"
 
     def execute(self, context):
+        selftag =  "BLENDYN_OT_assign_labels::execute(): "
         ret_val = assign_labels(context)
         if ret_val == {'NOTHING_DONE'}:
-            message = "BLENDYN_OT_assign_labels::execute(): "\
-                    +  "MBDyn labels file provided appears to not contain " \
+            message = "MBDyn labels file provided appears to not contain " \
                     + "correctly defined labels."
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'CANCELLED'}
 
         elif ret_val == {'LABELS_UPDATED'}:
-            message = "BLENDYN_OT_assign_labels::execute(): "\
-                    + "MBDyn labels imported correctly."
+            message = "MBDyn labels imported correctly."
             self.report({'INFO'}, message)
-            baseLogger.info(message)
+            baseLogger.info(selftag + message)
             return {'FINISHED'}
 
         elif ret_val == {'FILE_NOT_FOUND'}:
-            message = "BLENDYN_OT_assign_labels::execute(): "\
-                    + "MBDyn labels file not found."
+            message = "MBDyn labels file not found."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
 
     def invoke(self, context, event):
@@ -996,10 +986,10 @@ class BLENDYN_OT_clear_data(bpy.types.Operator):
             if isinstance(dummy, bpy.types.bpy_prop_collection):
                 dummy.clear()
 
-        message = "BLENDYN_OT_clear_data::execute(): "\
-                + "Cleared MBDyn data."
+        selftag = "BLENDYN_OT_clear_data::execute(): "
+        message = "Cleared MBDyn data."
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        baseLogger.info(selftag + message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1018,10 +1008,12 @@ class BLENDYN_OT_set_mbdyn_install_path(bpy.types.Operator):
         mbs = context.scene.mbdyn
         mbdyn_path = mbs.install_path
         config = {'mbdyn_path': mbdyn_path}
-        message = "BLENDYN_OT_set_mbdyn_install_path::execute(): "\
-                + "MBDyn install path set to "\
+
+        selftag = "BLENDYN_OT_set_mbdyn_install_path::execute(): "
+        message = "MBDyn install path set to "\
                 + mbdyn_path
-        baseLogger.info(message)
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag + message)
 
         with open(os.path.join(mbs.addon_path, 'config.json'), 'w') as f:
             json.dump(config, f)
@@ -1043,18 +1035,17 @@ class BLENDYN_OT_mbdyn_default_install_path(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
+        selftag = "BLENDYN_OT_mbdyn_default_install_path::execute(): "
         if shutil.which('mbdyn'):
             mbs.install_path = os.path.dirname(shutil.which('mbdyn'))
-            message = "BLENDYN_OT_mbdyn_default_install_path::execute(): "\
-                    + "MBDyn found in system's PATH at "\
+            message = "MBDyn found in system's PATH at "\
                     + mbs.install_path
             self.report({'INFO'}, message)
-            baseLogger.info(message)
+            baseLogger.info(selftag + message)
         else:
-            message = "BLENDYN_OT_mbdyn_default_install_path::execute(): "\
-                    + "MBDyn path is not set in the system $PATH variable"
+            message = "MBDyn path is not set in the system $PATH variable"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
 
         return {'FINISHED'}
 
@@ -1072,19 +1063,19 @@ class BLENDYN_OT_config_mbdyn_install_path(bpy.types.Operator):
 
     def execute(self, context):
         mbs = bpy.context.scene.mbdyn
+        selftag = "BLENDYN_OT_config_mbdyn_install_path::execute(): "
 
         try:
             with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
                 mbs.install_path = json.load(f)['mbdyn_path']
-                message = "BLENDYN_OT_config_mbdyn_install_path::execute(): "\
-                        + "Loaded MBDyn installation path "\
+                message = "Loaded MBDyn installation path "\
                         + mbs.install_path + " from config.json file"
-                baseLogger.info(message)
+                self.report({'INFO'}, message)
+                baseLogger.info(selftag + message)
         except FileNotFoundError:
-            message = "BLENDYN_OT_config_mbdyn_install_path::execute(): "\
-                    + "No config.json file found. Please set the path manually."
+            message = "No config.json file found. Please set the path manually."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1110,11 +1101,12 @@ class BLENDYN_OT_select_mbdyn_input_file(bpy.types.Operator, ImportHelper):
         mbs.file_basename = mbs.input_basename
         mbs.file_path = os.path.dirname(mbs.input_path)
 
-        message = "BLENDYN_OT_select_mbdyn_input_file::execute(): "\
-                + "Set input file to " \
+        selftag = "BLENDYN_OT_select_mbdyn_input_file::execute(): "
+        message = "Set input file to " \
                 + mbs.input_path + mbs.input_basename
 
-        baseLogger.info(message)
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag + message)
         return {'FINISHED'}
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -1131,6 +1123,7 @@ class BLENDYN_OT_set_env_variable(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+        selftag =  "BLENDYN_OT_set_env_variable::execute(): "
 
         exist_env_vars = [mbs.env_vars[var].variable for var in range(len(mbs.env_vars))]
 
@@ -1143,10 +1136,10 @@ class BLENDYN_OT_set_env_variable(bpy.types.Operator):
             env.variable = mbs.env_variable
             env.value = mbs.env_value
 
-        message = "BLENDYN_OT_set_env_variable::execute(): "\
-                + "Set environment variable "\
+        message = "Set environment variable "\
                 + env.variable + " = " + env.value
-        baseLogger.info(message)
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag + message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1162,12 +1155,13 @@ class BLENDYN_OT_delete_env_variable(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+        selftag =  "BLENDYN_OT_delete_env_variable::execute(): "
 
-        message = "BLENDYN_OT_delete_env_variable::execute(): "\
-                + "Removing environment variable "\
+        message = "Removing environment variable "\
                 + mbs.env_vars[mbs.env_index]
         mbs.env_vars.remove(mbs.env_index)
-
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag, message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1224,9 +1218,10 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
         self.timer = context.window_manager.event_timer_add(0.5, context.window)
         context.window_manager.modal_handler_add(self)
 
-        message = "BLENDYN_OT_run_mbdyn_simulation::execute() "\
-                 + "Started MBDyn simulation... "
-        baseLogger.info(message)
+        selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
+        message = "Started MBDyn simulation... "
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag + message)
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
@@ -1273,9 +1268,10 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
                         mbs.file_basename + '.mov'), context)
             return si_retval
 
-        message = "BLENDYN_OT_run_mbdyn_simulation::execute() "\
-                 + "MBDyn simulation completed."
-        baseLogger.info(message)
+        selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
+        message = "MBDyn simulation completed."
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag + message)
 
         return {'PASS_THROUGH'}
 
@@ -1286,10 +1282,10 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
         mbs.mbdyn_running = True
 
         if not mbs.final_time:
-            message = "BLENDYN_OT_run_mbdyn_simulation::invoke() "\
-                 + "Enter final time to start the simulation. Aborting..."
+            selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
+            message = "Enter final time to start the simulation. Aborting..."
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
 
         return self.execute(context)
@@ -1304,15 +1300,15 @@ class BLENDYN_OT_stop_mbdyn_simulation(bpy.types.Operator):
     bl_label = "Stop MBDyn Simulation"
 
     def execute(self, context):
+        selftag =  "BLENDYN_OT_stop_mbdyn_simulation::execute(): "
         mbs = context.scene.mbdyn
         kill_mbdyn()
 
         mbs.mbdyn_running = False
 
-        message = "BLENDYN_OT_stop_mbdyn_simulation::execute(): "\
-                + "MBDyn simulation halted."
+        message = "MBDyn simulation halted."
         self.report({'INFO'}, message)
-        baseLogger.info(message)
+        baseLogger.info(selftag + message)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -1337,10 +1333,10 @@ class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
         else:
             ret_val = set_motion_paths_netcdf(context)
         if ret_val == 'CANCELLED':
-            message = "BLENDYN_OT_set_motion_paths::execute()"\
-                    + "MBDyn results file not loaded"
+            selftag =  "BLENDYN_OT_set_motion_paths::execute()"
+            message = "MBDyn results file not loaded"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
         return ret_val
 
     def invoke(self, context, event):
@@ -1969,27 +1965,29 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
         mbs = context.scene.mbdyn
         nd = mbs.nodes
         added_nodes = 0
+        selftag = "BLENDYN_OT_node_import_all::execute(): "
 
         try:
             ncol = bpy.data.collections['mbdyn.nodes']
             set_active_collection('mbdyn.nodes')
         except KeyError:
-            message = "BLENDYN_OT_node_import_all::execute(): "\
-                    + "could not find the 'mbdyn.nodes' collection"
+            message =  "could not find the 'mbdyn.nodes' collection"
             print(message)
-            logging.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
 
+        wm = bpy.context.window_manager
+        Nnodes = len(nd)
+        wm.progress_begin(0, Nnodes)
         for node in nd:
             if (mbs.min_node_import <= node.int_label) & (mbs.max_node_import >= node.int_label):
 
                 if not(spawn_node_obj(context, node)):
-                    message = ("BLENDYN_OT_node_import_all::execute(): " \
-                              + "Could not spawn the Blender object assigned to node " \
+                    message = "Could not spawn the Blender object assigned to node " \
                               + str(node.int_label) \
-                              + ". Object already present?")
+                              + ". Object already present?"
                     self.report({'ERROR'}, message)
-                    baseLogger.error(message)
+                    baseLogger.error(selftag + message)
                     return {'CANCELLED'}
 
                 obj = context.active_object
@@ -2004,24 +2002,29 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
                     obj.name = node.name
                 node.blender_object = obj.name
 
-                print("BLENDYN_OT_node_import_all::execute(): added node " \
+                message = "added node " \
                         + str(node.int_label) \
-                        + " to scene and associated with object " + obj.name)
+                        + " to scene and associated with object " + obj.name
                 added_nodes += 1
+                baseLogger.info(selftag + message)
+                wm.progress_update(added_nodes)
 
         set_active_collection('Master Collection')
-        if added_nodes:
-            message = ("BLENDYN_OT_node_import_all::execute(): " \
-                      + "All MBDyn nodes imported successfully")
+        if (added_nodes == Nnodes):
+            message =  "All MBDyn nodes imported successfully"
             self.report({'INFO'}, message)
-            baseLogger.info(message)
+            baseLogger.info(selftag + message)
             return {'FINISHED'}
-        else:
-            message = ("BLENDYN_OT_node_import_all::execute(): " \
-                      + "No MBDyn nodes imported")
+        elif added_nodes == 0:
+            message = "No MBDyn nodes imported"
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'CANCELLED'}
+        else:
+            message = "Not every MBDyn node was imported."
+            self.report({'FINISHED'}, message)
+            baseLogger.warning(selftag + message)
+            return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_all class
 
@@ -2039,26 +2042,24 @@ class BLENDYN_OT_node_import_single(bpy.types.Operator):
                 node.blender_object = "none"
 
     def execute(self, context):
+        selftag =  "BLENDYN_OT_node_import_single::execute(): "
         try:
             ncol = bpy.data.collections['mbdyn.nodes']
             set_active_collection('mbdyn.nodes')
         except KeyError:
-            message = "BLENDYN_OT_node_import_single::execute(): "\
-                    + "could not find the 'mbdyn.nodes' collection"
+            message = "could not find the 'mbdyn.nodes' collection"
             print(message)
-            logging.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
 
         added_node = False
         for node in context.scene.mbdyn.nodes:
             if node.int_label == self.int_label:
                 if not(spawn_node_obj(context, node)):
-                    message = "BLENDYN_OT_node_import_single::execute(): " \
-                              + "Could not spawn the Blender object assigned to node {}"\
+                    message = "Could not spawn the Blender object assigned to node {}"\
                               .format(node.int_label)
-
                     self.report({'ERROR'}, message)
-                    baseLogger.error(message)
+                    baseLogger.error(selftag + message)
                     return {'CANCELLED'}
                 obj = context.active_object
                 obj.mbdyn.type = 'node'
@@ -2071,25 +2072,22 @@ class BLENDYN_OT_node_import_single(bpy.types.Operator):
                 else:
                     obj.name = node.name
                 node.blender_object = obj.name
-                message = "BLENDYN_OT_node_import_single::execute(): " \
-                          + "added node " + str(node.int_label)\
+                message = "added node " + str(node.int_label)\
                           + " to scene and associated it with object " \
                           + obj.name
                 self.report({'INFO'}, message)
-                baseLogger.info(message)
+                baseLogger.info(selftag + message)
                 added_node = True
         if added_node:
-            message = "BLENDYN_OT_node_import_single::execute(): " \
-                      + "node " + str(node.int_label)\
+            message = "node " + str(node.int_label)\
                       + " imported to scene "
             self.report({'INFO'}, message)
-            baseLogger.info(message)
+            baseLogger.info(selftag + message)
             return {'FINISHED'}
         else:
-            message = "BLENDYN_OT_node_import_single::execute(): " \
-                      + "Cannot import MBDyn node " + node.string_label
+            message =  "Cannot import MBDyn node " + node.string_label
             self.report({'WARNING'}, message)
-            baseLogger.warning(message)
+            baseLogger.warning(selftag + message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_single class
@@ -2103,12 +2101,12 @@ class BLENDYN_OT_references_import_all(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         rd = mbs.references
+        selftag = "BLENDYN_OT_references_import_all::execute(): "
 
         for ref in rd:
             retval = spawn_reference_frame(ref, context)
             if retval == {'OBJECT_EXISTS'}:
-                message = "BLENDYN_OT_references_import_all::execute(): " \
-                          + "Found the Object " + ref.blender_object \
+                message = "Found the Object " + ref.blender_object \
                           + " remove or rename it to re-import the element!"
                 self.report({'WARNING'}, message)
                 logging.warning(message)
@@ -2299,23 +2297,27 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
         mbs = context.scene.mbdyn
         ed = mbs.elems
 
-        ELEMS_MISSING = False
+        Nelems = len(ed)
+        wm = bpy.context.window_manager
+        wm.progress_begin(0, Nelems)
+        added_elems = 0
+        missing_elems = 0
         for elem in ed:
             if (elem.int_label >= mbs.min_elem_import) \
                     and (elem.int_label <= mbs.max_elem_import):
                 try:
                     eval("bpy.ops." + elem.import_function \
                             + "(int_label = " + str(elem.int_label) + ")")
+                    added_elems += 1
                 except NameError:
                         message = "BLENDYN_OT_elements_import_all::execute(): " \
                                   + "Could not find the import function for element of type " \
                                   + elem.type + ". Element " + elem.name + " not imported."
                         baseLogger.warning(message)
-                        if not(ELEMS_MISSING):
-                            ELEMS_MISSING = True
+                        missing_elems += 1
                         pass
-
-        if ELEMS_MISSING:
+                wm.progress_update(added_elems + missing_elems)
+        if missing_elems:
             message = "BLENDYN_OT_elements_import_all::execute(): " \
                       + "Some elements were not imported. See log file for details"
             baseLogger.warning(message)
