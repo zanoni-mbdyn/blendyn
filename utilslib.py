@@ -284,7 +284,7 @@ def set_active_collection(coll_name):
 # -----------------------------------------------------------
 # end of set_active_collection function
 
-def toggle_expand(context, action):
+def outline_toggle_expand(context, action):
     area = next(a for a in context.screen.areas if a.type == 'OUTLINER')
     bpy.ops.outliner.show_hierarchy({'area': area}, 'INVOKE_DEFAULT')
     state = {'expand': 1, 'collapse': 2}

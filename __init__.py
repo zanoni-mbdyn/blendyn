@@ -100,7 +100,7 @@ classes = (
         BLENDYN_OT_animate_eigenmode,
         BLENDYN_OT_import_elements_as_mesh,
         BLENDYN_OT_standard_import,
-        BLENDYN_OT_read_mbdyn_log,
+        BLENDYN_OT_read_mbdyn_log_file,
         BLENDYN_OT_select_output_file,
         BLENDYN_OT_assign_labels,
         BLENDYN_OT_clear_data,
