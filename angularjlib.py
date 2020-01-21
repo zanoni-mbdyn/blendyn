@@ -220,7 +220,7 @@ def spawn_angularvelocity_element(elem, context):
         axis_direction = Vector(elem.offsets[0].value)
         axis_direction.normalize()
         angularvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        angularvelocityjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularvelocityjOBJ.rotation_quaternion
+        angularvelocityjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion @ angularvelocityjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
         parenting(angularvelocityjOBJ, n1OBJ)
@@ -293,7 +293,7 @@ def spawn_angularacceleration_element(elem, context):
         axis_direction = Vector(elem.offsets[0].value)
         axis_direction.normalize()
         angularaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
-        angularaccelerationjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion * angularaccelerationjOBJ.rotation_quaternion
+        angularaccelerationjOBJ.rotation_quaternion = n1OBJ.rotation_quaternion @ angularaccelerationjOBJ.rotation_quaternion
 
         # set parenting of wireframe obj
         parenting(angularaccelerationjOBJ, [n1OBJ])

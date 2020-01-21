@@ -30,6 +30,8 @@ import logging
 from mathutils import *
 from math import *
 
+from .utilslib import *
+
 def parse_reference_frame(rw, rd):
     ret_val = True
 
@@ -78,10 +80,7 @@ def spawn_reference_frame(ref, context):
         return {'OBJECT_EXISTS'}
 
     try:
-        set_active_collection('references')
-        elcol = bpy.data.collections.new(name = elem.name)
-        bpy.data.collections['references'].children.link(elcol)
-        set_active_collection(elcol.name)
+        set_active_collection('mbdyn.references')
     except KeyError:
         return {'COLLECTION_ERROR'}
 

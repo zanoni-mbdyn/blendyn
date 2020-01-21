@@ -267,7 +267,7 @@ def spawn_aero0_element(elem, context):
     
     # set collections
     elcol.objects.link(n1OBJ)
-    set_current_collection('Master Collection')
+    set_active_collection('Master Collection')
 
     return{'FINISHED'}
 # -----------------------------------------------------------

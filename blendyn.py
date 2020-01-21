@@ -799,19 +799,28 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
     bl_idname = "blendyn.standard_import"
     bl_label = "MBDyn Standard Import"
 
-    def execute(self, context):
+    def modal(self, context, event):
+        selftag = 'BLENDYN_OT_standard_import::execute(): ' 
         try:
-            selftag = 'BLENDYN_OT_standard_import::execute(): ' 
             bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
             bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
             bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
         except RuntimeError as re:
-            message = "BLENDYN_OT_standard_import::execute(): something went wrong during the automatic import. "\
+            message = "BLENDYN_OT_standard_import::modal(): something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            baseLogger.error(selftag + message)
             return {'CANCELLED'}
+        
+        message = "BLENDYN_OT_standard_import::modal(): Done."
+        self.report({'INFO'}, message)
+        baseLogger.info(selftag + message)
+        bpy.ops.object.select_all(action = 'DESELECT')
         return {'FINISHED'}
+
+    def execute(self, context):
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
 
     def invoke(self, context, event):
         return self.execute(context)
@@ -820,7 +829,7 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
 # end of BLENDYN_OT_stardard_import class
 
 
-class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
+class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
     bl_idname = "blendyn.read_mbdyn_log_file"
     bl_label = "MBDyn .log file parsing"
@@ -830,7 +839,7 @@ class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
         ret_val, obj_names = parse_log_file(context)
 
         missing = context.scene.mbdyn.missing
-        selftag = 'BLENDYN_OT_read_mbdyn_log::execure(): '
+        selftag = 'BLENDYN_OT_read_mbdyn_log_file::execute(): '
         if len(obj_names) > 0:
             message = "Some of the nodes/elements are missing in the new .log file"
             self.report({'WARNING'}, message)
@@ -887,14 +896,13 @@ class BLENDYN_OT_read_mbdyn_log(bpy.types.Operator):
             bpy.context.scene.render.use_stamp_note = True
             self.report({'INFO'}, message)
             baseLogger.info(selftag + message)
-
             return {'FINISHED'}
 
     def invoke(self, context, event):
         return self.execute(context)
 
 # -----------------------------------------------------------
-# end of BLENDYN_OT_read_mbdyn_log class
+# end of BLENDYN_OT_read_mbdyn_log_file class
 
 
 class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
@@ -1416,7 +1424,7 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         row = layout.row()
         # row.label(text = "Load MBDyn data")
         col = layout.column(align = True)
-        col.operator(BLENDYN_OT_read_mbdyn_log.bl_idname, \
+        col.operator(BLENDYN_OT_read_mbdyn_log_file.bl_idname, \
                 text = "Load .log file")
 
         # Assign MBDyn labels to elements in dictionaries
@@ -2025,6 +2033,9 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
             self.report({'FINISHED'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context, event)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_all class
 
@@ -2326,7 +2337,7 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(context)
+        return self.execute(context, event)
 
 # -----------------------------------------------------------
 # end of BLENDYN_OT_elements_import_all class
