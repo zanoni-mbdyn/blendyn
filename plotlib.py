@@ -24,8 +24,21 @@
 
 import bpy
 
-import pygal
-import cairosvg
+try: 
+    import pygal
+    from netCDF4 import Dataset
+except ModuleNotFoundError as ierr:
+    print("BLENDYN::plotlib.py: could not import dependencies. Plotting "\
+            + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
+   
+HAVE_CAIROSVG = False
+try:
+    import cairosvg
+    HAVE_CAIROSG = True
+except ModuleNotFoundError as ierr:
+    print("BLENDYN::plotlib.py: could not import cairosvg. Plots will only be saved"\
+            + "in .svg format, and not displayed in Blender UI.")
 
 import numpy as np
 
@@ -34,13 +47,6 @@ import logging
 from .nodelib import *
 from .elementlib import *
 import os
-
-try:
-    from netCDF4 import Dataset
-except ImportError as ierr:
-    print("BLENDYN::base.py: could not enable the netCDF module. NetCDF import "\
-            + "will be disabled. The reported error was:")
-    print("{0}".format(ierr))
 
 class BLENDYN_UL_plot_var_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -207,8 +213,9 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
         message = "BLENDYN_OT_plot_var_sxx_scene::execute(): "\
                 + "Variable " + pvar.name + " autospectrum plotted"
@@ -339,8 +346,9 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
 
         message = "BLENDYN_OT_plot_var_sxx_object::execute(): "\
@@ -444,8 +452,10 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
 
         message = "BLENDYN_OT_plot_variables_list::execute() "\
@@ -543,8 +553,10 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
         message = "BLENDYN_OT_plot_var_scene::execute() "\
                 + "Variable " + pvar.name + " plotted"
@@ -634,8 +646,10 @@ class BLENDYN_OT_plot_var_object(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
 
         message = "BLENDYN_OT_plot_var_object::execute() "\

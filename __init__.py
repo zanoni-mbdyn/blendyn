@@ -35,12 +35,12 @@ from . shell4lib    import *
 from . sphjlib      import *
 from . totjlib      import *
 from . elementlib   import *
-from . plotlib      import *
 from . logwatcher   import *
 from . nodelib      import *
 from . eigenlib     import *
 from . elements     import *
 from . baselib      import *
+from . plotlib      import *
 from . blendyn      import *
 
 classes = (
