@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 
 import bpy
 from mathutils import *
@@ -48,7 +48,7 @@ class RotKeyError(Exception):
     def __str__(self):
         return repr(self.value)
 # -----------------------------------------------------------
-# end of RotKeyError class 
+# end of RotKeyError class
 
 def set_obj_locrot_mov(obj, rw):
 
@@ -56,13 +56,13 @@ def set_obj_locrot_mov(obj, rw):
     obj.location[0] = rw[1]
     obj.location[1] = rw[2]
     obj.location[2] = rw[3]
-    
+
     obj.keyframe_insert(data_path = "location")
-    
+
     # Orientation
     dictobj = get_dict_item(bpy.context, obj)
     parametrization = dictobj.parametrization
-    
+
     if parametrization[0:5] == 'EULER':
         obj.rotation_euler = Euler(Vector(( radians(rw[4]),\
                                             radians(rw[5]),\
@@ -90,7 +90,7 @@ def set_obj_locrot_mov(obj, rw):
         logging.error(message)
     return
 # -----------------------------------------------------------
-# end of set_obj_locrot_mov() function 
+# end of set_obj_locrot_mov() function
 
 def update_parametrization(obj):
     ret_val = ''
@@ -115,7 +115,7 @@ def update_parametrization(obj):
 
     return ret_val
 # -----------------------------------------------------------
-# end of update_parametrization() function 
+# end of update_parametrization() function
 
 ## Function that parses the single row of the .log file and stores
 #  the node element definition in elems
@@ -167,10 +167,10 @@ def parse_node(context, rw):
         print(message)
         logging.info(message)
 
-        # FIXME: this is here to enhance backwards compatibility: should disappear 
+        # FIXME: this is here to enhance backwards compatibility: should disappear
         # in the future
         node.mbclass = 'node.struct'
-        
+
         node.initial_pos = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         try:
             node.initial_rot, node.parametrization = orient_to_quat(rw)
@@ -234,4 +234,3 @@ def spawn_node_obj(context, node):
         return False
 # -----------------------------------------------------------
 # end of spawn_node_obj() function
-
