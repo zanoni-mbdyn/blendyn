@@ -451,8 +451,8 @@ def spawn_beam3_element(elem, context):
     polydata.points[3].co = P3
 
     # set the tilt angles of the sections
-    t3 = P3 - M2
-    t3.normalize()
+    # t3 = P3 - M2
+    # t3.normalize()
 
     # FIXME: This is nonsense!!
     # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
