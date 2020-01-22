@@ -795,7 +795,7 @@ def rename_log(scene):
 bpy.app.handlers.save_post.append(rename_log)
 
 class BLENDYN_OT_standard_import(bpy.types.Operator):
-    """ Standard Import Process """
+    """ Automatically import nodes and elements at once """
     bl_idname = "blendyn.standard_import"
     bl_label = "MBDyn Standard Import"
 
