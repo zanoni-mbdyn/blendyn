@@ -799,7 +799,7 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
     bl_idname = "blendyn.standard_import"
     bl_label = "MBDyn Standard Import"
 
-    def modal(self, context, event):
+    def execute(self, context):
         selftag = 'BLENDYN_OT_standard_import::execute(): ' 
         try:
             bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
@@ -817,10 +817,6 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
         baseLogger.info(selftag + message)
         bpy.ops.object.select_all(action = 'DESELECT')
         return {'FINISHED'}
-
-    def execute(self, context):
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
 
     def invoke(self, context, event):
         return self.execute(context)
@@ -1369,6 +1365,33 @@ class BLENDYN_OT_set_import_freq_auto(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_set_import_freq_auto class
 
+class BLENDYN_OT_outline_collapse(bpy.types.Operator):
+    """ Collapses all the elements in the scene outline """
+    bl_idname = "blendyn.outline_collapse"
+    bl_label = "Collapse scene outline"
+
+    def execute(self, context):
+        outline_toggle(context, 'collapse')
+        return{'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(self, context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_outline_collapse class
+
+class BLENDYN_OT_outline_expand(bpy.types.Operator):
+    """ Collapses all the elements in the scene outline """
+    bl_idname = "blendyn.outline_expand"
+    bl_label = "Expand scene outline"
+
+    def execute(self, context):
+        outline_toggle(context, 'expand')
+        return{'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(self, context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_outline_expand class
 
 class BLENDYN_PT_tool_bar:
     bl_category = 'Blendyn'
@@ -1701,6 +1724,21 @@ class BLENDYN_PT_active_object(BLENDYN_PT_tool_bar, bpy.types.Panel):
 # -----------------------------------------------------------
 # end of BLENDYN_PT_active_object class
 
+class BLENDYN_PT_utilities(BLENDYN_PT_tool_bar, bpy.types.Panel):
+    """ Simple utilities - Toolbar Panel """
+    bl_idname = "BLENDYN_PT_utilities"
+    bl_label = "Utilities"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+
+        # utility renaming
+        layout = self.layout
+        col = layout.column()
+        col.operator(BLENDYN_OT_outline_collapse.bl_idname, text = "Collapse outline")
+        col.operator(BLENDYN_OT_outline_expand.bl_idname, text = "Expand outline")
+# -----------------------------------------------------------
+# end of BLENDYN_PT_utilities class
 
 class BLENDYN_UL_mbdyn_nodes_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):

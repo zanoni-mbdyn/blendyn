@@ -284,7 +284,7 @@ def set_active_collection(coll_name):
 # -----------------------------------------------------------
 # end of set_active_collection function
 
-def outline_toggle_expand(context, action):
+def outline_toggle(context, action):
     area = next(a for a in context.screen.areas if a.type == 'OUTLINER')
     bpy.ops.outliner.show_hierarchy({'area': area}, 'INVOKE_DEFAULT')
     state = {'expand': 1, 'collapse': 2}
@@ -292,7 +292,7 @@ def outline_toggle_expand(context, action):
         bpy.ops.outliner.expanded_toggle({'area': area})
         area.tag_redraw()
 # -----------------------------------------------------------
-# end of toggle_expand() function
+# end of outline_toggl() function
 # source: https://blenderartists.org/t/question-regarding-expanding-collapsing-collection-in-outliner-in-2-8/1175242
 # NOTE: right now, not used by anyone! Should be called at the end of
 #       entities import, but UI is not refreshed! FIXME
