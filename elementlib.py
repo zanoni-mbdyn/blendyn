@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 
 import bpy
 from mathutils import *
@@ -29,6 +29,7 @@ from bpy.types import Operator, Panel
 from bpy.props import *
 
 import ntpath, os, csv, math
+from collections import namedtuple
 
 import logging
 
@@ -62,7 +63,7 @@ def parse_elements(context, jnt_type, rw):
     objects = context.scene.objects
     ed = context.scene.mbdyn.elems
 
-    joint_types  = {
+    joint_types  = {    
             "aero0": parse_aero0,
             "aero2": parse_aero2,
             "aero3": parse_aero3,
@@ -100,7 +101,7 @@ def parse_elements(context, jnt_type, rw):
             "angularacceleration": parse_angularacceleration,
             "drivedisplacement": parse_drive_displacement
             }
-
+ 
     try:
         ret_val = joint_types[jnt_type](rw, ed)
     except KeyError as kerr:
@@ -119,7 +120,7 @@ def parse_elements(context, jnt_type, rw):
 def elem_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     col = layout.column(align=True)
-
+     
     row = layout.row()
     col = row.column()
 
@@ -132,7 +133,7 @@ def elem_info_draw(elem, layout):
                 col.prop(node, "string_label", text = "Node " + str(kk) + " label")
                 col.prop(node, "blender_object", text = "Node " + str(kk) + " Object")
                 col.enabled = False
-
+    
     kk = 0
     for off in elem.offsets:
         kk = kk + 1
@@ -140,7 +141,7 @@ def elem_info_draw(elem, layout):
         row.label(text = "offset " + str(kk))
         col = layout.column(align = True)
         col.prop(off, "value", text = "", slider = False)
-
+    
     kk = 0
     for rotoff in elem.rotoffsets:
         kk = kk + 1
@@ -161,11 +162,13 @@ def update_elements(scene):
         element = ed[elem.name]
         eval(ed[elem.name].update + "(element, True)")
 
-    bpy.context.scene.update()
+    # Blender 2.8 way of updating the scene
+    dg = bpy.context.evaluated_depsgraph_get()
+    dg.update()
 
 bpy.app.handlers.frame_change_post.append(update_elements)
 
-# Retrieves the types of elements present in the scene and populates
+# Retrieves the types of elements present in the scene and populates 
 # the list to be shown in the Scene panel
 def get_elems_types(self, context):
     mbs = context.scene.mbdyn

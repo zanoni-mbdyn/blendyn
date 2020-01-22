@@ -33,10 +33,10 @@ from .utilslib import *
 ## Parses aerodynamic body element entry in .log file
 def parse_aero0(rw, ed):
     ret_val = True
-
-    try:
+    
+    try: 
         el = ed['aero0_' + str(rw[1])]
-
+        
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_aero0()", el)
 
@@ -63,7 +63,7 @@ def parse_aero0(rw, ed):
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
-
+        
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets.add()
@@ -86,9 +86,9 @@ def parse_aero0(rw, ed):
 ## Parses two-node aerodynamic beam element entry in .log file
 def parse_aero2(rw, ed):
     ret_val = True
-    try:
+    try: 
         el = ed['aero2_' + str(rw[1])]
-
+        
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero2()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_aero2()", el)
 
@@ -145,9 +145,9 @@ def parse_aero2(rw, ed):
 def parse_aero3(rw, ed):
     ret_val = True
     # Debug message
-    try:
+    try: 
         el = ed['aero3_' + str(rw[1])]
-
+        
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero2()", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_aero2()", el)
 
@@ -160,7 +160,7 @@ def parse_aero3(rw, ed):
         el.nodes[2].int_label = int(rw[16])
         el.offsets[4].value = Vector(( float(rw[17]), float(rw[18]), float(rw[19]) ))
         el.offsets[5].value = Vector(( float(rw[20]), float(rw[21]), float(rw[22]) ))
-
+        
         # FIXME: this is here to enhance backwards compatibility
         # Should disappear in future versions
         el.mbclass = 'elem.aero'
@@ -176,7 +176,7 @@ def parse_aero3(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_aero0()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_aero0()", el)
-
+       
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
 
@@ -217,8 +217,8 @@ def spawn_aero0_element(elem, context):
         whose vertices are rigidly connected to the parent node object"""
 
     nd = context.scene.mbdyn.nodes
-
-    # try to find Blender objects associated with the node that
+ 
+    # try to find Blender objects associated with the node that 
     # the element belongs to
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
@@ -234,9 +234,17 @@ def spawn_aero0_element(elem, context):
     if planeobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[planeobj_id])
 
+    try:
+        set_active_collection('aerodynamic')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['aerodynamic'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
-    aero0OBJ = bpy.context.scene.objects.active
+    aero0OBJ = bpy.context.view_layer.objects.active
     aero0OBJ.name = elem.name
     aero0OBJ.mbdyn.type = 'element'
     aero0OBJ.mbdyn.dkey = elem.name
@@ -247,16 +255,19 @@ def spawn_aero0_element(elem, context):
     mesh.vertices[1].co = Vector(( elem.offsets[1].value ))
     mesh.vertices[2].co = Vector(( elem.offsets[2].value ))
     mesh.vertices[3].co = Vector(( elem.offsets[3].value ))
-
+  
     aero0OBJ.rotation_mode = n1OBJ.rotation_mode
-
+    
     # set parenting for plane obj
     parenting(aero0OBJ, n1OBJ)
-    grouping(context, aero0OBJ, [n1OBJ])
 
     aero0OBJ.mbdyn.dkey = elem.name
     aero0OBJ.mbdyn.type = 'element'
     elem.blender_object = aero0OBJ.name
+    
+    # set collections
+    elcol.objects.link(n1OBJ)
+    set_active_collection('Master Collection')
 
     return{'FINISHED'}
 # -----------------------------------------------------------
@@ -268,9 +279,9 @@ def hook_vertices(bm, vidx, obj):
     for ii in vidx:
         bm.verts[ii].select = True
     bm.select_flush(True)
-    obj.select = True
+    obj.select_set(state = True)
     bpy.ops.object.hook_add_selob()
-    obj.select = False
+    obj.select_set(state = False)
 # -----------------------------------------------------------
 # end of hook_vertices() function
 
@@ -280,8 +291,8 @@ def spawn_aero2_element(elem, context):
         whose vertices are rigidly connected to the parent nodes objects """
 
     nd = context.scene.mbdyn.nodes
-
-    # try to find Blender objects associated with the nodes that
+ 
+    # try to find Blender objects associated with the nodes that 
     # the element belongs to
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
@@ -302,23 +313,31 @@ def spawn_aero2_element(elem, context):
     if planeobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[planeobj_id])
 
+    try:
+        set_active_collection('aerodynamic')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['aerodynamic'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+    
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
-    aero2OBJ = bpy.context.scene.objects.active
+    aero2OBJ = bpy.context.view_layer.objects.active
     aero2OBJ.name = elem.name
     aero2OBJ.mbdyn.type = 'element'
     aero2OBJ.mbdyn.dkey = elem.name
     mesh = aero2OBJ.data
 
     # move vertices
-    mesh.vertices[0].co = n1OBJ.matrix_world*Vector(( elem.offsets[0].value ))
-    mesh.vertices[1].co = n1OBJ.matrix_world*Vector(( elem.offsets[1].value ))
-    mesh.vertices[2].co = n2OBJ.matrix_world*Vector(( elem.offsets[2].value ))
-    mesh.vertices[3].co = n2OBJ.matrix_world*Vector(( elem.offsets[3].value ))
+    mesh.vertices[0].co = n1OBJ.matrix_world@Vector(( elem.offsets[0].value ))
+    mesh.vertices[1].co = n1OBJ.matrix_world@Vector(( elem.offsets[1].value ))
+    mesh.vertices[2].co = n2OBJ.matrix_world@Vector(( elem.offsets[2].value ))
+    mesh.vertices[3].co = n2OBJ.matrix_world@Vector(( elem.offsets[3].value ))
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    aero2OBJ.select = True
-    bpy.context.scene.objects.active = aero2OBJ
+    aero2OBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = aero2OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
     # add hooks
@@ -330,11 +349,14 @@ def spawn_aero2_element(elem, context):
 
     aero2OBJ.rotation_mode = n1OBJ.rotation_mode
 
-    grouping(context, aero2OBJ, [n1OBJ, n2OBJ])
-
     aero2OBJ.mbdyn.dkey = elem.name
     aero2OBJ.mbdyn.type = 'element'
     elem.blender_object = aero2OBJ.name
+
+    # set collections
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
 
     return{'FINISHED'}
 # -----------------------------------------------------------
@@ -346,8 +368,8 @@ def spawn_aero3_element(elem, context):
         whose vertices are rigidly connected to the parent nodes objects """
 
     nd = context.scene.mbdyn.nodes
-
-    # try to find Blender objects associated with the nodes that
+ 
+    # try to find Blender objects associated with the nodes that 
     # the element belongs to
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
@@ -369,6 +391,14 @@ def spawn_aero3_element(elem, context):
 
     # name of the plane object
     planeobj_id = elem.type + "_" + str(elem.int_label)
+    
+    try:
+        set_active_collection('aerodynamic')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['aerodynamic'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 
     # check if the object is already present. If it is, remove it
     if planeobj_id in bpy.data.objects.keys():
@@ -376,17 +406,17 @@ def spawn_aero3_element(elem, context):
 
     # create a mesh plane
     bpy.ops.mesh.primitive_plane_add(location = (0.0, 0.0, 0.0))
-    aero3OBJ = bpy.context.scene.objects.active
+    aero3OBJ = bpy.context.view_layer.objects.active
     aero3OBJ.name = elem.name
     aero3OBJ.mbdyn.type = 'element'
     aero3OBJ.mbdyn.dkey = elem.name
     mesh = aero3OBJ.data
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    aero3OBJ.select = True
-    bpy.context.scene.objects.active = aero3OBJ
+    aero3OBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = aero3OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-
+    
     bm = bmesh.from_edit_mesh(aero3OBJ.data)
     sel_edges = [edge for edge in bm.edges if edge.index in {1,3}]
     bmesh.ops.subdivide_edges(bm, edges=sel_edges, cuts = 1)
@@ -396,16 +426,16 @@ def spawn_aero3_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     # move vertices
-    mesh.vertices[0].co = n1OBJ.matrix_world*Vector(( elem.offsets[0].value ))
-    mesh.vertices[2].co = n1OBJ.matrix_world*Vector(( elem.offsets[1].value ))
-    mesh.vertices[4].co = n2OBJ.matrix_world*Vector(( elem.offsets[2].value ))
-    mesh.vertices[5].co = n2OBJ.matrix_world*Vector(( elem.offsets[3].value ))
-    mesh.vertices[1].co = n3OBJ.matrix_world*Vector(( elem.offsets[4].value ))
-    mesh.vertices[3].co = n3OBJ.matrix_world*Vector(( elem.offsets[5].value ))
-
+    mesh.vertices[0].co = n1OBJ.matrix_world@Vector(( elem.offsets[0].value ))
+    mesh.vertices[2].co = n1OBJ.matrix_world@Vector(( elem.offsets[1].value ))
+    mesh.vertices[4].co = n2OBJ.matrix_world@Vector(( elem.offsets[2].value ))
+    mesh.vertices[5].co = n2OBJ.matrix_world@Vector(( elem.offsets[3].value ))
+    mesh.vertices[1].co = n3OBJ.matrix_world@Vector(( elem.offsets[4].value ))
+    mesh.vertices[3].co = n3OBJ.matrix_world@Vector(( elem.offsets[5].value ))
+ 
     bpy.ops.object.select_all(action = 'DESELECT')
-    aero3OBJ.select = True
-    bpy.context.scene.objects.active = aero3OBJ
+    aero3OBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = aero3OBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
 
     # add hooks
@@ -415,14 +445,18 @@ def spawn_aero3_element(elem, context):
 
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
-
+    
     aero3OBJ.rotation_mode = n1OBJ.rotation_mode
 
     aero3OBJ.mbdyn.dkey = elem.name
     aero3OBJ.mbdyn.type = 'element'
     elem.blender_object = aero3OBJ.name
 
-    grouping(context, aero3OBJ, [n1OBJ, n2OBJ, n3OBJ])
+    # set collections
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    elcol.objects.link(n3OBJ)
+    set_active_collection('Master Collection')
 
     return{'FINISHED'}
 # -----------------------------------------------------------
@@ -432,7 +466,7 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
     """ Imports an Aerodynamic Body in the scene """
     bl_idname = "blendyn.import_aerodynamic_body"
     bl_label = "MBDyn aerodynamic body element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -441,11 +475,14 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+    
         try:
             elem = ed['aero0_' + str(self.int_label)]
             retval = spawn_aero0_element(elem, context)
             if retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
@@ -453,8 +490,7 @@ class BLENDYN_OT_import_aerodynamic_body(bpy.types.Operator):
                 return retval
             else:
                 # Should not be reached
-                return retval
-                
+                return retval 
         except KeyError:
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
@@ -465,7 +501,7 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
     """ Imports an Aerodynamic Beam2 in the scene """
     bl_idname = "blendyn.import_aerodynamic_beam2"
     bl_label = "MBDyn two-node aerodynamic beam element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -474,7 +510,7 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+    
         try:
             elem = ed['aero2_' + str(self.int_label)]
             retval = spawn_aero2_element(elem, context)
@@ -484,8 +520,11 @@ class BLENDYN_OT_import_aerodynamic_beam2(bpy.types.Operator):
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
-                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
+                eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem) 
                 return retval
             else:
                 # Should not be reached
@@ -500,7 +539,7 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
     """ Imports an Aerodynamic Beam2 in the scene """
     bl_idname = "blendyn.import_aerodynamic_beam3"
     bl_label = "MBDyn three-node aerodynamic beam element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -509,7 +548,7 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+    
         try:
             elem = ed['aero3_' + str(self.int_label)]
             retval = spawn_aero3_element(elem, context)
@@ -520,6 +559,9 @@ class BLENDYN_OT_import_aerodynamic_beam3(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:

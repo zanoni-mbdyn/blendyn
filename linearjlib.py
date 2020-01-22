@@ -57,9 +57,6 @@ def parse_linearvelocity(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'linearvelocity'
         el.int_label = int(rw[1])
-        
-        eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_linearvelocity()', el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_linearvelocity()", el) 
 
         eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_linearvelocity()', el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_linearvelocity()", el)
@@ -89,6 +86,7 @@ def parse_linearacceleration(rw, ed):
     ret_val = True
     try:
         el = ed['linearacceleration_' + str(rw[1])]
+
         eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_linearacceleration()', el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_linearacceleration()", el)
 
@@ -105,9 +103,6 @@ def parse_linearacceleration(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'linearacceleration'
         el.int_label = int(rw[1])
-        
-        eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_linearacceleration()', el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_linearacceleration()", el)
 
         eldbmsg({'PARSE_ELEM'}, 'BLENDYN::parse_linearacceleration()', el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_linearacceleration()", el)
@@ -190,17 +185,24 @@ def spawn_linearvelocity_element(elem, context):
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe linearvelocity joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe linearvelocity joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
            'library', 'joints.blend', 'Object'), filename = 'linvel.v')
-    if app_retval == {'FINISHED'}:
+
         # the append operator leaves just the imported object selected
         linearvelocityjOBJv = bpy.context.selected_objects[0]
         linearvelocityjOBJ = bpy.context.selected_objects[1]
 
         linearvelocityjOBJ.name = elem.name
         linearvelocityjOBJv.name = elem.name + '.v'
-        bpy.context.scene.objects.active = linearvelocityjOBJ
+        bpy.context.view_layer.objects.active = linearvelocityjOBJ
 
         # automatic scaling
         s = (1.0/sqrt(3.))*(n1OBJ.scale.magnitude)
@@ -221,15 +223,20 @@ def spawn_linearvelocity_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(linearvelocityjOBJ, n1OBJ)
-        grouping(linearvelocityjOBJ, n1OBJ)
 
         linearvelocityjOBJ.mbdyn.dkey = elem.name
         linearvelocityjOBJ.mbdyn.type = 'element'
         elem.blender_object = linearvelocityjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_linearvelocity_element(elem, context) function
 
@@ -251,10 +258,17 @@ def spawn_linearacceleration_element(elem, context):
     # nodes objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe linearacceleration joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe linearacceleration joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'linacc.a')
-    if app_retval == {'FINISHED'}:
+
         # the append operator leaves just the imported object selected
         linearaccelerationjOBJa = bpy.context.selected_objects[0]
         linearaccelerationjOBJ = bpy.context.selected_objects[1]
@@ -281,13 +295,18 @@ def spawn_linearacceleration_element(elem, context):
 
         # set parenting of wireframe obj
         parenting(linearaccelerationjOBJ, n1OBJ)
-        grouping(linearaccelerationjOBJ, [linearaccelerationjOBJa, n1OBJ])
 
         elem.blender_object = linearaccelerationjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_linearacceleration_element(elem, context) function
 
@@ -297,7 +316,7 @@ class BLENDYN_OT_import_linearvelocity(bpy.types.Operator):
         Blender scene """
     bl_idname = "blendyn.import_linearvelocity"
     bl_label = "Import a linearvelocity joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -315,6 +334,9 @@ class BLENDYN_OT_import_linearvelocity(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -337,7 +359,7 @@ class BLENDYN_OT_import_linearacceleration(bpy.types.Operator):
         into the Blender scene """
     bl_idname = "blendyn.import_linearacceleration"
     bl_label = "Imports a linearacceleration joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -355,6 +377,9 @@ class BLENDYN_OT_import_linearacceleration(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

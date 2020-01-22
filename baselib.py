@@ -31,7 +31,6 @@ from bpy.props import *
 import logging
 
 import numpy as np
-from bpy_extras.io_utils import ImportHelper
 
 import os, csv, atexit, re
 
@@ -39,6 +38,8 @@ from .nodelib import *
 from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
+
+import pdb
 
 HAVE_PSUTIL = False
 try:
@@ -264,6 +265,65 @@ def parse_log_file(context):
 
     ret_val = {''}
 
+    # Check if collections are already present (not the first import).
+    # if not, create them
+
+    try:
+        ncol = bpy.data.collections['mbdyn.nodes']
+    except KeyError:
+        ncol = bpy.data.collections.new(name = 'mbdyn.nodes')
+        bpy.context.scene.collection.children.link(ncol)
+
+    try:
+        ecol = bpy.data.collections['mbdyn.elements']
+    except KeyError:
+        ecol = bpy.data.collections.new(name = 'mbdyn.elements')
+        bpy.context.scene.collection.children.link(ecol)
+
+    # create elements children collections if they are not already there
+    try:
+        aecol = ecol.children['aerodynamic']
+    except KeyError:
+        aecol = bpy.data.collections.new(name = 'aerodynamic')
+        ecol.children.link(aecol)
+
+    try:
+        becol = ecol.children['beams']
+    except KeyError:
+        becol = bpy.data.collections.new(name = 'beams')
+        ecol.children.link(becol)
+
+    # elements sections sub-collection
+    try:
+        scol = ecol.children['sections']
+    except KeyError:
+        scol = bpy.data.collections.new(name = 'sections')
+        ecol.children.link(scol)
+
+    try:
+        bocol = ecol.children['bodies']
+    except KeyError:
+        bocol = bpy.data.collections.new(name = 'bodies')
+        ecol.children.link(bocol)
+
+    try:
+        fcol = ecol.children['forces']
+    except KeyError:
+        fcol = bpy.data.collections.new(name = 'forces')
+        ecol.children.link(fcol)
+
+    try:
+        jcol = ecol.children['joints']
+    except KeyError:
+        jcol = bpy.data.collections.new(name = 'joints')
+        ecol.children.link(jcol)
+
+    try:
+        pcol = ecol.children['plates']
+    except KeyError:
+        pcol = bpy.data.collections.new(name = 'plates')
+        ecol.children.link(pcol)
+
     try:
         with open(log_file) as lf:
             # open the reader, skipping initial whitespaces
@@ -292,6 +352,7 @@ def parse_log_file(context):
                     print("Blendyn::parse_log_file(): Found " + entry[:-1] + " element.")
                     b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
 
+
             if (is_init_nd and is_init_ed) or (b_nodes_consistent*b_elems_consistent):
                 ret_val = {'FINISHED'}
             elif (not(b_nodes_consistent) and not(is_init_nd)) and (not(b_elems_consistent) and not(is_init_ed)):
@@ -302,6 +363,7 @@ def parse_log_file(context):
                 ret_val = {'ELEMS_INCONSISTENT'}
             else:
                 ret_val = {'FINISHED'}
+
     except IOError:
         print("Blendyn::parse_log_file(): Could not locate the file " + log_file + ".")
         ret_val = {'LOG_NOT_FOUND'}
@@ -362,6 +424,9 @@ def parse_log_file(context):
             while True:
                 if next(reader)[0] == 'Step':
                   mbs.time_step = float(next(reader)[3])
+                  if (mbs.use_netcdf):
+                      mbs.end_time = nc.variables["time"][-1]
+                      mbs.start_time = nc.variables["time"][0]
                   break
     except FileNotFoundError:
         print("Blendyn::parse_log_file(): Could not locate the file " + out_file)
@@ -379,6 +444,14 @@ def parse_log_file(context):
             for rfm_row in reader:
                 if len(rfm_row) and rfm_row[0].strip() != '#':
                         parse_reference_frame(rfm_row, rd)
+
+        # create the reference frames collection if it is not already there
+        try:
+            rcol = bpy.data.collections['mbdyn.references']
+        except KeyError:
+            rcol = bpy.data.collections.new(name = 'mbdyn.references')
+            bpy.context.scene.collection.children.link(rcol)
+
     except StopIteration:
         pass
     except FileNotFoundError:
@@ -388,7 +461,8 @@ def parse_log_file(context):
         print("Blendyn::parse_out_file(): Could not read the file " + rfm_file)
         pass
 
-    mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
+    if not(mbs.use_netcdf):
+        mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
 
     return ret_val, obj_names
 # -----------------------------------------------------------
@@ -523,7 +597,7 @@ def assign_labels(context):
 def update_label(self, context):
 
     # utility renaming
-    obj = context.scene.objects.active
+    obj = context.view_layer.objects.active
     nd = context.scene.mbdyn.nodes
 
     # Search for int label and assign corresponding string label, if found.
@@ -568,7 +642,13 @@ def update_label(self, context):
 def update_end_time(self, context):
     mbs = context.scene.mbdyn
 
-    if mbs.end_time > mbs.num_timesteps * mbs.time_step:
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r")
+        if (mbs.end_time - nc.variables["time"][-1]) > mbs.time_step:
+            mbs.end_time = nc.variables["time"][-1]
+    elif mbs.end_time > mbs.num_timesteps * mbs.time_step:
         mbs.end_time = mbs.num_timesteps * mbs.time_step
 # -----------------------------------------------------------
 # end of update_end_time() function
@@ -576,7 +656,13 @@ def update_end_time(self, context):
 def update_start_time(self, context):
     mbs = context.scene.mbdyn
 
-    if mbs.start_time >= mbs.num_timesteps * mbs.time_step:
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r")
+        if mbs.start_time < nc.variables["time"][0]:
+            mbs.start_time = nc.variables["time"][0]
+    elif mbs.start_time >= mbs.num_timesteps * mbs.time_step:
         mbs.start_time = (mbs.num_timesteps - 1) * mbs.time_step
 # -----------------------------------------------------------
 # end of update_start_time() function
@@ -607,12 +693,12 @@ def hide_or_delete(obj_names, missing):
         obj_list = [bpy.data.objects[var] for var in obj_names]
 
         for obj in obj_list:
-            obj.hide = True
+            obj.hide_viewport = True
 
     if missing == "DELETE":
         bpy.ops.object.select_all(action='DESELECT')
         for obj in obj_list:
-            obj.select = True
+            obj.select_set(state = True)
             bpy.ops.object.delete()
 
 ## Function that parses the .mov file and sets the motion paths
@@ -656,6 +742,7 @@ def set_motion_paths_mov(context):
     try:
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
+
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
 
@@ -678,7 +765,7 @@ def set_motion_paths_mov(context):
                     if obj_name != 'none' and nd['node_' + str(int(rw[0]))].output:
                         anim_objs[rw[0]] = obj_name
                         obj = bpy.data.objects[obj_name]
-                        obj.select = True
+                        obj.select_set(state = True)
                         set_obj_locrot_mov(obj, rw)
                 except KeyError:
                     pass
@@ -707,9 +794,8 @@ def set_motion_paths_mov(context):
                     try:
                         answer = frac*first[ndx] + (1 - frac)*second[ndx]
                         obj = bpy.data.objects[anim_objs[round(answer[0])]]
-                        obj.select = True
+                        obj.select_set(state = True)
                         set_obj_locrot_mov(obj, answer)
-
                     except KeyError:
                         pass
 
@@ -871,14 +957,16 @@ def set_motion_paths_netcdf(context):
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r")
-    nctime = nc.variables["time"]
-
-    mbs.time_step = nctime[1]
-
     freq = mbs.load_frequency
 
-    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
-    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
+    nctime = nc.variables["time"]
+    mbs.time_step = nctime[1] - nctime[0]
+    if nctime[0] == 0.0:
+        scene.frame_start = int(mbs.start_time/(mbs.time_step*mbs.load_frequency))
+        scene.frame_end = int(mbs.end_time/(mbs.time_step*mbs.load_frequency)) + 1
+    else:
+        scene.frame_start = int((mbs.start_time - nctime[0])/(mbs.time_step*mbs.load_frequency))
+        scene.frame_end = int((mbs.end_time - nctime[0])/(mbs.time_step*mbs.load_frequency)) + 1
 
     anim_nodes = list()
     for node in nd:
@@ -905,13 +993,13 @@ def set_motion_paths_netcdf(context):
 
     kk = 0
     for ndx in anim_nodes:
-    
+
         dictobj = nd[ndx]
         if str(dictobj.int_label) in mbs.disabled_output.split(' '):
             continue
 
         obj = bpy.data.objects[dictobj.blender_object]
-        obj.select = True
+        obj.select_set(state = True)
         node_var = 'node.struct.' + str(dictobj.int_label) + '.'
         if dictobj.parametrization[0:5] == 'EULER':
             for frame in range(scene.frame_start, scene.frame_end):
@@ -957,7 +1045,7 @@ def set_motion_paths_netcdf(context):
             # Should not be reached
             print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
             return {'CANCELLED'}
-        obj.select = False
+        obj.select_set(state = False)
         kk = kk + 1
         wm.progress_update(kk)
     wm.progress_end()
@@ -1005,12 +1093,13 @@ def log_messages(mbs, baseLogger, saved_blend):
 
 def delete_log():
     mbs = bpy.context.scene.mbdyn
-    global logFile
+
     if not(bpy.data.is_saved) or mbs.del_log:
         try:
             os.remove(logFile)
             print("Blendyn::delete_log(): removed file" + logFile)
         except NameError as ex:
+            print("Blendyn::delete_log(): NameError:" + str(e))
             pass
 
 def logging_shutdown():

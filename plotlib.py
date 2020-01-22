@@ -24,23 +24,29 @@
 
 import bpy
 
-import pygal
-import cairosvg
+try: 
+    import pygal
+    from netCDF4 import Dataset
+except ModuleNotFoundError as ierr:
+    print("BLENDYN::plotlib.py: could not import dependencies. Plotting "\
+            + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
+   
+HAVE_CAIROSVG = False
+try:
+    import cairosvg
+    HAVE_CAIROSG = True
+except ModuleNotFoundError as ierr:
+    print("BLENDYN::plotlib.py: could not import cairosvg. Plots will only be saved"\
+            + "in .svg format, and not displayed in Blender UI.")
+
 import numpy as np
 
 import logging
 
 from .nodelib import *
 from .elementlib import *
-from .blendyn import HAVE_PLOT
 import os
-
-try:
-    from netCDF4 import Dataset
-except ImportError as ierr:
-    print("BLENDYN::base.py: could not enable the netCDF module. NetCDF import "\
-            + "will be disabled. The reported error was:")
-    print("{0}".format(ierr))
 
 class BLENDYN_UL_plot_var_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -80,14 +86,14 @@ class BLENDYN_UL_render_vars_list(bpy.types.UIList):
 bpy.utils.register_class(BLENDYN_UL_render_vars_list)
 
 class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
-    """ Plots the selected variable autospectrum (Sxx) in the image editor
+    """ Plots the selected variable autospectrum (Sxx) in the image editor 
         and optionally save it as .svg in the 'plots' directory.
-        The user can choose among all the variables of all the
+        The user can choose among all the variables of all the 
         MBDyn entitites found in the output NetCDF file."""
     bl_idname = "blendyn.plot_var_sxx_scene"
     bl_label = "Plot the selected MBDyn var autospectrum"
 
-    var_index = bpy.props.IntProperty()
+    var_index: bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -101,10 +107,10 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
         pvar = mbs.plot_vars[mbs.plot_var_index]
         ncvar = nc.variables[pvar.name]
         dim = len(ncvar.shape)
-
+        
         # get time vector
         time = nc.variables["time"]
-
+        
         # set up pygal
         config = pygal.Config()
         config.show_dots = False
@@ -123,14 +129,14 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
         if dim == 2:
             n,m = ncvar.shape
             nfft = int(np.power(2, np.round(np.log2(n) + .5)))
-
+            
             # FIXME: Check if this is still valid for a variable
             #        timestep simulation
-            # ANSWER: No, it is not, but so are a lot of other
+            # ANSWER: No, it is not, but so are a lot of other 
             #         assumptions we make inside of Blendyn.
             #         Fixed timestep output is needed everywhere.
             freq = np.arange(nfft)*1./time[-1];
-
+            
             for mdx in range(m):
                 if pvar.plot_comps[mdx]:
                     # normalized FFT
@@ -139,7 +145,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
                     else:
                         comp_fft = np.fft.fft(var[:, mdx])/nfft
                     Sxx = np.multiply(np.conj(comp_fft), comp_fft)
-                    Gxx = np.zeros(int(nfft/2))
+                    Gxx = np.zeros(int(nfft/2)) 
                     Gxx[0] = Sxx[0]
                     Gxx[1:int(nfft/2 - 1)] = 2*Sxx[1:int(nfft/2 - 1)]
                     chart.add(pvar.name + ".Sxx." + str(mdx + 1), \
@@ -148,7 +154,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
             n,m,k = ncvar.shape
             nfft = int(np.power(2, np.round(np.log2(n) + .5)))
             freq = np.arange(nfft)*1./time[-1];
-
+            
             if mbs.plot_var[-1] == 'R':
                 dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 2]
@@ -167,7 +173,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
                     else:
                         comp_fft = np.fft.fft(ncvar[:, dims1[mdx], dims2[mdx]])
                     Sxx = np.multiply(np.conj(comp_fft), comp_fft)
-                    Gxx = np.zeros(int(nfft/2))
+                    Gxx = np.zeros(int(nfft/2)) 
                     Gxx[0] = Sxx[0]
                     Gxx[1:int(nfft/2 - 1)] = 2*Sxx[1:int(nfft/2 - 1)]
                     chart.add(pvar.plot_var + ".Sxx." + dims_names[mdx], \
@@ -179,7 +185,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
             else:
                 ncvar_fft = np.fft.fft(ncvar)
                 Sxx = np.multiply(np.conj(ncvar_fft), ncvar_fft)
-                Gxx = np.zeros(int(nfft/2))
+                Gxx = np.zeros(int(nfft/2)) 
                 Gxx[0] = Sxx[0]
                 Gxx[1:int(nfft/2 - 1)] = 2*Sxx[1:int(nfft/2 - 1)]
                 chart.add(pvar.name + ".Sxx", [(freq[idx], Gxx[idx]) \
@@ -192,7 +198,7 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
-
+ 
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
            os.makedirs(plot_dir)
@@ -207,19 +213,20 @@ class BLENDYN_OT_plot_var_sxx_scene(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
         message = "BLENDYN_OT_plot_var_sxx_scene::execute(): "\
                 + "Variable " + pvar.name + " autospectrum plotted"
         self.report({'INFO'}, message)
-        logging.info(message)
+        baeLogger.info(message)
         return {'FINISHED'}
-# --------------------------------------------------
+# -------------------------------------------------- 
 # end of BLENDYN_OT_plot_var_sxx_scene class
 
 class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
-    """ Plots the object's selected variable autospectrum in the image editor
+    """ Plots the object's selected variable autospectrum in the image editor 
         and optionally save it as .svg in the 'plots' directory """
     bl_idname = "blendyn.plot_var_sxx_object"
     bl_label = "Plot the selected MBDyn var"
@@ -240,7 +247,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
 
         # get time vector
         time = nc.variables["time"]
-
+        
         # set up pygal
         config = pygal.Config()
         config.show_dots = False
@@ -270,7 +277,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
                     else:
                         comp_fft = np.fft.fft(ncvar[:, mdx])/nfft
                     Sxx = np.multiply(np.conj(comp_fft), comp_fft)
-                    Gxx = np.zeros(int(nfft/2))
+                    Gxx = np.zeros(int(nfft/2)) 
                     Gxx[0] = Sxx[0]
                     Gxx[1:int(nfft/2 - 1)] = 2*Sxx[1:int(nfft/2 - 1)]
                     chart.add(pvar.name + ".Sxx." + str(mdx + 1), \
@@ -279,7 +286,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
             n,m,k = ncvar.shape
             nfft = int(np.power(2, np.round(np.log2(n) + .5)))
             freq = np.arange(nfft)*1./time[-1];
-
+            
             if pvar.name[-1] == 'R':
                 dims_names = ["(1,1)", "(1,2)", "(1,3)", "(2,2)", "(2,3)", "(3,3)"]
                 dims1 = [0, 0, 0, 1, 1, 2]
@@ -298,7 +305,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
                     else:
                         comp_fft = np.fft.fft(ncvar[:, dims1[mdx], dims2[mdx]])
                     Sxx = np.multiply(np.conj(comp_fft), comp_fft)
-                    Gxx = np.zeros(int(nfft/2))
+                    Gxx = np.zeros(int(nfft/2)) 
                     Gxx[0] = Sxx[0]
                     Gxx[1:int(nfft/2 - 1)] = 2*Sxx[1:int(nfft/2 - 1)]
                     chart.add(pvar.name + ".Sxx." + dims_names[mdx], \
@@ -310,13 +317,13 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
             else:
                 ncvar_fft = np.fft.fft(ncvar)
                 Sxx = np.multiply(np.conj(ncvar_fft), ncvar_fft)
-                Gxx = np.zeros(int(nfft/2))
+                Gxx = np.zeros(int(nfft/2)) 
                 Gxx[0] = Sxx[0]
                 Gxx[1:int(nfft/2 - 1)] = 2*Sxx[1:int(nfft/2 - 1)]
                 chart.add(pvar.name + ".Sxx", [(freq[idx], Gxx[idx]) \
                         for idx in range(0, int(nfft/2), pvar.plot_frequency)])
             chart.add(pvar.name, [(time[idx], var[idx]) \
-                    for idx in range(0, len(time), pvar.plot_frequency)])
+                    for idx in range(0, len(time), pvar.plot_frequency)]) 
         chart.x_title = "Frequency [Hz]"
 
         if not(bpy.data.is_saved):
@@ -339,8 +346,9 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
 
         message = "BLENDYN_OT_plot_var_sxx_object::execute(): "\
@@ -348,7 +356,7 @@ class BLENDYN_OT_plot_var_sxx_object(bpy.types.Operator):
         self.report({'INFO'}, message)
         logging.info(message)
         return {'FINISHED'}
-# --------------------------------------------------
+# -------------------------------------------------- 
 # end of BLENDYN_OT_plot_var_sxx_object class
 
 class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
@@ -425,7 +433,7 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
                         for idx in range(0, len(time), pvar.plot_frequency)])
 
         chart.x_title = "time [s]"
-
+ 
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
            os.makedirs(plot_dir)
@@ -444,8 +452,10 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
 
         message = "BLENDYN_OT_plot_variables_list::execute() "\
@@ -453,7 +463,7 @@ class BLENDYN_OT_plot_variables_list(bpy.types.Operator):
         self.report({'INFO'}, message)
         logging.info(message)
         return {'FINISHED'}
-# --------------------------------------------------
+# -------------------------------------------------- 
 # end of BLENDYN_OT_plot_variables_list class
 
 
@@ -465,7 +475,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
     bl_idname = "blendyn.plot_var_scene"
     bl_label = "Plot the selected MBDyn var"
 
-    var_index =  bpy.props.IntProperty()
+    var_index: bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -543,8 +553,10 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
         message = "BLENDYN_OT_plot_var_scene::execute() "\
                 + "Variable " + pvar.name + " plotted"
@@ -555,7 +567,7 @@ class BLENDYN_OT_plot_var_scene(bpy.types.Operator):
 # end of BLENDYN_OT_plot_var_scene class
 
 class BLENDYN_OT_plot_var_object(bpy.types.Operator):
-    """ Plots the object's selected variable in the image editor
+    """ Plots the object's selected variable in the image editor 
         and optionally save it as .svg in the 'plots' directory """
     bl_idname = "blendyn.plot_var_object"
     bl_label = "Plot the selected MBDyn var"
@@ -576,7 +588,7 @@ class BLENDYN_OT_plot_var_object(bpy.types.Operator):
 
         # get time vector
         time = nc.variables["time"]
-
+        
         # set up pygal
         config = pygal.Config()
         config.show_dots = False
@@ -611,14 +623,14 @@ class BLENDYN_OT_plot_var_object(bpy.types.Operator):
         else:
             chart.add(pvar.name, [(time[idx], ncvar[idx]) \
                     for idx in range(0, len(time), pvar.plot_frequency)])
-
+        
         chart.x_title = "time [s]"
 
         if not(bpy.data.is_saved):
             message = "BLENDYN_OT_plot_var_object::execute() "\
                     + "Please save current Blender file first"
             self.report({'ERROR'}, message)
-            logging.error(message)
+            logging.error( message)
             return {'CANCELLED'}
         plot_dir = os.path.join(bpy.path.abspath('//'), "plots")
         if not os.path.exists(plot_dir):
@@ -634,8 +646,10 @@ class BLENDYN_OT_plot_var_object(bpy.types.Operator):
 
         outfname = os.path.join(plot_dir, basename)
         chart.render_to_file(outfname + ".svg")
-        cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
-        bpy.ops.image.open(filepath = outfname + ".png")
+        
+        if HAVE_CAIROSVG:
+            cairosvg.svg2png(file_obj = open(outfname + ".svg", "rb"), write_to = outfname + ".png")
+            bpy.ops.image.open(filepath = outfname + ".png")
 
 
         message = "BLENDYN_OT_plot_var_object::execute() "\
@@ -652,7 +666,7 @@ class BLENDYN_OT_set_plot_freq(bpy.types.Operator):
         to the import frequency of the MBDyn results """
     bl_idname = "blendyn.set_plot_freq"
     bl_label = "Sets the plot frequency for the scene equal to the load frequency"
-    is_object = bpy.props.BoolProperty()
+    is_object: bpy.props.BoolProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -660,13 +674,12 @@ class BLENDYN_OT_set_plot_freq(bpy.types.Operator):
             pvar = mbs.plot_vars[context.object.mbdyn.plot_var_index]
         else:
             pvar = mbs.plot_vars[mbs.plot_var_index]
-
+        
         pvar.plot_frequency = context.scene.mbdyn.load_frequency
         return {'FINISHED'}
 # --------------------------------------------------
-# end of BLENDYN_OT_set_plot_freq class
+# end of BLENDYN_OT_set_plot_freq class 
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_set_render_variable(bpy.types.Operator):
     """ Sets the NetCDF variables to be\
         displayed in the rendered frame """
@@ -696,7 +709,6 @@ class BLENDYN_OT_set_render_variable(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_set_render_variable class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
     """ Delete a render variable """
     bl_idname = "blendyn.delete_render_variable"
@@ -710,7 +722,7 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
                 + mbs.render_vars[mbs.render_index].varname
         self.report({'INFO'}, message)
         logging.info(message)
-
+        
         mbs.render_vars.remove(mbs.render_index)
 
         return {'FINISHED'}
@@ -720,7 +732,6 @@ class BLENDYN_OT_delete_render_variable(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_delete_render_variable class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
     """ Deleted all variables set for display in render frames """
     bl_idname = "blendyn.delete_all_render_variables"
@@ -743,7 +754,6 @@ class BLENDYN_OT_delete_all_render_variables(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_delete_all_render_variables class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_show_display_group(bpy.types.Operator):
     """ Shows the selected display group """
     bl_idname = "blendyn.show_display_group"
@@ -774,7 +784,6 @@ class BLENDYN_OT_show_display_group(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_show_display_group class
 
-# FIXME: this operator is also defined in base.py!!
 class BLENDYN_OT_set_display_group(bpy.types.Operator):
     """ Set group of variables to display in rendered frames """
     bl_idname = "sel.set_display_group"
@@ -851,7 +860,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                 dim = len(nc.variables[pvar.name].shape)
                 if dim == 2:     # vec3
                     box = layout.box()
-                    split = box.split(percentage = 1./3.)
+                    split = box.split(factor = 1./3.)
                     column = split.column()
                     column.prop(pvar, "plot_comps", index = 0, text = "x")
                     column = split.column()
@@ -861,7 +870,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                 elif dim == 3:
                     if pvar.name[-1] == 'R':
                         box = layout.box()
-                        split = box.split(percentage = 1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
@@ -873,7 +882,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                         column.row().prop(pvar, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
-                        split = box.split(percentage = 1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column.row().prop(pvar, "plot_comps", index = 3, text = "(2,1)")
@@ -918,20 +927,20 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
 
 ## Panel in Scene toolbar
 class BLENDYN_PT_plot_scene(bpy.types.Panel):
-    """ Plotting of MBDyn NetCDF variables:
+    """ Plotting of MBDyn NetCDF variables:  
         Scene properties panel"""
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
     bl_options = {'DEFAULT_CLOSED'}
     bl_label = "MBDyn Data Plot"
-
+    
     def draw(self, context):
         mbs = context.scene.mbdyn
         try:
             pvar = mbs.plot_vars[mbs.plot_var_index]
         except IndexError:
-            return
+            return    
         layout = self.layout
         row = layout.row()
 
@@ -947,7 +956,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                 dim = len(nc.variables[pvar.name].shape)
                 if dim == 2:     # Vec3
                     box = layout.box()
-                    split = box.split(percentage = 1./3.)
+                    split = box.split(factor = 1./3.)
                     column = split.column()
                     column.prop(pvar, "plot_comps", index = 0, text = "x")
                     column = split.column()
@@ -957,7 +966,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                 elif dim == 3:  # Mat3x3
                     if pvar.name[-1] == 'R':
                         box = layout.box()
-                        split = box.split(percentage = 1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column = split.column()
@@ -969,7 +978,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         column.row().prop(pvar, "plot_comps", index = 5, text = "(3,3)")
                     else:
                         box = layout.box()
-                        split = box.split(percentage = 1./3.)
+                        split = box.split(factor = 1./3.)
                         column = split.column()
                         column.row().prop(pvar, "plot_comps", index = 0, text = "(1,1)")
                         column.row().prop(pvar, "plot_comps", index = 3, text = "(2,1)")
@@ -982,28 +991,28 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         column.row().prop(pvar, "plot_comps", index = 2, text = "(1,3)")
                         column.row().prop(pvar, "plot_comps", index = 5, text = "(2,3)")
                         column.row().prop(pvar, "plot_comps", index = 8, text = "(3,3)")
-                if HAVE_PLOT:
+                # plot controls
+                row = layout.row()
+                col = layout.column()
+                col.prop(pvar, "plot_frequency")
+                col.operator(BLENDYN_OT_set_plot_freq.bl_idname, \
+                        text = "Use Import freq").is_object = False
+                row = layout.row()
+                row.prop(pvar, "plot_type")
+                row = layout.row()
+                row.prop(pvar, "plot_xrange_min")
+                row = layout.row()
+                row.prop(pvar, "plot_xrange_max")
+                row = layout.row()
+                if pvar.plot_type == "TIME HISTORY":
+                    row.operator(BLENDYN_OT_plot_var_scene.bl_idname, 
+                            text="Plot variable")
+                elif mbs.plot_type == "AUTOSPECTRUM":
                     row = layout.row()
-                    col = layout.column()
-                    col.prop(pvar, "plot_frequency")
-                    col.operator(BLENDYN_OT_set_plot_freq.bl_idname, \
-                            text = "Use Import freq").is_object = False
+                    row.prop(mbs, "fft_remove_mean")
                     row = layout.row()
-                    row.prop(pvar, "plot_type")
-                    row = layout.row()
-                    row.prop(pvar, "plot_xrange_min")
-                    row = layout.row()
-                    row.prop(pvar, "plot_xrange_max")
-                    row = layout.row()
-                    if pvar.plot_type == "TIME HISTORY":
-                        row.operator(BLENDYN_OT_plot_var_scene.bl_idname,
-                                text="Plot variable")
-                    elif mbs.plot_type == "AUTOSPECTRUM":
-                        row = layout.row()
-                        row.prop(mbs, "fft_remove_mean")
-                        row = layout.row()
-                        row.operator(BLENDYN_OT_plot_var_sxx_scene.bl_idname,
-                                text = "Plot variable Autospectrum")
+                    row.operator(BLENDYN_OT_plot_var_sxx_scene.bl_idname,
+                            text = "Plot variable Autospectrum")
             except IndexError:
                 pass
 
@@ -1026,22 +1035,22 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                     text = 'Delete Display Variable')
             row.operator(BLENDYN_OT_delete_all_render_variables.bl_idname, text = 'Clear')
 
-            if HAVE_PLOT:
-                row = layout.row()
-                row.operator(BLENDYN_OT_plot_variables_list.bl_idname, \
-                        text="Plot variables in List")
+            # plot controls
+            row = layout.row()
+            row.operator(BLENDYN_OT_plot_variables_list.bl_idname, \
+                    text="Plot variables in List")
 
-                row.prop(mbs, "plot_group", text = "Plot Group")
-                layout.separator()
-                layout.separator()
+            row.prop(mbs, "plot_group", text = "Plot Group")
+            layout.separator()
+            layout.separator()
 
-                row = layout.row()
-                row.prop(mbs, "group_name")
-                row.operator(BLENDYN_OT_set_display_group.bl_idname, text="Set Display Group")
+            row = layout.row()
+            row.prop(mbs, "group_name")
+            row.operator(BLENDYN_OT_set_display_group.bl_idname, text="Set Display Group")
 
-                row = layout.row()
-                row.prop(mbs, "display_enum_group")
-                row.operator(BLENDYN_OT_show_display_group.bl_idname, text = "Show Display Group")
+            row = layout.row()
+            row.prop(mbs, "display_enum_group")
+            row.operator(BLENDYN_OT_show_display_group.bl_idname, text = "Show Display Group")
 
         else:
             row = layout.row()

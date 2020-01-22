@@ -158,6 +158,15 @@ def spawn_distance_element(elem, context):
     # creation of line representing the dist
     distobj_id = 'dist_' + str(elem.int_label)
     distcv_id = distobj_id + '_cvdata'
+    
+    try:
+        # put it all in the 'joints' collection
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 
     # check if the object is already present. If it is, remove it.
     if distobj_id in bpy.data.objects.keys():
@@ -190,7 +199,7 @@ def spawn_distance_element(elem, context):
     distOBJ = bpy.data.objects.new(distobj_id, cvdata)
     distOBJ.mbdyn.type = 'element'
     distOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.objects.link(distOBJ)
+    elcol.objects.link(distOBJ)
     elem.blender_object = distOBJ.name
 
     # Finishing up
@@ -212,23 +221,23 @@ def spawn_distance_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    n1OBJ.select_set(state = True)
+    distOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[0].select = True
+    distOBJ.data.splines[0].points[0].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    n2OBJ.select_set(state = True)
+    distOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[1].select = True
+    distOBJ.data.splines[0].points[1].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -236,18 +245,18 @@ def spawn_distance_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    bpy.data.objects[distOBJ.name + '_child1'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child1']
+    n1OBJ.select_set(state = True)
+    bpy.data.objects[distOBJ.name + '_child1'].select_set(state = True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child1']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    bpy.data.objects[distOBJ.name + '_child2'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child2']
+    n2OBJ.select_set(state = True)
+    bpy.data.objects[distOBJ.name + '_child2'].select_set(state = True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child2']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -259,10 +268,13 @@ def spawn_distance_element(elem, context):
     # set parenting
     parenting(distOBJ, n1OBJ)
 
-    # set group
+    # put them all in the element collection
     dist_child1 = bpy.data.objects[distOBJ.name + '_child1']
-    dist_child2 = bpy.data.objects[distOBJ.name + '_child2']
-    grouping(context, distOBJ, [n1OBJ, n2OBJ, dist_child2, dist_child1])
+    dist_child2 = bpy.data.objects[distOBJ.name + '_child2'] 
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return{'FINISHED'}
@@ -273,7 +285,7 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
     """ Imports a distance Joint in the Blender scene """
     bl_idname = "blendyn.import_distance"
     bl_label = "Import a distance joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -294,6 +306,9 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

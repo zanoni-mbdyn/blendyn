@@ -77,6 +77,7 @@ def parse_beam2(rw, ed):
 
         el.offsets.add()
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
+
         el.import_function = "blendyn.import_beam2"
         el.info_draw = "beam2_info_draw"
         el.name = el.type + "_" + str(el.int_label)
@@ -89,6 +90,7 @@ def parse_beam2(rw, ed):
 # end of parse_beam2(rw, ed) function
 
 def parse_beam3(rw, ed):
+
     ret_val = True
     try:
         el = ed['beam3_' + rw[1]]
@@ -139,7 +141,7 @@ def parse_beam3(rw, ed):
 
         el.offsets.add()
         el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
-        
+
         el.import_function = "blendyn.import_beam3"
         el.info_draw = "beam3_info_draw"
         el.update = "update_beam3"
@@ -279,6 +281,15 @@ def spawn_beam2_element(elem, context):
     beamobj_id = 'beam2_' + str(elem.int_label)
     beamcv_id = beamobj_id + '_cvdata'
 
+    try:
+        # put it all in the 'beams' collection
+        set_active_collection('beams')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['beams'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     # check if the object is already present. If it is, remove it.
     if beamobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[beamobj_id])
@@ -300,8 +311,8 @@ def spawn_beam2_element(elem, context):
     # assign coordinates of curve knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2@Vector(( f2[0], f2[1], f2[2] ))
 
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
@@ -310,14 +321,14 @@ def spawn_beam2_element(elem, context):
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'element'
     beamOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.objects.link(beamOBJ)
+    elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    beamOBJ.select = True
-    bpy.context.scene.objects.active = beamOBJ
+    n1OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     beamOBJ.data.splines[0].points[0].select = True
@@ -326,9 +337,9 @@ def spawn_beam2_element(elem, context):
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    beamOBJ.select = True
-    bpy.context.scene.objects.active = beamOBJ
+    n2OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     beamOBJ.data.splines[0].points[1].select = True
@@ -359,8 +370,10 @@ def spawn_beam2_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    # create group for element
-    grouping(context, beamOBJ, [n1OBJ, n2OBJ])
+    # link objects to the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return {'FINISHED'}
@@ -399,6 +412,15 @@ def spawn_beam3_element(elem, context):
     beamobj_id = 'beam3_' + str(elem.int_label)
     beamcv_id = beamobj_id + '_cvdata'
 
+    try:
+        # put it all in the 'beams' collection
+        set_active_collection('beams')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['beams'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     # Check if the object is already present. If it is, remove it.
     if beamobj_id in bpy.data.objects.keys():
         bpy.data.objects.remove(bpy.data.objects[beamobj_id])
@@ -425,9 +447,9 @@ def spawn_beam3_element(elem, context):
     n3OBJ = bpy.data.objects[n3]
 
     # refline points in global frame
-    P1 = n1OBJ.matrix_world*Vector(( f1[0], f1[1], f1[1], 1.0 ))
-    P2 = n2OBJ.matrix_world*Vector(( f2[0], f2[1], f2[1], 1.0 ))
-    P3 = n3OBJ.matrix_world*Vector(( f3[0], f3[1], f3[1], 1.0 ))
+    P1 = n1OBJ.matrix_world@Vector(( f1[0], f1[1], f1[1], 1.0 ))
+    P2 = n2OBJ.matrix_world@Vector(( f2[0], f2[1], f2[1], 1.0 ))
+    P3 = n3OBJ.matrix_world@Vector(( f3[0], f3[1], f3[1], 1.0 ))
 
     # define the two intermediate control points # FIXME: find a more efficient way!!
     t1 = -3*P1 + 4*P2 - P3
@@ -451,10 +473,10 @@ def spawn_beam3_element(elem, context):
     polydata.points[3].co = P3
 
     # set the tilt angles of the sections
-    # t3 = P3 - M2
-    # t3.normalize()
+    t3 = P3 - M2
+    t3.normalize()
 
-    # FIXME: This is nonsense!!
+    # FIXME: check this very carefully!
     # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
     # phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
     # phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
@@ -472,26 +494,26 @@ def spawn_beam3_element(elem, context):
     ude.dkey = elem.name
     ude.name = elem.name
 
-    bpy.context.scene.objects.link(beamOBJ)
+    elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
-    beamOBJ.select = True
+    beamOBJ.select_set(state = True)
 
     # Hook control points
     bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M1[0:3])
-    obj2 = bpy.context.scene.objects.active
+    obj2 = bpy.context.view_layer.objects.active
     obj2.name = beamOBJ.name + '_M1'
-    obj2.select = False
+    obj2.select_set(state = False)
 
     bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M2[0:3])
-    obj3 = bpy.context.scene.objects.active
+    obj3 = bpy.context.view_layer.objects.active
     obj3.name = beamOBJ.name + '_M2'
-    obj3.select = False
+    obj3.select_set(state = False)
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    beamOBJ.select = True
-    bpy.context.scene.objects.active = beamOBJ
+    n1OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     beamOBJ.data.splines[0].points[0].select = True
@@ -500,9 +522,9 @@ def spawn_beam3_element(elem, context):
 
     # M1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    obj2.select = True
-    beamOBJ.select = True
-    bpy.context.scene.objects.active = beamOBJ
+    obj2.select_set(state = True)
+    beamOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     beamOBJ.data.splines[0].points[1].select = True
@@ -511,9 +533,9 @@ def spawn_beam3_element(elem, context):
 
     # M2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    obj3.select = True
-    beamOBJ.select = True
-    bpy.context.scene.objects.active = beamOBJ
+    obj3.select_set(state = True)
+    beamOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     beamOBJ.data.splines[0].points[2].select = True
@@ -522,9 +544,9 @@ def spawn_beam3_element(elem, context):
 
     # P3 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n3OBJ.select = True
-    beamOBJ.select = True
-    bpy.context.scene.objects.active = beamOBJ
+    n3OBJ.select_set(state = True)
+    beamOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = beamOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     beamOBJ.data.splines[0].points[3].select = True
@@ -533,13 +555,18 @@ def spawn_beam3_element(elem, context):
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    grouping(context, beamOBJ, [n1OBJ, n2OBJ, n3OBJ, obj2, obj3])
     elem.is_imported = True
 
-    obj2.hide = True
-    obj3.hide = True
+    obj2.hide_viewport = True
+    obj3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
+
+    # put them all in the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    elcol.objects.link(n3OBJ)
+    set_active_collection('Master Collection')
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_beam3_element(elem, context) function
@@ -567,9 +594,9 @@ def update_beam3(elem, insert_keyframe = False):
     f3 = elem.offsets[2].value
 
     # points on beam
-    P1 = n1.matrix_world*Vector(( f1[0], f1[1], f1[2], 1.0 ))
-    P2 = n2.matrix_world*Vector(( f2[0], f2[1], f2[2], 1.0 ))
-    P3 = n3.matrix_world*Vector(( f3[0], f3[1], f3[2], 1.0 ))
+    P1 = n1.matrix_world@Vector(( f1[0], f1[1], f1[2], 1.0 ))
+    P2 = n2.matrix_world@Vector(( f2[0], f2[1], f2[2], 1.0 ))
+    P3 = n3.matrix_world@Vector(( f3[0], f3[1], f3[2], 1.0 ))
 
     # redefine the two intermediate control points
     t1 = -3*P1 + 4*P2 - P3
@@ -604,10 +631,10 @@ def update_beam3(elem, insert_keyframe = False):
 
     if insert_keyframe:
         try:
-            cp2.select = True
+            cp2.select_set(state = True)
             cp2.keyframe_insert(data_path = "location")
 
-            cp3.select = True
+            cp3.select_set(state = True)
             cp3.keyframe_insert(data_path = "location")
 
         except RuntimeError as err:
@@ -624,12 +651,13 @@ def update_beam3(elem, insert_keyframe = False):
 # -----------------------------------------------------------
 # end of update_beam3() function
 
+
 ## Imports a Beam 2 element in the scene as a line joining two nodes
 class BLENDYN_OT_import_beam2(bpy.types.Operator):
     """ Imports a beam2 element into the Blender scene """
     bl_idname = "blendyn.import_beam2"
     bl_label = "Imports a beam2 element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -651,6 +679,9 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
             else:
@@ -668,7 +699,7 @@ class BLENDYN_OT_import_beam2(bpy.types.Operator):
 class BLENDYN_OT_import_beam3(bpy.types.Operator):
     bl_idname = "blendyn.import_beam3"
     bl_label = "Imports a beam3 element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -690,6 +721,9 @@ class BLENDYN_OT_import_beam3(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE3_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'FINISHED'}:
                 eldbmsg({'IMPORT_SUCCESS'}, type(self).__name__ + '::execute()', elem)
@@ -718,7 +752,7 @@ class BLENDYN_OT_update_beam3(bpy.types.Operator):
             message = type(self).__name__ + "::execute(): " \
                     + "Unable to find Blender objects to update"
             self.report({'ERROR'}, message)
-            baseLogger.error(message)
+            logging.error(message)
             return {'CANCELLED'}
         else:
             return ret_val

@@ -30,6 +30,8 @@ import logging
 from mathutils import *
 from math import *
 
+from .utilslib import *
+
 def parse_reference_frame(rw, rd):
     ret_val = True
 
@@ -77,8 +79,13 @@ def spawn_reference_frame(ref, context):
     if any(obj == ref.blender_object for obj in bpy.data.objects.keys()):
         return {'OBJECT_EXISTS'}
 
+    try:
+        set_active_collection('mbdyn.references')
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+
     bpy.ops.object.empty_add(type = 'ARROWS', location = ref.pos)
-    obj = context.scene.objects.active
+    obj = context.view_layer.objects.active
     obj.mbdyn.type = 'reference'
     obj.mbdyn.dkey = ref.name
     obj.rotation_mode = 'QUATERNION'
@@ -90,6 +97,8 @@ def spawn_reference_frame(ref, context):
         obj.name = ref.name
 
     ref.blender_object = obj.name
+
+    set_active_collection('Master Collection')
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of spawn_reference_frame(ref, context) function
@@ -100,7 +109,7 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
         as an Empty of type AXES"""
     bl_idname = "blendyn.import_reference"
     bl_label = "Imports a reference"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -124,6 +133,12 @@ class BLENDYN_OT_import_reference(bpy.types.Operator):
                 print(message)
                 logging.info(message)
                 return retval
+            elif retval == {'COLLECTION_ERROR'}:
+                message = "BLENDYN::parse_reference_frame(): "\
+                + "references collection not found "
+                print(message)
+                logging.info(message)
+                return {'CANCELLED'}
             else:
                 # Should not be reached
                 return retval

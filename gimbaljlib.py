@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 
 import bpy
 import os
@@ -46,14 +46,14 @@ def parse_gimbal(rw, ed):
 
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion();
+        el.rotoffsets[0].value = R1.to_quaternion(); 
 
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
 
         R2 = Matrix().to_3x3()
-        parse_rotmat(rw, 19, R2)
-        el.rotoffsets[1].value = R2.to_quaternion();
-
+        parse_rotmat(rw, 19, R2) 
+        el.rotoffsets[1].value = R2.to_quaternion(); 
+        
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -99,7 +99,7 @@ def parse_gimbal(rw, ed):
         ret_val = False
         pass
     return ret_val
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 # end of parse_gimbal(rw, ed) function
 
 # function that displays gimbal info in panel -- [ optional ]
@@ -168,69 +168,78 @@ def spawn_gimbal_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe gimbal joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe gimbal joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'gimbal')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         gimbaljOBJ = bpy.context.selected_objects[0]
         gimbaljOBJ.name = elem.name
-    else:
-        return {'LIBRARY_ERROR'}
+       
+        # automatic scaling
+        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
+        n2OBJ.scale.magnitude)
+        gimbaljOBJ.scale = Vector(( s, s, s ))
 
-    # automatic scaling
-    s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-    n2OBJ.scale.magnitude)
-    gimbaljOBJ.scale = Vector(( s, s, s ))
+        # joint offsets with respect to nodes
+        f1 = elem.offsets[0].value
+        f2 = elem.offsets[1].value
+        q1 = elem.rotoffsets[0].value
+        q2 = elem.rotoffsets[1].value
+    
+        # project offsets in global frame
+        R1 = n1OBJ.rotation_quaternion.to_matrix()
+        R2 = n2OBJ.rotation_quaternion.to_matrix()
+        p1 = Vector(( f1[0], f1[1], f1[2] ))
+        p2 = Vector(( f2[0], f2[1], f2[2] ))
+    
+        # place the joint object in the position defined relative to node 2
+        gimbaljOBJ.location = p1
+        gimbaljOBJ.rotation_mode = 'QUATERNION'
+        gimbaljOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
 
-    # joint offsets with respect to nodes
-    f1 = elem.offsets[0].value
-    f2 = elem.offsets[1].value
-    q1 = elem.rotoffsets[0].value
-    q2 = elem.rotoffsets[1].value
-
-    # project offsets in global frame
-    R1 = n1OBJ.rotation_quaternion.to_matrix()
-    R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = Vector(( f1[0], f1[1], f1[2] ))
-    p2 = Vector(( f2[0], f2[1], f2[2] ))
-
-    # place the joint object in the position defined relative to node 2
-    gimbaljOBJ.location = p1
-    gimbaljOBJ.rotation_mode = 'QUATERNION'
-    gimbaljOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
-
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'gimbal_child')
-    if app_retval != {'FINISHED'}:
+
+        gimbal_childobj = bpy.context.selected_objects[0]
+    
+        # position it correctly
+        gimbal_childobj.location = gimbaljOBJ.location
+    
+        # rotate it according to "position orientation" w.r.t. node 1
+        gimbal_childobj.rotation_mode = 'QUATERNION'
+        gimbal_childobj.rotation_quaternion = \
+                n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+    
+        bpy.ops.object.select_all(action = 'DESELECT')
+        gimbal_childobj.select_set(state = True)    
+        gimbaljOBJ.select_set(state = True)
+        bpy.context.view_layer.objects.active = gimbaljOBJ
+        bpy.ops.object.join()
+    
+        # set parenting of wireframe obj
+        parenting(gimbaljOBJ, n1OBJ)
+     
+        gimbaljOBJ.mbdyn.dkey = elem.name
+        gimbaljOBJ.mbdyn.type = 'element'
+        elem.blender_object = gimbaljOBJ.name
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
+
+        return {'FINISHED'}
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-
-    gimbal_childobj = bpy.context.selected_objects[0]
-
-    # position it correctly
-    gimbal_childobj.location = gimbaljOBJ.location
-
-    # rotate it according to "position orientation" w.r.t. node 1
-    gimbal_childobj.rotation_mode = 'QUATERNION'
-    gimbal_childobj.rotation_quaternion = \
-            n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
-
-    bpy.ops.object.select_all(action = 'DESELECT')
-    gimbal_childobj.select = True
-    gimbaljOBJ.select = True
-    bpy.context.scene.objects.active = gimbaljOBJ
-    bpy.ops.object.join()
-
-    # set parenting of wireframe obj
-    parenting(gimbaljOBJ, n1OBJ)
-
-    grouping(context, gimbaljOBJ, [n1OBJ, n2OBJ])
-
-    gimbaljOBJ.mbdyn.dkey = elem.name
-    gimbaljOBJ.mbdyn.type = 'element'
-    elem.blender_object = gimbaljOBJ.name
-
-    return {'FINISHED'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_gimbal_element(elem, context) function
 
@@ -239,7 +248,7 @@ class BLENDYN_OT_import_gimbal(bpy.types.Operator):
     """ Imports a gimbal joint element into the Blender scene """
     bl_idname = "blendyn.import_gimbal"
     bl_label = "Imports a gimbal joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -248,7 +257,7 @@ class BLENDYN_OT_import_gimbal(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+    
         try:
             elem = ed['gimbal_' + str(self.int_label)]
             retval = spawn_gimbal_element(elem, context)
@@ -260,6 +269,9 @@ class BLENDYN_OT_import_gimbal(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

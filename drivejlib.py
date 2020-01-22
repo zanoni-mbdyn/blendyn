@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 
 import bpy
 import os
@@ -35,17 +35,17 @@ def parse_drive_displacement(rw, ed):
     ret_val = True
     try:
         el = ed['drive_displacement_' + str(rw[1])]
-
+        
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)
-
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)  
+        
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[6])
-
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-
+        
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-
+        
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
         el.mbclass = 'elem.joint'
@@ -62,12 +62,6 @@ def parse_drive_displacement(rw, ed):
         
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)   
-
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)
-
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_drive_displacement()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_drive_displacement()", el)
 
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -87,7 +81,7 @@ def parse_drive_displacement(rw, ed):
         ret_val = False
         pass
     return ret_val
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 # end of parse_drive_displacement(rw, ed) function
 
 # function that displays drive_displacement info in panel -- [ optional ]
@@ -148,7 +142,7 @@ def spawn_drive_displacement_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-
+    
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -161,6 +155,16 @@ def spawn_drive_displacement_element(elem, context):
     # creation of line representing the drvdisp
     drvdispobj_id = 'drvdisp_' + str(elem.int_label)
     drvdispcv_id = drvdispobj_id + '_cvdata'
+
+    try:
+        # put it all in the 'beams' collection
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+        
 
     # check if the object is already present. If it is, remove it.
     if drvdispobj_id in bpy.data.objects.keys():
@@ -206,40 +210,39 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
     bpy.context.active_object.name = drvdispOBJ.name + '_child1'
     bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[drvdispOBJ.name + '_child1'].select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    bpy.data.objects[drvdispOBJ.name + '_child1'].select_set(state = True)
+    drvdispOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
     bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
     bpy.context.active_object.name = drvdispOBJ.name + '_child2'
     bpy.ops.object.select_all(action = 'DESELECT')
-    bpy.data.objects[drvdispOBJ.name + '_child2'].select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    bpy.data.objects[drvdispOBJ.name + '_child2'].select_set(state = True)
+    drvdispOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
 
-    #hooking of the line ends to the Blender objects
-
+    # hooking of the line ends to the Blender objects
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    n1OBJ.select_set(state = True)
+    drvdispOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    drvdispOBJ.data.splines[0].points[0].select = True
+    drvdispOBJ.data.splines[0].points[0].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = drvdispOBJ
+    n2OBJ.select_set(state = True)
+    drvdispOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = drvdispOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    drvdispOBJ.data.splines[0].points[1].select = True
+    drvdispOBJ.data.splines[0].points[1].select_set(state = True)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -247,18 +250,18 @@ def spawn_drive_displacement_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    bpy.data.objects[drvdispOBJ.name + '_child1'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[drvdispOBJ.name + '_child1']
+    n1OBJ.select_set(state = True)
+    bpy.data.objects[drvdispOBJ.name + '_child1'].select_set(state = True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[drvdispOBJ.name + '_child1']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    bpy.data.objects[drvdispOBJ.name + '_child2'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[drvdispOBJ.name + '_child2']
+    n2OBJ.select_set(state = True)
+    bpy.data.objects[drvdispOBJ.name + '_child2'].select_set(state = True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[drvdispOBJ.name + '_child2']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
@@ -268,10 +271,15 @@ def spawn_drive_displacement_element(elem, context):
     bpy.data.objects[drvdispOBJ.name + '_child2'].draw_type = 'WIRE'
 
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    drvdispOBJ.select = True
-    bpy.context.scene.objects.active = n1OBJ
+    n1OBJ.select_set(state = True)
+    drvdispOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = n1OBJ
     bpy.ops.object.parent_set(type = 'OBJECT', keep_transform = False)
+
+    # link objects to the element collection
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return {'FINISHED'}
@@ -282,7 +290,7 @@ def spawn_drive_displacement_element(elem, context):
 class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
     bl_idname = "blendyn.import_drive_displacement"
     bl_label = "MBDyn drive_displacement joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -291,7 +299,7 @@ class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+    
         try:
             elem = ed['drive_displacement_' + str(self.int_label)]
             retval = spawn_drive_displacement_element(elem, context)
@@ -303,6 +311,9 @@ class BLENDYN_OT_import_drive_displacement(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval ==  {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

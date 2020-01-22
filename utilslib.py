@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 
 import bpy
 
@@ -39,14 +39,16 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
     bl_idname = "blendyn.load_section"
     bl_label = "Load NACA profile in Selig format"
 
-    filter_glob = bpy.props.StringProperty(
+    filter_glob: bpy.props.StringProperty(
         default = "*.*",
         options = {'HIDDEN'},
         )
 
     def execute(self, context):
         try:
-            with open(self.filepath, 'r') as sf:
+            scol = bpy.data.collections['sections']
+            set_active_collection('sections')
+            with open(self.filepath, 'r') as sf:     
                 reader = csv.reader(sf, delimiter=' ', skipinitialspace=True)
                 name = next(reader)
                 cvdata = bpy.data.curves.new(' '.join(name), 'CURVE')
@@ -66,30 +68,10 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     poly.points[-1].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
 
                 obj = bpy.data.objects.new(name, cvdata)
-                context.scene.objects.link(obj)
-
-                kk = 0
-                layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
-                try:
-                    while len(layer_objs):
-                        kk = kk + 1
-                        layer_objs.clear()
-                        layer_objs = [ob for ob in bpy.context.scene.objects if ob.layers[kk]]
-                    obj.layers[kk] = True
-                    for jj in range(len(obj.layers)):
-                        if jj != kk:
-                            obj.layers[jj] = False
-                except IndexError:
-                    message = "BLENDYN_OT_load_section::execute(): "\
-                            + "Couldn't find an empty layer. Using the active layer"
-                    self.report({'INFO'}, message)
-                    logging.info(message)
-                    pass
-
-                # context.curve.bevel_object = obj
-
+                scol.objects.link(obj)
+             
                 for item in bpy.context.scene.objects:
-                    if ('beam3_' in item.name) and item.select:
+                    if item.select_get():
                         try:
                             item.data.bevel_object = obj
                         except AttributeError:
@@ -107,6 +89,12 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     + "Unespected end of file"
             self.report({'WARNING'}, message)
             logging.warning(message)
+            return {'CANCELLED'}
+        except KeyError:
+            message = "BLENDYN_OT_load_section::execute(): "\
+                    + "Could not finde 'sections' collection"
+            self.report({'ERROR'}, message)
+            logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
 # end of fmin function BLENDYN_OT_load_section class
@@ -135,7 +123,7 @@ def fmax(x):
 # -----------------------------------------------------------
 # end of fmax function
 
-def parse_rotmat(rw, idx, R):
+def parse_rotmat(rw, idx, R): 
     R[0][0] = float(rw[idx])
     R[0][1] = float(rw[idx + 1])
     R[0][2] = float(rw[idx + 2])
@@ -148,7 +136,7 @@ def parse_rotmat(rw, idx, R):
     pass
 
 def parenting(child, parent):
-    bpy.context.scene.objects.active = child
+    bpy.context.view_layer.objects.active = child
     bpy.ops.object.constraint_add(type='CHILD_OF')
     child.constraints["Child Of"].target = parent
 
@@ -159,19 +147,6 @@ def parenting(child, parent):
 # -----------------------------------------------------------
 # end of parenting function
 
-def grouping(context, elem_obj, obj_list):
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    bpy.ops.object.select_all(action = 'DESELECT')
-
-    elem_obj.select = True
-
-    for obj in obj_list:
-        obj.select = True
-
-    bpy.ops.group.create(name = elem_obj.name)
-
-# -----------------------------------------------------------
-# end of grouping function
 
 def eldbmsg(msg, who, elem):
     # Prints various standard debug messages for element import.
@@ -215,34 +190,41 @@ def eldbmsg(msg, who, elem):
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[0].int_label)
         logging.error(message)
-        return message
+        return message 
 
     def n2notfound(whomsg):
         message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[1].int_label)
         logging.error(message)
-        return message
+        return message 
 
     def n3notfound(whomsg):
         message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[2].int_label)
         logging.error(message)
-        return message
+        return message 
 
     def n4notfound(whomsg):
         message = whomsg \
                 + "Could not find the Blender object associated to node " + \
                 str(elem.nodes[3].int_label)
         logging.error(message)
-        return message
-
+        return message 
+    
     def libraryerror(whomsg):
         message = whomsg \
                 + "Could not import " \
                 + elem.type + " " + str(elem.int_label) \
                 + ": could not load library object"
+        logging.error(message)
+        return message
+
+    def collerror(whomsg):
+        message = whomsg \
+                + "Cannot find the container collection for "\
+                + "element " + elem.type + " " + str(elem.int_label)
         logging.error(message)
         return message
 
@@ -256,7 +238,7 @@ def eldbmsg(msg, who, elem):
     def importsuccess(whomsg):
         message = whomsg \
                 + "Element " + elem.type + " " + str(elem.int_label) + " " \
-                + "imported correctly."
+                + "imported correcly."
         logging.info(message)
         return message
 
@@ -273,8 +255,44 @@ def eldbmsg(msg, who, elem):
                 'LIBRARY_ERROR' : libraryerror,
                 'DICT_ERROR' : dicterror,
                 'IMPORT_SUCCESS' : importsuccess,
+                'COLLECTION_ERROR' : collerror
     }
 
     whomsg = who + ": "
     message = messages[msg.pop()](whomsg)
     print(message)
+
+def recur_layer_collection(layer_collection, coll_name):
+    """ Recursively traverse layer collection for coll_name """
+    found = None
+    if (layer_collection.name == coll_name):
+        return layer_collection
+    for layer in layer_collection.children:
+        found = recur_layer_collection(layer, coll_name)
+        if found:
+            return found
+# -----------------------------------------------------------
+# end of recur_layer_collection function
+
+
+def set_active_collection(coll_name):
+    """ Changes the active collection to coll_name after searching
+        for it with recur_layer_collection() """
+    curr_layer_collection = bpy.context.view_layer.layer_collection
+    new_layer_collection = recur_layer_collection(curr_layer_collection, coll_name)
+    bpy.context.view_layer.active_layer_collection = new_layer_collection
+# -----------------------------------------------------------
+# end of set_active_collection function
+
+def outline_toggle(context, action):
+    area = next(a for a in context.screen.areas if a.type == 'OUTLINER')
+    bpy.ops.outliner.show_hierarchy({'area': area}, 'INVOKE_DEFAULT')
+    state = {'expand': 1, 'collapse': 2}
+    for i in range(state[action]):
+        bpy.ops.outliner.expanded_toggle({'area': area})
+        area.tag_redraw()
+# -----------------------------------------------------------
+# end of outline_toggl() function
+# source: https://blenderartists.org/t/question-regarding-expanding-collapsing-collection-in-outliner-in-2-8/1175242
+# NOTE: right now, not used by anyone! Should be called at the end of
+#       entities import, but UI is not refreshed! FIXME

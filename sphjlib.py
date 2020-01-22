@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 
 import bpy
 import os.path
@@ -41,22 +41,22 @@ def parse_spherical_hinge(rw, ed):
 
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[15])
-
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-
+        
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion();
-
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        
         el.offsets[1].value = Vector(( float(rw[16]), float(rw[17]), float(rw[18]) ))
-
+        
         # FIXME: this is here to enhance backwards compatibility.
         # should disappear in future versions
         el.mbclass = 'elem.joint'
-
+        
         R2 = Matrix().to_3x3()
         parse_rotmat(rw, 19, R2)
-        el.rotoffsets[1].value = R2.to_quaternion();
+        el.rotoffsets[1].value = R2.to_quaternion(); 
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
@@ -97,7 +97,7 @@ def parse_spherical_hinge(rw, ed):
         ret_val = False
         pass
     return ret_val
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 # end of parse_spherical_hinge(rw, ed) function
 
 def parse_spherical_pin(rw, ed):
@@ -108,26 +108,26 @@ def parse_spherical_pin(rw, ed):
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_spherical_pin():", el)
         eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_spherical_pin():", el)
-
+        
         el.nodes[0].int_label = int(rw[2])
-
+        
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-
+        
         R1 = Matrix().to_3x3()
         parse_rotmat(rw, 6, R1)
-        el.rotoffsets[0].value = R1.to_quaternion();
-
+        el.rotoffsets[0].value = R1.to_quaternion(); 
+        
         # FIXME: this is here to enhance backwards compatibility.
         # should disappear in future versions
         el.mbclass = 'elem.joint'
-
+        
         if el.name in bpy.data.objects.keys():
             el.blender_object = el.name
         el.is_imported = True
         pass
     except KeyError:
         el = ed.add()
-        el.mbclass = 'elem.joint'
+        el.mbclass = 'elem.joint' 
         el.type = 'spherical_pin'
         el.int_label = int(rw[1])
 
@@ -151,7 +151,7 @@ def parse_spherical_pin(rw, ed):
         ret_val = False
         pass
     return ret_val
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 # end of parse_sphj(rw, ed) function
 
 ## Creates the objet representing a Spherical Hinge joint
@@ -168,7 +168,7 @@ def spawn_spherical_hinge_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-
+    
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
     except KeyError:
@@ -178,10 +178,16 @@ def spawn_spherical_hinge_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'spherical')
-    if app_retval == {'FINISHED'}:
         # the append operator leaves just the imported object selected
         sphjOBJ = bpy.context.selected_objects[0]
         sphjOBJ.name = elem.name
@@ -196,13 +202,13 @@ def spawn_spherical_hinge_element(elem, context):
         f2 = elem.offsets[1].value
         q1 = elem.rotoffsets[0].value
         q2 = elem.rotoffsets[1].value
-
+    
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
         p2 = Vector(( f2[0], f2[1], f2[2] ))
-
+    
         # place the joint object in the position defined relative to node 1
         sphjOBJ.location = p1
         sphjOBJ.rotation_mode = 'QUATERNION'
@@ -217,22 +223,26 @@ def spawn_spherical_hinge_element(elem, context):
         RF2.scale = .33*sphjOBJ.scale
         RF2.name = sphjOBJ.name + '_RF2'
         parenting(RF2, sphjOBJ)
-        RF2.hide = True
+        RF2.hide_viewport = True
 
         # set parenting of wireframe obj
         parenting(sphjOBJ, n1OBJ)
 
-        grouping(context, sphjOBJ, [n1OBJ, n2OBJ, RF2])
-
         sphjOBJ.mbdyn.dkey = elem.name
         sphjOBJ.mbdyn.type = 'element'
-        elem.blender_object = sphjOBJ.name
+        elem.blender_object = sphjOBJ.name 
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
-# --------------------------------------------------------------------------
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+# -------------------------------------------------------------------------- 
 # end of spawn_spherical_hinge_element(element, context) function
 
 ## Creates the objet representing a spherical joint
@@ -249,16 +259,22 @@ def spawn_spherical_pin_element(elem, context):
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
     except KeyError:
         return {'NODE1_NOTFOUND'}
-
+    
 
     # node object
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-        'library', 'joints.blend', 'Object'), filename = 'spherical.pin')
+    try:
 
-    if app_retval == {'FINISHED'}:
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'library', 'joints.blend', 'Object'), filename = 'spherical.pin')
+
         # the append operator leaves just the imported object selected
         sphjOBJ = bpy.context.selected_objects[0]
         sphjOBJ.name = elem.name
@@ -270,11 +286,11 @@ def spawn_spherical_pin_element(elem, context):
         # joint offsets with respect to nodes
         f1 = elem.offsets[0].value
         q1 = elem.rotoffsets[0].value
-
+    
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         p1 = Vector(( f1[0], f1[1], f1[2] ))
-
+    
         # place the joint object in the position defined relative to node 1
         sphjOBJ.location = p1
         sphjOBJ.rotation_mode = 'QUATERNION'
@@ -283,22 +299,25 @@ def spawn_spherical_pin_element(elem, context):
         # set parenting of wireframe obj
         parenting(sphjOBJ, n1OBJ)
 
-        grouping(context, sphjOBJ, [n1OBJ])
-
         elem.blender_object = sphjOBJ.name
+        
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
 
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
-    pass
-# --------------------------------------------------------------------------
+    except KeyError:
+        return {'COLLECTION_ERROR'}
+# -------------------------------------------------------------------------- 
 # end of spawn_spherpical_pin_element(element, context) function
 
 ## Imports a Spherical Joint element in the scene
 class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
     bl_idname = "blendyn.import_spherical_hinge"
     bl_label = "MBDyn spherical joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -307,7 +326,7 @@ class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+        
         try:
             elem = ed['spherical_hinge_' + str(self.int_label)]
             retval = spawn_spherical_hinge_element(elem, context)
@@ -318,6 +337,9 @@ class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
@@ -339,7 +361,7 @@ class BLENDYN_OT_import_spherical_hinge(bpy.types.Operator):
 class BLENDYN_OT_import_spherical_pin(bpy.types.Operator):
     bl_idname = "blendyn.import_spherical_pin"
     bl_label = "MBDyn spherical joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -348,7 +370,7 @@ class BLENDYN_OT_import_spherical_pin(bpy.types.Operator):
     def execute(self, context):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
-
+        
         try:
             elem = ed['spherical_pin_' + str(self.int_label)]
             retval = spawn_spherical_pin_element(elem, context)
@@ -356,6 +378,9 @@ class BLENDYN_OT_import_spherical_pin(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE1_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
