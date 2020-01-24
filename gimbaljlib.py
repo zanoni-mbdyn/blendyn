@@ -215,7 +215,7 @@ def spawn_gimbal_element(elem, context):
         # rotate it according to "position orientation" w.r.t. node 1
         gimbal_childobj.rotation_mode = 'QUATERNION'
         gimbal_childobj.rotation_quaternion = \
-                n2OBJ.rotation_quaternion * Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+                n2OBJ.rotation_quaternion @ Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
     
         bpy.ops.object.select_all(action = 'DESELECT')
         gimbal_childobj.select_set(state = True)    

@@ -189,8 +189,8 @@ def spawn_distance_element(elem, context):
     # assign coordinates of knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2@Vector(( f2[0], f2[1], f2[2] ))
 
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
@@ -205,15 +205,15 @@ def spawn_distance_element(elem, context):
     # Finishing up
     cvdata.fill_mode = 'FULL'
     length = (n2OBJ.location - n1OBJ.location).length
-    radius = 0.02 * length
-    cvdata.bevel_depth = radius
+    R = 0.02 * length
+    cvdata.bevel_depth = R
     cvdata.bevel_resolution = 10
 
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = p1)
     bpy.context.active_object.name = distOBJ.name + '_child1'
     parenting(bpy.data.objects[distOBJ.name + '_child1'], distOBJ)
 
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = p2)
     bpy.context.active_object.name = distOBJ.name + '_child2'
     parenting(bpy.data.objects[distOBJ.name + '_child2'], distOBJ)
 
@@ -226,7 +226,7 @@ def spawn_distance_element(elem, context):
     bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[0].select_set(state = True)
+    distOBJ.data.splines[0].points[0].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
@@ -237,7 +237,7 @@ def spawn_distance_element(elem, context):
     bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[1].select_set(state = True)
+    distOBJ.data.splines[0].points[1].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
