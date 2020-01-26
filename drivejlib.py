@@ -266,9 +266,9 @@ def spawn_drive_displacement_element(elem, context):
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-    drvdispOBJ.draw_type = 'WIRE'
-    bpy.data.objects[drvdispOBJ.name + '_child1'].draw_type = 'WIRE'
-    bpy.data.objects[drvdispOBJ.name + '_child2'].draw_type = 'WIRE'
+    drvdispOBJ.display_type = 'WIRE'
+    bpy.data.objects[drvdispOBJ.name + '_child1'].display_type = 'WIRE'
+    bpy.data.objects[drvdispOBJ.name + '_child2'].display_type = 'WIRE'
 
     bpy.ops.object.select_all(action = 'DESELECT')
     n1OBJ.select_set(state = True)

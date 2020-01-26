@@ -302,7 +302,7 @@ def spawn_beam2_element(elem, context):
     cvdata = bpy.data.curves.new(beamcv_id, type = 'CURVE')
     cvdata.dimensions = '3D'
     polydata = cvdata.splines.new('POLY')
-    polydata.points.add(2)
+    polydata.points.add(1)
 
     # get offsets in local frame
     f1 = elem.offsets[0].value

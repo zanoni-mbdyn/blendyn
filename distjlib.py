@@ -261,9 +261,9 @@ def spawn_distance_element(elem, context):
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-    distOBJ.draw_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child1'].draw_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child2'].draw_type = 'WIRE'
+    distOBJ.display_type = 'WIRE'
+    bpy.data.objects[distOBJ.name + '_child1'].display_type = 'WIRE'
+    bpy.data.objects[distOBJ.name + '_child2'].display_type = 'WIRE'
 
     # set parenting
     parenting(distOBJ, n1OBJ)
