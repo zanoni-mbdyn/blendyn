@@ -33,6 +33,8 @@ from .utilslib import *
 
 import logging
 
+import pdb
+
 # helper function to parse beam2
 def parse_beam2(rw, ed):
     ret_val = True
@@ -129,7 +131,7 @@ def parse_beam3(rw, ed):
 
         el.offsets.add()
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
-
+        
         el.nodes.add()
         el.nodes[1].int_label = int(rw[6])
 
@@ -393,18 +395,26 @@ def spawn_beam3_element(elem, context):
     # try to find Blender objects associated with the nodes that
     # the element connects
 
+    # we store in elem.rotoffsets the initial otientation of the nodes,
+    # to then set the tilt of the bevel section relative to it
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object
+        elem.rotoffsets.add()
+        elem.rotoffsets[0].value = bpy.data.objects[n1].matrix_world.to_quaternion()
     except KeyError:
         return {'NODE1_NOTFOUND'}
 
     try:
         n2 = nd['node_' + str(elem.nodes[1].int_label)].blender_object
+        elem.rotoffsets.add()
+        elem.rotoffsets[1].value = bpy.data.objects[n2].matrix_world.to_quaternion()
     except KeyError:
         return {'NODE2_NOTFOUND'}
 
     try:
         n3 = nd['node_' + str(elem.nodes[2].int_label)].blender_object
+        elem.rotoffsets.add()
+        elem.rotoffsets[2].value = bpy.data.objects[n3].matrix_world.to_quaternion()
     except KeyError:
         return {'NODE3_NOTFOUND'}
 
@@ -617,17 +627,18 @@ def update_beam3(elem, insert_keyframe = False):
 
     # FIXME: Check this very carefully!
     # set the tilt angles of the sections
-    # t3 = P3.to_3d() - cp2.location
-    # t3.normalize()
+    t3 = P3.to_3d() - cp2.location
+    t3.normalize()
 
-    # phi1, theta1 = n1.matrix_local.to_quaternion().to_axis_angle()
-    # phi2, theta2 = n2.matrix_local.to_quaternion().to_axis_angle()
-    # phi3, theta3 = n3.matrix_local.to_quaternion().to_axis_angle()
+    # relative rotation quaternions
+    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1.matrix_world.to_quaternion())
+    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2.matrix_world.to_quaternion())
+    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3.matrix_world.to_quaternion())
 
-    # cvdata.splines[0].points[0].tilt = t1.to_3d().dot((theta1*phi1))
-    # cvdata.splines[0].points[1].tilt = t2.to_3d().dot((theta2*phi2))
-    # cvdata.splines[0].points[2].tilt = t2.to_3d().dot((theta2*phi2))
-    # cvdata.splines[0].points[3].tilt = t3.to_3d().dot((theta3*phi3))
+    cvdata.splines[0].points[0].tilt = t1.to_3d().dot(qr1.to_exponential_map())
+    cvdata.splines[0].points[1].tilt = t2.to_3d().dot(qr2.to_exponential_map())
+    cvdata.splines[0].points[2].tilt = t2.to_3d().dot(qr2.to_exponential_map())
+    cvdata.splines[0].points[3].tilt = t3.to_3d().dot(qr3.to_exponential_map())
 
     if insert_keyframe:
         try:
