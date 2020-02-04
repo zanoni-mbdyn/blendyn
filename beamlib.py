@@ -447,9 +447,9 @@ def spawn_beam3_element(elem, context):
     n3OBJ = bpy.data.objects[n3]
 
     # refline points in global frame
-    P1 = n1OBJ.matrix_world@Vector(( f1[0], f1[1], f1[1], 1.0 ))
-    P2 = n2OBJ.matrix_world@Vector(( f2[0], f2[1], f2[1], 1.0 ))
-    P3 = n3OBJ.matrix_world@Vector(( f3[0], f3[1], f3[1], 1.0 ))
+    P1 = n1OBJ.matrix_world@Vector(( f1[0], f1[1], f1[2], 1.0 ))
+    P2 = n2OBJ.matrix_world@Vector(( f2[0], f2[1], f2[2], 1.0 ))
+    P3 = n3OBJ.matrix_world@Vector(( f3[0], f3[1], f3[2], 1.0 ))
 
     # define the two intermediate control points # FIXME: find a more efficient way!!
     t1 = -3*P1 + 4*P2 - P3
