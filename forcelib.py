@@ -587,7 +587,7 @@ def update_structural_couple(elem, insert_keyframe = False):
 
         try:
             M = Vector(( nc.variables['elem.couple.' + str(elem.int_label) + '.M'][tdx,:] ))
-            Ml = R0.transposed()*M
+            Ml = R0.transposed()@M
             obj.rotation_quaternion = (-Ml).to_track_quat('-Z', 'Y')
             # FIXME: This often results in very large objects!
             obj.scale = Vector(( Ml.magnitude, Ml.magnitude, 1.0 ))
