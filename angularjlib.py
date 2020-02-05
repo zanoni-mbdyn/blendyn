@@ -227,8 +227,8 @@ def spawn_angularvelocity_element(elem, context):
 
         # connection with dictionary item
         elem.blender_object = angularvelocityjOBJ.name
-        angularvelocityOBJ.mbdyn.type = 'element'
-        angularvelocityOBJ.mbdyn.dkey = elem.name
+        angularvelocityjOBJ.mbdyn.type = 'element'
+        angularvelocityjOBJ.mbdyn.dkey = elem.name
         
         # set collections
         elcol.objects.link(n1OBJ)
