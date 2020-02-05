@@ -234,6 +234,8 @@ def spawn_angularvelocity_element(elem, context):
         elcol.objects.link(n1OBJ)
         set_active_collection('Master Collection')
 
+        return {'FINISHED'}
+
     except FileNotFoundError:
         return {'LIBRARY_ERROR'}
     except KeyError:
