@@ -2073,7 +2073,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
             return {'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(context, event)
+        return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_all class
 
