@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file blendyn.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -795,7 +795,7 @@ def rename_log(scene):
 bpy.app.handlers.save_post.append(rename_log)
 
 class BLENDYN_OT_standard_import(bpy.types.Operator):
-    """ Standard Import Process """
+    """ Automatically import nodes and elements at once """
     bl_idname = "blendyn.standard_import"
     bl_label = "MBDyn Standard Import"
 
@@ -2073,7 +2073,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
             return {'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(context, event)
+        return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_all class
 
@@ -2398,12 +2398,12 @@ class BLENDYN_OT_obj_select_node(bpy.types.Operator):
             node.blender_object = 'none'
             context.object.mbdyn.type = 'none'
             context.object.mbdyn.dkey = 'none'
-            ret_val == 'UNASSIGNED'
+            ret_val = {'UNASSIGNED'}
         else:
             node.blender_object = context.object.name
-            ret_val = update_parametrization(context.object)
+            ret_val = assign_parametrization(context.object, node)
 
-        if ret_val == 'ROT_NOT_SUPPORTED':
+        if ret_val == {'ROT_NOT_SUPPORTED'}:
             message = "BLENDYN_OT_obj_select_node::execute(): "\
                     + "Rotation parametrization not supported, node "\
                     + str(node.int_label)
@@ -2411,7 +2411,7 @@ class BLENDYN_OT_obj_select_node(bpy.types.Operator):
             baseLogger.error(message)
             print(message)
             return {'CANCELLED'}
-        elif ret_val == 'UNASSIGNED':
+        elif ret_val == {'UNASSIGNED'}:
             # DEBUG message to console and log file
             message = "BLENDYN_OT_obj_select_node::execute(): "\
                     + "Node " + str(node.int_label) + " association with "\
@@ -2419,7 +2419,7 @@ class BLENDYN_OT_obj_select_node(bpy.types.Operator):
             baseLogger.info(message)
             print(message)
             return {'FINISHED'}
-        else: # ret_val == 'FINISHED'
+        else: # ret_val == {'FINISHED'}
             message = "BLENDYN_OT_obj_select_node::execute(): Object "\
                     + context.object.name \
                     + " MBDyn node association updated to node " \

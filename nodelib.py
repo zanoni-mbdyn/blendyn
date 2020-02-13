@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file nodelib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -92,28 +92,33 @@ def set_obj_locrot_mov(obj, rw):
 # -----------------------------------------------------------
 # end of set_obj_locrot_mov() function
 
-def update_parametrization(obj):
-    ret_val = ''
-    dictitem = get_dict_item(bpy.context, obj)
-    param = dictitem.parametrization
+def assign_parametrization(obj, node):
+    param = node.parametrization
     if param == 'PHI':
         obj.rotation_mode = 'AXIS_ANGLE'
-        ret_val = 'FINISHED'
+        ret_val = {'FINISHED'}
     elif param[0:5] == 'EULER':
         obj.rotation_mode = axes[param[7]] + axes[param[6]] + axes[param[5]]
-        ret_val = 'FINISHED'
+        ret_val = {'FINISHED'}
     elif param == 'MATRIX':
         obj.rotation_mode = 'QUATERNION'
-        ret_val = 'FINISHED'
+        ret_val = {'FINISHED'}
     else:
         # Should not be reached
         message = "BLENDYN::set_obj_locrot_mov(): "\
                 + "unsupported rotation parametrization"
         print(message)
         logging.error(message)
-        ret_val = 'ROT_NOT_SUPPORTED'
-
+        ret_val = {'ROT_NOT_SUPPORTED'}
     return ret_val
+
+def update_parametrization(obj):
+    node = get_dict_item(bpy.context, obj)
+    if dictitem:
+        param = dictitem.parametrization
+        return assign_parametrization(obj, dictitem);
+    else:
+        return {'NOTFOUND_DICT'}
 # -----------------------------------------------------------
 # end of update_parametrization() function
 

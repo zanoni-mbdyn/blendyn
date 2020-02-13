@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file baselib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -170,16 +170,12 @@ def no_output(context):
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r")
-        list1 = nc.variables.keys()
-        regex = re.compile(r'node.struct.*\.X$')
-        list2 = list(filter(regex.search, list1))
-        result_nodes = list(map(lambda x: x.split('.')[2], list2))
-        log_nodes = list(map(lambda x: x[5:], nd.keys()))
-        difference = set(result_nodes) ^ set(log_nodes)
-        difference = ' '.join(difference)
+        log_nodes = list(map(lambda x: int(x[5:]), nd.keys()))
+        netcdf_nodes = np.array(nc.variables['node.struct'])
+        difference = set(log_nodes).symmetric_difference(set(netcdf_nodes))
         print(difference)
-        mbs.disabled_output = difference
-
+        mbs.disabled_output = str(difference)
+        mbs.num_nodes = len(log_nodes) - len(difference)
     else:
         # .mov filename
         mov_file = os.path.join(os.path.dirname(mbs.file_path), \
@@ -385,15 +381,15 @@ def parse_log_file(context):
 
     if nn:
         no_output(context)
-
-    if nn:
         mbs.min_node_import = nd[0].int_label
         mbs.max_node_import = nd[0].int_label
+
         for ndx in range(1, len(nd)):
             if nd[ndx].int_label < mbs.min_node_import:
                 mbs.min_node_import = nd[ndx].int_label
             elif nd[ndx].int_label > mbs.max_node_import:
                 mbs.max_node_import = nd[ndx].int_label
+
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
@@ -402,6 +398,7 @@ def parse_log_file(context):
         else:
             disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
             mbs.num_timesteps = mbs.num_rows/(mbs.num_nodes - disabled_nodes)
+        
         mbs.is_ready = True
         ret_val = {'FINISHED'}
     else:

@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file angularjlib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -227,12 +227,14 @@ def spawn_angularvelocity_element(elem, context):
 
         # connection with dictionary item
         elem.blender_object = angularvelocityjOBJ.name
-        angularvelocityOBJ.mbdyn.type = 'element'
-        angularvelocityOBJ.mbdyn.dkey = elem.name
+        angularvelocityjOBJ.mbdyn.type = 'element'
+        angularvelocityjOBJ.mbdyn.dkey = elem.name
         
         # set collections
         elcol.objects.link(n1OBJ)
         set_active_collection('Master Collection')
+
+        return {'FINISHED'}
 
     except FileNotFoundError:
         return {'LIBRARY_ERROR'}
