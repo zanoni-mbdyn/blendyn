@@ -114,9 +114,9 @@ def assign_parametrization(obj, node):
 
 def update_parametrization(obj):
     node = get_dict_item(bpy.context, obj)
-    if dictitem:
-        param = dictitem.parametrization
-        return assign_parametrization(obj, dictitem);
+    if node:
+        param = node.parametrization
+        return assign_parametrization(obj, node);
     else:
         return {'NOTFOUND_DICT'}
 # -----------------------------------------------------------
