@@ -474,8 +474,8 @@ def spawn_beam3_element(elem, context):
 
     d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
 
-    M1 = Vector(( P2 + Vector((d[1]*t2)) ))
-    M2 = Vector(( P2 - Vector((d[1]*t2)) ))
+    M1 = Vector(( P2 + Vector((abs(d[1])*t2)) ))
+    M2 = Vector(( P2 - Vector((abs(d[1])*t2)) ))
 
     polydata.points[0].co = P1
     polydata.points[1].co = M1
@@ -621,8 +621,8 @@ def update_beam3(elem, insert_keyframe = False):
 
     d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
 
-    cp2.location = Vector(( P2 + Vector((d[1]*t2)) )).to_3d()
-    cp3.location = Vector(( P2 - Vector((d[1]*t2)) )).to_3d()
+    cp2.location = Vector(( P2 + Vector((abs(d[1])*t2)) )).to_3d()
+    cp3.location = Vector(( P2 - Vector((abs(d[1])*t2)) )).to_3d()
 
 
     # FIXME: Check this very carefully!
