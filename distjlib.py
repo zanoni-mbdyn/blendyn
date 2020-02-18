@@ -156,7 +156,7 @@ def spawn_distance_element(elem, context):
     n2OBJ = bpy.data.objects[n2]
 
     # creation of line representing the dist
-    distobj_id = 'dist_' + str(elem.int_label)
+    distobj_id = 'distance_' + str(elem.int_label)
     distcv_id = distobj_id + '_cvdata'
     
     try:

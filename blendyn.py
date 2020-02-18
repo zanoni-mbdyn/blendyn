@@ -2320,7 +2320,8 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
                     and (elem.int_label <= mbs.max_elem_import):
                 try:
                     # eval("spawn_" + elem.type + "_element(elem, context)")
-                    eval("bpy.ops." + elem.import_function + "()")
+                    eval("bpy.ops." + elem.import_function + "(int_label = " + \
+                            str(elem.int_label) + ")")
                 except NameError:
                         message = "BLENDYN_OT_import_elements_by_type::execute(): " \
                                   + "Could not find the import function for element of type " \
@@ -2375,7 +2376,7 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(context, event)
+        return self.execute(context)
 
 # -----------------------------------------------------------
 # end of BLENDYN_OT_elements_import_all class
