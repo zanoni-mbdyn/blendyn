@@ -131,7 +131,6 @@ def parse_node(context, rw):
 
     # helper function to convert any kind of orientation definition to quaternion
     def orient_to_quat(rw):
-
         type = rw[6];
 
         if type == 'mat':
@@ -148,9 +147,12 @@ def parse_node(context, rw):
             print(str(R))
             return R.to_quaternion(), 'MATRIX'
         elif type[0:5] == 'euler':
-            angles = Euler(Vector(( radians(float(rw[7])), radians(float(rw[8])), radians(float(rw[9])) )),\
-                            axes[type[7]] + axes[type[6]] + axes[type[5]])
-            return angles.to_quaternion(), 'EULER' + type[5:8]
+            try:
+                angles = Euler(Vector(( radians(float(rw[7])), radians(float(rw[8])), radians(float(rw[9])) )),\
+                                axes[type[7]] + axes[type[6]] + axes[type[5]])
+                return angles.to_quaternion(), 'EULER' + type[5:8]
+            except ValueError as e:
+                raise RotKeyError("BLENDYN::parse_node(): " + str(e))
         elif type == 'phi':
             vec = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             angle = vec.magnitude
@@ -158,7 +160,7 @@ def parse_node(context, rw):
             vec.normalize()
             return Quaternion(( cos(angle/2.), vec[0]*sin_angle, vec[1]*sin_angle, vec[2]*sin_angle )), 'PHI'
         else:
-            raise RotKeyError("Error: rotation mode " + type + " not recognised")
+            raise RotKeyError("BLENDYN::parse_node(): rotation mode " + type + " not recognised")
 
     message = "BLENDYN::parse_node(): Parsing node " + rw[2]
     print(message)
@@ -182,7 +184,13 @@ def parse_node(context, rw):
         except RotKeyError:
             if len(rw) < 8: # this is a displacement node
                 node.initial_rot, node.parametrization = orient_to_quat(rw[0:6] + ['phi', '0', '0', '0'])
-            pass
+                pass
+            else:
+                message = "BLENDYN::parse_node(): "\
+                        + "Unsupported rotation parametrization."
+                print(message)
+                logging.error(message)
+                return {}
         ret_val = True
     except KeyError:
         message = "BLENDYN::parse_node(): "\
@@ -202,12 +210,17 @@ def parse_node(context, rw):
         except RotKeyError:
             if len(rw) < 8: # this is a displacement node
                 node.initial_rot, node.parametrization = orient_to_quat(rw[0:6] + ['phi', '0', '0', '0'])
-            pass
-        pass
+                pass
+            else:
+                message = "BLENDYN::parse_node(): "\
+                        + "Unsupported rotation parametrization."
+                print(message)
+                logging.error(message)
+                return {}
         ret_val = False
     return ret_val
 # -----------------------------------------------------------
-# end of parse_node() function <-- FIXME: Duplicate?
+# end of parse_node() function
 
 ## Simple function that adds to the scene the default Blender object
 #  representing an MBDyn node

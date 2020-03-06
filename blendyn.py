@@ -886,6 +886,12 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
+        elif ret_val == {'ROTATION_ERROR'}:
+            message = "Output rotation parametrization is not supported by Blender"
+            self.report({'ERROR'}, message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+
         elif ret_val == {'FINISHED'}:
             message = "MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True

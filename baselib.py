@@ -39,8 +39,6 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
-import pdb
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -228,7 +226,6 @@ def no_output(context):
 
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
-# TODO:support more joint types
 def parse_log_file(context):
 
     # utility rename
@@ -366,6 +363,13 @@ def parse_log_file(context):
         pass
     except StopIteration:
         print("Blendyn::parse_log_file() Reached the end of .log file")
+        pass
+    except TypeError:       
+        # TypeError will be thrown if parse node exits with a {}, indicating an
+        # unsupported rotation parametrization (e.g. euler313)
+        ret_val = {'ROTATION_ERROR'}
+        pass
+
 
     del_nodes = [var for var in nd.keys() if nd[var].is_imported == False]
     del_elems = [var for var in ed.keys() if ed[var].is_imported == False]
@@ -400,7 +404,6 @@ def parse_log_file(context):
             mbs.num_timesteps = mbs.num_rows/(mbs.num_nodes - disabled_nodes)
         
         mbs.is_ready = True
-        ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass
@@ -431,6 +434,7 @@ def parse_log_file(context):
         pass
     except StopIteration:
         print("Blendyn::parse_log_file(): Reached the end of .out file")
+        pass
     except IOError:
         print("Blendyn::parse_log_file(): Could not read the file " + out_file)
         pass
