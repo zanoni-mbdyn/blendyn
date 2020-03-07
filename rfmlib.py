@@ -78,10 +78,10 @@ def set_ref_rotation(ref, rw, par):
         idx += 3;
         ref.rot = Quaternion(phi.normalized(), phi.magnitude)
     elif (par[0:5] == 'EULER'):
-        ref.rot = Euler(Vector((radians(float(rw[idx + 1])),\
-                                radians(float(rw[idx + 2])),\
-                                radians(float(rw[idx + 3])) )),\
-                                axes[par[7]] + axes[par[6]] + axes[par[5]]\
+        ref.rot = Euler(Vector((radians(float(rw[idx + int(par[5])])),\
+                                radians(float(rw[idx + int(par[6])])),\
+                                radians(float(rw[idx + int(par[7])])) )),\
+                                axes[par[5]] + axes[par[6]] + axes[par[7]]\
                         ).to_quaternion()
         idx += 3
     elif (par == 'MATRIX'):

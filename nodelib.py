@@ -64,10 +64,10 @@ def set_obj_locrot_mov(obj, rw):
     parametrization = dictobj.parametrization
 
     if parametrization[0:5] == 'EULER':
-        obj.rotation_euler = Euler(Vector(( radians(rw[4]),\
-                                            radians(rw[5]),\
-                                            radians(rw[6]))),\
-                     axes[parametrization[7]] + axes[parametrization[6]] + axes[parametrization[5]])
+        obj.rotation_euler = Euler(Vector(( radians(float(rw[3 + int(par[5])])),\
+                                            radians(float(rw[3 + int(par[6])])),\
+                                            radians(float(rw[3 + int(par[7])])))),\
+                     axes[parametrization[5]] + axes[parametrization[6]] + axes[parametrization[7]])
         obj.keyframe_insert(data_path = "rotation_euler")
     elif parametrization == 'PHI':
         rotvec = Vector((rw[4], rw[5], rw[6]))
@@ -148,8 +148,8 @@ def parse_node(context, rw):
             return R.to_quaternion(), 'MATRIX'
         elif type[0:5] == 'euler':
             try:
-                angles = Euler(Vector(( radians(float(rw[7])), radians(float(rw[8])), radians(float(rw[9])) )),\
-                                axes[type[7]] + axes[type[6]] + axes[type[5]])
+                angles = Euler(Vector(( radians(float(rw[6+int(type[5])])), radians(float(rw[6+int(type[6])])), radians(float(rw[6+int(type[7])])) )),\
+                                axes[type[5]] + axes[type[6]] + axes[type[7]])
                 return angles.to_quaternion(), 'EULER' + type[5:8]
             except ValueError as e:
                 raise RotKeyError("BLENDYN::parse_node(): " + str(e))
