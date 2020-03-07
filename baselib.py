@@ -1002,22 +1002,8 @@ def set_motion_paths_netcdf(context):
         obj = bpy.data.objects[dictobj.blender_object]
         obj.select_set(state = True)
         node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-        if dictobj.parametrization[0:5] == 'EULER':
-            for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current = frame
-
-                answer = netcdf_helper(nc, scene, node_var + 'X')
-                obj.location = Vector((answer))
-                obj.keyframe_insert(data_path = "location")
-
-                answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
-                obj.rotation_euler = \
-                        Euler( Vector((answer)),
-                                axes[dictobj.parametrization[7]] +\
-                                axes[dictobj.parametrization[6]] +\
-                                axes[dictobj.parametrization[5]] )
-                obj.keyframe_insert(data_path = "rotation_euler")
-        elif dictobj.parametrization == 'PHI':
+        par = dictobj.parametrization
+        if par == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -1031,7 +1017,23 @@ def set_motion_paths_netcdf(context):
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif dictobj.parametrization == 'MATRIX':
+        elif par[0:5] == 'EULER':
+            for frame in range(scene.frame_start, scene.frame_end):
+                scene.frame_current = frame
+
+                loc = netcdf_helper(nc, scene, node_var + 'X')
+                obj.location = Vector((loc))
+                obj.keyframe_insert(data_path = "location")
+
+                angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
+                obj.rotation_euler = Euler( Vector((\
+                                     angles[int(par[5]) - 1],\
+                                     angles[int(par[6]) - 1],\
+                                     angles[int(par[7]) - 1],\
+                                     )),\
+                                     axes[par[5]] + axes[par[6]] + axes[par[7]] )
+                obj.keyframe_insert(data_path = "rotation_euler")
+        elif par == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 

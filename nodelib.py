@@ -61,21 +61,25 @@ def set_obj_locrot_mov(obj, rw):
 
     # Orientation
     dictobj = get_dict_item(bpy.context, obj)
-    parametrization = dictobj.parametrization
+    par = dictobj.parametrization
 
-    if parametrization[0:5] == 'EULER':
-        obj.rotation_euler = Euler(Vector(( radians(float(rw[3 + int(par[5])])),\
-                                            radians(float(rw[3 + int(par[6])])),\
-                                            radians(float(rw[3 + int(par[7])])))),\
-                     axes[parametrization[5]] + axes[parametrization[6]] + axes[parametrization[7]])
+    if par[0:5] == 'EULER':
+        obj.rotation_euler = Euler(Vector((\
+                             radians(float(rw[3 + int(par[5])])),\
+                             radians(float(rw[3 + int(par[6])])),\
+                             radians(float(rw[3 + int(par[7])]))\
+                             )),\
+                             axes[par[5]] + axes[par[6]] + axes[par[7]])
         obj.keyframe_insert(data_path = "rotation_euler")
-    elif parametrization == 'PHI':
+    elif par == 'PHI':
         rotvec = Vector((rw[4], rw[5], rw[6]))
         rotvec_norm = rotvec.normalized()
-        obj.rotation_axis_angle = Vector((rotvec.magnitude, \
-                                            rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
+        obj.rotation_axis_angle = Vector((\
+                                  rotvec.magnitude,\
+                                  rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]\
+                                  ))
         obj.keyframe_insert(data_path = "rotation_axis_angle")
-    elif parametrization == 'MATRIX':
+    elif par == 'MATRIX':
         R = Matrix(((rw[4], rw[5], rw[6], 0.0),\
                     (rw[7], rw[8], rw[9], 0.0),\
                     (rw[10], rw[11], rw[12], 0.0),\
@@ -93,14 +97,14 @@ def set_obj_locrot_mov(obj, rw):
 # end of set_obj_locrot_mov() function
 
 def assign_parametrization(obj, node):
-    param = node.parametrization
-    if param == 'PHI':
+    par = node.parametrization
+    if par == 'PHI':
         obj.rotation_mode = 'AXIS_ANGLE'
         ret_val = {'FINISHED'}
-    elif param[0:5] == 'EULER':
-        obj.rotation_mode = axes[param[7]] + axes[param[6]] + axes[param[5]]
+    elif par[0:5] == 'EULER':
+        obj.rotation_mode = axes[par[7]] + axes[par[6]] + axes[par[5]]
         ret_val = {'FINISHED'}
-    elif param == 'MATRIX':
+    elif par == 'MATRIX':
         obj.rotation_mode = 'QUATERNION'
         ret_val = {'FINISHED'}
     else:
@@ -115,7 +119,6 @@ def assign_parametrization(obj, node):
 def update_parametrization(obj):
     node = get_dict_item(bpy.context, obj)
     if node:
-        param = node.parametrization
         return assign_parametrization(obj, node);
     else:
         return {'NOTFOUND_DICT'}
@@ -131,9 +134,9 @@ def parse_node(context, rw):
 
     # helper function to convert any kind of orientation definition to quaternion
     def orient_to_quat(rw):
-        type = rw[6];
+        par = rw[6];
 
-        if type == 'mat':
+        if par == 'mat':
             R = Matrix().to_3x3()
             R[0][0] = float(rw[7])
             R[0][1] = float(rw[8])
@@ -146,21 +149,25 @@ def parse_node(context, rw):
             R[2][2] = float(rw[15])
             print(str(R))
             return R.to_quaternion(), 'MATRIX'
-        elif type[0:5] == 'euler':
+        elif par[0:5] == 'euler':
             try:
-                angles = Euler(Vector(( radians(float(rw[6+int(type[5])])), radians(float(rw[6+int(type[6])])), radians(float(rw[6+int(type[7])])) )),\
-                                axes[type[5]] + axes[type[6]] + axes[type[7]])
-                return angles.to_quaternion(), 'EULER' + type[5:8]
+                angles = Euler(Vector(( \
+                        radians(float(rw[6 + int(par[5])])),\
+                        radians(float(rw[6 + int(par[6])])),\
+                        radians(float(rw[6 + int(par[7])])) 
+                        )),\
+                        axes[par[5]] + axes[par[6]] + axes[par[7]])
+                return angles.to_quaternion(), 'EULER' + par[5:8]
             except ValueError as e:
                 raise RotKeyError("BLENDYN::parse_node(): " + str(e))
-        elif type == 'phi':
+        elif pay == 'phi':
             vec = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             angle = vec.magnitude
             sin_angle = sin(angle/2.)
             vec.normalize()
             return Quaternion(( cos(angle/2.), vec[0]*sin_angle, vec[1]*sin_angle, vec[2]*sin_angle )), 'PHI'
         else:
-            raise RotKeyError("BLENDYN::parse_node(): rotation mode " + type + " not recognised")
+            raise RotKeyError("BLENDYN::parse_node(): rotation mode " + par + " not recognised")
 
     message = "BLENDYN::parse_node(): Parsing node " + rw[2]
     print(message)
