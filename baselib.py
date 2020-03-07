@@ -779,28 +779,38 @@ def set_motion_paths_mov(context):
 
             for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                 scene.frame_current += 1
-                frac = np.ceil(frame) - frame
+                message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
+                print(message)
+                logging.info(message)
 
                 # skip (freq - 1)*N lines
                 for ii in range(Nskip):
                     next(reader)
 
+                 
                 for ndx in range(mbs.num_nodes):
                     first[ndx] = np.array(next(reader)).astype(np.float)
+                
+                if freq > 1:
+                    frac = np.ceil(frame) - frame
+                    for ndx in range(mbs.num_nodes):
+                        second[ndx] = np.array(next(reader)).astype(np.float)
 
-                for ndx in range(mbs.num_nodes):
-                    second[ndx] = np.array(next(reader)).astype(np.float)
-
-                for ndx in range(mbs.num_nodes):
-                    try:
-                        answer = frac*first[ndx] + (1 - frac)*second[ndx]
-                        obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                    for ndx in range(mbs.num_nodes):
+                        try:
+                            answer = frac*first[ndx] + (1 - frac)*second[ndx]
+                            obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                            obj.select_set(state = True)
+                            set_obj_locrot_mov(obj, answer)
+                        except KeyError:
+                            pass
+                    first = second
+                else:
+                    for ndx in range(mbs.num_nodes):
+                        obj = bpy.data.objects[anim_objs[round(first[ndx][0])]]
                         obj.select_set(state = True)
-                        set_obj_locrot_mov(obj, answer)
-                    except KeyError:
-                        pass
+                        set_obj_locrot_mov(obj, first[ndx])
 
-                first = second
                 wm.progress_update(scene.frame_current)
     except StopIteration:
         pass
