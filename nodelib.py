@@ -160,7 +160,7 @@ def parse_node(context, rw):
                 return angles.to_quaternion(), 'EULER' + par[5:8]
             except ValueError as e:
                 raise RotKeyError("BLENDYN::parse_node(): " + str(e))
-        elif pay == 'phi':
+        elif par == 'phi':
             vec = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
             angle = vec.magnitude
             sin_angle = sin(angle/2.)
