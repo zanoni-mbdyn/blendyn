@@ -1434,7 +1434,7 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         # Display MBDyn file basename and info
         row = layout.row()
         col = layout.column(align = True)
-        col.label(text = "Loaded results file")
+        col.label(text = "Loaded results file") 
         col.prop(mbs, "file_basename", text = "")
         col.prop(mbs, "num_nodes", text = "nodes total")
 
@@ -1443,10 +1443,15 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col.prop(mbs, "num_timesteps", text = "time steps")
 
         row = layout.row()
+        fpath = mbs.file_path + mbs.file_basename
+        if mbs.use_netcdf:
+            fpath += '.nc'
+        else:
+            fpath += '.mov'
         if mbs.file_path:
             row.label(text = "Full file path:")
             row = layout.row()
-            row.label(text = mbs.file_path)
+            row.label(text = fpath)
         col.enabled = False
 
         # Import MBDyn data
