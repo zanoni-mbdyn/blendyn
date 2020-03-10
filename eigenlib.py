@@ -199,28 +199,28 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                 pass
             else:
                 obj.keyframe_insert(data_path = "location")
-    
-                if dictobj.parametrization[0:5] == 'EULER':
-                    eu_seq = axes[dictobj.parametrization[7]] +\
-                             axes[dictobj.parametrization[6]] +\
-                             axes[dictobj.parametrization[5]]
-                    obj.rotation_mode = eu_seq
-                    obj.rotation_euler = \
-                            Euler(\
-                                Vector (( \
-                                   math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :]) \
-                                    )), \
-                                    eu_seq
-                                )
-                    obj.keyframe_insert(data_path = "rotation_euler")
-                elif dictobj.parametrization == 'PHI':
+   
+                par = dictobj.parametrization 
+                if par == 'PHI':
                     obj.rotation_mode = 'AXIS_ANGLE'
                     rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
                     rotvec_norm = rotvec.normalized()
                     obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                     obj.keyframe_insert(data_path = "rotation_axis_angle")
-                elif dictobj.parametrization == 'MATRIX':
+                elif par[0:5] == 'EULER':
+                    eu_seq = axes[par[5]] +\
+                             axes[par[6]] +\
+                             axes[par[7]]
+                    obj.rotation_mode = eu_seq
+                    angles = math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :])
+                    obj.rotation_euler = Euler(Vector ((\
+                                         angles[int(par[5]) - 1],\
+                                         angles[int(par[6]) - 1],\
+                                         angles[int(par[7]) - 1],\
+                                    )), eu_seq)
+                    obj.keyframe_insert(data_path = "rotation_euler")
+                elif par == 'MATRIX':
                     obj.rotation_mode = 'QUATERNION'
                     R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
                     obj.rotation_quaternion = R.to_quaternion()

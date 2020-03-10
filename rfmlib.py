@@ -31,6 +31,7 @@ from mathutils import *
 from math import *
 
 from .utilslib import *
+from .nodelib import axes
 
 def parse_reference_frame(rw, rd):
     ret_val = True
@@ -62,15 +63,44 @@ def parse_reference_frame(rw, rd):
         pass
 
     ref.pos = Vector(( float(rw[1]), float(rw[2]), float(rw[3]) ))
+    idx = set_ref_rotation(ref, rw, bpy.context.scene.mbdyn.nodes[0].parametrization)
 
-    phi = Vector(( float(rw[4]), float(rw[5]), float(rw[6]) ))
-    ref.rot = Quaternion(phi.normalized(), phi.magnitude)
-
-    ref.vel = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-    ref.angvel = Vector(( float(rw[10]), float(rw[11]), float(rw[12]) ))
+    ref.vel = Vector(( float(rw[idx + 1]), float(rw[idx + 2]), float(rw[idx + 3]) ))
+    ref.angvel = Vector(( float(rw[idx + 4]), float(rw[idx + 5]), float(rw[idx + 6]) ))
     ref.is_imported = True
 # -----------------------------------------------------------
 # end of parse_reference_frame(rw, rd) function
+
+def set_ref_rotation(ref, rw, par):
+    idx = 3
+    if (par == 'PHI'):
+        phi = Vector(( float(rw[idx + 1]), float(rw[idx + 2]), float(rw[idx + 3]) ))
+        idx += 3;
+        ref.rot = Quaternion(phi.normalized(), phi.magnitude)
+    elif (par[0:5] == 'EULER'):
+        ref.rot = Euler(Vector((radians(float(rw[idx + int(par[5])])),\
+                                radians(float(rw[idx + int(par[6])])),\
+                                radians(float(rw[idx + int(par[7])])) )),\
+                                axes[par[5]] + axes[par[6]] + axes[par[7]]\
+                        ).to_quaternion()
+        idx += 3
+    elif (par == 'MATRIX'):
+        ref.rot = Matrix((\
+                    (( float(rw[idx + 1]), float(rw[idx + 2]), float(rw[idx + 3]) )),\
+                    (( float(rw[idx + 4]), float(rw[idx + 5]), float(rw[idx + 6]) )),\
+                    (( float(rw[idx + 7]), float(rw[idx + 8]), float(rw[idx + 9]) )),\
+                 )).to_quaternion()
+        idx += 9
+    else:
+        # Should not be reached
+        message = "BLENDYN::set_ref_rotation(): "\
+                + "unsupported rotation parametrization"
+        print(message)
+        logging.error(message)
+    return idx
+# -----------------------------------------------------------
+# end of set_ref_rotation(ref, rw, par) function
+
 
 def spawn_reference_frame(ref, context):
     """ Spawns an Empty Axes object to represent an MBDyn reference """

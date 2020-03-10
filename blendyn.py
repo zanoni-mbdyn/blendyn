@@ -886,6 +886,12 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
+        elif ret_val == {'ROTATION_ERROR'}:
+            message = "Output rotation parametrization is not supported by Blender"
+            self.report({'ERROR'}, message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+
         elif ret_val == {'FINISHED'}:
             message = "MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True
@@ -1428,7 +1434,7 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         # Display MBDyn file basename and info
         row = layout.row()
         col = layout.column(align = True)
-        col.label(text = "Loaded results file")
+        col.label(text = "Loaded results file") 
         col.prop(mbs, "file_basename", text = "")
         col.prop(mbs, "num_nodes", text = "nodes total")
 
@@ -1437,10 +1443,15 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col.prop(mbs, "num_timesteps", text = "time steps")
 
         row = layout.row()
+        fpath = mbs.file_path + mbs.file_basename
+        if mbs.use_netcdf:
+            fpath += '.nc'
+        else:
+            fpath += '.mov'
         if mbs.file_path:
             row.label(text = "Full file path:")
             row = layout.row()
-            row.label(text = mbs.file_path)
+            row.label(text = fpath)
         col.enabled = False
 
         # Import MBDyn data
@@ -2320,7 +2331,8 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
                     and (elem.int_label <= mbs.max_elem_import):
                 try:
                     # eval("spawn_" + elem.type + "_element(elem, context)")
-                    eval("bpy.ops." + elem.import_function + "()")
+                    eval("bpy.ops." + elem.import_function + "(int_label = " + \
+                            str(elem.int_label) + ")")
                 except NameError:
                         message = "BLENDYN_OT_import_elements_by_type::execute(): " \
                                   + "Could not find the import function for element of type " \
@@ -2375,7 +2387,7 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(context, event)
+        return self.execute(context)
 
 # -----------------------------------------------------------
 # end of BLENDYN_OT_elements_import_all class

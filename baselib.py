@@ -39,8 +39,6 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
-import pdb
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -228,7 +226,6 @@ def no_output(context):
 
 ## Function that parses the .log file and calls parse_elements() to add elements
 # to the elements dictionary and parse_node() to add nodes to the nodes dictionary
-# TODO:support more joint types
 def parse_log_file(context):
 
     # utility rename
@@ -366,6 +363,13 @@ def parse_log_file(context):
         pass
     except StopIteration:
         print("Blendyn::parse_log_file() Reached the end of .log file")
+        pass
+    except TypeError:       
+        # TypeError will be thrown if parse node exits with a {}, indicating an
+        # unsupported rotation parametrization (e.g. euler313)
+        ret_val = {'ROTATION_ERROR'}
+        pass
+
 
     del_nodes = [var for var in nd.keys() if nd[var].is_imported == False]
     del_elems = [var for var in ed.keys() if ed[var].is_imported == False]
@@ -400,7 +404,6 @@ def parse_log_file(context):
             mbs.num_timesteps = mbs.num_rows/(mbs.num_nodes - disabled_nodes)
         
         mbs.is_ready = True
-        ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass
@@ -431,6 +434,7 @@ def parse_log_file(context):
         pass
     except StopIteration:
         print("Blendyn::parse_log_file(): Reached the end of .out file")
+        pass
     except IOError:
         print("Blendyn::parse_log_file(): Could not read the file " + out_file)
         pass
@@ -775,28 +779,38 @@ def set_motion_paths_mov(context):
 
             for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                 scene.frame_current += 1
-                frac = np.ceil(frame) - frame
+                message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
+                print(message)
+                logging.info(message)
 
                 # skip (freq - 1)*N lines
                 for ii in range(Nskip):
                     next(reader)
 
+                 
                 for ndx in range(mbs.num_nodes):
                     first[ndx] = np.array(next(reader)).astype(np.float)
+                
+                if freq > 1:
+                    frac = np.ceil(frame) - frame
+                    for ndx in range(mbs.num_nodes):
+                        second[ndx] = np.array(next(reader)).astype(np.float)
 
-                for ndx in range(mbs.num_nodes):
-                    second[ndx] = np.array(next(reader)).astype(np.float)
-
-                for ndx in range(mbs.num_nodes):
-                    try:
-                        answer = frac*first[ndx] + (1 - frac)*second[ndx]
-                        obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                    for ndx in range(mbs.num_nodes):
+                        try:
+                            answer = frac*first[ndx] + (1 - frac)*second[ndx]
+                            obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                            obj.select_set(state = True)
+                            set_obj_locrot_mov(obj, answer)
+                        except KeyError:
+                            pass
+                    first = second
+                else:
+                    for ndx in range(mbs.num_nodes):
+                        obj = bpy.data.objects[anim_objs[round(first[ndx][0])]]
                         obj.select_set(state = True)
-                        set_obj_locrot_mov(obj, answer)
-                    except KeyError:
-                        pass
+                        set_obj_locrot_mov(obj, first[ndx])
 
-                first = second
                 wm.progress_update(scene.frame_current)
     except StopIteration:
         pass
@@ -998,22 +1012,8 @@ def set_motion_paths_netcdf(context):
         obj = bpy.data.objects[dictobj.blender_object]
         obj.select_set(state = True)
         node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-        if dictobj.parametrization[0:5] == 'EULER':
-            for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current = frame
-
-                answer = netcdf_helper(nc, scene, node_var + 'X')
-                obj.location = Vector((answer))
-                obj.keyframe_insert(data_path = "location")
-
-                answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
-                obj.rotation_euler = \
-                        Euler( Vector((answer)),
-                                axes[dictobj.parametrization[7]] +\
-                                axes[dictobj.parametrization[6]] +\
-                                axes[dictobj.parametrization[5]] )
-                obj.keyframe_insert(data_path = "rotation_euler")
-        elif dictobj.parametrization == 'PHI':
+        par = dictobj.parametrization
+        if par == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -1027,7 +1027,23 @@ def set_motion_paths_netcdf(context):
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif dictobj.parametrization == 'MATRIX':
+        elif par[0:5] == 'EULER':
+            for frame in range(scene.frame_start, scene.frame_end):
+                scene.frame_current = frame
+
+                loc = netcdf_helper(nc, scene, node_var + 'X')
+                obj.location = Vector((loc))
+                obj.keyframe_insert(data_path = "location")
+
+                angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
+                obj.rotation_euler = Euler( Vector((\
+                                     angles[int(par[5]) - 1],\
+                                     angles[int(par[6]) - 1],\
+                                     angles[int(par[7]) - 1],\
+                                     )),\
+                                     axes[par[5]] + axes[par[6]] + axes[par[7]] )
+                obj.keyframe_insert(data_path = "rotation_euler")
+        elif par == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
