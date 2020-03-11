@@ -81,7 +81,7 @@ def set_ref_rotation(ref, rw, par):
         ref.rot = Euler(Vector((radians(float(rw[idx + int(par[5])])),\
                                 radians(float(rw[idx + int(par[6])])),\
                                 radians(float(rw[idx + int(par[7])])) )),\
-                                axes[par[5]] + axes[par[6]] + axes[par[7]]\
+                                axes[par[7]] + axes[par[6]] + axes[par[5]]\
                         ).to_quaternion()
         idx += 3
     elif (par == 'MATRIX'):

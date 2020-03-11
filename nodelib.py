@@ -69,7 +69,7 @@ def set_obj_locrot_mov(obj, rw):
                              radians(float(rw[3 + int(par[6])])),\
                              radians(float(rw[3 + int(par[7])]))\
                              )),\
-                             axes[par[5]] + axes[par[6]] + axes[par[7]])
+                             axes[par[7]] + axes[par[6]] + axes[par[5]])
         obj.keyframe_insert(data_path = "rotation_euler")
     elif par == 'PHI':
         rotvec = Vector((rw[4], rw[5], rw[6]))
@@ -156,7 +156,7 @@ def parse_node(context, rw):
                         radians(float(rw[6 + int(par[6])])),\
                         radians(float(rw[6 + int(par[7])])) 
                         )),\
-                        axes[par[5]] + axes[par[6]] + axes[par[7]])
+                        axes[par[7]] + axes[par[6]] + axes[par[5]])
                 return angles.to_quaternion(), 'EULER' + par[5:8]
             except ValueError as e:
                 raise RotKeyError("BLENDYN::parse_node(): " + str(e))
