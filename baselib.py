@@ -1041,7 +1041,7 @@ def set_motion_paths_netcdf(context):
                                      angles[int(par[6]) - 1],\
                                      angles[int(par[7]) - 1],\
                                      )),\
-                                     axes[par[5]] + axes[par[6]] + axes[par[7]] )
+                                     axes[par[7]] + axes[par[6]] + axes[par[5]] )
                 obj.keyframe_insert(data_path = "rotation_euler")
         elif par == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):

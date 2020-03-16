@@ -110,10 +110,9 @@ class BLENDYN_PG_nodes_dictionary(bpy.types.PropertyGroup):
     )
     parametrization: EnumProperty(
             items = [("EULER123", "euler123", "euler123", '', 1),\
-                     ("EULER131", "euler313", "euler313", '', 2),\
-                     ("EULER321", "euler321", "euler321", '', 3),\
-                     ("PHI", "phi", "phi", '', 4),\
-                     ("MATRIX", "mat", "mat", '', 5)],
+                     ("EULER321", "euler321", "euler321", '', 2),\
+                     ("PHI", "phi", "phi", '', 3),\
+                     ("MATRIX", "mat", "mat", '', 4)],
             name = "rotation parametrization",
             default = "EULER123"
     )

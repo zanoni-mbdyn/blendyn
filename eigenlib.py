@@ -209,9 +209,9 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                     obj.keyframe_insert(data_path = "rotation_axis_angle")
                 elif par[0:5] == 'EULER':
-                    eu_seq = axes[par[5]] +\
+                    eu_seq = axes[par[7]] +\
                              axes[par[6]] +\
-                             axes[par[7]]
+                             axes[par[5]]
                     obj.rotation_mode = eu_seq
                     angles = math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :])
                     obj.rotation_euler = Euler(Vector ((\
