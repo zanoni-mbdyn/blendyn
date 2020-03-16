@@ -282,7 +282,7 @@ class BLENDYN_PG_plot_vars(bpy.types.PropertyGroup):
             default = 1
     )
     plot_type: EnumProperty(
-            items = [("TIME HISTORY", "Time history", "Time history", '', 1),\
+            items = [("TIME_HISTORY", "Time history", "Time history", '', 1),\
                     ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)], \
                     name = "plot type",
                     default = "TIME HISTORY"
@@ -521,7 +521,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             )
 
     missing: EnumProperty(
-            items = [("DO NOTHING", "Do Nothing","","" ,1),\
+            items = [("DO_NOTHING", "Do Nothing","","" ,1),\
                      ("HIDE", "Hide", "","" ,2),\
                      ("DELETE", "Delete", "", "", 3)],
             name = "Handling of missing nodes/elements",
@@ -529,10 +529,10 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     )
     # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
     mesh_import_mode: EnumProperty(
-            items = [("SEPARATED OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
-                     ("SINGLE MESH", "Joined in single mesh", "", 'LINKED', 2)],
+            items = [("SEPARATED_OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
+                     ("SINGLE_MESH", "Joined in single mesh", "", 'LINKED', 2)],
             name = "Mesh objects",
-            default = "SEPARATED OBJECTS"
+            default = "SEPARATED_OBJECTS"
     )
     # Elements dictionary -- holds the collection of the elements found in the .log file
     elems: CollectionProperty(
