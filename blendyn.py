@@ -285,7 +285,7 @@ class BLENDYN_PG_plot_vars(bpy.types.PropertyGroup):
             items = [("TIME_HISTORY", "Time history", "Time history", '', 1),\
                     ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)], \
                     name = "plot type",
-                    default = "TIME HISTORY"
+                    default = "TIME_HISTORY"
     )
     fft_remove_mean: BoolProperty(
             name = "Subtract mean",

@@ -907,7 +907,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                 row = layout.row()
                 row.prop(pvar, "plot_xrange_max")
                 row = layout.row()
-                if pvar.plot_type == "TIME HISTORY":
+                if pvar.plot_type == "TIME_HISTORY":
                     row.operator(BLENDYN_OT_plot_var_object.bl_idname,
                             text = "Plot variable")
                 elif pvar.plot_type == "AUTOSPECTRUM":
@@ -1004,7 +1004,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                 row = layout.row()
                 row.prop(pvar, "plot_xrange_max")
                 row = layout.row()
-                if pvar.plot_type == "TIME HISTORY":
+                if pvar.plot_type == "TIME_HISTORY":
                     row.operator(BLENDYN_OT_plot_var_scene.bl_idname, 
                             text="Plot variable")
                 elif mbs.plot_type == "AUTOSPECTRUM":
