@@ -494,10 +494,6 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "References collection index",
             default = 0
     )
-    disabled_output: StringProperty(
-            name = "Nodes for which Output is disabled",
-            default = ''
-    )
     # Nodes dictionary -- holds the association between MBDyn nodes and blender objects
     nodes: CollectionProperty(
             name = "MBDyn nodes",
@@ -840,11 +836,6 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             hide_or_delete(obj_names, missing)
-
-        if len(mbs.disabled_output) > 0:
-            message = "No output for nodes " + mbs.disabled_output
-            self.report({'WARNING'}, message)
-            baseLogger.warning(selftag + message)
 
         if ret_val == {'LOG_NOT_FOUND'}:
             message = ".log file not found"

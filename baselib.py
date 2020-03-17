@@ -39,6 +39,8 @@ from .elementlib import *
 from .rfmlib import *
 from .logwatcher import *
 
+import pdb
+
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -169,11 +171,13 @@ def no_output(context):
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r")
         log_nodes = list(map(lambda x: int(x[5:]), nd.keys()))
-        netcdf_nodes = np.array(nc.variables['node.struct'])
-        difference = set(log_nodes).symmetric_difference(set(netcdf_nodes))
-        print(difference)
-        mbs.disabled_output = str(difference)
-        mbs.num_nodes = len(log_nodes) - len(difference)
+        for node in log_nodes:
+            try:
+                X = nc.variables['node.struct.' + str(node) + '.X']
+                nd['node_' + str(node)].output = True
+            except KeyError:
+                # output disabled for this node
+                pass
     else:
         # .mov filename
         mov_file = os.path.join(os.path.dirname(mbs.file_path), \
@@ -196,31 +200,6 @@ def no_output(context):
         except StopIteration: # EOF
             pass
 
-        try:
-            with open(mov_file) as mf:
-                reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
-                result_nodes = []
-                rw = next(reader)
-                result_nodes.append(rw[0])
-                while True:
-                    rw = next(reader)
-                    if rw[0] != result_nodes[0]:
-                        result_nodes.append(rw[0])
-                    else:
-                        break
-                if len(result_nodes) > mbs.num_nodes:
-                    # some nodes are in the results, but not in the .log file:
-                    # relative frame structural nodes?
-                    mbs.num_nodes = len(result_nodes)
-                log_nodes = list(map(lambda x: x[5:], nd.keys()))
-                difference = set(result_nodes) ^ set(log_nodes)
-                difference = ' '.join(difference)
-                print(difference)
-                mbs.disabled_output = difference
-        except FileNotFoundError:
-            pass
-        except StopIteration:
-            pass
 # -----------------------------------------------------------
 # end of no_output() function
 
@@ -400,8 +379,7 @@ def parse_log_file(context):
             nc = Dataset(ncfile, "r")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
-            disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
-            mbs.num_timesteps = mbs.num_rows/(mbs.num_nodes - disabled_nodes)
+            mbs.num_timesteps = mbs.num_rows/mbs.num_nodes
         
         mbs.is_ready = True
     else:
@@ -747,8 +725,6 @@ def set_motion_paths_mov(context):
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
 
-            disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
-
             # skip to the first timestep to import
             for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
                 next(reader)
@@ -1006,7 +982,7 @@ def set_motion_paths_netcdf(context):
     for ndx in anim_nodes:
 
         dictobj = nd[ndx]
-        if str(dictobj.int_label) in mbs.disabled_output.split(' '):
+        if not(dictobj.output):
             continue
 
         obj = bpy.data.objects[dictobj.blender_object]
