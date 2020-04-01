@@ -274,6 +274,14 @@ def recur_layer_collection(layer_collection, coll_name):
 # -----------------------------------------------------------
 # end of recur_layer_collection function
 
+def cquat(q):
+    """ resets to zero small components of quaternion,
+        to avoid flickering """
+    tol = 1e-6
+    q.x = q.x*(abs(q.x) < tol)
+    q.y = q.y*(abs(q.y) < tol)
+    q.z = q.z*(abs(q.z) < tol)
+    return q
 
 def set_active_collection(coll_name):
     """ Changes the active collection to coll_name after searching

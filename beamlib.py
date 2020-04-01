@@ -474,8 +474,8 @@ def spawn_beam3_element(elem, context):
 
     d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
 
-    M1 = Vector(( P2 + Vector((abs(d[1])*t2)) ))
-    M2 = Vector(( P2 - Vector((abs(d[1])*t2)) ))
+    M1 = Vector(( P2 - Vector((abs(d[0])*t2)) ))
+    M2 = Vector(( P2 + Vector((abs(d[0])*t2)) ))
 
     polydata.points[0].co = P1
     polydata.points[1].co = M1
@@ -486,15 +486,24 @@ def spawn_beam3_element(elem, context):
     t3 = P3 - M2
     t3.normalize()
 
-    # FIXME: check this very carefully!
-    # phi1, theta1 = n1OBJ.matrix_world.to_quaternion().to_axis_angle()
-    # phi2, theta2 = n2OBJ.matrix_world.to_quaternion().to_axis_angle()
-    # phi3, theta3 = n3OBJ.matrix_world.to_quaternion().to_axis_angle()
+    l1 = ((M1 - P1)).length
+    l2 = ((P2 - M1)).length
+    l3 = ((M2 - P2)).length
+    l4 = ((P3 - M2)).length
 
-    # polydata.points[0].tilt = t1.to_3d()*(theta1*phi1)
-    # polydata.points[1].tilt = t2.to_3d()*(theta2*phi2)
-    # polydata.points[2].tilt = t2.to_3d()*(theta2*phi2)
-    # polydata.points[3].tilt = t3.to_3d()*(theta3*phi3)
+    # relative rotation quaternions
+    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1OBJ.matrix_world.to_quaternion()).conjugated()
+    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2OBJ.matrix_world.to_quaternion()).conjugated()
+    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3OBJ.matrix_world.to_quaternion()).conjugated()
+
+    phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
+    phi2 = t2.to_3d().dot(cquat(qr2).to_exponential_map())
+    phi3 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
+
+    cvdata.splines[0].points[0].tilt = phi1 
+    cvdata.splines[0].points[1].tilt = phi1*l1/(l1 + l2) + phi2*l2/(l1 + l2)
+    cvdata.splines[0].points[2].tilt = phi2*l3/(l3 + l4) + phi3*l4/(l3 + l4)
+    cvdata.splines[0].points[3].tilt = phi3
 
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
@@ -609,7 +618,7 @@ def update_beam3(elem, insert_keyframe = False):
     P3 = n3.matrix_world@Vector(( f3[0], f3[1], f3[2], 1.0 ))
 
     # redefine the two intermediate control points
-    t1 = -3*P1 + 4*P2 - P3
+    t1 = (-3*P1 + 4*P2 - P3)
     t1.normalize()
 
     t2 = -P1 + P3
@@ -621,24 +630,41 @@ def update_beam3(elem, insert_keyframe = False):
 
     d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
 
-    cp2.location = Vector(( P2 + Vector((abs(d[1])*t2)) )).to_3d()
-    cp3.location = Vector(( P2 - Vector((abs(d[1])*t2)) )).to_3d()
-
+    cp2.location = Vector(( P2 - Vector((abs(d[0])*t2)) )).to_3d()
+    cp3.location = Vector(( P2 + Vector((abs(d[0])*t2)) )).to_3d()
 
     # FIXME: Check this very carefully!
     # set the tilt angles of the sections
+
+    phi1_prev = cvdata.splines[0].points[0].tilt
+    phi2_prev = cvdata.splines[0].points[1].tilt
+    phi3_prev = cvdata.splines[0].points[2].tilt
+    phi4_prev = cvdata.splines[0].points[3].tilt
+
     t3 = P3.to_3d() - cp2.location
     t3.normalize()
 
-    # relative rotation quaternions
-    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1.matrix_world.to_quaternion())
-    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2.matrix_world.to_quaternion())
-    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3.matrix_world.to_quaternion())
+    l1 = (( cp2.location - P1.to_3d() )).length
+    l2 = (( P2.to_3d() - cp2.location )).length
+    l3 = (( cp3.location - P2.to_3d() )).length
+    l4 = (( P3.to_3d() - cp3.location )).length
 
-    cvdata.splines[0].points[0].tilt = t1.to_3d().dot(qr1.to_exponential_map())
-    cvdata.splines[0].points[1].tilt = t2.to_3d().dot(qr2.to_exponential_map())
-    cvdata.splines[0].points[2].tilt = t2.to_3d().dot(qr2.to_exponential_map())
-    cvdata.splines[0].points[3].tilt = t3.to_3d().dot(qr3.to_exponential_map())
+    # relative rotation quaternions
+    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1.matrix_world.to_quaternion()).conjugated()
+    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2.matrix_world.to_quaternion()).conjugated()
+    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3.matrix_world.to_quaternion()).conjugated()
+    
+    phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
+    phi2 = t1.to_3d().dot(cquat(qr1).to_exponential_map())*l1/(l1 + l2) + \
+           t2.to_3d().dot(cquat(qr2).to_exponential_map())*l2/(l1 + l2)
+    phi3 = t2.to_3d().dot(cquat(qr2).to_exponential_map())*l3/(l3 + l4) + \
+           t3.to_3d().dot(cquat(qr3).to_exponential_map())*l4/(l3 + l4)
+    phi4 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
+
+    cvdata.splines[0].points[0].tilt = phi1
+    cvdata.splines[0].points[1].tilt = phi2
+    cvdata.splines[0].points[2].tilt = phi3
+    cvdata.splines[0].points[3].tilt = phi4 
 
     if insert_keyframe:
         try:
