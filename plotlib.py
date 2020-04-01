@@ -768,7 +768,7 @@ class BLENDYN_OT_show_display_group(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        if mbs.display_enum_group is '':
+        if mbs.display_enum_group == '':
             message = "BLENDYN_OT_show_display_group::execute() "\
                     + "No Groups set"
             self.report({'ERROR'}, message)
