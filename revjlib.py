@@ -258,7 +258,7 @@ def spawn_revolute_hinge_element(elem, context):
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'revolute rotation')
+            'library', 'joints.blend', 'Object'), filename = 'revolute hinge')
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]
         revjOBJ.name = elem.name
