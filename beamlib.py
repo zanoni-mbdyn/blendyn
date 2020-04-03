@@ -636,35 +636,35 @@ def update_beam3(elem, insert_keyframe = False):
     # FIXME: Check this very carefully!
     # set the tilt angles of the sections
 
-    phi1_prev = cvdata.splines[0].points[0].tilt
-    phi2_prev = cvdata.splines[0].points[1].tilt
-    phi3_prev = cvdata.splines[0].points[2].tilt
-    phi4_prev = cvdata.splines[0].points[3].tilt
-
-    t3 = P3.to_3d() - cp2.location
-    t3.normalize()
-
-    l1 = (( cp2.location - P1.to_3d() )).length
-    l2 = (( P2.to_3d() - cp2.location )).length
-    l3 = (( cp3.location - P2.to_3d() )).length
-    l4 = (( P3.to_3d() - cp3.location )).length
-
-    # relative rotation quaternions
-    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1.matrix_world.to_quaternion()).conjugated()
-    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2.matrix_world.to_quaternion()).conjugated()
-    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3.matrix_world.to_quaternion()).conjugated()
-    
-    phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
-    phi2 = t1.to_3d().dot(cquat(qr1).to_exponential_map())*l1/(l1 + l2) + \
-           t2.to_3d().dot(cquat(qr2).to_exponential_map())*l2/(l1 + l2)
-    phi3 = t2.to_3d().dot(cquat(qr2).to_exponential_map())*l3/(l3 + l4) + \
-           t3.to_3d().dot(cquat(qr3).to_exponential_map())*l4/(l3 + l4)
-    phi4 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
-
-    cvdata.splines[0].points[0].tilt = phi1
-    cvdata.splines[0].points[1].tilt = phi2
-    cvdata.splines[0].points[2].tilt = phi3
-    cvdata.splines[0].points[3].tilt = phi4 
+#     phi1_prev = cvdata.splines[0].points[0].tilt
+#     phi2_prev = cvdata.splines[0].points[1].tilt
+#     phi3_prev = cvdata.splines[0].points[2].tilt
+#     phi4_prev = cvdata.splines[0].points[3].tilt
+# 
+#     t3 = P3.to_3d() - cp2.location
+#     t3.normalize()
+# 
+#     l1 = (( cp2.location - P1.to_3d() )).length
+#     l2 = (( P2.to_3d() - cp2.location )).length
+#     l3 = (( cp3.location - P2.to_3d() )).length
+#     l4 = (( P3.to_3d() - cp3.location )).length
+# 
+#     # relative rotation quaternions
+#     qr1 = Quaternion((elem.rotoffsets[0].value))@(n1.matrix_world.to_quaternion()).conjugated()
+#     qr2 = Quaternion((elem.rotoffsets[1].value))@(n2.matrix_world.to_quaternion()).conjugated()
+#     qr3 = Quaternion((elem.rotoffsets[2].value))@(n3.matrix_world.to_quaternion()).conjugated()
+#     
+#     phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
+#     phi2 = t1.to_3d().dot(cquat(qr1).to_exponential_map())*l1/(l1 + l2) + \
+#            t2.to_3d().dot(cquat(qr2).to_exponential_map())*l2/(l1 + l2)
+#     phi3 = t2.to_3d().dot(cquat(qr2).to_exponential_map())*l3/(l3 + l4) + \
+#            t3.to_3d().dot(cquat(qr3).to_exponential_map())*l4/(l3 + l4)
+#     phi4 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
+# 
+#     cvdata.splines[0].points[0].tilt = phi1
+#     cvdata.splines[0].points[1].tilt = phi2
+#     cvdata.splines[0].points[2].tilt = phi3
+#     cvdata.splines[0].points[3].tilt = phi4 
 
     if insert_keyframe:
         try:

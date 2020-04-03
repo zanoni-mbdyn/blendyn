@@ -22,7 +22,11 @@ the model definition phase.
 Please refer to the [wiki pages](https://github.com/zanoni-mbdyn/blendyn/wiki) 
 for the complete documentation.
 
-
+## **Update: January, 2020**
+The Blender **2.8x** version of **Blendyn** is now considered the **baseline** code for 
+development, while the 2.7x version has been moved to the `blender27` branch and will **not** 
+be updated, apart from occasional bugfixes, from now on. Therefore, the `master` branch now 
+points to the Blender 2.8x version, be careful when updating!
 
 ## **Update: August, 2019**
 The porting of **Blendyn** to the new Blender 2.80 API has been completed and is now available
