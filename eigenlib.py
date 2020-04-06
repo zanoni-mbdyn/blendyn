@@ -266,7 +266,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         logging.info(message)
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
-        if all(idx < 0):
+        if all(idx < 0) or not(len(idx[~idx.mask])):
             message = "BLENDYN_OT_animate_eigenmode::execute(): eig.idx is empty."\
                     + " Activate \"output geometry\" in eigenanalysis card."
             self.report({'ERROR'}, message)
