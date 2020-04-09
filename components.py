@@ -69,7 +69,7 @@ bpy.utils.register_class(BLENDYN_PG_component_section)
 class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
     """ Data of a component (structural model + geometry) """
     type: EnumProperty(
-            items: [('FROM_SECTIONS', "From sections", "From Sections", '', 1),\
+            items = [('FROM_SECTIONS', "From sections", "From Sections", '', 1),\
                     ('MESH_OBJECT', "Mesh Object", "Mesh Object", '', 2)],
             name = "component type",
             default = 'FROM_SECTIONS'
