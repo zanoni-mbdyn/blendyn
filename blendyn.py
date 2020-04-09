@@ -61,6 +61,7 @@ except ImportError as ierr:
 
 from . baselib import *
 from . elements import *
+from . components import *
 from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
@@ -626,7 +627,11 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             description = "Higher limit of integer labels for range import for elements",
             default = 2**31 - 1
     )
-    # True if output contains at least one eigensolution
+    components: CollectionProperty(
+            name = "Components",
+            description = "Components structural and geometrical data",
+            type = BLENDYN_PG_components_dictionary
+    )
     eigensolutions: CollectionProperty(
             name = "Eigensolutions",
             description = "Parameters of the eigensolutions found in the MBDyn output",

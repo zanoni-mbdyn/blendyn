@@ -39,6 +39,7 @@ from . logwatcher   import *
 from . nodelib      import *
 from . eigenlib     import *
 from . elements     import *
+from . components   import *
 from . baselib      import *
 from . plotlib      import *
 from . blendyn      import *
@@ -146,6 +147,9 @@ classes = (
 register, unregister_fact = bpy.utils.register_classes_factory(classes)
 
 def unregister():
+    bpy.utils.unregister_class(BLENDYN_PG_component_element)
+    bpy.utils.unregister_class(BLENDYN_PG_component_section)
+    bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elem_to_be_updated)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_collection)
