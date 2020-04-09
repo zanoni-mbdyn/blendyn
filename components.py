@@ -34,7 +34,7 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-from .blendyn import
+from .elements import BLENDYN_PG_elems_dictionary
 
 class BLENDYN_PG_component_element(bpy.types.PropertyGroup):
     """ MBDyn Element, part of the component's structural model """
