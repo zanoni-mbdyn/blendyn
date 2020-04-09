@@ -115,10 +115,14 @@ classes = (
         BLENDYN_OT_stop_mbdyn_simulation,
         BLENDYN_OT_set_motion_paths,
         BLENDYN_OT_set_import_freq_auto,
+        BLENDYN_OT_component_add,
+        BLENDYN_OT_component_add_confirm,
+        BLENDYN_OT_component_add_elem,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
         BLENDYN_PT_simulation,
         BLENDYN_PT_eigenanalysis,
+        BLENDYN_PT_components,
         BLENDYN_PT_active_object,
         BLENDYN_PT_nodes_scene,
         BLENDYN_PT_elems_scene,
@@ -147,7 +151,6 @@ classes = (
 register, unregister_fact = bpy.utils.register_classes_factory(classes)
 
 def unregister():
-    bpy.utils.unregister_class(BLENDYN_PG_component_element)
     bpy.utils.unregister_class(BLENDYN_PG_component_section)
     bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
@@ -169,6 +172,8 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_UL_env_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_mbdyn_nodes_list)
     bpy.utils.unregister_class(BLENDYN_UL_elements_list)
+    bpy.utils.unregister_class(BLENDYN_UL_components_list)
+    bpy.utils.unregister_class(BLENDYN_UL_deformable_elements_list)
     bpy.utils.unregister_class(BLENDYN_UL_refs_list)
     bpy.utils.unregister_class(BLENDYN_UL_render_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_object_plot_var_list)

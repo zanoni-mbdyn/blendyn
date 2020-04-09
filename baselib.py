@@ -833,6 +833,12 @@ def get_render_vars(self, context):
 # -----------------------------------------------------------
 # end of get_render_vars() function
 
+def get_deformable_elems(self, context):
+    mbs = context.scene.mbdyn
+    elems = mbs.elems
+    def_elems = [elem for elem in elems if elem.type in {'beam3', 'beam2'}]
+    return [(elem.name, elem.name, "") for elem in def_elems]
+
 def get_display_group(self, context):
     mbs = context.scene.mbdyn
 

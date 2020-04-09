@@ -398,10 +398,10 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     )
     render_nc_vars: EnumProperty(
             items = get_render_vars,
-            name = 'Text overlay variables',
+            name = "Text overlay variables",
     )
     render_var_name: StringProperty(
-            name = 'Name of variable',
+            name = "Name of variable",
             default = ''
     )
     render_vars: CollectionProperty(
@@ -631,6 +631,20 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Components",
             description = "Components structural and geometrical data",
             type = BLENDYN_PG_components_dictionary
+    )
+    adding_component: BoolProperty(
+            description = "Are we adding a new component?",
+            default = False
+    )
+    # Components dictionary index -- holds the index for displaying the 
+    # Components Dictionary in a UI List
+    cd_index: IntProperty(
+            name = "MBDyn components collection index",
+            default = 0
+    )
+    comp_add_elem: EnumProperty(
+            items = get_deformable_elems,
+            name = "Element to add to component"
     )
     eigensolutions: CollectionProperty(
             name = "Eigensolutions",
@@ -2007,6 +2021,68 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
 
+# class BLENDYN_UL_deformable_elements_list(bpy.types.UIList):
+#     FILTERED_FLAG = 1 << 0
+#     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+#         layout.label(text = item.name)
+#         custom_icon = 'CONSTRAINT'
+#     def filter_items(self, context, data, propname):
+#         elems = getattr(data, propname)
+#         hf = bpy.types.UI_UL_list
+#         flt_flags = [self.bitflag_filter_item] * len(elems)
+#         for idx, elem in enumerate(elems):
+#             if elem.type not in {'beam3', 'beam2'}:
+#                 flt_flags[idx] &= self.FILTERED_FLAG
+#         return flt_flags, []
+# # -----------------------------------------------------------
+# # end of BLENDYN_UL_deformable_elements_list class
+# bpy.utils.register_class(BLENDYN_UL_deformable_elements_list)
+
+
+class BLENDYN_PT_components(bpy.types.Panel):
+    """ List of Blendyn components: add/modify them,
+        generate armatures and geometry """
+    bl_label = "MBDyn components"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        comps = mbs.components
+        layout = self.layout
+        col = layout.column()
+        row = col.row()
+        row.template_list("BLENDYN_UL_components_list", \
+                "MBDyn components", \
+                mbs, "components", \
+                mbs, "cd_index")
+        row = col.row()
+        row.operator(BLENDYN_OT_component_add.bl_idname, \
+                text = "Add New Component")
+        if mbs.adding_component:
+            row = layout.row()
+            comp = comps[-1]
+            row.prop(comp, "type")
+            col = layout.column()
+            row = col.row()
+            row.label(text = "Component elements:")
+            row = col.row()
+            row.template_list("BLENDYN_UL_component_elements_list", \
+                "Component elements", \
+                comp, "elements", \
+                comp, "el_index")
+            row = col.row()
+            row.prop(mbs, "comp_add_elem", text = "Add")
+            row = col.row()
+            row.operator(BLENDYN_OT_component_add_elem.bl_idname, \
+                    text = "Add Element").comp_idx = -1
+            row = col.row()
+            row.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
+                text = "Confirm")
+# -----------------------------------------------------------
+# end of BLENDYN_PT_components_scene
 
 class BLENDYN_OT_node_import_all(bpy.types.Operator):
     """ Imports all the MBDyn nodes into the Blender scene """
