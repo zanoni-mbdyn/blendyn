@@ -39,7 +39,7 @@ from .elements import BLENDYN_PG_elems_dictionary
 class BLENDYN_PG_component_element(bpy.types.PropertyGroup):
     """ MBDyn Element, part of the component's structural model """
     elem: PointerProperty(
-        type = BLENDYN_PG_elems_dictionary
+        type = BLENDYN_PG_elems_dictionary,
         description = "Pointer to id_data of MBDyn element"
     )
 
@@ -54,7 +54,7 @@ bpy.utils.register_class(BLENDYN_PG_component_element)
 class BLENDYN_PG_component_section(bpy.types.PropertyGroup):
     """ Section, part of the component's geometry (mesh) model """
     curve: PointerProperty(
-        type = bpy.types.Curve
+        type = bpy.types.Curve,
         description = "Pointer to id_data of section's curve"
     )
 
@@ -70,7 +70,7 @@ class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
     """ Data of a component (structural model + geometry) """
     type: EnumProperty(
             items: [('FROM_SECTIONS', "From sections", "From Sections", '', 1),\
-                    ('MESH_OBJECT', "Mesh Object", "Mesh Object", '', 2)]
+                    ('MESH_OBJECT', "Mesh Object", "Mesh Object", '', 2)],
             name = "component type",
             default = 'FROM_SECTIONS'
     )
