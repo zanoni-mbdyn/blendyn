@@ -3,7 +3,7 @@ bl_info = {
     "category": "Physics",
     "blender": (2, 80, 0),
     "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
-    "version": (1, 1, 0),
+    "version": (1, 2, 0),
     "location": "View3D -> Properties -> Physics",
     "description": "Imports simulation results of MBDyn (Open Source MultiBody\
     Dynamics solver -- https://www.mbdyn.org/).",
