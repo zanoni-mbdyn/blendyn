@@ -642,9 +642,10 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "MBDyn components collection index",
             default = 0
     )
-    comp_add_elem: EnumProperty(
+    comp_selected_elem: EnumProperty(
             items = get_deformable_elems,
-            name = "Element to add to component"
+            name = "Selected element",
+            description = "Selected element in deformable elements list"
     )
     eigensolutions: CollectionProperty(
             name = "Eigensolutions",
@@ -2021,24 +2022,6 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
 
-# class BLENDYN_UL_deformable_elements_list(bpy.types.UIList):
-#     FILTERED_FLAG = 1 << 0
-#     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-#         layout.label(text = item.name)
-#         custom_icon = 'CONSTRAINT'
-#     def filter_items(self, context, data, propname):
-#         elems = getattr(data, propname)
-#         hf = bpy.types.UI_UL_list
-#         flt_flags = [self.bitflag_filter_item] * len(elems)
-#         for idx, elem in enumerate(elems):
-#             if elem.type not in {'beam3', 'beam2'}:
-#                 flt_flags[idx] &= self.FILTERED_FLAG
-#         return flt_flags, []
-# # -----------------------------------------------------------
-# # end of BLENDYN_UL_deformable_elements_list class
-# bpy.utils.register_class(BLENDYN_UL_deformable_elements_list)
-
-
 class BLENDYN_PT_components(bpy.types.Panel):
     """ List of Blendyn components: add/modify them,
         generate armatures and geometry """
@@ -2052,7 +2035,9 @@ class BLENDYN_PT_components(bpy.types.Panel):
         mbs = context.scene.mbdyn
         comps = mbs.components
         layout = self.layout
+        layout.alignment = 'LEFT'
         col = layout.column()
+        col.label(text = "Components:")
         row = col.row()
         row.template_list("BLENDYN_UL_components_list", \
                 "MBDyn components", \
@@ -2061,26 +2046,67 @@ class BLENDYN_PT_components(bpy.types.Panel):
         row = col.row()
         row.operator(BLENDYN_OT_component_add.bl_idname, \
                 text = "Add New Component")
+        row = col.row()
+        row.operator(BLENDYN_OT_component_remove.bl_idname, \
+                text = "Remove Component")
         if mbs.adding_component:
-            row = layout.row()
             comp = comps[-1]
-            row.prop(comp, "type")
+
             col = layout.column()
+            col.label(text = "Component Elements:")
             row = col.row()
-            row.label(text = "Component elements:")
+            split = row.split(factor = 0.2)
+            col = split.column()
+            col.label(text = "#")
+            col = split.column()
+            split = col.split(factor = .67)
+            col = split.column()
+            col.label(text = "element")
+            col = split.column()
+            col.label(text = "subs")
+            col = layout.column()
             row = col.row()
             row.template_list("BLENDYN_UL_component_elements_list", \
                 "Component elements", \
                 comp, "elements", \
                 comp, "el_index")
-            row = col.row()
-            row.prop(mbs, "comp_add_elem", text = "Add")
-            row = col.row()
-            row.operator(BLENDYN_OT_component_add_elem.bl_idname, \
+            col.prop(mbs, "comp_selected_elem", text = "Add")
+            try:
+                col.prop(comp.elements[comp.el_index], "str_idx")
+                col.prop(comp.elements[comp.el_index], "arm_ns")
+                row = col.row()
+                row.prop(comp.elements[comp.el_index], "name", emboss = True)
+                row.enabled = False
+            except IndexError:
+                pass
+            col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
                     text = "Add Element").comp_idx = -1
+            col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \
+                    text = "Remove Element").comp_idx = -1
+
+            col = layout.column()
+            col.operator(BLENDYN_OT_component_remove_all_elems.bl_idname, \
+                    text = "Remove All Elements").comp_idx = -1
+            col.operator(BLENDYN_OT_component_add_selected_elems.bl_idname, \
+                    text = "Add Selected Elements").comp_idx = -1
+            col = layout.column()
+            col.alignment = 'LEFT'
+
             row = col.row()
-            row.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
-                text = "Confirm")
+            row.label(text = "Component Type")
+            col.prop(comp, "type", text = "")
+            col = layout.column()
+            col.alignment = 'LEFT'
+            row = col.row()
+            if comp.type == 'MESH_OBJECT':
+                row.prop(comp, "object")
+            else:
+                # TODO: Display list of sections, with operators to add,
+                # remove, move and assign them
+                col.label(text = 'TODO: Sections definition')
+
+            col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
+                text = "Confirm").comp_idx = -1
 # -----------------------------------------------------------
 # end of BLENDYN_PT_components_scene
 

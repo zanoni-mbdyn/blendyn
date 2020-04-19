@@ -34,7 +34,9 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-from .elements import BLENDYN_PG_elems_dictionary
+from .componentlib import *
+
+import pdb
 
 class BLENDYN_PG_component_element(bpy.types.PropertyGroup):
     """ Element associated to a component """
@@ -44,7 +46,14 @@ class BLENDYN_PG_component_element(bpy.types.PropertyGroup):
     )
     str_idx: IntProperty(
             name = "index of element",
-            description = "Index of element in component structure"
+            description = "Index of element in component structure",
+            update = update_elem_str_idx
+    )
+    arm_ns: IntProperty(
+            name = "armature subdivisions",
+            description = "number of subdivisions in components' element armature",
+            default = 5,
+            min = 2
     )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_components_element class
@@ -87,17 +96,13 @@ class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
             name = "Component element index",
             default = 0
     )
-    object: PointerProperty(
-            type = bpy.types.Object
+    object: EnumProperty(
+            items = get_comp_mesh_objects,
+            name = "Mesh Object",
     )
     sections: CollectionProperty(
             type = BLENDYN_PG_component_section,
             description = "Pointer to id_data of section's curves"
-    )
-    arm_ns: IntProperty(
-            name = "armature subdivisions",
-            description = "number of subdivisions in components' armature",
-            default = 5
     )
     mesh_ns: IntProperty(
             name = "mesh subdivisions",
@@ -108,12 +113,24 @@ class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
 # end of BLENDYN_PG_components_dictionary class
 bpy.utils.register_class(BLENDYN_PG_components_dictionary)
 
+class BLENDYN_UL_component_object_list(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        custom_icon = 'MESH_DATA'
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.prop(item, "name", icon = custom_icon, emboss = False, text = "")
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label(text = '', icon = custom_icon)
+# -----------------------------------------------------------
+# end of BLENDYN_UL_component_object_list class
+bpy.utils.register_class(BLENDYN_UL_component_object_list)
+
 
 class BLENDYN_UL_components_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         custom_icon = 'MESH_DATA'
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(text = item.name, icon = custom_icon)
+            layout.prop(item, "name", icon = custom_icon, emboss = False, text = "")
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label(text = '', icon = custom_icon)
@@ -124,12 +141,20 @@ bpy.utils.register_class(BLENDYN_UL_components_list)
 
 class BLENDYN_UL_component_elements_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        custom_icon = 'CONSTRAINT'
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(text = '{:<4}{}'.format(item.str_idx, item.elem), icon = custom_icon)
+            row = layout.row()
+            split = row.split(factor = 0.2)
+            col = split.column()
+            col.prop(item, "str_idx", icon = 'CUBE', text = "" )
+            col = split.column()
+            split = col.split(factor = .67)
+            col = split.column()
+            col.label(text = item.elem)
+            col = split.column()
+            col.prop(item, "arm_ns", icon = 'MOD_ARRAY', text = "" )
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label(text = '', icon = custom_icon)
+            layout.label(text = '', icon = 'CUBE')
 # -----------------------------------------------------------
 # end of BLENDYN_UL_component_elements_list class
 bpy.utils.register_class(BLENDYN_UL_component_elements_list)
@@ -146,8 +171,27 @@ class BLENDYN_OT_component_add(bpy.types.Operator):
         comp.name = 'component_' + str(len(mbs.components))
         mbs.adding_component = True
         return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add class
+
+
+class BLENDYN_OT_component_remove(bpy.types.Operator):
+    """ Removes component  """
+    bl_idname = "blendyn.remove_component"
+    bl_label = "Remove selected MBDyn component"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        mbs.components.remove(mbs.cd_index)
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_remove class
 
 
 class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
@@ -155,10 +199,44 @@ class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
     bl_idname = "blendyn.add_component_confirm"
     bl_label = "Add an MBDyn component"
 
+    comp_idx: bpy.props.IntProperty()
+
     def execute(self, context):
+        selftag = "BLENDYN_OT_component_add_confirm::execute(): "
         mbs = context.scene.mbdyn
+        component = mbs.components[self.comp_idx]
+        if component.type == 'MESH_OBJECT':
+            retval = add_mesh_component(context, component)
+        elif component.type == 'FROM_SECTIONS':
+            retval = add_sections_component(context, component)
+        else:
+            # should not be reached!
+            message = "unknown component type!"
+            print(message)
+            baseLogger.error(selftag + message)
+            self.report({'ERROR'}, message)
+            return {'CANCELLED'}
         mbs.adding_component = False
-        return {'FINISHED'}
+
+        if retval == {'ELEM_TYPE_UNSUPPORTED'}:
+            # should not be reached
+            message = "unknown element type in component!"
+            print(message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+        elif retval == {'ARMATURE_PARENT_FAILED'}:
+            message = "unable to parent mesh to armature."
+            print(message)
+            baseLogger.warning(selftag + message)
+            return {'CANCELLED'}
+        elif retval == {'FINISHED'}:
+            message = "Added component " + component.name + "."
+            print(message)
+            baseLogger.info(selftag + message)
+            return retval
+    
+    def invoke(self, context, event):
+        return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add_confirm class
 
@@ -167,20 +245,108 @@ class BLENDYN_OT_component_add_elem(bpy.types.Operator):
     """ Adds and element to the component list, checking
         that is not already present """
     bl_idname = "blendyn.component_add_elem"
-    bl_label = "Add an MBDyn component"
+    bl_label = "Add an element to a MBDyn component"
 
     comp_idx: bpy.props.IntProperty()
 
     def execute(self, context):
         mbs = context.scene.mbdyn
         component = mbs.components[self.comp_idx]
-        if mbs.comp_add_elem not in component.elements.keys():
+        if mbs.comp_selected_elem not in component.elements.keys():
             celem = component.elements.add()
-            celem.elem = mbs.elems[mbs.comp_add_elem].name
+            celem.elem = mbs.elems[mbs.comp_selected_elem].name
             celem.str_idx = len(component.elements) - 1
-            celem.name = mbs.elems[mbs.comp_add_elem].name
+            celem.name = mbs.elems[mbs.comp_selected_elem].name
             return {'FINISHED'}
         else:
             return {'CANCELLED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
 # -----------------------------------------------------------
-# end of BLENDYN_OT_component_add_confirm class
+# end of BLENDYN_OT_component_add_elem class
+
+
+class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
+    """ Removes and element to the component list, reordering
+        the others """
+    bl_idname = "blendyn.component_remove_elem"
+    bl_label = "Remove an element from a MBDyn component"
+
+    comp_idx: bpy.props.IntProperty()
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        component = mbs.components[self.comp_idx]
+        component.elements.remove(component.el_index)
+        for idx in range(len(component.elements)):
+            component.elements[idx].str_idx = idx
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_remove_elem class
+
+class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
+    """ Removes an element to the component list and reorders
+        the others """
+    bl_idname = "blendyn.component_remove_elem"
+    bl_label = "Remove an element from a MBDyn component"
+
+    comp_idx: bpy.props.IntProperty()
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        component = mbs.components[self.comp_idx]
+        component.elements.remove(component.el_index)
+        for idx in range(len(component.elements)):
+            component.elements[idx].str_idx = idx
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_remove_elem class
+
+class BLENDYN_OT_component_remove_all_elems(bpy.types.Operator):
+    """ Removes all elements to the component list """
+    bl_idname = "blendyn.component_remove_all_elems"
+    bl_label = "Remove an element from a MBDyn component"
+
+    comp_idx: bpy.props.IntProperty()
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        component = mbs.components[self.comp_idx]
+        component.elements.clear()
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_remove_all_elems class
+
+class BLENDYN_OT_component_add_selected_elems(bpy.types.Operator):
+    """ Add all the selected elements into the component list """
+    bl_idname = "blendyn.component_add_selected_elems"
+    bl_label = "Add selected elements to component"
+
+    comp_idx: bpy.props.IntProperty()
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        component = mbs.components[self.comp_idx]
+        sel_elems = [ed[obj.mbdyn.dkey] for obj in bpy.context.selected_objects \
+                if (obj.mbdyn.type == 'element') and (ed[obj.mbdyn.dkey].type in DEFORMABLE_ELEMENTS) ]
+        for idx in range(len(sel_elems)):
+            celem = component.elements.add()
+            celem.elem = sel_elems[idx].name
+            celem.str_idx = idx
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_add_selected_elems class

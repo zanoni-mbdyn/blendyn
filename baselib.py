@@ -37,6 +37,7 @@ import os, csv, atexit, re
 from .nodelib import *
 from .elementlib import *
 from .rfmlib import *
+from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 
 import pdb
@@ -836,7 +837,8 @@ def get_render_vars(self, context):
 def get_deformable_elems(self, context):
     mbs = context.scene.mbdyn
     elems = mbs.elems
-    def_elems = [elem for elem in elems if elem.type in {'beam3', 'beam2'}]
+    def_elems = [elem for elem in elems \
+            if (elem.type in DEFORMABLE_ELEMENTS) and (elem.blender_object != 'none')]
     return [(elem.name, elem.name, "") for elem in def_elems]
 
 def get_display_group(self, context):
