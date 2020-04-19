@@ -203,10 +203,10 @@ def no_output(context):
 # -----------------------------------------------------------
 # end of no_output() function
 
-## Function that parses the .log file and calls parse_elements() to add elements
-# to the elements dictionary and parse_node() to add nodes to the nodes dictionary
 def parse_log_file(context):
-
+    """ Parses the .log file and calls parse_elements() to add elements 
+        to the elements dictionary and parse_node() to add nodes to 
+        the nodes dictionary """
     # utility rename
     mbs = context.scene.mbdyn
     nd = mbs.nodes
@@ -574,7 +574,6 @@ def assign_labels(context):
 
 
 def update_label(self, context):
-
     # utility renaming
     obj = context.view_layer.objects.active
     nd = context.scene.mbdyn.nodes
@@ -646,8 +645,8 @@ def update_start_time(self, context):
 # -----------------------------------------------------------
 # end of update_start_time() function
 
-## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
+    """ Clears the scene of keyframes of current simulation """
     mbs = context.scene.mbdyn
 
     node_names = mbs.nodes.keys()
@@ -664,7 +663,6 @@ def remove_oldframes(context):
 # end of remove_oldframes() function
 
 def hide_or_delete(obj_names, missing):
-
     obj_names = list(filter(lambda v: v != 'none', obj_names))
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
@@ -680,9 +678,8 @@ def hide_or_delete(obj_names, missing):
             obj.select_set(state = True)
             bpy.ops.object.delete()
 
-## Function that parses the .mov file and sets the motion paths
 def set_motion_paths_mov(context):
-
+    """ Parses the .mov file and sets the nodes motion paths """
     # Debug message
     print("Blendyn::set_motion_paths_mov(): Setting Motion Paths using .mov output...")
 
@@ -849,35 +846,75 @@ def netcdf_helper(nc, scene, key):
     tdx = scene.frame_current*freq
     frac = np.ceil(tdx) - tdx
 
-    first = nc.variables[key][int(tdx)]
-    second = nc.variables[key][int(np.ceil(tdx))]
-    answer = first*frac + second*(1 - frac)
+    first = Vector((nc.variables[key][int(tdx)]))
+    second = Vector((nc.variables[key][int(np.ceil(tdx))]))
+    # return = first*frac + second*(1 - frac)
+    return  first.lerp(second, 1 - frac)
 
-    return answer
-
-def netcdf_helper_rvars(nc, scene, var):
+def netcdf_helper_phi(nc, scene, key):
     mbs = scene.mbdyn
     freq = mbs.load_frequency
     tdx = scene.frame_current*freq
     frac = np.ceil(tdx) - tdx
 
-    first = nc.variables[var.variable][int(tdx)]
-    second = nc.variables[var.variable][int(np.ceil(tdx))]
-    answer = first*frac + second*(1 - frac)
+    first = Vector((nc.variables[key][int(tdx)]))
+    second = Vector((nc.variables[key][int(np.ceil(tdx))]))
+    return first.lerp(second, 1 - frac)
 
-    dims = len(answer.shape)
+def netcdf_helper_rmat(nc, scene, var):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = np.ceil(tdx) - tdx
+    
+    first = Matrix((nc.variables[var.variable][int(tdx)]))
+    second = Matrix((nc.variables[var.variable][int(np.ceil(tdx))]))
+    return first.lerp(second, 1 - frac) 
 
-    if (dims == 1):
-        for ii in range(len(answer)):
-            if (var.components[ii]):
-                var.value[ii] = answer[ii]
-    elif (dims == 2):
-        for ii in range(3):
-            for jj in range(3):
-                if var.components[ii + jj]:
-                    var.value[ii + jj] = answer[ii,jj]
+def netcdf_helper_euler(nc, scene, key, par):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = np.ceil(tdx) - tdx
 
-    return answer
+    v1 = math.radians(1.0)*nc.variables[key][int(tdx)]
+    v2 = math.radians(1.0)*nc.variables[key][int(np.ceil(tdx))]
+    order = axes[par[7]] + axes[par[6]] + axes[par[5]]
+    E1 = Euler( Vector((v1[int(par[5]) - 1], \
+                        v1[int(par[6]) - 1], \
+                        v1[int(par[7]) - 1], )),\
+                        order)
+    E2 = Euler( Vector((v2[int(par[5]) - 1], \
+                        v2[int(par[6]) - 1], \
+                        v2[int(par[7]) - 1], )),\
+                        order)
+    q1 = E1.to_quaternion()
+    q2 = E2.to_quaternion()
+    return (q1.slerp(q2, 1 - frac)).to_euler(order, E1)
+
+# def netcdf_helper_rvars(nc, scene, var):
+#     mbs = scene.mbdyn
+#     freq = mbs.load_frequency
+#     tdx = scene.frame_current*freq
+#     frac = np.ceil(tdx) - tdx
+# 
+#     first = nc.variables[var.variable][int(tdx)]
+#     second = nc.variables[var.variable][int(np.ceil(tdx))]
+#     answer = first*frac + second*(1 - frac)
+# 
+#     dims = len(answer.shape)
+# 
+#     if (dims == 1):
+#         for ii in range(len(answer)):
+#             if (var.components[ii]):
+#                 var.value[ii] = answer[ii]
+#     elif (dims == 2):
+#         for ii in range(3):
+#             for jj in range(3):
+#                 if var.components[ii + jj]:
+#                     var.value[ii + jj] = answer[ii,jj]
+# 
+#     return answer
 
 def netcdf_helper_quat(nc, scene, key):
     mbs = scene.mbdyn
@@ -887,11 +924,8 @@ def netcdf_helper_quat(nc, scene, key):
 
     q_first = Matrix((nc.variables[key][int(tdx)])).transposed().to_quaternion()
     q_second = Matrix((nc.variables[key][int(np.ceil(tdx))])).transposed().to_quaternion()
-    theta = q_second.angle - q_first.angle
-    if theta:
-        return 1/sin(theta)*(q_first*sin((1 - frac)*theta) + q_second*(frac*theta))
-    else:
-        return q_first
+    return q_first.slerp(q_second, 1 - frac)
+
 def parse_render_string(var, components):
     if hasattr(var, '__iter__'):
         return ', '.join(['{:.2f}'.format(item) if components[idx] else ' ' for idx, item in enumerate(var)])
@@ -997,7 +1031,7 @@ def set_motion_paths_netcdf(context):
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                answer = netcdf_helper(nc, scene, node_var + 'Phi')
+                answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
                 rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
@@ -1043,6 +1077,7 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
+
 class BlenderHandler(logging.Handler):
     def emit(self, record):
         MAXKEYLEN = 2**6 - 1    # FIXME: Is this universal?

@@ -37,7 +37,7 @@ baseLogger.setLevel(logging.DEBUG)
 from mathutils import *
 from math import *
 
-import os, shutil
+import shutil
 import numpy as np
 
 import subprocess

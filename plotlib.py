@@ -39,6 +39,12 @@ try:
 except ModuleNotFoundError as ierr:
     print("BLENDYN::plotlib.py: could not import cairosvg. Plots will only be saved"\
             + "in .svg format, and not displayed in Blender UI.")
+except OSError as oserr:
+    print("BLENDYN::plotlib.py: could not import cairosvg, OSError raised (linking "\
+            "error?). Plots will only be saved"\
+            + "in .svg format, and not displayed in Blender UI.")
+    print("The reported error was: {}".format(oserr))
+
 
 import numpy as np
 
@@ -762,7 +768,7 @@ class BLENDYN_OT_show_display_group(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
 
-        if mbs.display_enum_group is '':
+        if mbs.display_enum_group == '':
             message = "BLENDYN_OT_show_display_group::execute() "\
                     + "No Groups set"
             self.report({'ERROR'}, message)
