@@ -59,35 +59,9 @@ class BLENDYN_PG_component_element(bpy.types.PropertyGroup):
 # end of BLENDYN_PG_components_element class
 bpy.utils.register_class(BLENDYN_PG_component_element)
 
-class BLENDYN_PG_component_section(bpy.types.PropertyGroup):
-    """ Section, part of the component's geometry (mesh) model """
-    curve: PointerProperty(
-            type = bpy.types.Curve,
-            description = "Pointer to id_data of section's curve"
-    )
-    scale: FloatProperty(
-            name = "scale",
-            description = "Section scale factor",
-            min = 0.01,
-            default = 1.0,
-    )
-    element: StringProperty(
-            name = "element",
-            description = "Element the section is assigned to",
-            default = '',
-    )
-# -----------------------------------------------------------
-# end of BLENDYN_PG_components_section class
-bpy.utils.register_class(BLENDYN_PG_component_section)
- 
+
 class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
     """ Data of a component (structural model + geometry) """
-    type: EnumProperty(
-            items = [('FROM_SECTIONS', "From sections", "From Sections", '', 1),\
-                    ('MESH_OBJECT', "Mesh Object", "Mesh Object", '', 2)],
-            name = "component type",
-            default = 'FROM_SECTIONS'
-    )
     elements: CollectionProperty(
             type = BLENDYN_PG_component_element,
             description = "Pointer to id_data of MBDyn elements"
@@ -99,10 +73,6 @@ class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
     object: EnumProperty(
             items = get_comp_mesh_objects,
             name = "Mesh Object",
-    )
-    sections: CollectionProperty(
-            type = BLENDYN_PG_component_section,
-            description = "Pointer to id_data of section's curves"
     )
     mesh_ns: IntProperty(
             name = "mesh subdivisions",

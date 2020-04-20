@@ -339,18 +339,20 @@ def add_mesh_component(context, component):
         else: 
             return {'ELEM_TYPE_UNSUPPORTED'}
 
-    # parent object deformation to armature
+    # if a mesh object is selected for the component, 
+    # parent the object deformation to armature
     # FIXME: is there a way to do this without bpy.ops?
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
 
-    compOBJ = bpy.data.objects[component.object]
-    compOBJ.matrix_world = reference.matrix_world
-    compOBJ.select_set(state = True)
-    armOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = armOBJ
-    retval = bpy.ops.object.parent_set(type = 'ARMATURE_AUTO')
-    bpy.ops.object.select_all(action = 'DESELECT') 
+    if component.object:
+        compOBJ = bpy.data.objects[component.object]
+        compOBJ.matrix_world = reference.matrix_world
+        compOBJ.select_set(state = True)
+        armOBJ.select_set(state = True)
+        bpy.context.view_layer.objects.active = armOBJ
+        retval = bpy.ops.object.parent_set(type = 'ARMATURE_AUTO')
+        bpy.ops.object.select_all(action = 'DESELECT') 
 
     if retval == {'FINISHED'}:
         return retval

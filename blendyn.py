@@ -2086,21 +2086,8 @@ class BLENDYN_PT_components(bpy.types.Panel):
                 text = "Add Selected Elements")
         col = layout.column()
         col.alignment = 'LEFT'
-
-        
-        row = col.row()
-        row.prop(comp, "object")
-        row.label(text = "Component Type")
-        col.prop(comp, "type", text = "")
-        col = layout.column()
-        col.alignment = 'LEFT'
-        row = col.row()
-        if comp.type == 'MESH_OBJECT':
-            row.prop(comp, "object")
-        else:
-            # TODO: Display list of sections, with operators to add,
-            # remove, move and assign them
-            col.label(text = 'TODO: Sections definition')
+ 
+        col.prop(comp, "object")
         
         if mbs.adding_component:
             col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
