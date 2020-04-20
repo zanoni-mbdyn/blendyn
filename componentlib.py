@@ -321,8 +321,9 @@ def add_mesh_component(context, component):
     # add the armature object
     armature = bpy.data.armatures.new(component.name)
     armOBJ = bpy.data.objects.new(component.name, armature)
-    try: 
-        bpy.data.collections['mbdyn.components'].objects.link(armOBJ)
+    try:
+        mccol = bpy.data.collections['mbdyn.components']
+        mccol.objects.link(armOBJ)
     except KeyError:
         mccol = bpy.data.collections.new(name = 'mbdyn.components')
         bpy.context.scene.collection.children.link(mccol)
@@ -352,7 +353,7 @@ def add_mesh_component(context, component):
     # FIXME: is there a way to do this without bpy.ops?
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
-    component.armature = armOBJ
+    component.armature = armature
 
     if component.object:
         compOBJ = bpy.data.objects[component.object]

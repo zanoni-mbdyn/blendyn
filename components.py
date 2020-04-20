@@ -162,6 +162,9 @@ class BLENDYN_OT_component_remove(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         component = mbs.components[mbs.cd_index]
+        mccol = bpy.data.collections['mbdyn.components']
+        if component.object:
+            mccol.objects.unlink(bpy.data.objects[component.object])
         bpy.data.armatures.remove(component.armature)
         mbs.components.remove(mbs.cd_index)
         mbs.cd_index -= 1
@@ -204,17 +207,8 @@ class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
         selftag = "BLENDYN_OT_component_add_confirm::execute(): "
         mbs = context.scene.mbdyn
         component = mbs.components[mbs.cd_index]
-        if component.type == 'MESH_OBJECT':
-            retval = add_mesh_component(context, component)
-        elif component.type == 'FROM_SECTIONS':
-            retval = add_sections_component(context, component)
-        else:
-            # should not be reached!
-            message = "unknown component type!"
-            print(message)
-            baseLogger.error(selftag + message)
-            self.report({'ERROR'}, message)
-            return {'CANCELLED'}
+        
+        retval = add_mesh_component(context, component)
         mbs.adding_component = False
 
         if retval == {'ELEM_TYPE_UNSUPPORTED'}:
