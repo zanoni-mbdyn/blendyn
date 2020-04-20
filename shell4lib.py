@@ -27,6 +27,8 @@ import bpy, bmesh
 from mathutils import *
 from math import *
 
+from .utilslib import *
+
 def parse_shell4(rw, ed):
     """ Parses a shell4 element entry in the .log file """
 
@@ -139,10 +141,10 @@ def spawn_shell4_element(elem, context):
     mesh = shellOBJ.data
 
     # move vertices to nodes locations
-    mesh.vertices[0].co = shellOBJ.matrix_world.inverted()*n1OBJ.location
-    mesh.vertices[1].co = shellOBJ.matrix_world.inverted()*n2OBJ.location
-    mesh.vertices[3].co = shellOBJ.matrix_world.inverted()*n3OBJ.location
-    mesh.vertices[2].co = shellOBJ.matrix_world.inverted()*n4OBJ.location
+    mesh.vertices[0].co = shellOBJ.matrix_world.inverted()@n1OBJ.location
+    mesh.vertices[1].co = shellOBJ.matrix_world.inverted()@n2OBJ.location
+    mesh.vertices[3].co = shellOBJ.matrix_world.inverted()@n3OBJ.location
+    mesh.vertices[2].co = shellOBJ.matrix_world.inverted()@n4OBJ.location
 
     # create hooks
     bpy.ops.object.select_all(action = 'DESELECT')
@@ -154,7 +156,7 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[0].select_set(state = True)
+    mesh.verts[0].select = True
     mesh.select_flush(True)
     n1OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
@@ -164,7 +166,7 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[1].select_set(state = True)
+    mesh.verts[1].select = True
     mesh.select_flush(True)
     n2OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
@@ -174,7 +176,7 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[2].select_set(state = True)
+    mesh.verts[2].select = True
     mesh.select_flush(True)
     n4OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
@@ -184,7 +186,7 @@ def spawn_shell4_element(elem, context):
     mesh = bmesh.from_edit_mesh(shellOBJ.data)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     mesh.verts.ensure_lookup_table()
-    mesh.verts[3].select_set(state = True)
+    mesh.verts[3].select = True
     mesh.select_flush(True)
     n3OBJ.select_set(state = True)
     bpy.ops.object.hook_add_selob()
