@@ -79,6 +79,11 @@ class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
             description = "number of subdivisions in components' mesh",
             default = 20
     )
+    armature: PointerProperty(
+            type = bpy.types.Armature,
+            name = "Armature",
+            description = "Component armature"
+    )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_components_dictionary class
 bpy.utils.register_class(BLENDYN_PG_components_dictionary)
@@ -156,6 +161,8 @@ class BLENDYN_OT_component_remove(bpy.types.Operator):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
+        component = mbs.components[mbs.cd_index]
+        bpy.data.armatures.remove(component.armature)
         mbs.components.remove(mbs.cd_index)
         mbs.cd_index -= 1
         return {'FINISHED'}

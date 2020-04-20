@@ -352,6 +352,7 @@ def add_mesh_component(context, component):
     # FIXME: is there a way to do this without bpy.ops?
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
+    component.armature = armOBJ
 
     if component.object:
         compOBJ = bpy.data.objects[component.object]
@@ -360,7 +361,8 @@ def add_mesh_component(context, component):
         armOBJ.select_set(state = True)
         bpy.context.view_layer.objects.active = armOBJ
         retval = bpy.ops.object.parent_set(type = 'ARMATURE_AUTO')
-        bpy.ops.object.select_all(action = 'DESELECT') 
+        bpy.ops.object.select_all(action = 'DESELECT')
+        mccol.objects.link(compOBJ)
 
     if retval == {'FINISHED'}:
         return retval
