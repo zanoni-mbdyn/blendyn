@@ -107,10 +107,10 @@ def add_mesh_component(context, component):
             except KeyError:
                 pass
 
-        N1 = elcol.objects[node_objs[0]]
-        N2 = elcol.objects[node_objs[1]]
-        N3 = elcol.objects[node_objs[2]]
-        N4 = elcol.objects[node_objs[3]]
+        N1 = elcol.objects[node_objs[0].blender_object]
+        N2 = elcol.objects[node_objs[1].blender_object]
+        N3 = elcol.objects[node_objs[2].blender_object]
+        N4 = elcol.objects[node_objs[3].blender_object]
 
         pN1 = N1.matrix_world.to_translation()
         pN2 = N2.matrix_world.to_translation()
@@ -153,7 +153,7 @@ def add_mesh_component(context, component):
         bN2_32.use_deform = False
         # node 3 -- aligned with (pN3 - pN2)
         bN3_32 = edit_bones.new(elem.name + '_' + N3.name + '_32')
-        bN3_32.head = pN3 - 0.001*t1*L2
+        bN3_32.head = pN3 - 0.001*t2*L2
         bN3_32.tail = pN3
         bN3_32.use_deform = False
         # node 3 -- aligned with (pN4 - pN3)
@@ -165,32 +165,32 @@ def add_mesh_component(context, component):
         bN4_43 = edit_bones.new(elem.name + '_' + N4.name + '_43')
         bN4_43.head = pN4 - 0.001*t3*L3
         bN4_43.tail = pN4
-        bN1_43.use_deform = False
+        bN4_43.use_deform = False
         # node 4 -- aligned with (pN1 - pN4)
         bN4_14 = edit_bones.new(elem.name + '_' + N4.name + '_14')
         bN4_14.head = pN4
         bN4_14.tail = pN4 + 0.001*t4*L4
         bN4_14.use_deform = False
         # node 1 -- aligned with (pN1 - pN4)
-        bN4_14 = edit_bones.new(elem.name + '_' + N1.name + '_14')
-        bN4_14.head = pN1 - 0.001*t4*L4
-        bN4_14.tail = pN1
-        bN4_14.use_deform = False
+        bN1_14 = edit_bones.new(elem.name + '_' + N1.name + '_14')
+        bN1_14.head = pN1 - 0.001*t4*L4
+        bN1_14.tail = pN1
+        bN1_14.use_deform = False
 
         # volume 1 (node 1 -- node 2)
         bV1 = edit_bones.new(elem.name + '_V1')
-        bV1.head = bN1_21.head
-        bV1.tail = bN2_21.tail
+        bV1.head = bN1_21.tail
+        bV1.tail = bN2_21.head
         bV1.bbone_segments = celem.arm_ns
         # volume 2 (node 2 -- node 3)
         bV2 = edit_bones.new(elem.name + '_V2')
-        bV2.head = bN2_32.head
-        bV2.tail = bN3_32.tail
+        bV2.head = bN2_32.tail
+        bV2.tail = bN3_32.head
         bV2.bbone_segments = celem.arm_ns
         # volume 3 (node 3 -- node 4)
         bV3 = edit_bones.new(elem.name + '_V3')
-        bV3.head = bN3_43.head
-        bV3.tail = bN4_43.tail
+        bV3.head = bN3_43.tail
+        bV3.tail = bN4_43.head
         bV3.bbone_segments = celem.arm_ns
         # volume 4 (node 4 -- node 1)
         bV4 = edit_bones.new(elem.name + '_V4')
@@ -199,13 +199,16 @@ def add_mesh_component(context, component):
         bV4.bbone_segments = celem.arm_ns
 
         # parenting
-        bN1_14.parent = bN1_21
-        bN2_21.parent = bN2_32
-        bN3_32.parent = bN3_43
-        bN4_43.parent = bN4_14
+        bV1.parent = bN1_21
+        bV2.parent = bN2_32
+        bV3.parent = bN3_43
+        bV4.parent = bN4_14
+
+        # show as Bendy Bone
+        armOBJ.data.display_type = 'BBONE'
 
         # constraints
-        bpy.ops.object_mode_set(mode = 'POSE', toggle = False)
+        bpy.ops.object.mode_set(mode = 'POSE', toggle = False)
 
         # volume 1
         V1 = armOBJ.pose.bones[elem.name + '_V1']
@@ -248,58 +251,117 @@ def add_mesh_component(context, component):
         V4.bbone_handle_type_end = 'TANGENT'
         V4.bbone_custom_handle_end = armOBJ.data.bones[elem.name + '_' + N1.name + '_14']
         
-        # node 1
-        pbN1 = armOBJ.pose.bones[elem.name + '_' + N1.name + '_21']
-        clN1 = pbN1.constraints.new(type = 'COPY_LOCATION')
-        clN1.target = N1
-        crN1 = pbN1.constraints.new(type = 'CHILD_OF')
-        crN1.use_location_x = False
-        crN1.use_location_y = False
-        crN1.use_location_z = False
-        crN1.use_scale_x = False
-        crN1.use_scale_y = False
-        crN1.use_scale_z = False
-        crN1.target = N1
-        crN1.inverse_matrix = N1.matrix_world.inverted()
-        # node 2
-        pbN2 = armOBJ.pose.bones[elem.name + '_' + N2.name + '_32']
-        clN2 = pbN2.constraints.new(type = 'COPY_LOCATION')
-        clN2.target = N2
-        crN2 = pbN1.constraints.new(type = 'CHILD_OF')
-        crN2.use_location_x = False
-        crN2.use_location_y = False
-        crN2.use_location_z = False
-        crN2.use_scale_x = False
-        crN2.use_scale_y = False
-        crN2.use_scale_z = False
-        crN2.target = N2
-        crN2.inverse_matrix = N2.matrix_world.inverted()
-        # node 3
-        pbN3 = armOBJ.pose.bones[elem.name + '_' + N3.name + '_43']
-        clN3 = pbN1.constraints.new(type = 'COPY_LOCATION')
-        clN3.target = N3
-        crN3 = pbN3.constraints.new(type = 'CHILD_OF')
-        crN3.use_location_x = False
-        crN3.use_location_y = False
-        crN3.use_location_z = False
-        crN3.use_scale_x = False
-        crN3.use_scale_y = False
-        crN3.use_scale_z = False
-        crN3.target = N3
-        crN3.inverse_matrix = N3.matrix_world.inverted()
-        # node 4
-        pbN4 = armOBJ.pose.bones[elem.name + '_' + N4.name + '_14']
-        clN4 = pbN4.constraints.new(type = 'COPY_LOCATION')
-        clN4.target = N4
-        crN4 = pbN4.constraints.new(type = 'CHILD_OF')
-        crN4.use_location_x = False
-        crN4.use_location_y = False
-        crN4.use_location_z = False
-        crN4.use_scale_x = False
-        crN4.use_scale_y = False
-        crN4.use_scale_z = False
-        crN4.target = N4
-        crN4.inverse_matrix = N4.matrix_world.inverted()
+        # node 1 -- aligned with (pN2 - pN1)
+        pbN1_21 = armOBJ.pose.bones[elem.name + '_' + N1.name + '_21']
+        clN1_21 = pbN1_21.constraints.new(type = 'COPY_LOCATION')
+        clN1_21.target = N1
+        crN1_21 = pbN1_21.constraints.new(type = 'CHILD_OF')
+        crN1_21.use_location_x = False
+        crN1_21.use_location_y = False
+        crN1_21.use_location_z = False
+        crN1_21.use_scale_x = False
+        crN1_21.use_scale_y = False
+        crN1_21.use_scale_z = False
+        crN1_21.target = N1
+        crN1_21.inverse_matrix = N1.matrix_world.inverted()
+        
+        # node 1 -- aligned with (pN1 - pN4)
+        pbN1_14 = armOBJ.pose.bones[elem.name + '_' + N1.name + '_14']
+        clN1_14 = pbN1_14.constraints.new(type = 'COPY_LOCATION')
+        clN1_14.target = N1
+        crN1_14 = pbN1_14.constraints.new(type = 'CHILD_OF')
+        crN1_14.use_location_x = False
+        crN1_14.use_location_y = False
+        crN1_14.use_location_z = False
+        crN1_14.use_scale_x = False
+        crN1_14.use_scale_y = False
+        crN1_14.use_scale_z = False
+        crN1_14.target = N1
+        crN1_14.inverse_matrix = N1.matrix_world.inverted()
+        
+        # node 2 -- aligned with (pN2 - pN1)
+        pbN2_21 = armOBJ.pose.bones[elem.name + '_' + N2.name + '_21']
+        clN2_21 = pbN2_21.constraints.new(type = 'COPY_LOCATION')
+        clN2_21.target = N2
+        crN2_21 = pbN2_21.constraints.new(type = 'CHILD_OF')
+        crN2_21.use_location_x = False
+        crN2_21.use_location_y = False
+        crN2_21.use_location_z = False
+        crN2_21.use_scale_x = False
+        crN2_21.use_scale_y = False
+        crN2_21.use_scale_z = False
+        crN2_21.target = N2
+        crN2_21.inverse_matrix = N2.matrix_world.inverted()
+        
+        # node 2 -- aligned with (pN3 - pN2)
+        pbN2_32 = armOBJ.pose.bones[elem.name + '_' + N2.name + '_32']
+        clN2_32 = pbN2_32.constraints.new(type = 'COPY_LOCATION')
+        clN2_32.target = N2
+        crN2_32 = pbN2_32.constraints.new(type = 'CHILD_OF')
+        crN2_32.use_location_x = False
+        crN2_32.use_location_y = False
+        crN2_32.use_location_z = False
+        crN2_32.use_scale_x = False
+        crN2_32.use_scale_y = False
+        crN2_32.use_scale_z = False
+        crN2_32.target = N2
+        crN2_32.inverse_matrix = N2.matrix_world.inverted() 
+
+        # node 3 -- aligned with (pN3 - pN2)
+        pbN3_32 = armOBJ.pose.bones[elem.name + '_' + N3.name + '_32']
+        clN3_32 = pbN3_32.constraints.new(type = 'COPY_LOCATION')
+        clN3_32.target = N3
+        crN3_32 = pbN3_32.constraints.new(type = 'CHILD_OF')
+        crN3_32.use_location_x = False
+        crN3_32.use_location_y = False
+        crN3_32.use_location_z = False
+        crN3_32.use_scale_x = False
+        crN3_32.use_scale_y = False
+        crN3_32.use_scale_z = False
+        crN3_32.target = N3
+        crN3_32.inverse_matrix = N3.matrix_world.inverted()
+        
+        # node 3 -- aligned with (pN4 - pN3)
+        pbN3_43 = armOBJ.pose.bones[elem.name + '_' + N3.name + '_43']
+        clN3_43 = pbN3_43.constraints.new(type = 'COPY_LOCATION')
+        clN3_43.target = N3
+        crN3_43 = pbN3_43.constraints.new(type = 'CHILD_OF')
+        crN3_43.use_location_x = False
+        crN3_43.use_location_y = False
+        crN3_43.use_location_z = False
+        crN3_43.use_scale_x = False
+        crN3_43.use_scale_y = False
+        crN3_43.use_scale_z = False
+        crN3_43.target = N3
+        crN3_43.inverse_matrix = N3.matrix_world.inverted()
+
+        # node 4 -- aligned with (pN4 - pN3)
+        pbN4_43 = armOBJ.pose.bones[elem.name + '_' + N4.name + '_43']
+        clN4_43 = pbN4_43.constraints.new(type = 'COPY_LOCATION')
+        clN4_43.target = N4
+        crN4_43 = pbN4_43.constraints.new(type = 'CHILD_OF')
+        crN4_43.use_location_x = False
+        crN4_43.use_location_y = False
+        crN4_43.use_location_z = False
+        crN4_43.use_scale_x = False
+        crN4_43.use_scale_y = False
+        crN4_43.use_scale_z = False
+        crN4_43.target = N4
+        crN4_43.inverse_matrix = N4.matrix_world.inverted() 
+        
+        # node 4 -- aligned with (pN1 - pN4)
+        pbN4_14 = armOBJ.pose.bones[elem.name + '_' + N4.name + '_14']
+        clN4_14 = pbN4_14.constraints.new(type = 'COPY_LOCATION')
+        clN4_14.target = N4
+        crN4_14 = pbN4_14.constraints.new(type = 'CHILD_OF')
+        crN4_14.use_location_x = False
+        crN4_14.use_location_y = False
+        crN4_14.use_location_z = False
+        crN4_14.use_scale_x = False
+        crN4_14.use_scale_y = False
+        crN4_14.use_scale_z = False
+        crN4_14.target = N4
+        crN4_14.inverse_matrix = N4.matrix_world.inverted()
 
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
         # -------------------------------------------------------
@@ -358,9 +420,12 @@ def add_mesh_component(context, component):
         bV2.head = bN2.tail
         bV2.tail = bN3.head
         bV2.bbone_segments = celem.arm_ns
+        
         # parenting
         bV1.parent = bN1
         bV2.parent = bN2
+
+        # show as Bendy Bone
         armOBJ.data.display_type = 'BBONE'
 
         # contraints
@@ -547,7 +612,7 @@ def add_mesh_component(context, component):
                 n = [obj for obj in elcol.objects \
                         if ((obj.mbdyn.dkey in nd.keys()) and (nd[obj.mbdyn.dkey].int_label == elem.nodes[0].int_label))]
                 reference = n[0]
-            add_comp_armature_bones_plate(armOBJ, armature, component_celem)
+            add_comp_armature_bones_plate(armOBJ, armature, component, celem)
         else:
             return {'ELEM_TYPE_UNSUPPORTED'}
 
