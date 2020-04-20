@@ -118,6 +118,7 @@ classes = (
         BLENDYN_OT_component_add,
         BLENDYN_OT_component_remove,
         BLENDYN_OT_component_add_confirm,
+        BLENDYN_OT_component_add_cancel,
         BLENDYN_OT_component_add_elem,
         BLENDYN_OT_component_remove_elem,
         BLENDYN_OT_component_remove_all_elems,

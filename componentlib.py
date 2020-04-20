@@ -36,6 +36,15 @@ from .utilslib import *
 
 DEFORMABLE_ELEMENTS = {'beam3', 'beam3'}
 
+def update_cd_index(self, context):
+    mbs = context.scene.mbdyn
+    comps = mbs.components
+
+    if (mbs.cd_index != len(comps) - 1) and mbs.adding_component:
+        mbs.cd_index = len(comps) - 1
+    elif mbs.cd_index >= len(comps):
+        mbs.cd_index = len(comps) - 1
+
 def get_comp_mesh_objects(self, context):
     mbs = context.scene.mbdyn
     nd = mbs.nodes
@@ -135,7 +144,7 @@ def add_mesh_component(context, component):
         bV2.head = bN2.tail
         bV2.tail = bN3.head
         bV2.bbone_segments = celem.arm_ns
-        # parentin
+        # parenting
         bV1.parent = bN1
         bV2.parent = bN2
         armOBJ.data.display_type = 'BBONE'
@@ -231,7 +240,7 @@ def add_mesh_component(context, component):
         t1 = -pRF1 + pRF2
         t1.normalize()
 
-        # approximate length (FIXME: use 'exact' length?)
+        # beam length
         L = (pRF2 - pRF1).length
 
         # enter edit mode and add bones
@@ -239,20 +248,20 @@ def add_mesh_component(context, component):
         edit_bones = armature.edit_bones 
 
         # node 1
-        bN1 = edit_bones.new(node_objs[0].name)
-        bN1.head = (0.0, 0.0, 0.0)
-        bN1.tail = 0.001*L*t1
+        bN1 = edit_bones.new(elem.name + '_' + node_objs[0].name)
+        bN1.head = pRF1 
+        bN1.tail = pRF1 + 0.001*t1*L
         bN1.use_deform = False
-        # volume 1 (node 1 -- node 2)
-        bV1 = edit_bones.new('V1')
-        bV1.head = bN1.tail
-        bV1.tail = bV1.head + 0.4995*L*t1
-        bV1.bbone_segments = celem.arm_ns
         # node 2
-        bN2 = edit_bones.new(node_objs[1].name)
-        bN2.head = bV1.tail
-        bN2.tail = bN2.head + 0.001*L*t1
-        bN1.use_deform = False
+        bN2 = edit_bones.new(elem.name + '_' + node_objs[1].name)
+        bN2.head = pRF2 - 0.001*t1*L
+        bN2.tail = pRF2
+        bN2.use_deform = False
+        # volume 1 (node 1 -- node 2)
+        bV1 = edit_bones.new(elem.name + '_V1')
+        bV1.head = bN1.tail
+        bV1.tail = bN2.head
+        bV1.bbone_segments = celem.arm_ns
         # parenting
         bV1.parent = bN1
         armOBJ.data.display_type = 'BBONE'
@@ -260,36 +269,46 @@ def add_mesh_component(context, component):
         # contraints
         bpy.ops.object.mode_set(mode = 'POSE', toggle = False)
 
+        # volume 1
+        V1 = armOBJ.pose.bones[elem.name + '_V1']
+        stV1N2 = V1.constraints.new(type = 'STRETCH_TO')
+        stV1N2.target = armOBJ
+        stV1N2.subtarget = elem.name + '_' + node_objs[1].name
+        V1 = armOBJ.data.bones['_V1']
+        V1.bbone_handle_type_start = 'TANGENT'
+        V1.bbone_custom_handle_start = armOBJ.data.bones[elem.name + '_' + node_objs[0].name]
+        V1.bbone_handle_type_end = 'TANGENT'
+        V1.bbone_custom_handle_end = armOBJ.data.bones[elem.name + '_' + node_objs[1].name]
         # node 1
         N1 = armOBJ.pose.bones[node_objs[0].name]
         clN1RF1 = N1.constraints.new(type = 'COPY_LOCATION')
         clN1RF1.target = RF1
-        crN1RF1 = N1.constraints.new(type = 'COPY_ROTATION')
+        crN1RF1 = N1.constraints.new(type = 'CHILD_OF')
+        crN1RF1.use_location_x = False
+        crN1RF1.use_location_y = False
+        crN1RF1.use_location_z = False
+        crN1RF1.use_scale_x = False
+        crN1RF1.use_scale_y = False
+        crN1RF1.use_scale_z = False
         crN1RF1.target = RF1
-        crN1RF1.mix_mode = 'ADD'
-        crN1RF1.euler_order = 'ZXY' 
-        # volume 1
-        V1 = armOBJ.pose.bones['V1']
-        stV1N2 = V1.constraints.new(type = 'STRETCH_TO')
-        stV1N2.target = armOBJ
-        stV1N2.subtarget = node_objs[0].name
-        V1 = armOBJ.data.bones['V1']
-        V1.bbone_handle_type_start = 'TANGENT'
-        V1.bbone_custom_handle_start = armOBJ.data.bones[node_objs[0].name]
-        V1.bbone_handle_type_end = 'TANGENT'
-        V1.bbone_custom_handle_end = armOBJ.data.bones[node_objs[1].name]
+        crN1RF1.inverse_matrix = RF1.matrix_world.inverted()
         # node 2
         N2 = armOBJ.pose.bones[node_objs[1].name]
         clN2RF2 = N2.constraints.new(type = 'COPY_LOCATION')
         clN2RF2.target = RF2
-        crN2RF2 = N2.constraints.new(type = 'COPY_ROTATION')
+        crN2RF2 = N2.constraints.new(type = 'CHILD_OF')
+        crN2RF2.use_location_x = False
+        crN2RF2.use_location_y = False
+        crN2RF2.use_location_z = False
+        crN2RF2.use_scale_x = False
+        crN2RF2.use_scale_y = False
+        crN2RF2.use_scale_z = False
         crN2RF2.target = RF2
-        crN2RF2.mix_mode = 'ADD'
-        crN2RF2.euler_order = 'ZXY' 
+        crN2RF2.inverse_matrix = RF2.matrix_world.inverted()
 
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
         # -------------------------------------------------------
-        # end of add_comp_armature_bones_beam3() helper function
+        # end of add_comp_armature_bones_beam2() helper function
 
     # add the armature object
     armature = bpy.data.armatures.new(component.name)

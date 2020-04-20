@@ -169,6 +169,7 @@ class BLENDYN_OT_component_add(bpy.types.Operator):
         mbs = context.scene.mbdyn
         comp = mbs.components.add()
         comp.name = 'component_' + str(len(mbs.components))
+        mbs.cd_index = len(mbs.components) - 1 
         mbs.adding_component = True
         return {'FINISHED'}
     
@@ -194,17 +195,37 @@ class BLENDYN_OT_component_remove(bpy.types.Operator):
 # end of BLENDYN_OT_component_remove class
 
 
+class BLENDYN_OT_component_add_cancel(bpy.types.Operator):
+    """ Cancels adding the component """
+    bl_idname = "blendyn.add_component_cancel"
+    bl_label = "Cancel add of MBDyn component"
+
+    def execute(self, context):
+        selftag = "BLENDYN_OT_component_add_cancel::execute(): "
+        mbs = context.scene.mbdyn
+        mbs.components.remove(mbs.cd_index)
+        mbs.adding_component = False
+        mbs.cd_index -= 1
+
+        message = "component add aborted."
+        print(message)
+        baseLogger.info(selftag + message)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_add_cancel class
+
 class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
     """ Adds the component and sets adding_component flag to False  """
     bl_idname = "blendyn.add_component_confirm"
-    bl_label = "Add an MBDyn component"
-
-    comp_idx: bpy.props.IntProperty()
+    bl_label = "Confirm add of MBDyn component"
 
     def execute(self, context):
         selftag = "BLENDYN_OT_component_add_confirm::execute(): "
         mbs = context.scene.mbdyn
-        component = mbs.components[self.comp_idx]
+        component = mbs.components[mbs.cd_index]
         if component.type == 'MESH_OBJECT':
             retval = add_mesh_component(context, component)
         elif component.type == 'FROM_SECTIONS':
@@ -247,11 +268,9 @@ class BLENDYN_OT_component_add_elem(bpy.types.Operator):
     bl_idname = "blendyn.component_add_elem"
     bl_label = "Add an element to a MBDyn component"
 
-    comp_idx: bpy.props.IntProperty()
-
     def execute(self, context):
         mbs = context.scene.mbdyn
-        component = mbs.components[self.comp_idx]
+        component = mbs.components[mbs.cd_index]
         if mbs.comp_selected_elem not in component.elements.keys():
             celem = component.elements.add()
             celem.elem = mbs.elems[mbs.comp_selected_elem].name
@@ -273,11 +292,9 @@ class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
     bl_idname = "blendyn.component_remove_elem"
     bl_label = "Remove an element from a MBDyn component"
 
-    comp_idx: bpy.props.IntProperty()
-
     def execute(self, context):
         mbs = context.scene.mbdyn
-        component = mbs.components[self.comp_idx]
+        component = mbs.components[mbs.cd_index]
         component.elements.remove(component.el_index)
         for idx in range(len(component.elements)):
             component.elements[idx].str_idx = idx
@@ -294,11 +311,9 @@ class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
     bl_idname = "blendyn.component_remove_elem"
     bl_label = "Remove an element from a MBDyn component"
 
-    comp_idx: bpy.props.IntProperty()
-
     def execute(self, context):
         mbs = context.scene.mbdyn
-        component = mbs.components[self.comp_idx]
+        component = mbs.components[mbs.cd_index]
         component.elements.remove(component.el_index)
         for idx in range(len(component.elements)):
             component.elements[idx].str_idx = idx
@@ -314,11 +329,9 @@ class BLENDYN_OT_component_remove_all_elems(bpy.types.Operator):
     bl_idname = "blendyn.component_remove_all_elems"
     bl_label = "Remove an element from a MBDyn component"
 
-    comp_idx: bpy.props.IntProperty()
-
     def execute(self, context):
         mbs = context.scene.mbdyn
-        component = mbs.components[self.comp_idx]
+        component = mbs.components[mbs.cd_index]
         component.elements.clear()
         return {'FINISHED'}
     
@@ -332,12 +345,10 @@ class BLENDYN_OT_component_add_selected_elems(bpy.types.Operator):
     bl_idname = "blendyn.component_add_selected_elems"
     bl_label = "Add selected elements to component"
 
-    comp_idx: bpy.props.IntProperty()
-
     def execute(self, context):
         mbs = context.scene.mbdyn
         ed = mbs.elems
-        component = mbs.components[self.comp_idx]
+        component = mbs.components[mbs.cd_index]
         sel_elems = [ed[obj.mbdyn.dkey] for obj in bpy.context.selected_objects \
                 if (obj.mbdyn.type == 'element') and (ed[obj.mbdyn.dkey].type in DEFORMABLE_ELEMENTS) ]
         for idx in range(len(sel_elems)):
