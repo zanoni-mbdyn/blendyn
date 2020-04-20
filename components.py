@@ -157,6 +157,7 @@ class BLENDYN_OT_component_remove(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         mbs.components.remove(mbs.cd_index)
+        mbs.cd_index -= 1
         return {'FINISHED'}
     
     def invoke(self, context, event):

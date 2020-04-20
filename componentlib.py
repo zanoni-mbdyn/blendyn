@@ -40,10 +40,14 @@ def update_cd_index(self, context):
     mbs = context.scene.mbdyn
     comps = mbs.components
 
-    if (mbs.cd_index != len(comps) - 1) and mbs.adding_component:
-        mbs.cd_index = len(comps) - 1
-    elif mbs.cd_index >= len(comps):
-        mbs.cd_index = len(comps) - 1
+    if len(comps):
+        if (mbs.cd_index != len(comps) - 1) and mbs.adding_component:
+            mbs.cd_index = len(comps) - 1
+        elif mbs.cd_index >= len(comps):
+            mbs.cd_index = len(comps) - 1
+# -----------------------------------------------------------
+# end of update_cd_index() function
+
 
 def get_comp_mesh_objects(self, context):
     mbs = context.scene.mbdyn
@@ -54,6 +58,9 @@ def get_comp_mesh_objects(self, context):
     mesh_objs = [obj for obj in bpy.data.objects \
             if (obj.type == 'MESH') and (obj.mbdyn.dkey not in nd.keys()) and (obj.mbdyn.dkey not in ed.keys())]
     return [(mesh_obj.name, mesh_obj.name, "") for mesh_obj in mesh_objs]
+# -----------------------------------------------------------
+# end of get_comp_mesh_objects() function
+
 
 def update_elem_str_idx(self, context):
     # Updates the order of the elements in component
@@ -68,6 +75,7 @@ def update_elem_str_idx(self, context):
                 break
 # -----------------------------------------------------------
 # end of update_elem_str_idx() function
+
 
 def add_mesh_component(context, component):
     """ Finalized a component definition by creating the armature 

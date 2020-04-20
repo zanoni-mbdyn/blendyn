@@ -641,7 +641,8 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     cd_index: IntProperty(
             name = "MBDyn components collection index",
             default = 0,
-            update = update_cd_index
+            min = 0,
+            update = update_cd_index,
     )
     comp_selected_elem: EnumProperty(
             items = get_deformable_elems,
@@ -2051,49 +2052,51 @@ class BLENDYN_PT_components(bpy.types.Panel):
             row = col.row()
             row.operator(BLENDYN_OT_component_remove.bl_idname, \
                     text = "Remove Component")
-            comp = comps[mbs.cd_index]
+            if len(comps):
+                comp = comps[mbs.cd_index]
         else:
             comp = comps[-1]
 
-        col = layout.column()
-        col.label(text = "Component Elements:")
-        row = col.row()
-        split = row.split(factor = 0.2)
-        col = split.column()
-        col.label(text = "#")
-        col = split.column()
-        split = col.split(factor = .67)
-        col = split.column()
-        col.label(text = "element")
-        col = split.column()
-        col.label(text = "subs")
-        col = layout.column()
-        row = col.row()
-        row.template_list("BLENDYN_UL_component_elements_list", \
-            "Component elements", \
-            comp, "elements", \
-            comp, "el_index")
-        col.prop(mbs, "comp_selected_elem", text = "Add")
-        col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
-                text = "Add Element")
-        col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \
-                text = "Remove Element")
-
-        col = layout.column()
-        col.operator(BLENDYN_OT_component_remove_all_elems.bl_idname, \
-                text = "Remove All Elements")
-        col.operator(BLENDYN_OT_component_add_selected_elems.bl_idname, \
-                text = "Add Selected Elements")
-        col = layout.column()
-        col.alignment = 'LEFT'
- 
-        col.prop(comp, "object")
-        
-        if mbs.adding_component:
-            col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
-                text = "Confirm")
-            col.operator(BLENDYN_OT_component_add_cancel.bl_idname, \
-                text = "Cancel")
+        if len(comps):
+            col = layout.column()
+            col.label(text = "Component Elements:")
+            row = col.row()
+            split = row.split(factor = 0.2)
+            col = split.column()
+            col.label(text = "#")
+            col = split.column()
+            split = col.split(factor = .67)
+            col = split.column()
+            col.label(text = "element")
+            col = split.column()
+            col.label(text = "subs")
+            col = layout.column()
+            row = col.row()
+            row.template_list("BLENDYN_UL_component_elements_list", \
+                "Component elements", \
+                comp, "elements", \
+                comp, "el_index")
+            col.prop(mbs, "comp_selected_elem", text = "Add")
+            col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
+                    text = "Add Element")
+            col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \
+                    text = "Remove Element")
+    
+            col = layout.column()
+            col.operator(BLENDYN_OT_component_remove_all_elems.bl_idname, \
+                    text = "Remove All Elements")
+            col.operator(BLENDYN_OT_component_add_selected_elems.bl_idname, \
+                    text = "Add Selected Elements")
+            col = layout.column()
+            col.alignment = 'LEFT'
+     
+            col.prop(comp, "object")
+            
+            if mbs.adding_component:
+                col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
+                    text = "Confirm")
+                col.operator(BLENDYN_OT_component_add_cancel.bl_idname, \
+                    text = "Cancel")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_components_scene
 
