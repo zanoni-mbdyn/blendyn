@@ -34,7 +34,7 @@ from math import *
 
 from .utilslib import *
 
-DEFORMABLE_ELEMENTS = {'beam3', 'beam3'}
+DEFORMABLE_ELEMENTS = {'beam3', 'beam2', 'shell4', 'membrane4'}
 
 def update_cd_index(self, context):
     mbs = context.scene.mbdyn

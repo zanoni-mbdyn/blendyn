@@ -32,6 +32,7 @@ from . prismjlib    import *
 from . revjlib      import *
 from . rodjlib      import *
 from . shell4lib    import *
+from . membrane4lib import *
 from . sphjlib      import *
 from . totjlib      import *
 from . elementlib   import *
@@ -79,6 +80,7 @@ classes = (
         BLENDYN_OT_import_rod,
         BLENDYN_OT_write_rod_input,
         BLENDYN_OT_import_shell4,
+        BLENDYN_OT_import_membrane4,
         BLENDYN_OT_import_spherical_hinge,
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
