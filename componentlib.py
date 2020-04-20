@@ -57,7 +57,10 @@ def get_comp_mesh_objects(self, context):
 
     mesh_objs = [obj for obj in bpy.data.objects \
             if (obj.type == 'MESH') and (obj.mbdyn.dkey not in nd.keys()) and (obj.mbdyn.dkey not in ed.keys())]
-    return [(mesh_obj.name, mesh_obj.name, "") for mesh_obj in mesh_objs]
+    mo = [(mesh_obj.name, mesh_obj.name, "") for mesh_obj in mesh_objs]
+    # allow to not set any object, and just create the armature
+    mo.append([('', '', '')])        
+    return mo 
 # -----------------------------------------------------------
 # end of get_comp_mesh_objects() function
 
@@ -355,6 +358,7 @@ def add_mesh_component(context, component):
     bpy.ops.object.select_all(action = 'DESELECT')
     component.armature = armature
 
+    retval = {'FINISHED'}
     if component.object:
         compOBJ = bpy.data.objects[component.object]
         compOBJ.matrix_world = reference.matrix_world
