@@ -222,7 +222,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                     obj.keyframe_insert(data_path = "rotation_euler")
                 elif par == 'MATRIX':
                     obj.rotation_mode = 'QUATERNION'
-                    q = Matrix(( nc.variables[node_var + 'R'][eigsol.step - 1])).transposed().to_quaternion
+                    q = Matrix(( nc.variables[node_var + 'R'][eigsol.step - 1])).transposed().to_quaternion()
                     obj.rotation_quaternion = q
                     obj.keyframe_insert(data_path = "rotation_quaternion")
                 else:
