@@ -59,7 +59,7 @@ def get_comp_mesh_objects(self, context):
             if (obj.type == 'MESH') and (obj.mbdyn.dkey not in nd.keys()) and (obj.mbdyn.dkey not in ed.keys())]
     mo = [(mesh_obj.name, mesh_obj.name, "") for mesh_obj in mesh_objs]
     # allow to not set any object, and just create the armature
-    mo.append([('', '', '')])        
+    mo.append(('', '', ''))        
     return mo 
 # -----------------------------------------------------------
 # end of get_comp_mesh_objects() function
@@ -543,7 +543,7 @@ def add_mesh_component(context, component):
         stV1N2 = V1.constraints.new(type = 'STRETCH_TO')
         stV1N2.target = armOBJ
         stV1N2.subtarget = RF2.name
-        V1 = armOBJ.data.bones['_V1']
+        V1 = armOBJ.data.bones[elem.name + '_V1']
         V1.bbone_handle_type_start = 'TANGENT'
         V1.bbone_custom_handle_start = armOBJ.data.bones[RF1.name]
         V1.bbone_handle_type_end = 'TANGENT'
