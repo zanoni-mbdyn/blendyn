@@ -203,7 +203,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                 par = dictobj.parametrization 
                 if par == 'PHI':
                     obj.rotation_mode = 'AXIS_ANGLE'
-                    rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
+                    rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step - 1, :] ))
                     rotvec_norm = rotvec.normalized()
                     obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
@@ -222,8 +222,8 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                     obj.keyframe_insert(data_path = "rotation_euler")
                 elif par == 'MATRIX':
                     obj.rotation_mode = 'QUATERNION'
-                    R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
-                    obj.rotation_quaternion = R.to_quaternion()
+                    q = Matrix(( nc.variables[node_var + 'R'][eigsol.step - 1])).transposed().to_quaternion()
+                    obj.rotation_quaternion = q
                     obj.keyframe_insert(data_path = "rotation_quaternion")
                 else:
                     # Should not be reached
