@@ -616,6 +616,14 @@ def add_mesh_component(context, component):
         else:
             return {'ELEM_TYPE_UNSUPPORTED'}
 
+    # remove component elements from the update list
+    celems = component.elements.keys()
+    etu = mbs.elems_to_update
+    if component.remove_from_etu:
+        for ude in etu:
+            if ude.dkey in celems:
+                etu.remove(etu.find(ude.name))
+
     # if a mesh object is selected for the component, 
     # parent the object deformation to armature
     # FIXME: is there a way to do this without bpy.ops?
@@ -632,7 +640,8 @@ def add_mesh_component(context, component):
         bpy.context.view_layer.objects.active = armOBJ
         retval = bpy.ops.object.parent_set(type = 'ARMATURE_AUTO')
         bpy.ops.object.select_all(action = 'DESELECT')
-        mccol.objects.link(compOBJ)
+        if compOBJ.name not in mccol.objects.keys():
+            mccol.objects.link(compOBJ)
 
     if retval == {'FINISHED'}:
         return retval

@@ -84,6 +84,11 @@ class BLENDYN_PG_components_dictionary(bpy.types.PropertyGroup):
             name = "Armature",
             description = "Component armature"
     )
+    remove_from_etu: BoolProperty(
+            name = "Disable element update",
+            description = "Remove component elements from update list",
+            default = False
+    )
 # -----------------------------------------------------------
 # end of BLENDYN_PG_components_dictionary class
 bpy.utils.register_class(BLENDYN_PG_components_dictionary)

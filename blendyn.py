@@ -2089,9 +2089,11 @@ class BLENDYN_PT_components(bpy.types.Panel):
                     text = "Remove All Elements")
             col.operator(BLENDYN_OT_component_add_selected_elems.bl_idname, \
                     text = "Add Selected Elements")
+            if mbs.adding_component:
+                col.prop(comp, "remove_from_etu", text = "Disable elements update")
+
             col = layout.column()
-            col.alignment = 'LEFT'
-     
+            col.alignment = 'LEFT' 
             col.prop(comp, "object")
             
             if mbs.adding_component:
