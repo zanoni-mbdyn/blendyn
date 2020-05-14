@@ -482,28 +482,28 @@ def spawn_beam3_element(elem, context):
     polydata.points[2].co = M2
     polydata.points[3].co = P3
 
-    # set the tilt angles of the sections
-    t3 = P3 - M2
-    t3.normalize()
-
-    l1 = ((M1 - P1)).length
-    l2 = ((P2 - M1)).length
-    l3 = ((M2 - P2)).length
-    l4 = ((P3 - M2)).length
-
-    # relative rotation quaternions
-    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1OBJ.matrix_world.to_quaternion()).conjugated()
-    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2OBJ.matrix_world.to_quaternion()).conjugated()
-    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3OBJ.matrix_world.to_quaternion()).conjugated()
-
-    phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
-    phi2 = t2.to_3d().dot(cquat(qr2).to_exponential_map())
-    phi3 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
-
-    cvdata.splines[0].points[0].tilt = phi1 
-    cvdata.splines[0].points[1].tilt = phi1*l1/(l1 + l2) + phi2*l2/(l1 + l2)
-    cvdata.splines[0].points[2].tilt = phi2*l3/(l3 + l4) + phi3*l4/(l3 + l4)
-    cvdata.splines[0].points[3].tilt = phi3
+#     # set the tilt angles of the sections
+#     t3 = P3 - M2
+#     t3.normalize()
+# 
+#     l1 = ((M1 - P1)).length
+#     l2 = ((P2 - M1)).length
+#     l3 = ((M2 - P2)).length
+#     l4 = ((P3 - M2)).length
+# 
+#     # relative rotation quaternions
+#     qr1 = Quaternion((elem.rotoffsets[0].value))@(n1OBJ.matrix_world.to_quaternion()).conjugated()
+#     qr2 = Quaternion((elem.rotoffsets[1].value))@(n2OBJ.matrix_world.to_quaternion()).conjugated()
+#     qr3 = Quaternion((elem.rotoffsets[2].value))@(n3OBJ.matrix_world.to_quaternion()).conjugated()
+# 
+#     phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
+#     phi2 = t2.to_3d().dot(cquat(qr2).to_exponential_map())
+#     phi3 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
+# 
+#     cvdata.splines[0].points[0].tilt = phi1 
+#     cvdata.splines[0].points[1].tilt = phi1*l1/(l1 + l2) + phi2*l2/(l1 + l2)
+#     cvdata.splines[0].points[2].tilt = phi2*l3/(l3 + l4) + phi3*l4/(l3 + l4)
+#     cvdata.splines[0].points[3].tilt = phi3
 
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
