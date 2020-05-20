@@ -158,6 +158,23 @@ class BLENDYN_OT_component_add(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add class
 
+class BLENDYN_OT_component_edit(bpy.types.Operator):
+    """ Open component for editing  """
+    bl_idname = "blendyn.edit_component"
+    bl_label = "Edit selected MBDyn component"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        component = mbs.components[mbs.cd_index]
+        mccol = bpy.data.collections['mbdyn.components']
+        mbs.editing_component = True
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_edit class
+
 
 class BLENDYN_OT_component_remove(bpy.types.Operator):
     """ Removes component  """
@@ -203,6 +220,26 @@ class BLENDYN_OT_component_add_cancel(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add_cancel class
 
+class BLENDYN_OT_component_edit_cancel(bpy.types.Operator):
+    """ Cancels editing the current component """
+    bl_idname = "blendyn.edit_component_cancel"
+    bl_label = "Cancel edit of MBDyn component"
+
+    def execute(self, context):
+        selftag = "BLENDYN_OT_component_edit_cancel::execute(): "
+        mbs = context.scene.mbdyn
+        mbs.editing_component = False
+
+        message = "component edit aborted."
+        print(message)
+        baseLogger.info(selftag + message)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_edit_cancel class
+
 class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
     """ Adds the component and sets adding_component flag to False  """
     bl_idname = "blendyn.add_component_confirm"
@@ -237,6 +274,28 @@ class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
         return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add_confirm class
+
+class BLENDYN_OT_component_edit_confirm(bpy.types.Operator):
+    """ Confirms the modifications to the current component """
+    bl_idname = "blendyn.edit_component_confirm"
+    bl_label = "Confirm edit of MBDyn component"
+
+    def execute(self, context):
+        selftag = "BLENDYN_OT_component_edit_confirm::execute(): "
+        mbs = context.scene.mbdyn
+        
+        component = mbs.components[mbs.cd_index]
+        message = "edited component {}".format(component.name)
+        print(message)
+        baseLogger.info(selftag + message)
+        mbs.editing_component = False
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_component_edit_confirm class
+        
 
 
 class BLENDYN_OT_component_add_elem(bpy.types.Operator):

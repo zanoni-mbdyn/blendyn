@@ -638,6 +638,10 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             description = "Are we adding a new component?",
             default = False
     )
+    editing_component: BoolProperty(
+            description = "Are we editing an existing component?",
+            default = False
+    )
     # Components dictionary index -- holds the index for displaying the 
     # Components Dictionary in a UI List
     cd_index: IntProperty(
@@ -2055,6 +2059,9 @@ class BLENDYN_PT_components(bpy.types.Panel):
             row.operator(BLENDYN_OT_component_add.bl_idname, \
                     text = "Add New Component")
             row = col.row()
+            row.operator(BLENDYN_OT_component_edit.bl_idname, \
+                    text = "Edit Selected Component")
+            row = col.row()
             row.operator(BLENDYN_OT_component_remove.bl_idname, \
                     text = "Remove Component")
             if len(comps):
@@ -2062,7 +2069,7 @@ class BLENDYN_PT_components(bpy.types.Panel):
         else:
             comp = comps[-1]
 
-        if len(comps):
+        if len(comps) and (mbs.adding_component or mbs.editing_component) :
             col = layout.column()
             col.label(text = "Component Elements:")
             row = col.row()
@@ -2103,6 +2110,11 @@ class BLENDYN_PT_components(bpy.types.Panel):
                 col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
                     text = "Confirm")
                 col.operator(BLENDYN_OT_component_add_cancel.bl_idname, \
+                    text = "Cancel")
+            elif mbs.editing_component:
+                col.operator(BLENDYN_OT_component_edit_confirm.bl_idname, \
+                    text = "Confirm")
+                col.operator(BLENDYN_OT_component_edit_cancel.bl_idname, \
                     text = "Cancel")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_components_scene
