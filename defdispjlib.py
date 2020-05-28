@@ -149,10 +149,12 @@ def spawn_deformable_displacement_joint_element(elem, context):
         RF1.location = elem.offsets[0].value
         RF1.rotation_mode = 'QUATERNION'
         RF1.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
+        RF1.hide_viewport = True
 
         RF2.location = elem.offsets[1].value
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
+        RF2.hide_viewport = True
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
@@ -162,6 +164,11 @@ def spawn_deformable_displacement_joint_element(elem, context):
         parenting(ddOBJ, n1OBJ)
         parenting(RF1, n1OBJ)
         parenting(RF2, n2OBJ)
+
+        # set mbdyn props of object
+        elem.blender_object = ddOBJ.name
+        ddOBJ.mbdyn.dkey = elem.name
+        ddOBJ.mbdyn.type = 'element'
 
         # link objects to element collection
         elcol.objects.link(n1OBJ)
