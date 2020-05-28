@@ -136,10 +136,15 @@ def spawn_deformable_displacement_joint_element(elem, context):
         
         ddOBJ = bpy.context.selected_objects[0]
         ddOBJ.name = elem.name
+        ddOBJ = bpy.data.objects[elem.name]
+
         RF1 = bpy.context.selected_objects[1]
         RF1.name = elem.name + '_RF1'
-        RF2 = ddOBJ = bpy.context.selected_objects[2]
+        RF1 = bpy.data.objects[elem.name + '_RF1']
+
+        RF2 = bpy.context.selected_objects[2]
         RF2.name = elem.name + '_RF2'
+        RF2 = bpy.data.objects[elem.name + '_RF2']
 
         # place the joint objects in the position defined relative to node 1
         ddOBJ.location = elem.offsets[0].value
@@ -149,21 +154,23 @@ def spawn_deformable_displacement_joint_element(elem, context):
         RF1.location = elem.offsets[0].value
         RF1.rotation_mode = 'QUATERNION'
         RF1.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
+        parenting(RF1, n1OBJ)
         RF1.hide_viewport = True
 
         RF2.location = elem.offsets[1].value
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
+        parenting(RF2, n2OBJ)
         RF2.hide_viewport = True
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
         ddOBJ.scale = Vector((s, s, s))
+        # ddOBJ.data.transforms(ddOBJ.matrix_world)
+        # ddOBJ.matrix_world = Matrix()
 
         # parenting of wireframe objects
         parenting(ddOBJ, n1OBJ)
-        parenting(RF1, n1OBJ)
-        parenting(RF2, n2OBJ)
 
         # set mbdyn props of object
         elem.blender_object = ddOBJ.name
