@@ -383,6 +383,7 @@ def parse_log_file(context):
             mbs.num_timesteps = mbs.num_rows/mbs.num_nodes
         
         mbs.is_ready = True
+        ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass
