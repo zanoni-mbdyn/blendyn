@@ -355,14 +355,14 @@ def spawn_beam2_element(elem, context):
     RF1 = bpy.context.selected_objects[0]
     parenting(RF1, n1OBJ)
     RF1.name = beamOBJ.name + '_RF1'
-    RF1.hide_set(state = True)
+    RF1.hide_viewport = True
     
     bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
             radius = .33*n2OBJ.scale.magnitude/sqrt(3))
     RF2 = bpy.context.selected_objects[0]
     RF2.name = beamOBJ.name + '_RF2'
     parenting(RF2, n2OBJ)
-    RF2.hide_set(state = True)
+    RF2.hide_viewport = True
 
     # link objects to the element collection
     elcol.objects.link(n1OBJ)
@@ -549,28 +549,28 @@ def spawn_beam3_element(elem, context):
     RF1 = bpy.context.selected_objects[0]
     parenting(RF1, n1OBJ)
     RF1.name = beamOBJ.name + '_RF1'
-    RF1.hide_set(state = True)
+    RF1.hide_viewport = True
     
     bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
             radius = .33*n2OBJ.scale.magnitude/sqrt(3))
     RF2 = bpy.context.selected_objects[0]
     parenting(RF2, n2OBJ)
     RF2.name = beamOBJ.name + '_RF2'
-    RF2.hide_set(state = True)
+    RF2.hide_viewport = True
 
     bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[2].value, \
             radius = .33*n3OBJ.scale.magnitude/sqrt(3))
     RF3 = bpy.context.selected_objects[0]
     parenting(RF3, n3OBJ)
     RF3.name = beamOBJ.name + '_RF3'
-    RF3.hide_set(state = True)
+    RF3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
     elem.is_imported = True
 
-    obj2.hide_set(state = True)
-    obj3.hide_set(state = True)
+    obj2.hide_viewport = True
+    obj3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
