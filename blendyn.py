@@ -867,52 +867,46 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             hide_or_delete(obj_names, missing)
+            return {'FINISHED'}
 
         if ret_val == {'LOG_NOT_FOUND'}:
             message = ".log file not found"
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
-
         elif ret_val == {'NODES_NOT_FOUND'}:
             message = "The .log file selected does not contain node definitions"
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
-
         elif ret_val == {'MODEL_INCONSISTENT'}:
             message = "Contents of .log file are not onsistent with "\
                     + "current Blender scene."
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'NODES_INCONSISTENT'}:
             message = "Nodes in .log file are not consistent with "\
                     + "current Blender scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'ELEMS_INCONSISTENT'}:
             message = "Elements in .log file are not consistent with "\
                     + "curren Blender scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'OUT_NOT_FOUND'}:
             message = "Could not locate the .out file"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'ROTATION_ERROR'}:
             message = "Output rotation parametrization is not supported by Blender"
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
-
         elif ret_val == {'FINISHED'}:
             message = "MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True
@@ -920,6 +914,13 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             self.report({'INFO'}, message)
             baseLogger.info(selftag + message)
             return {'FINISHED'}
+        else:
+            # should not be reached
+            message = "Unknown error in reading .log file."\
+                    + "The return value of parse_log_file() was: {}".format(ret_val)
+            self.report({'ERROR'}, message)
+            baseLogger.info(selftag + message)
+            return {'CANCELLED'} 
 
     def invoke(self, context, event):
         return self.execute(context)
