@@ -34,6 +34,115 @@ from bpy_extras.io_utils import ImportHelper
 
 import csv
 
+def install_pip():
+    import subprocess
+    """
+    Installs pip if not already present. 
+    source: https://github.com/robertguetzkow/blender-python-examples
+    """
+
+    try:
+        # Check if pip is already installed
+        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "--version"], check=True)
+    except subprocess.CalledProcessError:
+        import os
+        import ensurepip
+
+        ensurepip.bootstrap()
+        # ensurepip.bootstrap() calls pip, which adds PIP_REQ_TRACKER to the
+        # environment. In subsequent calls, pip searches for PIP_REQ_TRACKER and try
+        # to use it if present, but after boostrap() the variable will point to a
+        # non-existing path. Thus is has to be removed.
+        os.environ.pop("PIP_REQ_TRACKER", None)
+# -----------------------------------------------------------
+# end of install_pip() function 
+
+def install_and_import_module(module_name, package_name = None, global_name = None):
+    """
+    Installs the package through pip and attempts to import the installed module.
+    :param module_name: Module to import.
+    :param package_name: (Optional) Name of the package that needs to be installed.
+                         If None it is assumed to be equal to the module_name.
+    :param global_name: (Optional) Name under which the module is imported, as in
+                        e.g., "import numpy as np"
+    :raises: subprocess.CalledProcessError and ImportError
+    source: https://github.com/robertguetzkow/blender-python-examples
+    """
+    import importlib
+
+    if package_name is None:
+        package_name = module_name
+
+    if global_name is None:
+        global_name = module_name
+    
+    try:
+        # Try to install the package. This may fail with subprocess.CalledProcessError
+        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", package_name], check=True)
+    except subprocess.CalledProcessError:
+        # TODO: inform user and stop gracefully
+        print("BLENDYN::install_and_import_module(): Could not install module " + \
+                "{}".format(module_name) + " subprocess ended with CalledProcessError")
+
+    try:
+        # The installation succeeded, attempt to import the module again
+        import_module(module_name, global_name)
+    except ImportError:
+        # TODO: inform user and stop gracefully
+        print("BLENDYN::install_and_import_module(): Could not import module " + \
+                "{}".format(module_name))
+# -----------------------------------------------------------
+# end of install_and_import_module() function 
+
+class EXAMPLE_OT_install_dependency(bpy.types.Operator):
+    """
+    Install dependencies for additional features. 
+    Inspired by: https://github.com/robertguetzkow/blender-python-examples
+    """
+    bl_idname = "blendyn.install_dependency"
+    bl_label = "Install dependency"
+    bl_description = ("Download and installs the required dependencies to enable additional "
+                      "Blendyn features. Internet connection is required. Blender may have " 
+                      "to be started with elevated permissions")
+    bl_options = {"REGISTER", "INTERNAL"}
+
+    def execute(self, context): 
+        try:
+            install_pip()
+            for dependency in dependencies:
+                install_and_import_module(module_name=dependency.module,
+                                          package_name=dependency.package,
+                                          global_name=dependency.name)
+        except (subprocess.CalledProcessError, ImportError) as err:
+            self.report({"ERROR"}, str(err))
+            return {"CANCELLED"}
+
+        global dependencies_installed
+        dependencies_installed = True
+
+        # Register the panels, operators, etc. since dependencies are installed
+        for cls in classes:
+            bpy.utils.register_class(cls)
+
+        return {"FINISHED"}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_install_dependency class 
+
+class BLENDYN_preferences(bpy.types.AddonPreferences):
+    bl_idname = "blendyn.install_netcdf_deps"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text = "Test panel..."
+        layout.operator(BLENDYN_OT_install_dependency.bl_idname, icon="CONSOLE")
+# -----------------------------------------------------------
+# end of BLENDYN_preferences class 
+
+
+preference_classes = (EXAMPLE_PT_warning_panel,
+                      EXAMPLE_OT_install_dependencies,
+                      EXAMPLE_preferences)
+
 class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
     """ Loads profile to assign to curve bevel, in Selig format """
     bl_idname = "blendyn.load_section"
@@ -97,7 +206,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
             logging.error(message)
             return {'CANCELLED'}
 # -----------------------------------------------------------
-# end of fmin function BLENDYN_OT_load_section class
+# end of BLENDYN_OT_load_section class
 
 
 ## Utility functions
@@ -110,7 +219,7 @@ def fmin(x):
             loc = idx
     return (min, loc)
 # -----------------------------------------------------------
-# end of fmin function
+# end of fmin() function
 
 def fmax(x):
     max = x[0]
