@@ -34,6 +34,8 @@ from bpy_extras.io_utils import ImportHelper
 
 import csv
 
+from . dependencies import *
+
 def install_pip():
     import subprocess
     """
@@ -75,73 +77,72 @@ def install_and_import_module(module_name, package_name = None, global_name = No
 
     if global_name is None:
         global_name = module_name
-    
-    try:
-        # Try to install the package. This may fail with subprocess.CalledProcessError
-        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", package_name], check=True)
-    except subprocess.CalledProcessError:
-        # TODO: inform user and stop gracefully
-        print("BLENDYN::install_and_import_module(): Could not install module " + \
-                "{}".format(module_name) + " subprocess ended with CalledProcessError")
 
     try:
-        # The installation succeeded, attempt to import the module again
+        # First, try to import the modules. If everything is okay, do nothing.
         import_module(module_name, global_name)
     except ImportError:
-        # TODO: inform user and stop gracefully
-        print("BLENDYN::install_and_import_module(): Could not import module " + \
-                "{}".format(module_name))
+        # Try to install the package. This may fail with subprocess.CalledProcessError
+        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", package_name], check=True)
+        # The installation succeeded, attempt to import the module again
+        import_module(module_name, global_name)
 # -----------------------------------------------------------
 # end of install_and_import_module() function 
 
-class EXAMPLE_OT_install_dependency(bpy.types.Operator):
+
+class BLENDYN_OT_install_dependencies(bpy.types.Operator):
     """
     Install dependencies for additional features. 
     Inspired by: https://github.com/robertguetzkow/blender-python-examples
     """
-    bl_idname = "blendyn.install_dependency"
-    bl_label = "Install dependency"
+    bl_idname = "blendyn.install_dependencies"
+    bl_label = "Install dependencies"
     bl_description = ("Download and installs the required dependencies to enable additional "
                       "Blendyn features. Internet connection is required. Blender may have " 
                       "to be started with elevated permissions")
     bl_options = {"REGISTER", "INTERNAL"}
 
+    # Which set of features we want to enable?
+    feature: StringProperty()
+
     def execute(self, context): 
         try:
             install_pip()
-            for dependency in dependencies:
-                install_and_import_module(module_name=dependency.module,
-                                          package_name=dependency.package,
-                                          global_name=dependency.name)
+            # deps is a global defines in dependencies.py
+            for dependency in deps[feature]:
+                install_and_import_module(module_name = dependency.module,
+                                          package_name = dependency.package,
+                                          global_name = dependency.name)
+                dependency.installed = True
         except (subprocess.CalledProcessError, ImportError) as err:
             self.report({"ERROR"}, str(err))
+            print("BLENDYN_OT_install_dependencies::execute(): " + str(err))
             return {"CANCELLED"}
-
-        global dependencies_installed
-        dependencies_installed = True
-
-        # Register the panels, operators, etc. since dependencies are installed
-        for cls in classes:
-            bpy.utils.register_class(cls)
 
         return {"FINISHED"}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_install_dependency class 
+# end of BLENDYN_OT_install_dependencies class 
 
 class BLENDYN_preferences(bpy.types.AddonPreferences):
-    bl_idname = "blendyn.install_netcdf_deps"
+    bl_idname = __package__
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text = "Test panel..."
-        layout.operator(BLENDYN_OT_install_dependency.bl_idname, icon="CONSOLE")
+        for feature in deps.keys():
+            box = layout.box()
+            box.label(text = feature)
+            for dep in deps[feature]:
+                dstr = "{} -- ".format(dep.module)
+                if dep.installed:
+                    dstr += 'OK'
+                else:
+                    dstr += 'NOT FOUND'
+                box.label(text = dstr)
+            if not(all([dep.installed for dep in deps[feature]])):
+                layout.operator(BLENDYN_OT_install_dependency.bl_idname, icon="CONSOLE").feature = feature
 # -----------------------------------------------------------
 # end of BLENDYN_preferences class 
 
-
-preference_classes = (EXAMPLE_PT_warning_panel,
-                      EXAMPLE_OT_install_dependencies,
-                      EXAMPLE_preferences)
 
 class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
     """ Loads profile to assign to curve bevel, in Selig format """

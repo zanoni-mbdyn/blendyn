@@ -46,6 +46,7 @@ from . plotlib      import *
 from . blendyn      import *
 
 classes = (
+        BLENDYN_OT_install_dependencies,
         BLENDYN_OT_load_section,
         BLENDYN_OT_import_aerodynamic_body,
         BLENDYN_OT_import_aerodynamic_beam2,
@@ -128,6 +129,7 @@ classes = (
         BLENDYN_OT_component_remove_elem,
         BLENDYN_OT_component_remove_all_elems,
         BLENDYN_OT_component_add_selected_elems,
+        BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
         BLENDYN_PT_simulation,
