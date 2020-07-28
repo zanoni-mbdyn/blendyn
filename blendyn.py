@@ -786,8 +786,11 @@ def rename_log(scene):
         pass
 
     if os.path.basename(logFile) != "untitled_not yet loaded.bylog":
-        bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
-        log_messages(mbs, baseLogger, True)
+        try:
+            bpy.data.texts[os.path.basename(logFile)].name = os.path.basename(newLog)
+            log_messages(mbs, baseLogger, True)
+        except KeyError:
+            pass
 
 bpy.app.handlers.save_post.append(rename_log)
 

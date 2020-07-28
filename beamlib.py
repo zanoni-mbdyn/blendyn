@@ -348,29 +348,21 @@ def spawn_beam2_element(elem, context):
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-    # add drivers for bevel section rotation
-    drv_tilt_P1 = beamOBJ.data.splines[0].points[0].driver_add('tilt')
-    xrot_P1 = drv_tilt_P1.driver.variables.new()
-    xrot_P1.name = "xrot_P1"
-    xrot_P1.type = 'TRANSFORMS'
-    xrot_P1.targets[0].id = n1OBJ
-    xrot_P1.targets[0].data_path = 'rotation.x'
-    xrot_P1.targets[0].transform_type = 'ROT_X'
-    xrot_P1.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_P1.driver.expression = "xrot_P1"
-
-    drv_tilt_P2 = beamOBJ.data.splines[0].points[1].driver_add('tilt')
-    xrot_P2 = drv_tilt_P2.driver.variables.new()
-    xrot_P2.name = "xrot_P2"
-    xrot_P2.type = 'TRANSFORMS'
-    xrot_P2.targets[0].id = n2OBJ
-    xrot_P2.targets[0].data_path = 'rotation.x'
-    xrot_P2.targets[0].transform_type = 'ROT_X'
-    xrot_P2.targets[0].transform_space = 'WORLD_SPACE'
-    drv_tilt_P2.driver.expression = "xrot_P2"
-
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    bpy.ops.object.select_all(action = 'DESELECT')
+    # add objects representing the position of the two points
+    # on the beam axis, w.r.t. nodes    
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
+            radius = .33*n1OBJ.scale.magnitude/sqrt(3))
+    RF1 = bpy.context.selected_objects[0]
+    parenting(RF1, n1OBJ)
+    RF1.name = beamOBJ.name + '_RF1'
+    RF1.hide_viewport = True
+    
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
+            radius = .33*n2OBJ.scale.magnitude/sqrt(3))
+    RF2 = bpy.context.selected_objects[0]
+    RF2.name = beamOBJ.name + '_RF2'
+    parenting(RF2, n2OBJ)
+    RF2.hide_viewport = True
 
     # link objects to the element collection
     elcol.objects.link(n1OBJ)
@@ -481,30 +473,7 @@ def spawn_beam3_element(elem, context):
     polydata.points[1].co = M1
     polydata.points[2].co = M2
     polydata.points[3].co = P3
-
-    # set the tilt angles of the sections
-    t3 = P3 - M2
-    t3.normalize()
-
-    l1 = ((M1 - P1)).length
-    l2 = ((P2 - M1)).length
-    l3 = ((M2 - P2)).length
-    l4 = ((P3 - M2)).length
-
-    # relative rotation quaternions
-    qr1 = Quaternion((elem.rotoffsets[0].value))@(n1OBJ.matrix_world.to_quaternion()).conjugated()
-    qr2 = Quaternion((elem.rotoffsets[1].value))@(n2OBJ.matrix_world.to_quaternion()).conjugated()
-    qr3 = Quaternion((elem.rotoffsets[2].value))@(n3OBJ.matrix_world.to_quaternion()).conjugated()
-
-    phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
-    phi2 = t2.to_3d().dot(cquat(qr2).to_exponential_map())
-    phi3 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
-
-    cvdata.splines[0].points[0].tilt = phi1 
-    cvdata.splines[0].points[1].tilt = phi1*l1/(l1 + l2) + phi2*l2/(l1 + l2)
-    cvdata.splines[0].points[2].tilt = phi2*l3/(l3 + l4) + phi3*l4/(l3 + l4)
-    cvdata.splines[0].points[3].tilt = phi3
-
+    
     # create the object
     beamOBJ = bpy.data.objects.new(beamobj_id, cvdata)
     beamOBJ.mbdyn.type = 'element'
@@ -571,6 +540,30 @@ def spawn_beam3_element(elem, context):
     beamOBJ.data.splines[0].points[3].select = True
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+    
+
+    # add objects representing the position of the two points
+    # on the beam axis, w.r.t. nodes    
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
+            radius = .33*n1OBJ.scale.magnitude/sqrt(3))
+    RF1 = bpy.context.selected_objects[0]
+    parenting(RF1, n1OBJ)
+    RF1.name = beamOBJ.name + '_RF1'
+    RF1.hide_viewport = True
+    
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
+            radius = .33*n2OBJ.scale.magnitude/sqrt(3))
+    RF2 = bpy.context.selected_objects[0]
+    parenting(RF2, n2OBJ)
+    RF2.name = beamOBJ.name + '_RF2'
+    RF2.hide_viewport = True
+
+    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[2].value, \
+            radius = .33*n3OBJ.scale.magnitude/sqrt(3))
+    RF3 = bpy.context.selected_objects[0]
+    parenting(RF3, n3OBJ)
+    RF3.name = beamOBJ.name + '_RF3'
+    RF3.hide_viewport = True
 
     bpy.ops.object.select_all(action = 'DESELECT')
 
