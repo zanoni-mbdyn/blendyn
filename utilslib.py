@@ -34,7 +34,11 @@ from bpy_extras.io_utils import ImportHelper
 
 import csv
 
+import imp
+
 from . dependencies import *
+
+import pdb
 
 def install_pip():
     import subprocess
@@ -45,7 +49,7 @@ def install_pip():
 
     try:
         # Check if pip is already installed
-        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "--version"], check=True)
+        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "--version"], check = True)
     except subprocess.CalledProcessError:
         import os
         import ensurepip
@@ -83,7 +87,7 @@ def install_and_import_module(module_name, package_name = None, global_name = No
         import_module(module_name, global_name)
     except ImportError:
         # Try to install the package. This may fail with subprocess.CalledProcessError
-        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", package_name], check=True)
+        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", "--user", package_name], check = True)
         # The installation succeeded, attempt to import the module again
         import_module(module_name, global_name)
 # -----------------------------------------------------------
@@ -98,8 +102,7 @@ class BLENDYN_OT_install_dependencies(bpy.types.Operator):
     bl_idname = "blendyn.install_dependencies"
     bl_label = "Install dependencies"
     bl_description = ("Download and installs the required dependencies to enable additional "
-                      "Blendyn features. Internet connection is required. Blender may have " 
-                      "to be started with elevated permissions")
+                      "Blendyn features. Internet connection is required.")
     bl_options = {"REGISTER", "INTERNAL"}
 
     # Which set of features we want to enable?
@@ -113,7 +116,7 @@ class BLENDYN_OT_install_dependencies(bpy.types.Operator):
                 install_and_import_module(module_name = dependency.module,
                                           package_name = dependency.package,
                                           global_name = dependency.name)
-                dependency.installed = True
+                dependency.installed(True)
         except (subprocess.CalledProcessError, ImportError) as err:
             self.report({"ERROR"}, str(err))
             print("BLENDYN_OT_install_dependencies::execute(): " + str(err))
@@ -132,14 +135,17 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
             box = layout.box()
             box.label(text = feature)
             for dep in deps[feature]:
-                dstr = "{} -- ".format(dep.module)
-                if dep.installed:
+                dstr = "  {} -- ".format(dep.module)
+                try:
+                    imp.find_module(dep.module)
+                    dep.installed(True)
                     dstr += 'OK'
-                else:
+                except ImportError:
                     dstr += 'NOT FOUND'
+                    dep.installed(True)
                 box.label(text = dstr)
             if not(all([dep.installed for dep in deps[feature]])):
-                layout.operator(BLENDYN_OT_install_dependency.bl_idname, icon="CONSOLE").feature = feature
+                layout.operator(BLENDYN_OT_install_dependencies.bl_idname, icon = "CONSOLE").feature = feature
 # -----------------------------------------------------------
 # end of BLENDYN_preferences class 
 

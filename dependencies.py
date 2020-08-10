@@ -26,27 +26,46 @@ from collections import namedtuple
 
 global deps
 
-# Generic dependency.
-# :module: name of the module
-# :package: name of the python package (if None, package = module)
-# :name: name to be given to module during import (if None, name = module)
-# :installed: boolean flag indicating if the dependency is found in the system
-Dependency = namedtuple("Dependency", ["module", "package", "name", "installed"])
+class Dependency:
+    # Generic dependency.
+    # :module: name of the module
+    # :package: name of the python package (if None, package = module)
+    # :name: name to be given to module during import (if None, name = module)
+    # :installed: boolean flag indicating if the dependency is found in the system
+    module = None
+    package = None
+    name = None
+    is_installed = False
+
+    def __init__(self, module, package, name):
+        self.module = module
+        self.package = package
+        self.name = name
+
+    def installed(self):
+        # getter for is_installed Flag
+        return self.is_installed
+
+    def installed(self, flag):
+        # setter for is_installed Flag
+        self.is_installed = flag
+        return
+
 
 # NetCDF
 netcdf_deps = (\
-        Dependency(module = "netCDF4", package = None, name = None, installed = False)\
+        Dependency("netCDF4", None, None),\
         )
 
 # Plotting with Pygal/Cairosvg
 plotting_pygal_deps = (\
-        Dependency(module = "pygal", package = None, name = None, installed = False),\
-        Dependency(module = "cairosvg", package = None, name = None, installed = False)\
+        Dependency("pygal", None, None),\
+        Dependency("cairosvg", None, None)\
         )
 
 # Control of MBDyn simulation from Blender
 psutil_deps = (\
-        Dependency(module = "psutil", package = None, name = None, installed = False)\
+        Dependency("psutil", None, None),\
         )
 
 # Dictionary of dependencies
