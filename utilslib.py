@@ -25,6 +25,8 @@
 import bpy
 
 import logging
+baseLogger = logging.getLogger()
+baseLogger.setLevel(logging.DEBUG)
 
 from mathutils import *
 from math import *
@@ -32,11 +34,9 @@ from bpy.types import Operator
 from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
-import csv
-
-import imp
-
 from . dependencies import *
+import subprocess
+import imp
 
 import pdb
 
@@ -54,7 +54,7 @@ def install_pip():
         import os
         import ensurepip
 
-        ensurepip.bootstrap()
+        ensurepip.bootstrap(user = True)
         # ensurepip.bootstrap() calls pip, which adds PIP_REQ_TRACKER to the
         # environment. In subsequent calls, pip searches for PIP_REQ_TRACKER and try
         # to use it if present, but after boostrap() the variable will point to a
@@ -82,14 +82,9 @@ def install_and_import_module(module_name, package_name = None, global_name = No
     if global_name is None:
         global_name = module_name
 
-    try:
-        # First, try to import the modules. If everything is okay, do nothing.
-        import_module(module_name, global_name)
-    except ImportError:
-        # Try to install the package. This may fail with subprocess.CalledProcessError
-        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", "--user", package_name], check = True)
-        # The installation succeeded, attempt to import the module again
-        import_module(module_name, global_name)
+    # Try to install the package. This may fail with subprocess.CalledProcessError
+    subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", "--user", package_name], check = True)
+
 # -----------------------------------------------------------
 # end of install_and_import_module() function 
 
@@ -112,11 +107,14 @@ class BLENDYN_OT_install_dependencies(bpy.types.Operator):
         try:
             install_pip()
             # deps is a global defines in dependencies.py
-            for dependency in deps[feature]:
+            for dependency in deps[self.feature]:
                 install_and_import_module(module_name = dependency.module,
                                           package_name = dependency.package,
                                           global_name = dependency.name)
                 dependency.installed(True)
+                msg = "Successfully installed Python module {}".format(dependency.module)
+                self.report({'INFO'}, msg)
+                baseLogger.info('BLENDYN_OT_install_dependencies::execute(): ' + msg)
         except (subprocess.CalledProcessError, ImportError) as err:
             self.report({"ERROR"}, str(err))
             print("BLENDYN_OT_install_dependencies::execute(): " + str(err))
@@ -142,9 +140,9 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
                     dstr += 'OK'
                 except ImportError:
                     dstr += 'NOT FOUND'
-                    dep.installed(True)
+                    dep.installed(False)
                 box.label(text = dstr)
-            if not(all([dep.installed for dep in deps[feature]])):
+            if not(all([dep.installed() for dep in deps[feature]])):
                 layout.operator(BLENDYN_OT_install_dependencies.bl_idname, icon = "CONSOLE").feature = feature
 # -----------------------------------------------------------
 # end of BLENDYN_preferences class 

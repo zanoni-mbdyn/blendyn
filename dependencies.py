@@ -42,15 +42,15 @@ class Dependency:
         self.package = package
         self.name = name
 
-    def installed(self):
-        # getter for is_installed Flag
-        return self.is_installed
-
-    def installed(self, flag):
-        # setter for is_installed Flag
-        self.is_installed = flag
-        return
-
+    def installed(self, flag = None):
+        if not flag:
+            # getter for is_installed Flag
+            return self.is_installed
+        else:
+            # setter for is_installed Flag
+            self.is_installed = flag
+# -----------------------------------------------------------
+# end of Dependency class 
 
 # NetCDF
 netcdf_deps = (\
