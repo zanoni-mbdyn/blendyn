@@ -3,7 +3,6 @@ bl_info = {
     "category": "Physics",
     "blender": (2, 80, 0),
     "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
-    "version": (1, 1, 0),
     "location": "View3D -> Properties -> Physics",
     "description": "Imports simulation results of MBDyn (Open Source MultiBody\
     Dynamics solver -- https://www.mbdyn.org/).",
@@ -32,6 +31,7 @@ from . prismjlib    import *
 from . revjlib      import *
 from . rodjlib      import *
 from . shell4lib    import *
+from . membrane4lib import *
 from . sphjlib      import *
 from . totjlib      import *
 from . elementlib   import *
@@ -39,11 +39,13 @@ from . logwatcher   import *
 from . nodelib      import *
 from . eigenlib     import *
 from . elements     import *
+from . components   import *
 from . baselib      import *
 from . plotlib      import *
 from . blendyn      import *
 
 classes = (
+        BLENDYN_OT_install_dependencies,
         BLENDYN_OT_load_section,
         BLENDYN_OT_import_aerodynamic_body,
         BLENDYN_OT_import_aerodynamic_beam2,
@@ -78,6 +80,7 @@ classes = (
         BLENDYN_OT_import_rod,
         BLENDYN_OT_write_rod_input,
         BLENDYN_OT_import_shell4,
+        BLENDYN_OT_import_membrane4,
         BLENDYN_OT_import_spherical_hinge,
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
@@ -114,10 +117,23 @@ classes = (
         BLENDYN_OT_stop_mbdyn_simulation,
         BLENDYN_OT_set_motion_paths,
         BLENDYN_OT_set_import_freq_auto,
+        BLENDYN_OT_component_add,
+        BLENDYN_OT_component_edit,
+        BLENDYN_OT_component_remove,
+        BLENDYN_OT_component_add_confirm,
+        BLENDYN_OT_component_edit_confirm,
+        BLENDYN_OT_component_add_cancel,
+        BLENDYN_OT_component_edit_cancel,
+        BLENDYN_OT_component_add_elem,
+        BLENDYN_OT_component_remove_elem,
+        BLENDYN_OT_component_remove_all_elems,
+        BLENDYN_OT_component_add_selected_elems,
+        BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
         BLENDYN_PT_simulation,
         BLENDYN_PT_eigenanalysis,
+        BLENDYN_PT_components,
         BLENDYN_PT_active_object,
         BLENDYN_PT_nodes_scene,
         BLENDYN_PT_elems_scene,
@@ -146,6 +162,7 @@ classes = (
 register, unregister_fact = bpy.utils.register_classes_factory(classes)
 
 def unregister():
+    bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elem_to_be_updated)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_collection)
@@ -162,11 +179,19 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_PG_mbtime)
     bpy.utils.unregister_class(BLENDYN_PG_reference_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_component_element)
+    bpy.utils.unregister_class(BLENDYN_PG_component_section)
+    bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
     bpy.utils.unregister_class(BLENDYN_UL_env_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_mbdyn_nodes_list)
     bpy.utils.unregister_class(BLENDYN_UL_elements_list)
+    bpy.utils.unregister_class(BLENDYN_UL_components_list)
+    bpy.utils.unregister_class(BLENDYN_UL_deformable_elements_list)
     bpy.utils.unregister_class(BLENDYN_UL_refs_list)
     bpy.utils.unregister_class(BLENDYN_UL_render_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_object_plot_var_list)
     bpy.utils.unregister_class(BLENDYN_UL_plot_var_list)
+    bpy.utils.unregister_class(BLENDYN_UL_component_object_list)
+    bpy.utils.unregister_class(BLENDYN_UL_components_list)
+    bpy.utils.unregister_class(BLENDYN_UL_component_elements_list) 
     unregister_fact()

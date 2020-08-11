@@ -43,8 +43,6 @@ import numpy as np
 import subprocess
 import json
 
-import pdb
-
 try:
     from netCDF4 import Dataset
 except ImportError as ierr:
@@ -63,6 +61,7 @@ except ImportError as ierr:
 
 from . baselib import *
 from . elements import *
+from . components import *
 from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
@@ -399,10 +398,10 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     )
     render_nc_vars: EnumProperty(
             items = get_render_vars,
-            name = 'Text overlay variables',
+            name = "Text overlay variables",
     )
     render_var_name: StringProperty(
-            name = 'Name of variable',
+            name = "Name of variable",
             default = ''
     )
     render_vars: CollectionProperty(
@@ -628,7 +627,32 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             description = "Higher limit of integer labels for range import for elements",
             default = 2**31 - 1
     )
-    # True if output contains at least one eigensolution
+    components: CollectionProperty(
+            name = "Components",
+            description = "Components structural and geometrical data",
+            type = BLENDYN_PG_components_dictionary
+    )
+    adding_component: BoolProperty(
+            description = "Are we adding a new component?",
+            default = False
+    )
+    editing_component: BoolProperty(
+            description = "Are we editing an existing component?",
+            default = False
+    )
+    # Components dictionary index -- holds the index for displaying the 
+    # Components Dictionary in a UI List
+    cd_index: IntProperty(
+            name = "MBDyn components collection index",
+            default = 0,
+            min = 0,
+            update = update_cd_index,
+    )
+    comp_selected_elem: EnumProperty(
+            items = get_deformable_elems,
+            name = "Selected element",
+            description = "Selected element in deformable elements list"
+    )
     eigensolutions: CollectionProperty(
             name = "Eigensolutions",
             description = "Parameters of the eigensolutions found in the MBDyn output",
@@ -841,52 +865,46 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             hide_or_delete(obj_names, missing)
+            return {'FINISHED'}
 
         if ret_val == {'LOG_NOT_FOUND'}:
             message = ".log file not found"
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
-
         elif ret_val == {'NODES_NOT_FOUND'}:
             message = "The .log file selected does not contain node definitions"
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
-
         elif ret_val == {'MODEL_INCONSISTENT'}:
             message = "Contents of .log file are not onsistent with "\
                     + "current Blender scene."
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'NODES_INCONSISTENT'}:
             message = "Nodes in .log file are not consistent with "\
                     + "current Blender scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'ELEMS_INCONSISTENT'}:
             message = "Elements in .log file are not consistent with "\
                     + "curren Blender scene"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'OUT_NOT_FOUND'}:
             message = "Could not locate the .out file"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
-
         elif ret_val == {'ROTATION_ERROR'}:
             message = "Output rotation parametrization is not supported by Blender"
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
-
         elif ret_val == {'FINISHED'}:
             message = "MBDyn model imported successfully"
             bpy.context.scene.render.use_stamp = True
@@ -894,6 +912,13 @@ class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
             self.report({'INFO'}, message)
             baseLogger.info(selftag + message)
             return {'FINISHED'}
+        else:
+            # should not be reached
+            message = "Unknown error in reading .log file."\
+                    + "The return value of parse_log_file() was: {}".format(ret_val)
+            self.report({'ERROR'}, message)
+            baseLogger.info(selftag + message)
+            return {'CANCELLED'} 
 
     def invoke(self, context, event):
         return self.execute(context)
@@ -2007,6 +2032,91 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
 
+class BLENDYN_PT_components(bpy.types.Panel):
+    """ List of Blendyn components: add/modify them,
+        generate armatures and geometry """
+    bl_label = "MBDyn components"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        mbs = context.scene.mbdyn
+        comps = mbs.components
+        layout = self.layout
+        layout.alignment = 'LEFT'
+        col = layout.column()
+        col.label(text = "Components:")
+        row = col.row()
+        row.template_list("BLENDYN_UL_components_list", \
+                "MBDyn components", \
+                mbs, "components", \
+                mbs, "cd_index")
+        row = col.row()
+        if not mbs.adding_component:
+            row.operator(BLENDYN_OT_component_add.bl_idname, \
+                    text = "Add New Component")
+            row = col.row()
+            row.operator(BLENDYN_OT_component_edit.bl_idname, \
+                    text = "Edit Selected Component")
+            row = col.row()
+            row.operator(BLENDYN_OT_component_remove.bl_idname, \
+                    text = "Remove Component")
+            if len(comps):
+                comp = comps[mbs.cd_index]
+        else:
+            comp = comps[-1]
+
+        if len(comps) and (mbs.adding_component or mbs.editing_component) :
+            col = layout.column()
+            col.label(text = "Component Elements:")
+            row = col.row()
+            split = row.split(factor = 0.2)
+            col = split.column()
+            col.label(text = "#")
+            col = split.column()
+            split = col.split(factor = .67)
+            col = split.column()
+            col.label(text = "element")
+            col = split.column()
+            col.label(text = "subs")
+            col = layout.column()
+            row = col.row()
+            row.template_list("BLENDYN_UL_component_elements_list", \
+                "Component elements", \
+                comp, "elements", \
+                comp, "el_index")
+            col.prop(mbs, "comp_selected_elem", text = "Add")
+            col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
+                    text = "Add Element")
+            col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \
+                    text = "Remove Element")
+    
+            col = layout.column()
+            col.operator(BLENDYN_OT_component_remove_all_elems.bl_idname, \
+                    text = "Remove All Elements")
+            col.operator(BLENDYN_OT_component_add_selected_elems.bl_idname, \
+                    text = "Add Selected Elements")
+            if mbs.adding_component:
+                col.prop(comp, "remove_from_etu", text = "Disable elements update")
+
+            col = layout.column()
+            col.alignment = 'LEFT' 
+            col.prop(comp, "object")
+            
+            if mbs.adding_component:
+                col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
+                    text = "Confirm")
+                col.operator(BLENDYN_OT_component_add_cancel.bl_idname, \
+                    text = "Cancel")
+            elif mbs.editing_component:
+                col.operator(BLENDYN_OT_component_edit_confirm.bl_idname, \
+                    text = "Confirm")
+                col.operator(BLENDYN_OT_component_edit_cancel.bl_idname, \
+                    text = "Cancel")
+# -----------------------------------------------------------
+# end of BLENDYN_PT_components_scene
 
 class BLENDYN_OT_node_import_all(bpy.types.Operator):
     """ Imports all the MBDyn nodes into the Blender scene """

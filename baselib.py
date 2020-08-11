@@ -37,9 +37,8 @@ import os, csv, atexit, re
 from .nodelib import *
 from .elementlib import *
 from .rfmlib import *
+from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
-
-import pdb
 
 HAVE_PSUTIL = False
 try:
@@ -382,6 +381,7 @@ def parse_log_file(context):
             mbs.num_timesteps = mbs.num_rows/mbs.num_nodes
         
         mbs.is_ready = True
+        ret_val = {'FINISHED'}
     else:
         ret_val = {'NODES_NOT_FOUND'}
     pass
@@ -832,6 +832,13 @@ def get_render_vars(self, context):
     return [(var, var, "") for var in render_vars]
 # -----------------------------------------------------------
 # end of get_render_vars() function
+
+def get_deformable_elems(self, context):
+    mbs = context.scene.mbdyn
+    elems = mbs.elems
+    def_elems = [elem for elem in elems \
+            if (elem.type in DEFORMABLE_ELEMENTS) and (elem.blender_object != 'none')]
+    return [(elem.name, elem.name, "") for elem in def_elems]
 
 def get_display_group(self, context):
     mbs = context.scene.mbdyn

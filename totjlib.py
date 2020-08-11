@@ -525,7 +525,8 @@ def spawn_total_pin_joint_element(elem, context):
     
         # set parenting of wireframe obj
         parenting(totjOBJ, n1OBJ)
-     
+    
+        # set objects' mbdyn props
         elem.blender_object = totjOBJ.name
         totjOBJ.mbdyn.dkey = elem.name
         totjOBJ.mbdyn.type = 'element'

@@ -33,8 +33,6 @@ from .utilslib import *
 
 import logging
 
-import pdb
-
 # helper function to parse beam2
 def parse_beam2(rw, ed):
     ret_val = True
