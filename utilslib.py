@@ -137,21 +137,22 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+        layout.label(text = "-- Additional dependencies --")
         for feature in deps.keys():
             box = layout.box()
             box.label(text = feature)
             for dep in deps[feature]:
-                dstr = "  {} -- ".format(dep.module)
                 try:
                     imp.find_module(dep.module)
                     dep.installed(True)
-                    dstr += 'OK'
+                    box.label(text = dep.module + " is installed", icon = 'CHECKMARK')
                 except ImportError:
-                    dstr += 'NOT FOUND'
                     dep.installed(False)
-                box.label(text = dstr)
+                    box.label(text = dep.module + " is missing", icon = 'SCRIPTPLUGINS') 
             if not(all([dep.installed() for dep in deps[feature]])):
-                layout.operator(BLENDYN_OT_install_dependencies.bl_idname, icon = "CONSOLE").feature = feature
+                box.operator(BLENDYN_OT_install_dependencies.bl_idname, icon = "CONSOLE").feature = feature
+            else:
+                box.label(text = "All the needed Python packages are installed.")
 # -----------------------------------------------------------
 # end of BLENDYN_preferences class 
 

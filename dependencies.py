@@ -70,7 +70,7 @@ psutil_deps = (\
 
 # Dictionary of dependencies
 deps = {
-    "NetCDF": netcdf_deps,
-    "Plot-Pygal": plotting_pygal_deps,
-    "Psutil": psutil_deps
+    "Support for NetCDF output": netcdf_deps,
+    "Plotting - Pygal": plotting_pygal_deps,
+    "Running MBDyn from Blender UI": psutil_deps
     }
