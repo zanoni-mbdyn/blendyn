@@ -43,8 +43,6 @@ import numpy as np
 import subprocess
 import json
 
-import pdb
-
 try:
     from netCDF4 import Dataset
 except ImportError as ierr:

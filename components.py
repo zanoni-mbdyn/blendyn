@@ -36,8 +36,6 @@ from math import *
 
 from .componentlib import *
 
-import pdb
-
 class BLENDYN_PG_component_element(bpy.types.PropertyGroup):
     """ Element associated to a component """
     elem: StringProperty(

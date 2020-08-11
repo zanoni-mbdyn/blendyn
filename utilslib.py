@@ -39,8 +39,6 @@ import os
 import subprocess
 import imp
 
-import pdb
-
 def install_pip():
     import subprocess
     """

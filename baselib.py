@@ -40,8 +40,6 @@ from .rfmlib import *
 from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 
-import pdb
-
 HAVE_PSUTIL = False
 try:
     import psutil
