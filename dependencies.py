@@ -52,6 +52,11 @@ class Dependency:
 # -----------------------------------------------------------
 # end of Dependency class 
 
+# Numpy (FIXME: check if really needed)
+numpy_deps = (\
+        Dependency("numpy", None, None),\
+        )
+
 # NetCDF
 netcdf_deps = (\
         Dependency("netCDF4", None, None),\
@@ -70,6 +75,7 @@ psutil_deps = (\
 
 # Dictionary of dependencies
 deps = {
+    "Numpy": numpy_deps,
     "Support for NetCDF output": netcdf_deps,
     "Plotting - Pygal": plotting_pygal_deps,
     "Running MBDyn from Blender UI": psutil_deps

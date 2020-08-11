@@ -150,7 +150,7 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
             if not(all([dep.installed() for dep in deps[feature]])):
                 box.operator(BLENDYN_OT_install_dependencies.bl_idname, icon = "CONSOLE").feature = feature
             else:
-                box.label(text = "All the needed Python packages are installed.")
+                box.label(text = "All the Python packages needed for this feature are installed.")
 # -----------------------------------------------------------
 # end of BLENDYN_preferences class 
 
