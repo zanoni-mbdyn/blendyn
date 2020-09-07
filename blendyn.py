@@ -500,6 +500,12 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "MBDyn nodes",
             type = BLENDYN_PG_nodes_dictionary
     )
+    # Do we use 'free' or 'structured' labels?
+    free_labels: BoolProperty(
+            name = "Use free labels",
+            description = "Do not check variable name when parsing labels"
+            # update = bpy.ops.blendyn.free_labels_warning
+    )       
     # Nodes dictionary index -- holds the index for displaying the Nodes Dictionary in a UI List
     nd_index: IntProperty(
             name = "MBDyn nodes collection index",
@@ -1484,7 +1490,11 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         # Assign MBDyn labels to elements in dictionaries
         col.operator(BLENDYN_OT_assign_labels.bl_idname, \
                 text = "Load MBDyn labels")
-
+        col.prop(mbs, "free_labels", text = "Free labels")
+        if mbs.free_labels:
+            box = layout.box()
+            box.label(text = "WARNING: with free labels, no checks are made on labels names. See docs for details")
+        
         # Set action to be taken for missing nodes/elements
         row = layout.row()
         col = layout.column(align = True)

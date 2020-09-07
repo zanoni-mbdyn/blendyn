@@ -473,8 +473,16 @@ def file_len(filepath):
 # end of file_len() function
 
 def assign_labels(context):
-    """ Function that parses the (optional) labels file and assigns \
-        the string labels it can find to the respective MBDyn objects """
+    """ Function that parses the .log file and assigns \
+        the string labels it can find to the respective MBDyn objects
+        -- 
+         'standard' labels: assigns only the labels that match a
+                            specific pattern
+         'free' labels: assigns the labels directly.
+                        contributed by Louis Gagnon 
+                        -- see Github Issue #39
+        --
+    """
 
     mbs = context.scene.mbdyn
     nd = mbs.nodes
@@ -486,80 +494,103 @@ def assign_labels(context):
     log_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.log')
 
-    set_strings_node = ["  const integer Node_", \
-                        "  integer Node_", \
-                        "  const integer node_", \
-                        "  integer node_", \
-                        "  const integer NODE_", \
-                        "  integer NODE_"]
+    if mbs.free_labels:
+        obj_list = [nd, ed, rd]
+        set_strings_any = ["  const integer", \
+                           "  integer"]
+    else:
+        set_strings_node = ["  const integer Node_", \
+                            "  integer Node_", \
+                            "  const integer node_", \
+                            "  integer node_", \
+                            "  const integer NODE_", \
+                            "  integer NODE_"]
+    
+        set_strings_joint = ["  const integer Joint_", \
+                             "  integer Joint_"
+                             "  const integer joint_", \
+                             "  integer joint_", \
+                             "  const integer JOINT_", \
+                             "  integer JOINT_"]
+    
+        set_strings_beam = ["  const integer Beam_", \
+                            "  integer Beam_", \
+                            "  const integer beam_", \
+                            "  integer beam_", \
+                            "  const integer BEAM_", \
+                            "  integer BEAM_"]
+    
+        set_strings_refs = ["  const integer Ref_", \
+                            "  integer Ref_", \
+                            "  const integer ref_", \
+                            "  integer ref_", \
+                            "  const integer REF_", \
+                            "  integer REF_", \
+                            "  const integer Reference_", \
+                            "  integer Reference_", \
+                            "  const integer reference_", \
+                            "  integer reference_", \
+                            "  const integer REFERENCE_", \
+                            "  integer REFERENCE_"]
 
-    set_strings_joint = ["  const integer Joint_", \
-                         "  integer Joint_"
-                         "  const integer joint_", \
-                         "  integer joint_", \
-                         "  const integer JOINT_", \
-                         "  integer JOINT_"]
-
-    set_strings_beam = ["  const integer Beam_", \
-                        "  integer Beam_", \
-                        "  const integer beam_", \
-                        "  integer beam_", \
-                        "  const integer BEAM_", \
-                        "  integer BEAM_"]
-
-    set_strings_refs = ["  const integer Ref_", \
-                        "  integer Ref_", \
-                        "  const integer ref_", \
-                        "  integer ref_", \
-                        "  const integer REF_", \
-                        "  integer REF_", \
-                        "  const integer Reference_", \
-                        "  integer Reference_", \
-                        "  const integer reference_", \
-                        "  integer reference_", \
-                        "  const integer REFERENCE_", \
-                        "  integer REFERENCE_"]
-
-    def assign_label(line, type, set_string, dict):
+    def assign_label(line, entity_type, set_string, the_dict):
         line_str = line.rstrip()
         eq_idx = line_str.find('=') + 1
         label_int = int(line_str[eq_idx:].strip())
-        label_str = line_str[(len(set_string) - len(type) - 1):(eq_idx -1)].strip()
-        for item in dict:
+        if mbs.free_labels:
+            label_str = line_str[len(set_string):(eq_idx -1)].strip()
+        else:
+            label_str = line_str[(len(set_string) - len(entity_type) - 1):(eq_idx-1)].strip()
+         
+        for item in the_dict:
             if item.int_label == label_int:
                 if item.string_label != label_str:
                     item.string_label = label_str
+                    message = "BLENDYN::assign_label(): \nset_string:{}\nline_str:{}\nlabel_str:{}".format(set_string, line_str, label_str)
+                    print(message)
+                    baseLogger.info(message)
                     return True
                 break
         return False
 
     try:
-        with open(log_file) as lf:
-            for line in lf:
-                found = False
-                for set_string in set_strings_node:
-                    if set_string in line:
-                        labels_changed += (assign_label(line, 'node', set_string, nd))
-                        found = True
-                        break
-                if not(found):
-                    for set_string in set_strings_joint:
+        if mbs.free_labels:
+            with open(log_file) as lf:
+                for line in lf:
+                    found = False
+                    for set_string in set_strings_any:
                         if set_string in line:
-                            labels_changed += (assign_label(line, 'joint', set_string, ed))
+                            for the_obj in obj_list:
+                                labels_changed += (assign_label(line, '', set_string, the_obj))
                             found = True
                             break
-                if not(found):
-                    for set_string in set_strings_beam:
+        else:
+            with open(log_file) as lf:
+                for line in lf:
+                    found = False
+                    for set_string in set_strings_node:
                         if set_string in line:
-                            labels_changed += (assign_label(line, 'beam', set_string, ed))
+                            labels_changed += (assign_label(line, 'node', set_string, nd))
                             found = True
                             break
-                if not (found):
-                    for set_string in set_strings_refs:
-                        if set_string in line:
-                            labels_changed += (assign_label(line, 'ref', set_string, rd))
-                            found = True
-                            break
+                    if not(found):
+                        for set_string in set_strings_joint:
+                            if set_string in line:
+                                labels_changed += (assign_label(line, 'joint', set_string, ed))
+                                found = True
+                                break
+                    if not(found):
+                        for set_string in set_strings_beam:
+                            if set_string in line:
+                                labels_changed += (assign_label(line, 'beam', set_string, ed))
+                                found = True
+                                break
+                    if not (found):
+                        for set_string in set_strings_refs:
+                            if set_string in line:
+                                labels_changed += (assign_label(line, 'ref', set_string, rd))
+                                found = True
+                                break
     except IOError:
         print("Blendyn::assign_labels(): can't read from file {}, \
                 sticking with default labeling...".format(log_file))
