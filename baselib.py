@@ -128,6 +128,8 @@ def setup_import(filepath, context):
         nc = Dataset(filepath, "r")
         mbs.use_netcdf = True
         mbs.num_rows = 0
+        mbs.num_nodes = nc.dimensions['struct_node_labels_dim'].size
+        mbs.num_timesteps = nc.dimensions['time'].size
         try:
             eig_step = nc.variables['eig.step']
             eig_time = nc.variables['eig.time']
