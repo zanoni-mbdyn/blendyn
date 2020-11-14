@@ -2194,7 +2194,7 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
             return {'CANCELLED'}
         else:
             message = "Not every MBDyn node was imported."
-            self.report({'FINISHED'}, message)
+            self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)
             return {'FINISHED'}
 
