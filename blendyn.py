@@ -1936,12 +1936,12 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
             col = box.column()
             col.prop(mbs, "min_elem_import")
             col.prop(mbs, "max_elem_import")
-            if mbs.elem_type_import in ['shell4']:
+            if mbs.elem_type_import in ('shell4', 'membrane4'):
                 col.prop(mbs, "mesh_import_mode")
-            if mbs.mesh_import_mode == 'SEPARATED OBJECTS':
+            if mbs.mesh_import_mode == 'SEPARATED_OBJECTS':
                 col.operator(BLENDYN_OT_import_elements_by_type.bl_idname, \
                         text="Import elements by type")
-            elif mbs.mesh_import_mode == 'SINGLE MESH':
+            elif mbs.mesh_import_mode == 'SINGLE_MESH':
                 col.operator(BLENDYN_OT_import_elements_as_mesh.bl_idname, \
                         text="Import elements by type")
             col.operator(BLENDYN_OT_elements_import_all.bl_idname)
@@ -2430,7 +2430,6 @@ class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_scale_elements_by_type class
-
 
 class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
     """ Imports the MBDyn elements of the selected type in the blender scene """
