@@ -36,6 +36,8 @@ from .utilslib import *
 
 DEFORMABLE_ELEMENTS = {'beam3', 'beam2', 'shell4', 'membrane4'}
 
+import pdb
+
 def update_cd_index(self, context):
     mbs = context.scene.mbdyn
     comps = mbs.components
@@ -428,7 +430,7 @@ def add_mesh_component(context, component):
         # show as Bendy Bone
         armOBJ.data.display_type = 'BBONE'
 
-        # contraints
+        # constraints
         bpy.ops.object.mode_set(mode = 'POSE', toggle = False)
 
         # volume 1
@@ -593,25 +595,13 @@ def add_mesh_component(context, component):
     bpy.context.view_layer.objects.active = armOBJ
 
     # add bones
-    reference = []      # reference object
     for celem in component.elements:
         elem = ed[celem.elem]
         if elem.type == 'beam3':
-            if not reference:
-                elcol = bpy.data.collections[elem.name]
-                reference = elcol.objects[elem.name + '_RF1']
             add_comp_armature_bones_beam3(armOBJ, armature, component, celem)
         elif elem.type == 'beam2':
-            if not reference:
-                elcol = bpy.data.collections[elem.name]
-                reference = elcol.objects[elem.name + '_RF1']
             add_comp_armature_bones_beam2(armOBJ, armature, component, celem)
         elif elem.type in {'shell4', 'membrane4'}:
-            if not reference:
-                elcol = bpy.data.collections[elem.name]
-                n = [obj for obj in elcol.objects \
-                        if ((obj.mbdyn.dkey in nd.keys()) and (nd[obj.mbdyn.dkey].int_label == elem.nodes[0].int_label))]
-                reference = n[0]
             add_comp_armature_bones_plate(armOBJ, armature, component, celem)
         else:
             return {'ELEM_TYPE_UNSUPPORTED'}
