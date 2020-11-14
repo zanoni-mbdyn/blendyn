@@ -324,43 +324,22 @@ def spawn_beam2_element(elem, context):
     elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
-    # P1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select_set(state = True)
-    beamOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = beamOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[0].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    # P2 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select_set(state = True)
-    beamOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = beamOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[1].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    # add objects representing the position of the two points
-    # on the beam axis, w.r.t. nodes    
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
-            radius = .33*n1OBJ.scale.magnitude/sqrt(3))
-    RF1 = bpy.context.selected_objects[0]
-    parenting(RF1, n1OBJ)
-    RF1.name = beamOBJ.name + '_RF1'
-    RF1.hide_viewport = True
-    
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
-            radius = .33*n2OBJ.scale.magnitude/sqrt(3))
-    RF2 = bpy.context.selected_objects[0]
-    RF2.name = beamOBJ.name + '_RF2'
-    parenting(RF2, n2OBJ)
-    RF2.hide_viewport = True
+    # Hook control points and add internal RFs objects
+    objs = [n1OBJ, n2OBJ]
+    names = ['P1', 'P2']
+    M = Matrix()
+    for i, (p, obj, name) in enumerate(zip(beamOBJ.data.splines[0].points, objs, names)):
+        hook = beamOBJ.modifiers.new(name, type = 'HOOK')
+        hook.object = obj
+        hook.vertex_indices_set([i])
+        hook.matrix_inverse = M.Translation(-obj.location)
+        nobj = bpy.data.objects.new(beamOBJ.name + 'RF' + str(i + 1), None)
+        nobj.location = elem.offsets[i].value
+        dim = obj.dimensions.magnitude/sqrt(3) if obj.data else obj.empty_display_size
+        nobj.empty_display_size = .33*dim
+        parenting(nobj, obj)
+        elcol.objects.link(nobj)
+        nobj.hide_set(state = True)
 
     # link objects to the element collection
     elcol.objects.link(n1OBJ)
@@ -483,99 +462,52 @@ def spawn_beam3_element(elem, context):
     elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
     beamOBJ.select_set(state = True)
+    
+    # add objects representing the position of the points on the beam axis, w.r.t. nodes
+    nOBJs = [n1OBJ, n2OBJ, n3OBJ]
+    for i in range(3):
+        obj = bpy.data.objects.new(beamOBJ.name + '_RF' + str(i + 1), None)
+        obj.location = elem.offsets[i].value
+        obj.empty_display_type = 'PLAIN_AXES'
+        dim = nOBJs[i].dimensions.magnitude/sqrt(3) if nOBJs[i].data else nOBJs[i].empty_display_size
+        obj.empty_display_size = .33*dim
+        parenting(obj, nOBJs[i])
+        elcol.objects.link(obj)
+        obj.hide_set(state = True)
 
     # Hook control points
-    bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M1[0:3])
-    obj2 = bpy.context.view_layer.objects.active
-    obj2.name = beamOBJ.name + '_M1'
-    obj2.select_set(state = False)
+    obj2 = bpy.data.objects.new(beamOBJ.name + '_M1', None)
+    obj2.location = M1[0:3]
+    obj2.empty_display_type = 'PLAIN_AXES'
+    dim = n2OBJ.dimensions.magnitude/sqrt(3) if n2OBJ.data else n2OBJ.empty_display_size
+    obj2.empty_display_size = dim
 
-    bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = M2[0:3])
-    obj3 = bpy.context.view_layer.objects.active
-    obj3.name = beamOBJ.name + '_M2'
-    obj3.select_set(state = False)
+    obj3 = bpy.data.objects.new(beamOBJ.name + '_M2', None)
+    obj3.location = M2[0:3]
+    obj3.empty_display_type = 'PLAIN_AXES'
+    obj3.empty_display_size = dim
 
-    # P1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select_set(state = True)
-    beamOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = beamOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[0].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    # M1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj2.select_set(state = True)
-    beamOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = beamOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[1].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    # M2 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj3.select_set(state = True)
-    beamOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = beamOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[2].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    # P3 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n3OBJ.select_set(state = True)
-    beamOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = beamOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    beamOBJ.data.splines[0].points[3].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    
-
-    # add objects representing the position of the two points
-    # on the beam axis, w.r.t. nodes    
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
-            radius = .33*n1OBJ.scale.magnitude/sqrt(3))
-    RF1 = bpy.context.selected_objects[0]
-    parenting(RF1, n1OBJ)
-    RF1.name = beamOBJ.name + '_RF1'
-    RF1.hide_viewport = True
-    
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
-            radius = .33*n2OBJ.scale.magnitude/sqrt(3))
-    RF2 = bpy.context.selected_objects[0]
-    parenting(RF2, n2OBJ)
-    RF2.name = beamOBJ.name + '_RF2'
-    RF2.hide_viewport = True
-
-    bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[2].value, \
-            radius = .33*n3OBJ.scale.magnitude/sqrt(3))
-    RF3 = bpy.context.selected_objects[0]
-    parenting(RF3, n3OBJ)
-    RF3.name = beamOBJ.name + '_RF3'
-    RF3.hide_viewport = True
-
-    bpy.ops.object.select_all(action = 'DESELECT')
+    objs = [n1OBJ, obj2, obj3, n3OBJ]
+    names = ['P1', 'M1', 'M2', 'P3']
+    M = Matrix()
+    for i, (p, obj, name) in enumerate(zip(beamOBJ.data.splines[0].points, objs, names)):
+        hook = beamOBJ.modifiers.new(name, type = 'HOOK')
+        hook.object = obj
+        hook.vertex_indices_set([i])
+        hook.matrix_inverse = M.Translation(-obj.location)
 
     elem.is_imported = True
 
-    obj2.hide_viewport = True
-    obj3.hide_viewport = True
+    # bpy.ops.object.select_all(action = 'DESELECT')
 
-    bpy.ops.object.select_all(action = 'DESELECT')
-
-    # put them all in the element collection
+    # put them all in the element collection and hide the internal references
     elcol.objects.link(n1OBJ)
     elcol.objects.link(n2OBJ)
     elcol.objects.link(n3OBJ)
+    elcol.objects.link(obj2)
+    elcol.objects.link(obj3)
+    obj2.hide_set(state = True)
+    obj3.hide_set(state = True)
     set_active_collection('Master Collection')
     return {'FINISHED'}
 # -----------------------------------------------------------
@@ -623,39 +555,6 @@ def update_beam3(elem, insert_keyframe = False):
 
     cp2.location = Vector(( P2 - Vector((abs(d[0])*t2)) )).to_3d()
     cp3.location = Vector(( P2 + Vector((abs(d[0])*t2)) )).to_3d()
-
-    # FIXME: Check this very carefully!
-    # set the tilt angles of the sections
-
-#     phi1_prev = cvdata.splines[0].points[0].tilt
-#     phi2_prev = cvdata.splines[0].points[1].tilt
-#     phi3_prev = cvdata.splines[0].points[2].tilt
-#     phi4_prev = cvdata.splines[0].points[3].tilt
-# 
-#     t3 = P3.to_3d() - cp2.location
-#     t3.normalize()
-# 
-#     l1 = (( cp2.location - P1.to_3d() )).length
-#     l2 = (( P2.to_3d() - cp2.location )).length
-#     l3 = (( cp3.location - P2.to_3d() )).length
-#     l4 = (( P3.to_3d() - cp3.location )).length
-# 
-#     # relative rotation quaternions
-#     qr1 = Quaternion((elem.rotoffsets[0].value))@(n1.matrix_world.to_quaternion()).conjugated()
-#     qr2 = Quaternion((elem.rotoffsets[1].value))@(n2.matrix_world.to_quaternion()).conjugated()
-#     qr3 = Quaternion((elem.rotoffsets[2].value))@(n3.matrix_world.to_quaternion()).conjugated()
-#     
-#     phi1 = t1.to_3d().dot(cquat(qr1).to_exponential_map())
-#     phi2 = t1.to_3d().dot(cquat(qr1).to_exponential_map())*l1/(l1 + l2) + \
-#            t2.to_3d().dot(cquat(qr2).to_exponential_map())*l2/(l1 + l2)
-#     phi3 = t2.to_3d().dot(cquat(qr2).to_exponential_map())*l3/(l3 + l4) + \
-#            t3.to_3d().dot(cquat(qr3).to_exponential_map())*l4/(l3 + l4)
-#     phi4 = t3.to_3d().dot(cquat(qr3).to_exponential_map())
-# 
-#     cvdata.splines[0].points[0].tilt = phi1
-#     cvdata.splines[0].points[1].tilt = phi2
-#     cvdata.splines[0].points[2].tilt = phi3
-#     cvdata.splines[0].points[3].tilt = phi4 
 
     if insert_keyframe:
         try:
