@@ -205,7 +205,7 @@ def spawn_prismatic_element(elem, context):
         RF2.scale = .33*prismjOBJ.scale
         RF2.name = prismjOBJ.name + '_RF2'
         parenting(RF2, prismjOBJ)
-        RF2.hide_viewport = True
+        RF2.hide_(state = True)
 
         # set parenting of wireframe obj
         parenting(prismjOBJ, n1OBJ)

@@ -645,8 +645,8 @@ def spawn_rod_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     n2OBJ.select_set(state = True)
-    p1OBJ.hide_viewport = True
-    p2OBJ.hide_viewport = True
+    p1OBJ.hide_set(state = True)
+    p2OBJ.hide_set(state = True)
  
     # put them all in the element collection
     elcol.objects.link(n1OBJ)

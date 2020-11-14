@@ -703,7 +703,7 @@ def hide_or_delete(obj_names, missing):
         obj_list = [bpy.data.objects[var] for var in obj_names]
 
         for obj in obj_list:
-            obj.hide_viewport = True
+            obj.hide_set(state = True)
 
     if missing == "DELETE":
         bpy.ops.object.select_all(action='DESELECT')

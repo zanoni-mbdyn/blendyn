@@ -223,7 +223,7 @@ def spawn_spherical_hinge_element(elem, context):
         RF2.scale = .33*sphjOBJ.scale
         RF2.name = sphjOBJ.name + '_RF2'
         parenting(RF2, sphjOBJ)
-        RF2.hide_viewport = True
+        RF2.hide_set(state = True)
 
         # set parenting of wireframe obj
         parenting(sphjOBJ, n1OBJ)

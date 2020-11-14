@@ -294,7 +294,7 @@ def spawn_revolute_hinge_element(elem, context):
         RF2.scale = .33*revjOBJ.scale
         RF2.name = revjOBJ.name + '_RF2'
         parenting(RF2, revjOBJ)
-        RF2.hide_viewport = True
+        RF2.hide_set(state = True)
 
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)

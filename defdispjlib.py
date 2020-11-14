@@ -155,13 +155,13 @@ def spawn_deformable_displacement_joint_element(elem, context):
         RF1.rotation_mode = 'QUATERNION'
         RF1.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
         parenting(RF1, n1OBJ)
-        RF1.hide_viewport = True
+        RF1.hide_set(state = True)
 
         RF2.location = elem.offsets[1].value
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
         parenting(RF2, n2OBJ)
-        RF2.hide_viewport = True
+        RF2.hide_set(state = True)
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
