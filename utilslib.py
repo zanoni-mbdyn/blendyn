@@ -257,13 +257,11 @@ def parse_rotmat(rw, idx, R):
     pass
 
 def parenting(child, parent):
-    bpy.context.view_layer.objects.active = child
-    bpy.ops.object.constraint_add(type='CHILD_OF')
-    child.constraints["Child Of"].target = parent
-
-    child.constraints["Child Of"].use_scale_x = False
-    child.constraints["Child Of"].use_scale_y = False
-    child.constraints["Child Of"].use_scale_z = False
+    co = child.constraints.new(type = 'CHILD_OF')
+    co.target = parent
+    co.use_scale_x = False
+    co.use_scale_y = False
+    co.use_scale_z = False
 
 # -----------------------------------------------------------
 # end of parenting function
