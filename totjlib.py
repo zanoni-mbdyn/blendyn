@@ -353,57 +353,54 @@ def spawn_total_joint_element(elem, context):
     
         # create an object representing the RF used to express the relative
         # position w.r.t. node 1, for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value,\
-                radius = .33*totjOBJ.scale.magnitude/sqrt(3))
-        RF1p = bpy.context.selected_objects[0]
+        RF1p = bpy.data.objects.new(totjOBJ.name + '_RF1_pos', None)
+        RF1p.empty_display_type = 'ARROWS'
         RF1p.rotation_mode = 'QUATERNION'
         RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
-        RF1p.name = totjOBJ.name + '_RF1_pos'
-        parenting(RF1p, n1OBJ)
-        RF1p.hide_set(state = True)
     
         # create an object representing the RF used to express the relative
         # orientation w.r.t. node 1, for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
-                radius = .33*totjOBJ.scale.magnitude/sqrt(3))
-        RF1r = bpy.context.selected_objects[0]
+        RF1r = bpy.data.objects.new(totjOBJ.name + '_RF1_rot', None)
+        RF1r.empty_display_type = 'ARROWS'
         RF1r.rotation_mode = 'QUATERNION'
         RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
-        RF1r.name = totjOBJ.name + '_RF1_rot'
-        parenting(RF1r, n1OBJ)
-        RF1r.hide_set(state = True)
     
         # create an object representing the RF used to express the relative
         # position w.r.t. node 2, for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
-                radius = .33*totjOBJ.scale.magnitude/sqrt(3))
-        RF2p = bpy.context.selected_objects[0]
+        RF2p = bpy.data.objects.new(totjOBJ.name + '_RF2_pos', None)
+        RF2p.empty_display_type = 'ARROWS'
         RF2p.rotation_mode = 'QUATERNION'
         RF2p.rotation_quaternion = Quaternion(elem.rotoffsets[2].value[0:])
-        RF2p.name = totjOBJ.name + '_RF2_pos'
-        parenting(RF2p, n2OBJ)
-        RF2p.hide_set(state = True)
     
         # create an object representing the RF used to express the relative
         # orientation w.r.t. node 2, for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[1].value, \
-                radius = .33*totjOBJ.scale.magnitude/sqrt(3))
-        RF2r = bpy.context.selected_objects[0]
+        RF2r = bpy.data.objects.new(totjOBJ.name + '_RF2_rot', None)
+        RF2r.empty_display_type = 'ARROWS'
         RF2r.rotation_mode = 'QUATERNION'
         RF2r.rotation_quaternion = Quaternion(elem.rotoffsets[3].value[0:])
-        RF2r.name = totjOBJ.name + '_RF2_rot'
-        parenting(RF2r, n2OBJ)
-        RF2r.hide_set(state = True)
-    
-        # set parenting of wireframe obj
-        parenting(totjOBJ, n1OBJ)
     
         # set mbdyn props of object
         elem.blender_object = totjOBJ.name
         totjOBJ.mbdyn.dkey = elem.name
         totjOBJ.mbdyn.type = 'element'
 
+        # set parenting of wireframe obj
+        parenting(totjOBJ, n1OBJ)
+        # parent the RF objects to the corresponding nodes
+        parenting(RF1p, n1OBJ)
+        parenting(RF1r, n1OBJ)
+        parenting(RF2p, n2OBJ)
+        parenting(RF2r, n2OBJ)
+
         # link objects to element collection
+        elcol.objects.link(RF1p)
+        elcol.objects.link(RF1r)
+        elcol.objects.link(RF2p)
+        elcol.objects.link(RF2r)
+        RF1p.hide_set(state = True)
+        RF1r.hide_set(state = True)
+        RF2p.hide_set(state = True)
+        RF2r.hide_set(state = True)
         elcol.objects.link(n1OBJ)
         elcol.objects.link(n2OBJ)
         set_active_collection('Master Collection')
@@ -503,28 +500,23 @@ def spawn_total_pin_joint_element(elem, context):
     
         # create an object representing the RF used to express the relative
         # position w.r.t. node 1, for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
-                radius = .33*totjOBJ.scale.magnitude/sqrt(3))
-        RF1p = bpy.context.selected_objects[0]
+        RF1p = bpy.data.objects.new(totjOBJ.name + '_RF1_pos', None)
+        RF1p.empty_display_type = 'ARROWS'
         RF1p.rotation_mode = 'QUATERNION'
         RF1p.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-        RF1p.name = totjOBJ.name + '_RF1_pos'
-        parenting(RF1p, n1OBJ)
-        RF1p.hide_set(state = True)
     
         # create an object representing the RF used to express the relative
         # orientation w.r.t. node 1, for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = elem.offsets[0].value, \
-                radius = .33*totjOBJ.scale.magnitude/sqrt(3))
-        RF1r = bpy.context.selected_objects[0]
+        RF1r = bpy.data.objects.new(totjOBJ.name + '_RF1_rot', None)
+        RF1r.empty_display_type = 'ARROWS'
         RF1r.rotation_mode = 'QUATERNION'
         RF1r.rotation_quaternion = Quaternion(elem.rotoffsets[1].value)
-        RF1r.name = totjOBJ.name + '_RF1_rot'
-        parenting(RF1r, n1OBJ)
-        RF1r.hide_set(state = True)
     
         # set parenting of wireframe obj
         parenting(totjOBJ, n1OBJ)
+        # set parenting of RF objects
+        parenting(RF1p, n1OBJ)
+        parenting(RF1r, n1OBJ)
     
         # set objects' mbdyn props
         elem.blender_object = totjOBJ.name
@@ -533,6 +525,10 @@ def spawn_total_pin_joint_element(elem, context):
     
         # link objects to element collection
         elcol.objects.link(n1OBJ)
+        elcol.objects.link(RF1p)
+        elcol.objects.link(RF1r)
+        RF1p.hide_set(state = True)
+        RF1r.hide_set(state = True)
         set_active_collection('Master Collection')
 
         return {'FINISHED'}
