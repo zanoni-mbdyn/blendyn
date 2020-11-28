@@ -334,6 +334,7 @@ def spawn_beam2_element(elem, context):
         hook.vertex_indices_set([i])
         hook.matrix_inverse = M.Translation(-obj.location)
         nobj = bpy.data.objects.new(beamOBJ.name + 'RF' + str(i + 1), None)
+        nobj.empty_display_type = 'ARROWS'
         nobj.location = elem.offsets[i].value
         dim = obj.dimensions.magnitude/sqrt(3) if obj.data else obj.empty_display_size
         nobj.empty_display_size = .33*dim
@@ -468,7 +469,7 @@ def spawn_beam3_element(elem, context):
     for i in range(3):
         obj = bpy.data.objects.new(beamOBJ.name + '_RF' + str(i + 1), None)
         obj.location = elem.offsets[i].value
-        obj.empty_display_type = 'PLAIN_AXES'
+        obj.empty_display_type = 'ARROWS'
         dim = nOBJs[i].dimensions.magnitude/sqrt(3) if nOBJs[i].data else nOBJs[i].empty_display_size
         obj.empty_display_size = .33*dim
         parenting(obj, nOBJs[i])
