@@ -594,11 +594,9 @@ def spawn_rod_element(elem, context):
     # assign coordinates of knots in global frame 
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    # p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    # p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
-    p1 = Vector((f1))
-    p2 = Vector((f2))
-
+    p1 = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
+    p2 = n2OBJ.location + R2@Vector(( f2[0], f2[1], f2[2] ))
+    
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
 
@@ -609,46 +607,24 @@ def spawn_rod_element(elem, context):
     elem.blender_object = rodOBJ.name
         
     ## hooking of the line ends to the Blender objects 
-    
-    # P1 hook
-    objs = bpy.data.objects.keys()
-    bpy.ops.object.select_all(action = 'DESELECT')
-    rodOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = rodOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    rodOBJ.data.splines[0].points[0].select = True
-    bpy.ops.object.hook_add_newob()
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    new_objs = bpy.data.objects.keys()
-    p1OBJkey = [obj for obj in new_objs if obj not in objs]
-    p1OBJ = bpy.data.objects[p1OBJkey[0]]
-    p1OBJ.name = rodOBJ.name + '_P1'
-    parenting(p1OBJ, n1OBJ)
+    objs = [n1OBJ, n2OBJ]
+    names = ['P1', 'P2']
+    M = Matrix()
 
-    # P2 hook
-    objs = bpy.data.objects.keys()
-    bpy.ops.object.select_all(action = 'DESELECT')
-    rodOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = rodOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    rodOBJ.data.splines[0].points[1].select = True
-    bpy.ops.object.hook_add_newob()
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    new_objs = bpy.data.objects.keys()
-    p2OBJkey = [obj for obj in new_objs if obj not in objs]
-    p2OBJ = bpy.data.objects[p2OBJkey[0]]
-    p2OBJ.name = rodOBJ.name + '_P2'
-    parenting(p2OBJ, n2OBJ)
-
-    bpy.ops.object.select_all(action = 'DESELECT')
-
-    n2OBJ.select_set(state = True)
-    p1OBJ.hide_set(state = True)
-    p2OBJ.hide_set(state = True)
+    for i, (p, obj, name) in enumerate(zip(rodOBJ.data.splines[0].points, objs, names)):
+        hook = rodOBJ.modifiers.new(name, type = 'HOOK')
+        hook.object = obj
+        hook.vertex_indices_set([i])
+        nobj = bpy.data.objects.new(rodOBJ.name + 'RF' + str(i + 1), None)
+        nobj.empty_display_type = 'ARROWS'
+        nobj.location = elem.offsets[i].value
+        dim = obj.dimensions.magnitude/sqrt(3) if obj.data else obj.empty_display_size
+        nobj.empty_display_size = .33*dim
+        parenting(nobj, obj)
+        elcol.objects.link(nobj)
+        nobj.hide_set(state = True)
  
-    # put them all in the element collection
+    # link objects to the element collection
     elcol.objects.link(n1OBJ)
     elcol.objects.link(n2OBJ)
     set_active_collection('Master Collection')
