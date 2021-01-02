@@ -180,7 +180,6 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_PG_reference_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_component_element)
-    bpy.utils.unregister_class(BLENDYN_PG_component_section)
     bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
     bpy.utils.unregister_class(BLENDYN_UL_env_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_mbdyn_nodes_list)
