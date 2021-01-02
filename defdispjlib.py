@@ -147,17 +147,21 @@ def spawn_deformable_displacement_joint_element(elem, context):
         RF2 = bpy.data.objects[elem.name + '_RF2']
 
         # place the joint objects in the position defined relative to node 1
-        ddOBJ.location = elem.offsets[0].value
+        R1 = n1OBJ.rotation_quaternion.to_matrix()
+        R2 = n2OBJ.rotation_quaternion.to_matrix()
+        f1 = elem.offsets[0].value
+        f2 = elem.offsets[1].value
+        ddOBJ.location = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
         ddOBJ.rotation_mode = 'QUATERNION'
         ddOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
 
-        RF1.location = elem.offsets[0].value
+        RF1.location = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
         RF1.rotation_mode = 'QUATERNION'
         RF1.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
         parenting(RF1, n1OBJ)
         RF1.hide_set(state = True)
 
-        RF2.location = elem.offsets[1].value
+        RF2.location = n2OBJ.location + R1@Vector(( f2[0], f2[1], f2[2] ))
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
         parenting(RF2, n2OBJ)
@@ -166,8 +170,6 @@ def spawn_deformable_displacement_joint_element(elem, context):
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
         ddOBJ.scale = Vector((s, s, s))
-        # ddOBJ.data.transforms(ddOBJ.matrix_world)
-        # ddOBJ.matrix_world = Matrix()
 
         # parenting of wireframe objects
         parenting(ddOBJ, n1OBJ)
