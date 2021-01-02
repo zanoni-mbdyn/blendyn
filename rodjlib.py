@@ -609,21 +609,27 @@ def spawn_rod_element(elem, context):
     ## hooking of the line ends to the Blender objects 
     objs = [n1OBJ, n2OBJ]
     names = ['P1', 'P2']
+    locs = [p1, p2]
     M = Matrix()
 
-    for i, (p, obj, name) in enumerate(zip(rodOBJ.data.splines[0].points, objs, names)):
+    for i, (p, obj, name, loc) in enumerate(zip(rodOBJ.data.splines[0].points, objs, names, locs)):
         hook = rodOBJ.modifiers.new(name, type = 'HOOK')
         hook.object = obj
         hook.vertex_indices_set([i])
-        nobj = bpy.data.objects.new(rodOBJ.name + 'RF' + str(i + 1), None)
+        nobj = bpy.data.objects.new(rodOBJ.name + '_RF' + str(i + 1), None)
         nobj.empty_display_type = 'ARROWS'
-        nobj.location = elem.offsets[i].value
+        nobj.location = loc
         dim = obj.dimensions.magnitude/sqrt(3) if obj.data else obj.empty_display_size
         nobj.empty_display_size = .33*dim
         parenting(nobj, obj)
         elcol.objects.link(nobj)
         nobj.hide_set(state = True)
- 
+
+    # lock the object scale
+    rodOBJ.lock_scale[0] = True
+    rodOBJ.lock_scale[1] = True
+    rodOBJ.lock_scale[2] = True
+
     # link objects to the element collection
     elcol.objects.link(n1OBJ)
     elcol.objects.link(n2OBJ)
