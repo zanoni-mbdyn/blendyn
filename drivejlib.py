@@ -181,14 +181,14 @@ def spawn_drive_displacement_element(elem, context):
     polydata.points.add(1)
 
     # get offsets
-    f1 = elem.offsets[0].value
-    f2 = elem.offsets[1].value
+    f1 = Vector(( elem.offsets[0].value[0:] ))
+    f2 = Vector(( elem.offsets[1].value[0:] ))
 
     # assign coordinates of knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = n1OBJ.location + R1*f1
+    p2 = n2OBJ.location + R2*f2
 
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
