@@ -174,7 +174,7 @@ def spawn_brake_element(elem, context):
     f1 = elem.offsets[0].value
     f2 = elem.offsets[1].value
     q1 = Quaternion((elem.rotoffsets[0].value[0:]))@n1OBJ.rotation_quaternion
-    q2 = Quaternion((elem.rotoffsets[1].value[0:])))@n2OBJ.rotation_quaternion
+    q2 = Quaternion((elem.rotoffsets[1].value[0:]))@n2OBJ.rotation_quaternion
 
     # project offsets in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
@@ -194,12 +194,7 @@ def spawn_brake_element(elem, context):
         # the append operator leaves just the imported object selected
         brakejOBJd = bpy.context.selected_objects[0]
         brakejOBJd.name = elem.name
-    
-        # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-                n2OBJ.scale.magnitude)
-        brakejOBJd.scale = Vector(( s, s, s ))
-    
+     
         # place the joint object in the position defined relative to node 2
         brakejOBJd.location = p2
         brakejOBJd.rotation_mode = 'QUATERNION'
@@ -216,11 +211,6 @@ def spawn_brake_element(elem, context):
         brakejOBJc = bpy.context.selected_objects[0]
         brakejOBJc.name = elem.name + '_caliper'
 
-        # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
-        n2OBJ.scale.magnitude)
-        brakejOBJc.scale = Vector(( s, s, s ))
-    
         # place the joint object in the position defined relative to node 1
         brakejOBJc.location = p1
         brakejOBJc.rotation_mode = 'QUATERNION'
@@ -229,7 +219,7 @@ def spawn_brake_element(elem, context):
         # set parenting of wireframe obj
         parenting(brakejOBJc, n1OBJ)
 
-        elem.blender_object = brakejOBJ.name
+        elem.blender_object = brakejOBJd.name
 
         # link to the element collection
         elcol.objects.link(n1OBJ)
