@@ -188,21 +188,21 @@ def spawn_gimbal_element(elem, context):
         gimbaljOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
-        q1 = elem.rotoffsets[0].value
-        q2 = elem.rotoffsets[1].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
+        f2 = Vector(( elem.offsets[1].value[0:] ))
+        q1 = Quaternion(( elem.rotoffsets[0].value[0:] ))
+        q2 = Quaternion(( elem.rotoffsets[1].value[0:] ))
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
-        p2 = Vector(( f2[0], f2[1], f2[2] ))
+        p1 = n1OBJ.location + R1@f1 
+        p2 = n1OBJ.location + R2@f2
     
         # place the joint object in the position defined relative to node 2
         gimbaljOBJ.location = p1
         gimbaljOBJ.rotation_mode = 'QUATERNION'
-        gimbaljOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        gimbaljOBJ.rotation_quaternion = q1@n1OBJ.rotation_quaternion 
 
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'gimbal_child')
@@ -214,8 +214,7 @@ def spawn_gimbal_element(elem, context):
     
         # rotate it according to "position orientation" w.r.t. node 1
         gimbal_childobj.rotation_mode = 'QUATERNION'
-        gimbal_childobj.rotation_quaternion = \
-                n2OBJ.rotation_quaternion @ Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+        gimbal_childobj.rotation_quaternion = q2@n2OBJ.rotation_quaternion
     
         bpy.ops.object.select_all(action = 'DESELECT')
         gimbal_childobj.select_set(state = True)    
