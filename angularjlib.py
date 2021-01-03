@@ -208,12 +208,6 @@ def spawn_angularvelocity_element(elem, context):
         s = (1.0/sqrt(3.))*(n1OBJ.scale.magnitude)
         angularvelocityjOBJ.scale = Vector(( s, s, s ))
 
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-    
-        # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-    
         # place the joint object in the position defined relative to node 2
         angularvelocityjOBJ.location = n1OBJ.location
         angularvelocityjOBJ.rotation_mode = 'QUATERNION'
@@ -283,12 +277,6 @@ def spawn_angularacceleration_element(elem, context):
         s = (1.0/sqrt(3.))*(n1OBJ.scale.magnitude)
         angularaccelerationjOBJ.scale = Vector(( s, s, s ))
 
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-    
-        # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-    
         # place the joint object in the position defined relative to node 2
         angularaccelerationjOBJ.location = n1OBJ.location
         angularaccelerationjOBJ.rotation_mode = 'QUATERNION'
