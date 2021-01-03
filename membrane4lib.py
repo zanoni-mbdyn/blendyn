@@ -146,54 +146,18 @@ def spawn_membrane4_element(elem, context):
     mesh.vertices[3].co = shellOBJ.matrix_world.inverted()@n3OBJ.location
     mesh.vertices[2].co = shellOBJ.matrix_world.inverted()@n4OBJ.location
 
-    # create hooks
-    bpy.ops.object.select_all(action = 'DESELECT')
-    shellOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = shellOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-
-    # vertex 1 hook
-    mesh = bmesh.from_edit_mesh(shellOBJ.data)
-    bpy.ops.mesh.select_all(action = 'DESELECT')
-    mesh.verts.ensure_lookup_table()
-    mesh.verts[0].select = True
-    mesh.select_flush(True)
-    n1OBJ.select_set(state = True)
-    bpy.ops.object.hook_add_selob()
-    n1OBJ.select_set(state = False)
-
-    # vertex 2 hook
-    mesh = bmesh.from_edit_mesh(shellOBJ.data)
-    bpy.ops.mesh.select_all(action = 'DESELECT')
-    mesh.verts.ensure_lookup_table()
-    mesh.verts[1].select = True
-    mesh.select_flush(True)
-    n2OBJ.select_set(state = True)
-    bpy.ops.object.hook_add_selob()
-    n2OBJ.select_set(state = False)
-
-    # vertex 3 hook
-    mesh = bmesh.from_edit_mesh(shellOBJ.data)
-    bpy.ops.mesh.select_all(action = 'DESELECT')
-    mesh.verts.ensure_lookup_table()
-    mesh.verts[2].select = True
-    mesh.select_flush(True)
-    n4OBJ.select_set(state = True)
-    bpy.ops.object.hook_add_selob()
-    n4OBJ.select_set(state = False)
-
-    # vertex 4 hook
-    mesh = bmesh.from_edit_mesh(shellOBJ.data)
-    bpy.ops.mesh.select_all(action = 'DESELECT')
-    mesh.verts.ensure_lookup_table()
-    mesh.verts[3].select = True
-    mesh.select_flush(True)
-    n3OBJ.select_set(state = True)
-    bpy.ops.object.hook_add_selob()
-    n3OBJ.select_set(state = False)
-
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-    bpy.ops.object.select_all(action = 'DESELECT')
+    # create hooks 
+    objs = [n1OBJ, n2OBJ, n4OBJ, n3OBJ]
+    names = ['P1', 'P2', 'P4', 'P3']
+    for i, (obj, name) in enumerate(zip(objs, names)):
+        hook = shellOBJ.modifiers.new(name, type = 'HOOK')
+        hook.object = obj
+        hook.vertex_indices_set([i])
+    
+    # lock object's scale
+    shellOBJ.lock_scale[0] = True
+    shellOBJ.lock_scale[1] = True
+    shellOBJ.lock_scale[2] = True
 
     # put them all in the element collection
     elcol.objects.link(n1OBJ)
