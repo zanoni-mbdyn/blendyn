@@ -209,7 +209,7 @@ def spawn_linearvelocity_element(elem, context):
         linearvelocityjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
 
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
@@ -217,9 +217,7 @@ def spawn_linearvelocity_element(elem, context):
         # place the joint object in the position defined relative to node 2
         linearvelocityjOBJ.location = n1OBJ.location
         linearvelocityjOBJ.rotation_mode = 'QUATERNION'
-        axis_direction = Vector(elem.offsets[0].value)
-        axis_direction.normalize()
-        linearvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
+        linearvelocityjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(f1.normalize())
 
         # set parenting of wireframe obj
         parenting(linearvelocityjOBJ, n1OBJ)
@@ -281,7 +279,7 @@ def spawn_linearacceleration_element(elem, context):
         linearaccelerationjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
 
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
@@ -289,9 +287,7 @@ def spawn_linearacceleration_element(elem, context):
         # place the joint object in the position defined relative to node 2
         linearaccelerationjOBJ.location = n1OBJ.location
         linearaccelerationjOBJ.rotation_mode = 'QUATERNION'
-        axis_direction = Vector(elem.offsets[0].value)
-        axis_direction.normalize()
-        linearaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis_direction)
+        linearaccelerationjOBJ.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(f1.normalize())
 
         # set parenting of wireframe obj
         parenting(linearaccelerationjOBJ, n1OBJ)
