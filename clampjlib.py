@@ -137,17 +137,17 @@ def spawn_clamp_element(elem, context):
         clampjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        q1 = elem.rotoffsets[0].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
+        q1 = Quaternion(( elem.rotoffsets[0].value[0:] ))
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
+        p1 = n1OBJ.location + R1@f1 
     
         # place the joint object in the position defined relative to node 1
         clampjOBJ.location = p1
         clampjOBJ.rotation_mode = 'QUATERNION'
-        clampjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        clampjOBJ.rotation_quaternion = q1@n1OBJ.rotation_quaternion 
 
         # set parenting of wireframe obj
         parenting(clampjOBJ, n1OBJ)
