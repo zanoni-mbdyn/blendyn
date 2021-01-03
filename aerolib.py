@@ -226,6 +226,7 @@ def spawn_aero0_element(elem, context):
         return {'NODE1_NOTFOUND'}
 
     n1OBJ = bpy.data.objects[n1]
+    R1 = n1OBJ.rotation_quaternion.to_matrix()
 
     # name of the plane object
     planeobj_id = elem.type + "_" + str(elem.int_label)
@@ -251,12 +252,15 @@ def spawn_aero0_element(elem, context):
     mesh = aero0OBJ.data
 
     # move vertices
-    mesh.vertices[0].co = Vector(( elem.offsets[0].value ))
-    mesh.vertices[1].co = Vector(( elem.offsets[1].value ))
-    mesh.vertices[2].co = Vector(( elem.offsets[2].value ))
-    mesh.vertices[3].co = Vector(( elem.offsets[3].value ))
+    mesh.vertices[0].co = n1OBJ.location + R1@Vector(( elem.offsets[0].value ))
+    mesh.vertices[1].co = n1OBJ.location + R1@Vector(( elem.offsets[1].value ))
+    mesh.vertices[2].co = n1OBJ.location + R1@Vector(( elem.offsets[2].value ))
+    mesh.vertices[3].co = n1OBJ.location + R1@Vector(( elem.offsets[3].value ))
   
     aero0OBJ.rotation_mode = n1OBJ.rotation_mode
+    aero0OBJ.lock_scale[0] = True
+    aero0OBJ.lock_scale[1] = True
+    aero0OBJ.lock_scale[2] = True
     
     # set parenting for plane obj
     parenting(aero0OBJ, n1OBJ)
@@ -348,6 +352,9 @@ def spawn_aero2_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
 
     aero2OBJ.rotation_mode = n1OBJ.rotation_mode
+    aero2OBJ.lock_scale[0] = True
+    aero2OBJ.lock_scale[1] = True
+    aero2OBJ.lock_scale[2] = True
 
     aero2OBJ.mbdyn.dkey = elem.name
     aero2OBJ.mbdyn.type = 'element'
@@ -447,6 +454,9 @@ def spawn_aero3_element(elem, context):
     bpy.ops.object.select_all(action = 'DESELECT')
     
     aero3OBJ.rotation_mode = n1OBJ.rotation_mode
+    aero3OBJ.lock_scale[0] = True
+    aero3OBJ.lock_scale[1] = True
+    aero3OBJ.lock_scale[2] = True
 
     aero3OBJ.mbdyn.dkey = elem.name
     aero3OBJ.mbdyn.type = 'element'
