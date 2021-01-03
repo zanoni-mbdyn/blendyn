@@ -260,11 +260,11 @@ def spawn_structural_force_element(elem, context):
         forceOBJ.name = elem.name
 
         # offsets with respect to nodes
-        f1 = elem.offsets[0].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
+        p1 = n1OBJ.location + R1@f1
     
         # place the joint object in the position defined relative to node 1
         forceOBJ.location = p1
@@ -325,12 +325,12 @@ def spawn_structural_couple_element(elem, context):
         coupleOBJ.name = elem.name
 
         # offsets with respect to nodes
-        f1 = elem.offsets[0].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
     
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
-    
+        p1 = n1OBJ.location + R1@f1
+
         # place the joint object in the position defined relative to node 1
         coupleOBJ.location = p1
         coupleOBJ.rotation_mode = 'QUATERNION'
