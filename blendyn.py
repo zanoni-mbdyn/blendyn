@@ -1407,7 +1407,7 @@ class BLENDYN_OT_outline_collapse(bpy.types.Operator):
         return{'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(self, context)
+        return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_outline_collapse class
 
@@ -1421,7 +1421,7 @@ class BLENDYN_OT_outline_expand(bpy.types.Operator):
         return{'FINISHED'}
 
     def invoke(self, context, event):
-        return self.execute(self, context)
+        return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_outline_expand class
 
