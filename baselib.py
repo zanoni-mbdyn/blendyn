@@ -362,7 +362,6 @@ def parse_log_file(context):
     nn = len(nd)
 
     # Account for nodes with no output
-
     if nn:
         no_output(context)
         mbs.min_node_import = nd[0].int_label
@@ -380,6 +379,7 @@ def parse_log_file(context):
             nc = Dataset(ncfile, "r")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
+            mbs.num_nodes = nn
             mbs.num_timesteps = mbs.num_rows/mbs.num_nodes
         
         mbs.is_ready = True
