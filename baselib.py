@@ -1160,6 +1160,7 @@ def delete_log():
 
     if not(bpy.data.is_saved) or mbs.del_log:
         try:
+            print("BLENDYN::logging_shutdown()::INFO: deleting log files.")
             os.remove(logFile)
             print("Blendyn::delete_log(): removed file" + logFile)
         except NameError as ex:
@@ -1167,6 +1168,9 @@ def delete_log():
             pass
 
 def logging_shutdown():
+
+    delete_log()
+
     print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
 
@@ -1176,5 +1180,4 @@ def logging_shutdown():
         logger.removeHandler(handler)
     print("BLENDYN::logging_shutdown()::INFO: done.")
 
-atexit.register(delete_log)
 atexit.register(logging_shutdown)

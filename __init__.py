@@ -162,7 +162,6 @@ classes = (
 register, unregister_fact = bpy.utils.register_classes_factory(classes)
 
 def unregister():
-    bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elem_to_be_updated)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_collection)
@@ -179,13 +178,11 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_PG_mbtime)
     bpy.utils.unregister_class(BLENDYN_PG_reference_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_dictionary)
-    bpy.utils.unregister_class(BLENDYN_PG_component_element)
     bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
+    bpy.utils.unregister_class(BLENDYN_PG_component_element)
     bpy.utils.unregister_class(BLENDYN_UL_env_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_mbdyn_nodes_list)
     bpy.utils.unregister_class(BLENDYN_UL_elements_list)
-    bpy.utils.unregister_class(BLENDYN_UL_components_list)
-    bpy.utils.unregister_class(BLENDYN_UL_deformable_elements_list)
     bpy.utils.unregister_class(BLENDYN_UL_refs_list)
     bpy.utils.unregister_class(BLENDYN_UL_render_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_object_plot_var_list)
