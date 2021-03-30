@@ -1169,7 +1169,6 @@ def delete_log():
 
 def logging_shutdown():
 
-    delete_log()
 
     print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
@@ -1179,5 +1178,7 @@ def logging_shutdown():
     for handler in logger.handlers:
         logger.removeHandler(handler)
     print("BLENDYN::logging_shutdown()::INFO: done.")
+    
+    delete_log()
 
 atexit.register(logging_shutdown)
