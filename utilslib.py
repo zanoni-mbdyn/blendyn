@@ -39,6 +39,8 @@ import os
 import subprocess
 import imp
 
+import csv
+
 def install_pip():
     import subprocess
     """
