@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file revjlib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -67,9 +67,6 @@ def parse_revolute_hinge(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'revolute_hinge'
         el.int_label = int(rw[1])
-        
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el) 
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_hinge()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_hinge()", el)
@@ -133,9 +130,6 @@ def parse_revolute_pin(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'revolute_pin'
         el.int_label = int(rw[1])
-        
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_pin()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_pin()", el)  
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_pin()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_pin()", el)
@@ -197,9 +191,6 @@ def parse_revolute_rot(rw, ed):
         el.mbclass = 'elem.joint'
         el.type = 'revolute_rot'
         el.int_label = int(rw[1])
-        
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_rot()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_rot()", el)  
 
         eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_revolute_rot()", el)
         eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_revolute_rot()", el)
@@ -258,10 +249,16 @@ def spawn_revolute_hinge_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'revolute rotation')
-    if app_retval == {'FINISHED'}:
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+            'library', 'joints.blend', 'Object'), filename = 'revolute hinge')
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]
         revjOBJ.name = elem.name
@@ -272,45 +269,50 @@ def spawn_revolute_hinge_element(elem, context):
         revjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
-        q1 = elem.rotoffsets[0].value
-        q2 = elem.rotoffsets[1].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
+        f2 = Vector(( elem.offsets[1].value[0:] ))
+        q1 = Quaternion(( elem.rotoffsets[0].value[0:] ))
+        q2 = Quaternion(( elem.rotoffsets[1].value[0:] ))
 
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
-        p2 = Vector(( f2[0], f2[1], f2[2] ))
+        p1 = n1OBJ.location + R1@f1
+        p2 = n2OBJ.location + R2@f2
 
         # place the joint object in the position defined relative to node 1
         revjOBJ.location = p1
         revjOBJ.rotation_mode = 'QUATERNION'
-        revjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        revjOBJ.rotation_quaternion = q1@n1OBJ.rotation_quaternion 
 
         # create an object representing the second RF used by the joint
         # for model debugging
         bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
         RF2 = bpy.context.selected_objects[0]
         RF2.rotation_mode = 'QUATERNION'
-        RF2.rotation_quaternion = Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+        RF2.rotation_quaternion = q2@n2OBJ.rotation_quaternion 
         RF2.scale = .33*revjOBJ.scale
         RF2.name = revjOBJ.name + '_RF2'
         parenting(RF2, revjOBJ)
-        RF2.hide = True
+        RF2.hide_set(state = True)
 
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
-
-        grouping(context, revjOBJ, [n1OBJ, n2OBJ, RF2])
 
         revjOBJ.mbdyn.dkey = elem.name
         revjOBJ.mbdyn.type = 'element'
         elem.blender_object = revjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_revolute_hinge_element(elem, context) function
 
@@ -319,7 +321,7 @@ class BLENDYN_OT_import_revolute_hinge(bpy.types.Operator):
     """ Imports a revolute hinge joint element into the Blender scene """
     bl_idname = "blendyn.import_revolute_hinge"
     bl_label = "MBDyn revolute hinge joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -340,6 +342,9 @@ class BLENDYN_OT_import_revolute_hinge(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -374,10 +379,17 @@ def spawn_revolute_pin_element(elem, context):
     # nodes' objects
     n1OBJ = bpy.data.objects[n1]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'revolute.pin')
-    if app_retval == {'FINISHED'}:
+
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]
         revjOBJ.name = elem.name
@@ -387,30 +399,34 @@ def spawn_revolute_pin_element(elem, context):
         revjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        q1 = elem.rotoffsets[0].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
+        q1 = Quaternion(( elem.rotoffsets[0].value[0:] ))
 
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
+        p1 = n1OBJ.location + R1@f1
 
         # the position defined relative to node 1
         revjOBJ.location = p1
         revjOBJ.rotation_mode = 'QUATERNION'
-        revjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        revjOBJ.rotation_quaternion = q1@n1OBJ.rotation_quaternion 
 
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
-
-        grouping(context, revjOBJ, [n1OBJ])
 
         revjOBJ.mbdyn.dkey = elem.name
         revjOBJ.mbdyn.dkey = 'element'
         elem.blender_object = revjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_revolute_pin_element(elem, context) function
 
@@ -418,7 +434,7 @@ def spawn_revolute_pin_element(elem, context):
 class BLENDYN_OT_import_revolute_pin(bpy.types.Operator):
     bl_idname = "blendyn.import_revolute_pin"
     bl_label = "MBDyn revolute pin joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -439,6 +455,9 @@ class BLENDYN_OT_import_revolute_pin(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
@@ -480,10 +499,17 @@ def spawn_revolute_rot_element(elem, context):
     n1OBJ = bpy.data.objects[n1]
     n2OBJ = bpy.data.objects[n2]
 
-    # load the wireframe revolute joint object from the library
-    app_retval = bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+    try:
+
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+
+        # load the wireframe revolute joint object from the library
+        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'revolute rotation')
-    if app_retval == {'FINISHED'}:
+
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]
         revjOBJ.name = elem.name
@@ -494,43 +520,48 @@ def spawn_revolute_rot_element(elem, context):
         revjOBJ.scale = Vector(( s, s, s ))
 
         # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
-        q1 = elem.rotoffsets[0].value
-        q2 = elem.rotoffsets[1].value
+        f1 = Vector(( elem.offsets[0].value[0:] ))
+        f2 = Vector(( elem.offsets[1].value[0:] ))
+        q1 = Quaternion(( elem.rotoffsets[0].value[0:] ))
+        q2 = Quaternion(( elem.rotoffsets[1].value[0:] ))
 
         # project offsets in global frame
         R1 = n1OBJ.rotation_quaternion.to_matrix()
         R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
-        p2 = Vector(( f2[0], f2[1], f2[2] ))
+        p1 = n1OBJ.location + R1@f1
+        p2 = n2OBJ.location + R2@f2
 
         # place the joint object in the position defined relative to node 1
         revjOBJ.location = p1
         revjOBJ.rotation_mode = 'QUATERNION'
-        revjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        revjOBJ.rotation_quaternion = q1@n1OBJ.rotation_quaternion 
 
         # create an object representing the second RF used by the joint
         # for model debugging
         bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
         RF2 = bpy.context.selected_objects[0]
         RF2.rotation_mode = 'QUATERNION'
-        RF2.rotation_quaternion = Quaternion(( q2[0], q2[1], q2[2], q2[3] ))
+        RF2.rotation_quaternion = q2@n2OBJ.rotation_quaternion 
         RF2.scale = .33*revjOBJ.scale
         RF2.name = revjOBJ.name + '_RF2'
         parenting(RF2, revjOBJ)
-        RF2.hide = True
+        RF2.hide_viewport = True
 
         # set parenting of wireframe obj
         parenting(revjOBJ, n1OBJ)
 
-        grouping(context, revjOBJ, [n1OBJ, n2OBJ, RF2])
-
         elem.blender_object = revjOBJ.name
 
+        # link objects to element collection
+        elcol.objects.link(n1OBJ)
+        elcol.objects.link(n2OBJ)
+        set_active_collection('Master Collection')
+
         return {'FINISHED'}
-    else:
+    except FileNotFoundError:
         return {'LIBRARY_ERROR'}
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 # -----------------------------------------------------------
 # end of spawn_revolute_rot_element(elem, context) function
 
@@ -538,7 +569,7 @@ def spawn_revolute_rot_element(elem, context):
 class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
     bl_idname = "blendyn.import_revolute_rotation"
     bl_label = "MBDyn revolute joint element importer"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -558,6 +589,9 @@ class BLENDYN_OT_import_revolute_rotation(bpy.types.Operator):
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
+                eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:

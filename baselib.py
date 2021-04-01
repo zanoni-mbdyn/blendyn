@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file baselib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -31,13 +31,13 @@ from bpy.props import *
 import logging
 
 import numpy as np
-from bpy_extras.io_utils import ImportHelper
 
 import os, csv, atexit, re
 
 from .nodelib import *
 from .elementlib import *
 from .rfmlib import *
+from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 
 HAVE_PSUTIL = False
@@ -128,6 +128,8 @@ def setup_import(filepath, context):
         nc = Dataset(filepath, "r")
         mbs.use_netcdf = True
         mbs.num_rows = 0
+        mbs.num_nodes = nc.dimensions['struct_node_labels_dim'].size
+        mbs.num_timesteps = nc.dimensions['time'].size
         try:
             eig_step = nc.variables['eig.step']
             eig_time = nc.variables['eig.time']
@@ -169,16 +171,14 @@ def no_output(context):
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r")
-        list1 = nc.variables.keys()
-        regex = re.compile(r'node.struct.*\.X$')
-        list2 = list(filter(regex.search, list1))
-        result_nodes = list(map(lambda x: x.split('.')[2], list2))
-        log_nodes = list(map(lambda x: x[5:], nd.keys()))
-        difference = set(result_nodes) ^ set(log_nodes)
-        difference = ' '.join(difference)
-        print(difference)
-        mbs.disabled_output = difference
-
+        log_nodes = list(map(lambda x: int(x[5:]), nd.keys()))
+        for node in log_nodes:
+            try:
+                X = nc.variables['node.struct.' + str(node) + '.X']
+                nd['node_' + str(node)].output = True
+            except KeyError:
+                # output disabled for this node
+                pass
     else:
         # .mov filename
         mov_file = os.path.join(os.path.dirname(mbs.file_path), \
@@ -201,39 +201,13 @@ def no_output(context):
         except StopIteration: # EOF
             pass
 
-        try:
-            with open(mov_file) as mf:
-                reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
-                result_nodes = []
-                rw = next(reader)
-                result_nodes.append(rw[0])
-                while True:
-                    rw = next(reader)
-                    if rw[0] != result_nodes[0]:
-                        result_nodes.append(rw[0])
-                    else:
-                        break
-                if len(result_nodes) > mbs.num_nodes:
-                    # some nodes are in the results, but not in the .log file:
-                    # relative frame structural nodes?
-                    mbs.num_nodes = len(result_nodes)
-                log_nodes = list(map(lambda x: x[5:], nd.keys()))
-                difference = set(result_nodes) ^ set(log_nodes)
-                difference = ' '.join(difference)
-                print(difference)
-                mbs.disabled_output = difference
-        except FileNotFoundError:
-            pass
-        except StopIteration:
-            pass
 # -----------------------------------------------------------
 # end of no_output() function
 
-## Function that parses the .log file and calls parse_elements() to add elements
-# to the elements dictionary and parse_node() to add nodes to the nodes dictionary
-# TODO:support more joint types
 def parse_log_file(context):
-
+    """ Parses the .log file and calls parse_elements() to add elements 
+        to the elements dictionary and parse_node() to add nodes to 
+        the nodes dictionary """
     # utility rename
     mbs = context.scene.mbdyn
     nd = mbs.nodes
@@ -264,6 +238,65 @@ def parse_log_file(context):
 
     ret_val = {''}
 
+    # Check if collections are already present (not the first import).
+    # if not, create them
+
+    try:
+        ncol = bpy.data.collections['mbdyn.nodes']
+    except KeyError:
+        ncol = bpy.data.collections.new(name = 'mbdyn.nodes')
+        bpy.context.scene.collection.children.link(ncol)
+
+    try:
+        ecol = bpy.data.collections['mbdyn.elements']
+    except KeyError:
+        ecol = bpy.data.collections.new(name = 'mbdyn.elements')
+        bpy.context.scene.collection.children.link(ecol)
+
+    # create elements children collections if they are not already there
+    try:
+        aecol = ecol.children['aerodynamic']
+    except KeyError:
+        aecol = bpy.data.collections.new(name = 'aerodynamic')
+        ecol.children.link(aecol)
+
+    try:
+        becol = ecol.children['beams']
+    except KeyError:
+        becol = bpy.data.collections.new(name = 'beams')
+        ecol.children.link(becol)
+
+    # elements sections sub-collection
+    try:
+        scol = ecol.children['sections']
+    except KeyError:
+        scol = bpy.data.collections.new(name = 'sections')
+        ecol.children.link(scol)
+
+    try:
+        bocol = ecol.children['bodies']
+    except KeyError:
+        bocol = bpy.data.collections.new(name = 'bodies')
+        ecol.children.link(bocol)
+
+    try:
+        fcol = ecol.children['forces']
+    except KeyError:
+        fcol = bpy.data.collections.new(name = 'forces')
+        ecol.children.link(fcol)
+
+    try:
+        jcol = ecol.children['joints']
+    except KeyError:
+        jcol = bpy.data.collections.new(name = 'joints')
+        ecol.children.link(jcol)
+
+    try:
+        pcol = ecol.children['plates']
+    except KeyError:
+        pcol = bpy.data.collections.new(name = 'plates')
+        ecol.children.link(pcol)
+
     try:
         with open(log_file) as lf:
             # open the reader, skipping initial whitespaces
@@ -292,6 +325,7 @@ def parse_log_file(context):
                     print("Blendyn::parse_log_file(): Found " + entry[:-1] + " element.")
                     b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
 
+
             if (is_init_nd and is_init_ed) or (b_nodes_consistent*b_elems_consistent):
                 ret_val = {'FINISHED'}
             elif (not(b_nodes_consistent) and not(is_init_nd)) and (not(b_elems_consistent) and not(is_init_ed)):
@@ -302,12 +336,20 @@ def parse_log_file(context):
                 ret_val = {'ELEMS_INCONSISTENT'}
             else:
                 ret_val = {'FINISHED'}
+
     except IOError:
         print("Blendyn::parse_log_file(): Could not locate the file " + log_file + ".")
         ret_val = {'LOG_NOT_FOUND'}
         pass
     except StopIteration:
         print("Blendyn::parse_log_file() Reached the end of .log file")
+        pass
+    except TypeError:       
+        # TypeError will be thrown if parse node exits with a {}, indicating an
+        # unsupported rotation parametrization (e.g. euler313)
+        ret_val = {'ROTATION_ERROR'}
+        pass
+
 
     del_nodes = [var for var in nd.keys() if nd[var].is_imported == False]
     del_elems = [var for var in ed.keys() if ed[var].is_imported == False]
@@ -320,26 +362,26 @@ def parse_log_file(context):
     nn = len(nd)
 
     # Account for nodes with no output
-
     if nn:
         no_output(context)
-
-    if nn:
         mbs.min_node_import = nd[0].int_label
         mbs.max_node_import = nd[0].int_label
+
         for ndx in range(1, len(nd)):
             if nd[ndx].int_label < mbs.min_node_import:
                 mbs.min_node_import = nd[ndx].int_label
             elif nd[ndx].int_label > mbs.max_node_import:
                 mbs.max_node_import = nd[ndx].int_label
+
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
             nc = Dataset(ncfile, "r")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
-            disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
-            mbs.num_timesteps = mbs.num_rows/(mbs.num_nodes - disabled_nodes)
+            mbs.num_nodes = nn
+            mbs.num_timesteps = mbs.num_rows/mbs.num_nodes
+        
         mbs.is_ready = True
         ret_val = {'FINISHED'}
     else:
@@ -362,6 +404,9 @@ def parse_log_file(context):
             while True:
                 if next(reader)[0] == 'Step':
                   mbs.time_step = float(next(reader)[3])
+                  if (mbs.use_netcdf):
+                      mbs.end_time = nc.variables["time"][-1]
+                      mbs.start_time = nc.variables["time"][0]
                   break
     except FileNotFoundError:
         print("Blendyn::parse_log_file(): Could not locate the file " + out_file)
@@ -369,6 +414,7 @@ def parse_log_file(context):
         pass
     except StopIteration:
         print("Blendyn::parse_log_file(): Reached the end of .out file")
+        pass
     except IOError:
         print("Blendyn::parse_log_file(): Could not read the file " + out_file)
         pass
@@ -379,6 +425,14 @@ def parse_log_file(context):
             for rfm_row in reader:
                 if len(rfm_row) and rfm_row[0].strip() != '#':
                         parse_reference_frame(rfm_row, rd)
+
+        # create the reference frames collection if it is not already there
+        try:
+            rcol = bpy.data.collections['mbdyn.references']
+        except KeyError:
+            rcol = bpy.data.collections.new(name = 'mbdyn.references')
+            bpy.context.scene.collection.children.link(rcol)
+
     except StopIteration:
         pass
     except FileNotFoundError:
@@ -388,7 +442,8 @@ def parse_log_file(context):
         print("Blendyn::parse_out_file(): Could not read the file " + rfm_file)
         pass
 
-    mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
+    if not(mbs.use_netcdf):
+        mbs.end_time = (mbs.num_timesteps - 1) * mbs.time_step
 
     return ret_val, obj_names
 # -----------------------------------------------------------
@@ -420,8 +475,16 @@ def file_len(filepath):
 # end of file_len() function
 
 def assign_labels(context):
-    """ Function that parses the (optional) labels file and assigns \
-        the string labels it can find to the respective MBDyn objects """
+    """ Function that parses the .log file and assigns \
+        the string labels it can find to the respective MBDyn objects
+        -- 
+         'standard' labels: assigns only the labels that match a
+                            specific pattern
+         'free' labels: assigns the labels directly.
+                        contributed by Louis Gagnon 
+                        -- see Github Issue #39
+        --
+    """
 
     mbs = context.scene.mbdyn
     nd = mbs.nodes
@@ -433,80 +496,103 @@ def assign_labels(context):
     log_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.log')
 
-    set_strings_node = ["  const integer Node_", \
-                        "  integer Node_", \
-                        "  const integer node_", \
-                        "  integer node_", \
-                        "  const integer NODE_", \
-                        "  integer NODE_"]
+    if mbs.free_labels:
+        obj_list = [nd, ed, rd]
+        set_strings_any = ["  const integer", \
+                           "  integer"]
+    else:
+        set_strings_node = ["  const integer Node_", \
+                            "  integer Node_", \
+                            "  const integer node_", \
+                            "  integer node_", \
+                            "  const integer NODE_", \
+                            "  integer NODE_"]
+    
+        set_strings_joint = ["  const integer Joint_", \
+                             "  integer Joint_"
+                             "  const integer joint_", \
+                             "  integer joint_", \
+                             "  const integer JOINT_", \
+                             "  integer JOINT_"]
+    
+        set_strings_beam = ["  const integer Beam_", \
+                            "  integer Beam_", \
+                            "  const integer beam_", \
+                            "  integer beam_", \
+                            "  const integer BEAM_", \
+                            "  integer BEAM_"]
+    
+        set_strings_refs = ["  const integer Ref_", \
+                            "  integer Ref_", \
+                            "  const integer ref_", \
+                            "  integer ref_", \
+                            "  const integer REF_", \
+                            "  integer REF_", \
+                            "  const integer Reference_", \
+                            "  integer Reference_", \
+                            "  const integer reference_", \
+                            "  integer reference_", \
+                            "  const integer REFERENCE_", \
+                            "  integer REFERENCE_"]
 
-    set_strings_joint = ["  const integer Joint_", \
-                         "  integer Joint_"
-                         "  const integer joint_", \
-                         "  integer joint_", \
-                         "  const integer JOINT_", \
-                         "  integer JOINT_"]
-
-    set_strings_beam = ["  const integer Beam_", \
-                        "  integer Beam_", \
-                        "  const integer beam_", \
-                        "  integer beam_", \
-                        "  const integer BEAM_", \
-                        "  integer BEAM_"]
-
-    set_strings_refs = ["  const integer Ref_", \
-                        "  integer Ref_", \
-                        "  const integer ref_", \
-                        "  integer ref_", \
-                        "  const integer REF_", \
-                        "  integer REF_", \
-                        "  const integer Reference_", \
-                        "  integer Reference_", \
-                        "  const integer reference_", \
-                        "  integer reference_", \
-                        "  const integer REFERENCE_", \
-                        "  integer REFERENCE_"]
-
-    def assign_label(line, type, set_string, dict):
+    def assign_label(line, entity_type, set_string, the_dict):
         line_str = line.rstrip()
         eq_idx = line_str.find('=') + 1
         label_int = int(line_str[eq_idx:].strip())
-        label_str = line_str[(len(set_string) - len(type) - 1):(eq_idx -1)].strip()
-        for item in dict:
+        if mbs.free_labels:
+            label_str = line_str[len(set_string):(eq_idx -1)].strip()
+        else:
+            label_str = line_str[(len(set_string) - len(entity_type) - 1):(eq_idx-1)].strip()
+         
+        for item in the_dict:
             if item.int_label == label_int:
                 if item.string_label != label_str:
                     item.string_label = label_str
+                    message = "BLENDYN::assign_label(): \nset_string:{}\nline_str:{}\nlabel_str:{}".format(set_string, line_str, label_str)
+                    print(message)
+                    baseLogger.info(message)
                     return True
                 break
         return False
 
     try:
-        with open(log_file) as lf:
-            for line in lf:
-                found = False
-                for set_string in set_strings_node:
-                    if set_string in line:
-                        labels_changed += (assign_label(line, 'node', set_string, nd))
-                        found = True
-                        break
-                if not(found):
-                    for set_string in set_strings_joint:
+        if mbs.free_labels:
+            with open(log_file) as lf:
+                for line in lf:
+                    found = False
+                    for set_string in set_strings_any:
                         if set_string in line:
-                            labels_changed += (assign_label(line, 'joint', set_string, ed))
+                            for the_obj in obj_list:
+                                labels_changed += (assign_label(line, '', set_string, the_obj))
                             found = True
                             break
-                if not(found):
-                    for set_string in set_strings_beam:
+        else:
+            with open(log_file) as lf:
+                for line in lf:
+                    found = False
+                    for set_string in set_strings_node:
                         if set_string in line:
-                            labels_changed += (assign_label(line, 'beam', set_string, ed))
+                            labels_changed += (assign_label(line, 'node', set_string, nd))
                             found = True
                             break
-                if not (found):
-                    for set_string in set_strings_refs:
-                        if set_string in line:
-                            labels_changed += (assign_label(line, 'ref', set_string, rd))
-                            found = True
-                            break
+                    if not(found):
+                        for set_string in set_strings_joint:
+                            if set_string in line:
+                                labels_changed += (assign_label(line, 'joint', set_string, ed))
+                                found = True
+                                break
+                    if not(found):
+                        for set_string in set_strings_beam:
+                            if set_string in line:
+                                labels_changed += (assign_label(line, 'beam', set_string, ed))
+                                found = True
+                                break
+                    if not (found):
+                        for set_string in set_strings_refs:
+                            if set_string in line:
+                                labels_changed += (assign_label(line, 'ref', set_string, rd))
+                                found = True
+                                break
     except IOError:
         print("Blendyn::assign_labels(): can't read from file {}, \
                 sticking with default labeling...".format(log_file))
@@ -521,9 +607,8 @@ def assign_labels(context):
 
 
 def update_label(self, context):
-
     # utility renaming
-    obj = context.scene.objects.active
+    obj = context.view_layer.objects.active
     nd = context.scene.mbdyn.nodes
 
     # Search for int label and assign corresponding string label, if found.
@@ -568,7 +653,13 @@ def update_label(self, context):
 def update_end_time(self, context):
     mbs = context.scene.mbdyn
 
-    if mbs.end_time > mbs.num_timesteps * mbs.time_step:
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r")
+        if (mbs.end_time - nc.variables["time"][-1]) > mbs.time_step:
+            mbs.end_time = nc.variables["time"][-1]
+    elif mbs.end_time > mbs.num_timesteps * mbs.time_step:
         mbs.end_time = mbs.num_timesteps * mbs.time_step
 # -----------------------------------------------------------
 # end of update_end_time() function
@@ -576,13 +667,19 @@ def update_end_time(self, context):
 def update_start_time(self, context):
     mbs = context.scene.mbdyn
 
-    if mbs.start_time >= mbs.num_timesteps * mbs.time_step:
+    if mbs.use_netcdf:
+        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
+                    mbs.file_basename + '.nc')
+        nc = Dataset(ncfile, "r")
+        if mbs.start_time < nc.variables["time"][0]:
+            mbs.start_time = nc.variables["time"][0]
+    elif mbs.start_time >= mbs.num_timesteps * mbs.time_step:
         mbs.start_time = (mbs.num_timesteps - 1) * mbs.time_step
 # -----------------------------------------------------------
 # end of update_start_time() function
 
-## Function that clears the scene of keyframes of current simulation
 def remove_oldframes(context):
+    """ Clears the scene of keyframes of current simulation """
     mbs = context.scene.mbdyn
 
     node_names = mbs.nodes.keys()
@@ -599,7 +696,6 @@ def remove_oldframes(context):
 # end of remove_oldframes() function
 
 def hide_or_delete(obj_names, missing):
-
     obj_names = list(filter(lambda v: v != 'none', obj_names))
     obj_list = [bpy.data.objects[var] for var in obj_names]
 
@@ -607,17 +703,16 @@ def hide_or_delete(obj_names, missing):
         obj_list = [bpy.data.objects[var] for var in obj_names]
 
         for obj in obj_list:
-            obj.hide = True
+            obj.hide_set(state = True)
 
     if missing == "DELETE":
         bpy.ops.object.select_all(action='DESELECT')
         for obj in obj_list:
-            obj.select = True
+            obj.select_set(state = True)
             bpy.ops.object.delete()
 
-## Function that parses the .mov file and sets the motion paths
 def set_motion_paths_mov(context):
-
+    """ Parses the .mov file and sets the nodes motion paths """
     # Debug message
     print("Blendyn::set_motion_paths_mov(): Setting Motion Paths using .mov output...")
 
@@ -656,10 +751,9 @@ def set_motion_paths_mov(context):
     try:
         with open(mov_file) as mf:
             reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
+
             # first loop: we establish which object to animate
             scene.frame_current = scene.frame_start
-
-            disabled_nodes = 0 if len(mbs.disabled_output) == 0 else len(mbs.disabled_output.split(' '))
 
             # skip to the first timestep to import
             for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
@@ -678,7 +772,7 @@ def set_motion_paths_mov(context):
                     if obj_name != 'none' and nd['node_' + str(int(rw[0]))].output:
                         anim_objs[rw[0]] = obj_name
                         obj = bpy.data.objects[obj_name]
-                        obj.select = True
+                        obj.select_set(state = True)
                         set_obj_locrot_mov(obj, rw)
                 except KeyError:
                     pass
@@ -691,29 +785,38 @@ def set_motion_paths_mov(context):
 
             for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                 scene.frame_current += 1
-                frac = np.ceil(frame) - frame
+                message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
+                print(message)
+                logging.info(message)
 
                 # skip (freq - 1)*N lines
                 for ii in range(Nskip):
                     next(reader)
 
+                 
                 for ndx in range(mbs.num_nodes):
                     first[ndx] = np.array(next(reader)).astype(np.float)
+                
+                if freq > 1:
+                    frac = np.ceil(frame) - frame
+                    for ndx in range(mbs.num_nodes):
+                        second[ndx] = np.array(next(reader)).astype(np.float)
 
-                for ndx in range(mbs.num_nodes):
-                    second[ndx] = np.array(next(reader)).astype(np.float)
+                    for ndx in range(mbs.num_nodes):
+                        try:
+                            answer = frac*first[ndx] + (1 - frac)*second[ndx]
+                            obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                            obj.select_set(state = True)
+                            set_obj_locrot_mov(obj, answer)
+                        except KeyError:
+                            pass
+                    first = second
+                else:
+                    for ndx in range(mbs.num_nodes):
+                        obj = bpy.data.objects[anim_objs[round(first[ndx][0])]]
+                        obj.select_set(state = True)
+                        set_obj_locrot_mov(obj, first[ndx])
 
-                for ndx in range(mbs.num_nodes):
-                    try:
-                        answer = frac*first[ndx] + (1 - frac)*second[ndx]
-                        obj = bpy.data.objects[anim_objs[round(answer[0])]]
-                        obj.select = True
-                        set_obj_locrot_mov(obj, answer)
-
-                    except KeyError:
-                        pass
-
-                first = second
                 wm.progress_update(scene.frame_current)
     except StopIteration:
         pass
@@ -763,6 +866,13 @@ def get_render_vars(self, context):
 # -----------------------------------------------------------
 # end of get_render_vars() function
 
+def get_deformable_elems(self, context):
+    mbs = context.scene.mbdyn
+    elems = mbs.elems
+    def_elems = [elem for elem in elems \
+            if (elem.type in DEFORMABLE_ELEMENTS) and (elem.blender_object != 'none')]
+    return [(elem.name, elem.name, "") for elem in def_elems]
+
 def get_display_group(self, context):
     mbs = context.scene.mbdyn
 
@@ -776,35 +886,75 @@ def netcdf_helper(nc, scene, key):
     tdx = scene.frame_current*freq
     frac = np.ceil(tdx) - tdx
 
-    first = nc.variables[key][int(tdx)]
-    second = nc.variables[key][int(np.ceil(tdx))]
-    answer = first*frac + second*(1 - frac)
+    first = Vector((nc.variables[key][int(tdx)]))
+    second = Vector((nc.variables[key][int(np.ceil(tdx))]))
+    # return = first*frac + second*(1 - frac)
+    return  first.lerp(second, 1 - frac)
 
-    return answer
-
-def netcdf_helper_rvars(nc, scene, var):
+def netcdf_helper_phi(nc, scene, key):
     mbs = scene.mbdyn
     freq = mbs.load_frequency
     tdx = scene.frame_current*freq
     frac = np.ceil(tdx) - tdx
 
-    first = nc.variables[var.variable][int(tdx)]
-    second = nc.variables[var.variable][int(np.ceil(tdx))]
-    answer = first*frac + second*(1 - frac)
+    first = Vector((nc.variables[key][int(tdx)]))
+    second = Vector((nc.variables[key][int(np.ceil(tdx))]))
+    return first.lerp(second, 1 - frac)
 
-    dims = len(answer.shape)
+def netcdf_helper_rmat(nc, scene, var):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = np.ceil(tdx) - tdx
+    
+    first = Matrix((nc.variables[var.variable][int(tdx)]))
+    second = Matrix((nc.variables[var.variable][int(np.ceil(tdx))]))
+    return first.lerp(second, 1 - frac) 
 
-    if (dims == 1):
-        for ii in range(len(answer)):
-            if (var.components[ii]):
-                var.value[ii] = answer[ii]
-    elif (dims == 2):
-        for ii in range(3):
-            for jj in range(3):
-                if var.components[ii + jj]:
-                    var.value[ii + jj] = answer[ii,jj]
+def netcdf_helper_euler(nc, scene, key, par):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = np.ceil(tdx) - tdx
 
-    return answer
+    v1 = math.radians(1.0)*nc.variables[key][int(tdx)]
+    v2 = math.radians(1.0)*nc.variables[key][int(np.ceil(tdx))]
+    order = axes[par[7]] + axes[par[6]] + axes[par[5]]
+    E1 = Euler( Vector((v1[int(par[5]) - 1], \
+                        v1[int(par[6]) - 1], \
+                        v1[int(par[7]) - 1], )),\
+                        order)
+    E2 = Euler( Vector((v2[int(par[5]) - 1], \
+                        v2[int(par[6]) - 1], \
+                        v2[int(par[7]) - 1], )),\
+                        order)
+    q1 = E1.to_quaternion()
+    q2 = E2.to_quaternion()
+    return (q1.slerp(q2, 1 - frac)).to_euler(order, E1)
+
+# def netcdf_helper_rvars(nc, scene, var):
+#     mbs = scene.mbdyn
+#     freq = mbs.load_frequency
+#     tdx = scene.frame_current*freq
+#     frac = np.ceil(tdx) - tdx
+# 
+#     first = nc.variables[var.variable][int(tdx)]
+#     second = nc.variables[var.variable][int(np.ceil(tdx))]
+#     answer = first*frac + second*(1 - frac)
+# 
+#     dims = len(answer.shape)
+# 
+#     if (dims == 1):
+#         for ii in range(len(answer)):
+#             if (var.components[ii]):
+#                 var.value[ii] = answer[ii]
+#     elif (dims == 2):
+#         for ii in range(3):
+#             for jj in range(3):
+#                 if var.components[ii + jj]:
+#                     var.value[ii + jj] = answer[ii,jj]
+# 
+#     return answer
 
 def netcdf_helper_quat(nc, scene, key):
     mbs = scene.mbdyn
@@ -814,11 +964,8 @@ def netcdf_helper_quat(nc, scene, key):
 
     q_first = Matrix((nc.variables[key][int(tdx)])).transposed().to_quaternion()
     q_second = Matrix((nc.variables[key][int(np.ceil(tdx))])).transposed().to_quaternion()
-    theta = q_second.angle - q_first.angle
-    if theta:
-        return 1/sin(theta)*(q_first*sin((1 - frac)*theta) + q_second*(frac*theta))
-    else:
-        return q_first
+    return q_first.slerp(q_second, 1 - frac)
+
 def parse_render_string(var, components):
     if hasattr(var, '__iter__'):
         return ', '.join(['{:.2f}'.format(item) if components[idx] else ' ' for idx, item in enumerate(var)])
@@ -871,14 +1018,16 @@ def set_motion_paths_netcdf(context):
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     nc = Dataset(ncfile, "r")
-    nctime = nc.variables["time"]
-
-    mbs.time_step = nctime[1]
-
     freq = mbs.load_frequency
 
-    scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
-    scene.frame_end = int(mbs.end_time/(mbs.time_step * mbs.load_frequency)) + 1
+    nctime = nc.variables["time"]
+    mbs.time_step = nctime[1] - nctime[0]
+    if nctime[0] == 0.0:
+        scene.frame_start = int(mbs.start_time/(mbs.time_step*mbs.load_frequency))
+        scene.frame_end = int(mbs.end_time/(mbs.time_step*mbs.load_frequency)) + 1
+    else:
+        scene.frame_start = int((mbs.start_time - nctime[0])/(mbs.time_step*mbs.load_frequency))
+        scene.frame_end = int((mbs.end_time - nctime[0])/(mbs.time_step*mbs.load_frequency)) + 1
 
     anim_nodes = list()
     for node in nd:
@@ -905,15 +1054,16 @@ def set_motion_paths_netcdf(context):
 
     kk = 0
     for ndx in anim_nodes:
-    
+
         dictobj = nd[ndx]
-        if str(dictobj.int_label) in mbs.disabled_output.split(' '):
+        if not(dictobj.output):
             continue
 
         obj = bpy.data.objects[dictobj.blender_object]
-        obj.select = True
+        obj.select_set(state = True)
         node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-        if dictobj.parametrization[0:5] == 'EULER':
+        par = dictobj.parametrization
+        if par == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -921,28 +1071,29 @@ def set_motion_paths_netcdf(context):
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                answer = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
-                obj.rotation_euler = \
-                        Euler( Vector((answer)),
-                                axes[dictobj.parametrization[7]] +\
-                                axes[dictobj.parametrization[6]] +\
-                                axes[dictobj.parametrization[5]] )
-                obj.keyframe_insert(data_path = "rotation_euler")
-        elif dictobj.parametrization == 'PHI':
-            for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current = frame
-
-                answer = netcdf_helper(nc, scene, node_var + 'X')
-                obj.location = Vector((answer))
-                obj.keyframe_insert(data_path = "location")
-
-                answer = netcdf_helper(nc, scene, node_var + 'Phi')
+                answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
                 rotvec = Vector((answer))
                 rotvec_norm = rotvec.normalized()
                 obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                         rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                 obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif dictobj.parametrization == 'MATRIX':
+        elif par[0:5] == 'EULER':
+            for frame in range(scene.frame_start, scene.frame_end):
+                scene.frame_current = frame
+
+                loc = netcdf_helper(nc, scene, node_var + 'X')
+                obj.location = Vector((loc))
+                obj.keyframe_insert(data_path = "location")
+
+                angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
+                obj.rotation_euler = Euler( Vector((\
+                                     angles[int(par[5]) - 1],\
+                                     angles[int(par[6]) - 1],\
+                                     angles[int(par[7]) - 1],\
+                                     )),\
+                                     axes[par[7]] + axes[par[6]] + axes[par[5]] )
+                obj.keyframe_insert(data_path = "rotation_euler")
+        elif par == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
 
@@ -957,7 +1108,7 @@ def set_motion_paths_netcdf(context):
             # Should not be reached
             print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
             return {'CANCELLED'}
-        obj.select = False
+        obj.select_set(state = False)
         kk = kk + 1
         wm.progress_update(kk)
     wm.progress_end()
@@ -966,6 +1117,7 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
+
 class BlenderHandler(logging.Handler):
     def emit(self, record):
         MAXKEYLEN = 2**6 - 1    # FIXME: Is this universal?
@@ -1005,15 +1157,19 @@ def log_messages(mbs, baseLogger, saved_blend):
 
 def delete_log():
     mbs = bpy.context.scene.mbdyn
-    global logFile
+
     if not(bpy.data.is_saved) or mbs.del_log:
         try:
+            print("BLENDYN::logging_shutdown()::INFO: deleting log files.")
             os.remove(logFile)
             print("Blendyn::delete_log(): removed file" + logFile)
         except NameError as ex:
+            print("Blendyn::delete_log(): NameError:" + str(e))
             pass
 
 def logging_shutdown():
+
+
     print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
     logging.shutdown()
 
@@ -1022,6 +1178,7 @@ def logging_shutdown():
     for handler in logger.handlers:
         logger.removeHandler(handler)
     print("BLENDYN::logging_shutdown()::INFO: done.")
+    
+    delete_log()
 
-atexit.register(delete_log)
 atexit.register(logging_shutdown)

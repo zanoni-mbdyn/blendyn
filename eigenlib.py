@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file eigenlib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -20,7 +20,7 @@
 #    along with Blendyn.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ***** END GPL LICENCE BLOCK *****
-# --------------------------------------------------------------------------
+# -------------------------------------------------------------------------- 
 
 import bpy
 from mathutils import Euler, Vector, Matrix
@@ -35,7 +35,7 @@ from .nodelib import axes
 import os
 from sys import float_info
 
-try:
+try: 
     from netCDF4 import Dataset
 except ImportError as ierr:
     print("BLENDYN::eigenlib.py: could not find netCDF4 module. NetCDF import "\
@@ -64,7 +64,7 @@ def update_curr_eigmode(self, context):
         alpha_i = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.curr_eigmode - 1, 1]
         beta = nc.variables['eig.' + str(eigsol_idx) + '.alpha'][self.curr_eigmode - 1, 2]
         det = (alpha_r + beta)**2 + alpha_i**2
-
+    
     lambda_real = (1./self.dCoef)*(alpha_r**2 + alpha_i**2 - beta**2)/det
     lambda_imag = (1./self.dCoef)*(2*alpha_i*beta)/det
     if alpha_i*beta < 0:
@@ -91,40 +91,40 @@ def update_curr_eigsol(self, context):
 class BLENDYN_PG_eigenanalysis(bpy.types.PropertyGroup):
     """ Holds the properties of the eigensolutions found in the MBDyn output """
 
-    index = IntProperty(
+    index: IntProperty(
             name = "index",
             description = "Index of the eigenanalysis"
             )
 
-    step = IntProperty(
+    step: IntProperty(
             name = "step",
             description = "Step number at which the eigenanalysis was performed"
             )
 
-    time = FloatProperty(
+    time: FloatProperty(
             name = "time",
             description = "the time in seconds at which the eigenanalysis was performed",
             precision = 6
             )
 
-    dCoef = FloatProperty(
+    dCoef: FloatProperty(
             name = "dCoef",
             description = "the coefficient used to build the problem matrices"
             )
 
-    iNVec = IntProperty(
+    iNVec: IntProperty(
             name = "eigenvalues",
             description = "number of eigenvalues calculated"
             )
-
-    curr_eigmode = IntProperty(
+    
+    curr_eigmode: IntProperty(
             name = "eigenmode",
             description = "index of the current selected eigenmode",
             update = update_curr_eigmode,
             default = 0
             )
 
-    lambda_damp = IntProperty(
+    lambda_damp: IntProperty(
             subtype = 'PERCENTAGE',
             name = "damping [%]",
             description = "damping factor of current eigenvalue [%]",
@@ -132,18 +132,18 @@ class BLENDYN_PG_eigenanalysis(bpy.types.PropertyGroup):
             max = 100
             )
 
-    lambda_freq = FloatProperty(
+    lambda_freq: FloatProperty(
             name = "frequency [Hz]",
             description = "natural frequency of current eigenvalue [Hz]"
             )
 
-    anim_scale = FloatProperty(
+    anim_scale: FloatProperty(
             name = "Scale factor",
             description = "scale factor for eigenmode visualization",
             default = 1.0
             )
-
-    anim_frames = IntProperty(
+    
+    anim_frames: IntProperty(
             name = "Frames",
             description = "number of frames for eigenmode visualization",
             default = 48,
@@ -155,7 +155,7 @@ class BLENDYN_PG_eigenanalysis(bpy.types.PropertyGroup):
 bpy.utils.register_class(BLENDYN_PG_eigenanalysis)
 
 class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
-    """ Visualizes the reference geometry for the current eigensolution  """
+    """ Visualizes the reference geometry for the current eigensolution  """ 
     bl_idname = "blendyn._eigen_geometry"
     bl_label = "Visualize reference geometry for current eigensolution"
 
@@ -163,7 +163,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
         mbs = context.scene.mbdyn
         nd = mbs.nodes
         ed = mbs.elems
-
+        
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r")
@@ -181,13 +181,13 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
-
+    
         for ndx in anim_nodes:
             dictobj = nd[ndx]
             obj = bpy.data.objects[dictobj.blender_object]
-            obj.select = True
+            obj.select_set(state = True)
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
-
+           
             try:
                 obj.location = Vector(( nc.variables[node_var + 'X'][eigsol.step - 1, :] ))
             except KeyError:
@@ -199,31 +199,31 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                 pass
             else:
                 obj.keyframe_insert(data_path = "location")
-
-                if dictobj.parametrization[0:5] == 'EULER':
-                    eu_seq = axes[dictobj.parametrization[7]] +\
-                             axes[dictobj.parametrization[6]] +\
-                             axes[dictobj.parametrization[5]]
-                    obj.rotation_mode = eu_seq
-                    obj.rotation_euler = \
-                            Euler(\
-                                Vector (( \
-                                   math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :]) \
-                                    )), \
-                                    eu_seq
-                                )
-                    obj.keyframe_insert(data_path = "rotation_euler")
-                elif dictobj.parametrization == 'PHI':
+   
+                par = dictobj.parametrization 
+                if par == 'PHI':
                     obj.rotation_mode = 'AXIS_ANGLE'
-                    rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step, :] ))
+                    rotvec = Vector(( nc.variables[node_var + 'Phi'][eigsol.step - 1, :] ))
                     rotvec_norm = rotvec.normalized()
                     obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                     obj.keyframe_insert(data_path = "rotation_axis_angle")
-                elif dictobj.parametrization == 'MATRIX':
+                elif par[0:5] == 'EULER':
+                    eu_seq = axes[par[7]] +\
+                             axes[par[6]] +\
+                             axes[par[5]]
+                    obj.rotation_mode = eu_seq
+                    angles = math.radians(1.0)*(nc.variables[node_var + 'E'][eigsol.step - 1, :])
+                    obj.rotation_euler = Euler(Vector ((\
+                                         angles[int(par[5]) - 1],\
+                                         angles[int(par[6]) - 1],\
+                                         angles[int(par[7]) - 1],\
+                                    )), eu_seq)
+                    obj.keyframe_insert(data_path = "rotation_euler")
+                elif par == 'MATRIX':
                     obj.rotation_mode = 'QUATERNION'
-                    R = Matrix(( nc.variables[node_var + 'R'][eigsol.step, :])).to_3x3()
-                    obj.rotation_quaternion = R.to_quaternion()
+                    q = Matrix(( nc.variables[node_var + 'R'][eigsol.step - 1])).transposed().to_quaternion()
+                    obj.rotation_quaternion = q
                     obj.keyframe_insert(data_path = "rotation_quaternion")
                 else:
                     # Should not be reached
@@ -231,8 +231,8 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                             + "Unrecognised rotation parametrization"
                     self.report({'ERROR'}, message)
                     logging.error(message)
-
-            obj.select = False
+            
+            obj.select_set(state = False)
 
         # Triggers the updte of deformable elements
         frame = bpy.context.scene.frame_current
@@ -252,27 +252,27 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         nd = mbs.nodes
         ed = mbs.elems
         wm = context.window_manager
-
+        
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
         nc = Dataset(ncfile, "r")
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode
-
+        
         message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                 + " animating mode " + str(cem)
         print(message)
         logging.info(message)
 
         idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
-        if all(idx < 0):
+        if all(idx < 0) or not(len(idx[~idx.mask])):
             message = "BLENDYN_OT_animate_eigenmode::execute(): eig.idx is empty."\
                     + " Activate \"output geometry\" in eigenanalysis card."
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
-
+   
         try:
             eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
             eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
@@ -284,9 +284,9 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
-
+        
         eigvec_phase = np.arctan2(eigvec_im, eigvec_re)
-
+        
         scale = eigsol.anim_scale
 
         nodes = np.array(nc.variables["node.struct"])
@@ -302,14 +302,14 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             self.report({'ERROR'}, message)
             logging.error(message)
             return {'CANCELLED'}
-
+    
         wm.progress_begin(1, len(anim_nodes))
         init_frame = context.scene.frame_current
 
         kk = 0
         for ndx in anim_nodes:
             obj = bpy.data.objects[nd[ndx].blender_object]
-            obj.select = True
+            obj.select_set(state = True)
             obj.rotation_mode = 'AXIS_ANGLE'
 
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
@@ -338,7 +338,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
                 for frame in range(eigsol.anim_frames):
                     context.scene.frame_current = init_frame + frame
                     t = frame/eigsol.anim_frames
-
+                
                     obj.location = ref_pos + \
                             Vector((
                                 scale*eigvec_abs[node_idx]*math.cos(2*math.pi*t + \
@@ -364,7 +364,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
 
                     new_phi_axis = new_phi.normalized()
                     obj.rotation_axis_angle = \
-                        Vector((
+                        Vector(( 
                             new_phi.magnitude, \
                             new_phi_axis[0],
                             new_phi_axis[1],
@@ -372,11 +372,12 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
                             ))
 
                     obj.keyframe_insert(data_path = "rotation_axis_angle")
-
-                obj.select = False
+           
+                obj.select_set(state = False)
                 kk = kk + 1
                 wm.progress_update(kk)
         wm.progress_end()
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_animate_eigenmode class
+

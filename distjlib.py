@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file distancejlib.py
-# Copyright (C) 2015 -- 2019 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -156,8 +156,17 @@ def spawn_distance_element(elem, context):
     n2OBJ = bpy.data.objects[n2]
 
     # creation of line representing the dist
-    distobj_id = 'dist_' + str(elem.int_label)
+    distobj_id = 'distance_' + str(elem.int_label)
     distcv_id = distobj_id + '_cvdata'
+    
+    try:
+        # put it all in the 'joints' collection
+        set_active_collection('joints')
+        elcol = bpy.data.collections.new(name = elem.name)
+        bpy.data.collections['joints'].children.link(elcol)
+        set_active_collection(elcol.name)
+    except KeyError:
+        return {'COLLECTION_ERROR'}
 
     # check if the object is already present. If it is, remove it.
     if distobj_id in bpy.data.objects.keys():
@@ -174,14 +183,14 @@ def spawn_distance_element(elem, context):
     polydata.points.add(1)
 
     # get offsets
-    f1 = elem.offsets[0].value
-    f2 = elem.offsets[1].value
+    f1 = Vector(( elem.offsets[0].value[0:] ))
+    f2 = Vector(( elem.offsets[1].value[0:] ))
 
     # assign coordinates of knots in global frame
     R1 = n1OBJ.rotation_quaternion.to_matrix()
     R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1*Vector(( f1[0], f1[1], f1[2] ))
-    p2 = n2OBJ.location + R2*Vector(( f2[0], f2[1], f2[2] ))
+    p1 = n1OBJ.location + R1@f1
+    p2 = n2OBJ.location + R2@f2
 
     polydata.points[0].co = p1.to_4d()
     polydata.points[1].co = p2.to_4d()
@@ -190,21 +199,21 @@ def spawn_distance_element(elem, context):
     distOBJ = bpy.data.objects.new(distobj_id, cvdata)
     distOBJ.mbdyn.type = 'element'
     distOBJ.mbdyn.dkey = elem.name
-    bpy.context.scene.objects.link(distOBJ)
+    elcol.objects.link(distOBJ)
     elem.blender_object = distOBJ.name
 
     # Finishing up
     cvdata.fill_mode = 'FULL'
     length = (n2OBJ.location - n1OBJ.location).length
-    radius = 0.02 * length
-    cvdata.bevel_depth = radius
+    R = 0.02 * length
+    cvdata.bevel_depth = R
     cvdata.bevel_resolution = 10
 
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p1)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = p1)
     bpy.context.active_object.name = distOBJ.name + '_child1'
     parenting(bpy.data.objects[distOBJ.name + '_child1'], distOBJ)
 
-    bpy.ops.mesh.primitive_uv_sphere_add(size = radius * 2, location = p2)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = p2)
     bpy.context.active_object.name = distOBJ.name + '_child2'
     parenting(bpy.data.objects[distOBJ.name + '_child2'], distOBJ)
 
@@ -212,9 +221,9 @@ def spawn_distance_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    n1OBJ.select_set(state = True)
+    distOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     distOBJ.data.splines[0].points[0].select = True
@@ -223,9 +232,9 @@ def spawn_distance_element(elem, context):
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    distOBJ.select = True
-    bpy.context.scene.objects.active = distOBJ
+    n2OBJ.select_set(state = True)
+    distOBJ.select_set(state = True)
+    bpy.context.view_layer.objects.active = distOBJ
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action = 'DESELECT')
     distOBJ.data.splines[0].points[1].select = True
@@ -236,33 +245,36 @@ def spawn_distance_element(elem, context):
 
     # P1 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select = True
-    bpy.data.objects[distOBJ.name + '_child1'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child1']
+    n1OBJ.select_set(state = True)
+    bpy.data.objects[distOBJ.name + '_child1'].select_set(state = True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child1']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     # P2 hook
     bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select = True
-    bpy.data.objects[distOBJ.name + '_child2'].select = True
-    bpy.context.scene.objects.active = bpy.data.objects[distOBJ.name + '_child2']
+    n2OBJ.select_set(state = True)
+    bpy.data.objects[distOBJ.name + '_child2'].select_set(state = True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child2']
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.object.hook_add_selob(use_bone = False)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-    distOBJ.draw_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child1'].draw_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child2'].draw_type = 'WIRE'
+    distOBJ.display_type = 'WIRE'
+    bpy.data.objects[distOBJ.name + '_child1'].display_type = 'WIRE'
+    bpy.data.objects[distOBJ.name + '_child2'].display_type = 'WIRE'
 
     # set parenting
     parenting(distOBJ, n1OBJ)
 
-    # set group
+    # put them all in the element collection
     dist_child1 = bpy.data.objects[distOBJ.name + '_child1']
-    dist_child2 = bpy.data.objects[distOBJ.name + '_child2']
-    grouping(context, distOBJ, [n1OBJ, n2OBJ, dist_child2, dist_child1])
+    dist_child2 = bpy.data.objects[distOBJ.name + '_child2'] 
+    elcol.objects.link(n1OBJ)
+    elcol.objects.link(n2OBJ)
+
+    set_active_collection('Master Collection')
 
     elem.is_imported = True
     return{'FINISHED'}
@@ -273,7 +285,7 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
     """ Imports a distance Joint in the Blender scene """
     bl_idname = "blendyn.import_distance"
     bl_label = "Import a distance joint element"
-    int_label = bpy.props.IntProperty()
+    int_label: bpy.props.IntProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -294,6 +306,9 @@ class BLENDYN_OT_import_distance(bpy.types.Operator):
                 return {'CANCELLED'}
             elif retval == {'NODE2_NOTFOUND'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
+                return {'CANCELLED'}
+            elif retval == {'COLLECTION_ERROR'}:
+                eldbmsf(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
             elif retval == {'LIBRARY_ERROR'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)

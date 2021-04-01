@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------
-# Blendyn -- file shell4lib.py
+# Blendyn -- file membrane4lib.py
 # Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
@@ -29,15 +29,15 @@ from math import *
 
 from .utilslib import *
 
-def parse_shell4(rw, ed):
-    """ Parses a shell4 element entry in the .log file """
+def parse_membrane4(rw, ed):
+    """ Parses a membrane4 element entry in the .log file """
 
     ret_val = True
     try:
-        el = ed['shell4_' + str(rw[1])]
+        el = ed['membrane4_' + str(rw[1])]
         
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_shell4()", el)
-        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_shell4()", el)  
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_membrane4()", el)
+        eldbmsg({'FOUND_DICT'}, "BLENDYN::parse_membrane4()", el)  
         
         el.nodes[0].int_label = int(rw[2])
         el.nodes[1].int_label = int(rw[3])
@@ -55,11 +55,11 @@ def parse_shell4(rw, ed):
         
         el = ed.add()
         el.mbclass = 'elem.shell'
-        el.type = 'shell4'
+        el.type = 'membrane4'
         el.int_label = int(rw[1])
         
-        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_shell4()", el)
-        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_shell4()", el)   
+        eldbmsg({'PARSE_ELEM'}, "BLENDYN::parse_membrane4()", el)
+        eldbmsg({'NOTFOUND_DICT'}, "BLENDYN::parse_membrane4()", el)   
         
         el.nodes.add()
         el.nodes[0].int_label = int(rw[2])
@@ -73,8 +73,8 @@ def parse_shell4(rw, ed):
         el.nodes.add()
         el.nodes[3].int_label = int(rw[5])
         
-        el.import_function = "blendyn.import_shell4"
-        el.info_draw = "shell4_info_draw"
+        el.import_function = "blendyn.import_membrane4"
+        el.info_draw = "membrane4_info_draw"
         el.name = el.type + '_' + str(el.int_label)
 
         el.is_imported = True
@@ -83,11 +83,11 @@ def parse_shell4(rw, ed):
 
     return ret_val
 # -----------------------------------------------------------
-# end of parse_shell4(rw, ed) function 
+# end of parse_membrane4(rw, ed) function 
 
-# Creates the object representing a shell4 element
-def spawn_shell4_element(elem, context):
-    """ Draws a shell4 element as a plane mesh with the vertices
+# Creates the object representing a membrane4 element
+def spawn_membrane4_element(elem, context):
+    """ Draws a membrane4 element as a plane mesh with the vertices
         connected to the objects representing the nodes """
 
     nd = context.scene.mbdyn.nodes
@@ -146,7 +146,7 @@ def spawn_shell4_element(elem, context):
     mesh.vertices[3].co = shellOBJ.matrix_world.inverted()@n3OBJ.location
     mesh.vertices[2].co = shellOBJ.matrix_world.inverted()@n4OBJ.location
 
-    # create hooks
+    # create hooks 
     objs = [n1OBJ, n2OBJ, n4OBJ, n3OBJ]
     names = ['P1', 'P2', 'P4', 'P3']
     for i, (obj, name) in enumerate(zip(objs, names)):
@@ -169,8 +169,8 @@ def spawn_shell4_element(elem, context):
     elem.blender_object = shellOBJ.name
     return {'FINISHED'}
 
-# function that displays shell4 info in panel -- [ optional ]
-def shell4_info_draw(elem, layout):
+# function that displays membrane4 info in panel -- [ optional ]
+def membrane4_info_draw(elem, layout):
     nd = bpy.context.scene.mbdyn.nodes
     row = layout.row()
     col = layout.column(align=True)
@@ -187,12 +187,12 @@ def shell4_info_draw(elem, layout):
     except KeyError:
         return {'NODE_NOTFOUND'}
 # -----------------------------------------------------------
-# end of shell4_info_draw(elem, layout) function
+# end of membrane4_info_draw(elem, layout) function
 
-class BLENDYN_OT_import_shell4(bpy.types.Operator):
-    """ Imports a shell4 element into the Blender scene """
-    bl_idname = "blendyn.import_shell4"
-    bl_label = "Imports a shell4 element"
+class BLENDYN_OT_import_membrane4(bpy.types.Operator):
+    """ Imports a membrane4 element into the Blender scene """
+    bl_idname = "blendyn.import_membrane4"
+    bl_label = "Imports a membrane4 element"
     int_label: bpy.props.IntProperty()
 
     def draw(self, context):
@@ -203,8 +203,8 @@ class BLENDYN_OT_import_shell4(bpy.types.Operator):
         ed = bpy.context.scene.mbdyn.elems
         nd = bpy.context.scene.mbdyn.nodes
         try:
-            elem = ed['shell4_' + str(self.int_label)]
-            retval = spawn_shell4_element(elem, context)
+            elem = ed['membrane4_' + str(self.int_label)]
+            retval = spawn_membrane4_element(elem, context)
             if retval == {'OBJECT_EXISTS'}:
                 eldbmsg(retval, type(self).__name__ + '::execute()', elem)
                 return {'CANCELLED'}
@@ -233,4 +233,4 @@ class BLENDYN_OT_import_shell4(bpy.types.Operator):
             eldbmsg({'DICT_ERROR'}, type(self).__name__ + '::execute()', elem)
             return {'CANCELLED'}
 # --------------------------------------------------------------
-# end of BLENDYN_OT_import_shell4 class
+# end of BLENDYN_OT_import_membrane4 class
