@@ -195,6 +195,8 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
              
                 for item in bpy.context.scene.objects:
                     if item.select_get():
+                        # Bevel mode introduced in Blender 2.8
+                        item.data.bevel_mode = 'OBJECT'     
                         try:
                             item.data.bevel_object = obj
                         except AttributeError:
