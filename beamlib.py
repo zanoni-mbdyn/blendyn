@@ -327,6 +327,7 @@ def spawn_beam2_element(elem, context):
     # Hook control points and add internal RFs objects
     objs = [n1OBJ, n2OBJ]
     names = ['P1', 'P2']
+    RFpos = [p1, p2]
     M = Matrix()
     for i, (p, obj, name) in enumerate(zip(beamOBJ.data.splines[0].points, objs, names)):
         hook = beamOBJ.modifiers.new(name, type = 'HOOK')
@@ -335,7 +336,7 @@ def spawn_beam2_element(elem, context):
         hook.matrix_inverse = M.Translation(-obj.location)
         nobj = bpy.data.objects.new(beamOBJ.name + 'RF' + str(i + 1), None)
         nobj.empty_display_type = 'ARROWS'
-        nobj.location = elem.offsets[i].value
+        nobj.location = RFpos[i].to_3d()
         dim = obj.dimensions.magnitude/sqrt(3) if obj.data else obj.empty_display_size
         nobj.empty_display_size = .33*dim
         parenting(nobj, obj)
@@ -466,9 +467,10 @@ def spawn_beam3_element(elem, context):
     
     # add objects representing the position of the points on the beam axis, w.r.t. nodes
     nOBJs = [n1OBJ, n2OBJ, n3OBJ]
+    RFpos = [P1, P2, P3]
     for i in range(3):
         obj = bpy.data.objects.new(beamOBJ.name + '_RF' + str(i + 1), None)
-        obj.location = elem.offsets[i].value
+        obj.location = RFpos[i].to_3d()
         obj.empty_display_type = 'ARROWS'
         dim = nOBJs[i].dimensions.magnitude/sqrt(3) if nOBJs[i].data else nOBJs[i].empty_display_size
         obj.empty_display_size = .33*dim
