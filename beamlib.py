@@ -33,6 +33,8 @@ from .utilslib import *
 
 import logging
 
+import pdb
+
 # helper function to parse beam2
 def parse_beam2(rw, ed):
     ret_val = True
@@ -445,14 +447,15 @@ def spawn_beam3_element(elem, context):
     t2 = -P1 + P3
     t2.normalize()
 
-    T = np.zeros((4,2))
-    T[:,0] = t1
-    T[:,1] = -t2
+    T = np.zeros((3,2))
+    T[:,0] = t1.to_3d()
+    T[:,1] = -t2.to_3d()
 
-    d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
+    d = np.linalg.pinv(T).dot(np.array((P2 - P1).to_3d()))
+    pdb.set_trace()
 
-    M1 = Vector(( P2 - Vector((abs(d[0])*t2)) ))
-    M2 = Vector(( P2 + Vector((abs(d[0])*t2)) ))
+    M1 = Vector(( P2 - Vector((max(d)*t2)) ))
+    M2 = Vector(( P2 + Vector((max(d)*t2)) ))
 
     polydata.points[0].co = P1
     polydata.points[1].co = M1
@@ -562,14 +565,14 @@ def update_beam3(elem, insert_keyframe = False):
     t2 = -P1 + P3
     t2.normalize()
 
-    T = np.zeros((4,2))
-    T[:,0] = t1
-    T[:,1] = -t2
+    T = np.zeros((3,2))
+    T[:,0] = t1.to_3d()
+    T[:,1] = -t2.to_3d()
 
-    d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
+    d = np.linalg.pinv(T).dot(np.array((P2 - P1).to_3d()))
 
-    cp2.location = Vector(( P2 - Vector((abs(d[0])*t2)) )).to_3d()
-    cp3.location = Vector(( P2 + Vector((abs(d[0])*t2)) )).to_3d()
+    cp2.location = Vector(( P2 - Vector((max(d)*t2)) )).to_3d()
+    cp3.location = Vector(( P2 + Vector((max(d)*t2)) )).to_3d()
 
     if insert_keyframe:
         try:
