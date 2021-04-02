@@ -33,8 +33,6 @@ from .utilslib import *
 
 import logging
 
-import pdb
-
 # helper function to parse beam2
 def parse_beam2(rw, ed):
     ret_val = True
@@ -452,7 +450,6 @@ def spawn_beam3_element(elem, context):
     T[:,1] = -t2.to_3d()
 
     d = np.linalg.pinv(T).dot(np.array((P2 - P1).to_3d()))
-    pdb.set_trace()
 
     M1 = Vector(( P2 - Vector((max(d)*t2)) ))
     M2 = Vector(( P2 + Vector((max(d)*t2)) ))
