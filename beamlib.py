@@ -324,6 +324,12 @@ def spawn_beam2_element(elem, context):
     elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
+    beamOBJ.lock_scale[0] = True
+    beamOBJ.lock_scale[1] = True
+    beamOBJ.lock_scale[2] = True
+
+    beamOBJ.select_set(state = True)
+
     # Hook control points and add internal RFs objects
     objs = [n1OBJ, n2OBJ]
     names = ['P1', 'P2']
@@ -463,7 +469,13 @@ def spawn_beam3_element(elem, context):
 
     elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
+
+    beamOBJ.lock_scale[0] = True
+    beamOBJ.lock_scale[1] = True
+    beamOBJ.lock_scale[2] = True
+
     beamOBJ.select_set(state = True)
+
     
     # add objects representing the position of the points on the beam axis, w.r.t. nodes
     nOBJs = [n1OBJ, n2OBJ, n3OBJ]
