@@ -324,9 +324,16 @@ def spawn_beam2_element(elem, context):
     elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
 
+    beamOBJ.lock_scale[0] = True
+    beamOBJ.lock_scale[1] = True
+    beamOBJ.lock_scale[2] = True
+
+    beamOBJ.select_set(state = True)
+
     # Hook control points and add internal RFs objects
     objs = [n1OBJ, n2OBJ]
     names = ['P1', 'P2']
+    RFpos = [p1, p2]
     M = Matrix()
     for i, (p, obj, name) in enumerate(zip(beamOBJ.data.splines[0].points, objs, names)):
         hook = beamOBJ.modifiers.new(name, type = 'HOOK')
@@ -335,7 +342,7 @@ def spawn_beam2_element(elem, context):
         hook.matrix_inverse = M.Translation(-obj.location)
         nobj = bpy.data.objects.new(beamOBJ.name + 'RF' + str(i + 1), None)
         nobj.empty_display_type = 'ARROWS'
-        nobj.location = elem.offsets[i].value
+        nobj.location = RFpos[i].to_3d()
         dim = obj.dimensions.magnitude/sqrt(3) if obj.data else obj.empty_display_size
         nobj.empty_display_size = .33*dim
         parenting(nobj, obj)
@@ -438,14 +445,14 @@ def spawn_beam3_element(elem, context):
     t2 = -P1 + P3
     t2.normalize()
 
-    T = np.zeros((4,2))
-    T[:,0] = t1
-    T[:,1] = -t2
+    T = np.zeros((3,2))
+    T[:,0] = t1.to_3d()
+    T[:,1] = -t2.to_3d()
 
-    d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
+    d = np.linalg.pinv(T).dot(np.array((P2 - P1).to_3d()))
 
-    M1 = Vector(( P2 - Vector((abs(d[0])*t2)) ))
-    M2 = Vector(( P2 + Vector((abs(d[0])*t2)) ))
+    M1 = Vector(( P2 - Vector((max(d)*t2)) ))
+    M2 = Vector(( P2 + Vector((max(d)*t2)) ))
 
     polydata.points[0].co = P1
     polydata.points[1].co = M1
@@ -462,13 +469,20 @@ def spawn_beam3_element(elem, context):
 
     elcol.objects.link(beamOBJ)
     elem.blender_object = beamOBJ.name
+
+    beamOBJ.lock_scale[0] = True
+    beamOBJ.lock_scale[1] = True
+    beamOBJ.lock_scale[2] = True
+
     beamOBJ.select_set(state = True)
+
     
     # add objects representing the position of the points on the beam axis, w.r.t. nodes
     nOBJs = [n1OBJ, n2OBJ, n3OBJ]
+    RFpos = [P1, P2, P3]
     for i in range(3):
         obj = bpy.data.objects.new(beamOBJ.name + '_RF' + str(i + 1), None)
-        obj.location = elem.offsets[i].value
+        obj.location = RFpos[i].to_3d()
         obj.empty_display_type = 'ARROWS'
         dim = nOBJs[i].dimensions.magnitude/sqrt(3) if nOBJs[i].data else nOBJs[i].empty_display_size
         obj.empty_display_size = .33*dim
@@ -548,14 +562,14 @@ def update_beam3(elem, insert_keyframe = False):
     t2 = -P1 + P3
     t2.normalize()
 
-    T = np.zeros((4,2))
-    T[:,0] = t1
-    T[:,1] = -t2
+    T = np.zeros((3,2))
+    T[:,0] = t1.to_3d()
+    T[:,1] = -t2.to_3d()
 
-    d = np.linalg.pinv(T).dot(np.array((P2 - P1)))
+    d = np.linalg.pinv(T).dot(np.array((P2 - P1).to_3d()))
 
-    cp2.location = Vector(( P2 - Vector((abs(d[0])*t2)) )).to_3d()
-    cp3.location = Vector(( P2 + Vector((abs(d[0])*t2)) )).to_3d()
+    cp2.location = Vector(( P2 - Vector((max(d)*t2)) )).to_3d()
+    cp3.location = Vector(( P2 + Vector((max(d)*t2)) )).to_3d()
 
     if insert_keyframe:
         try:

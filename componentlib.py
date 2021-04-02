@@ -624,7 +624,6 @@ def add_mesh_component(context, component):
     retval = {'FINISHED'}
     if component.object:
         compOBJ = bpy.data.objects[component.object]
-        compOBJ.matrix_world = reference.matrix_world
         compOBJ.select_set(state = True)
         armOBJ.select_set(state = True)
         bpy.context.view_layer.objects.active = armOBJ
