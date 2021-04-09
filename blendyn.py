@@ -2528,6 +2528,10 @@ class BLENDYN_OT_obj_select_node(bpy.types.Operator):
         else:
             node.blender_object = context.object.name
             ret_val = assign_parametrization(context.object, node)
+            if ret_val == {'FINISHED'}:
+                obj = context.object
+                obj.mbdyn.type = 'node'
+                obj.mbdyn.dkey = node.name
 
         if ret_val == {'ROT_NOT_SUPPORTED'}:
             message = "BLENDYN_OT_obj_select_node::execute(): "\
