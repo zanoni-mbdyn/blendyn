@@ -40,6 +40,8 @@ from .rfmlib import *
 from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 
+import pdb
+
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -1029,10 +1031,7 @@ def set_motion_paths_netcdf(context):
         scene.frame_start = int((mbs.start_time - nctime[0])/(mbs.time_step*mbs.load_frequency))
         scene.frame_end = int((mbs.end_time - nctime[0])/(mbs.time_step*mbs.load_frequency)) + 1
 
-    anim_nodes = list()
-    for node in nd:
-        if node.blender_object != 'none':
-            anim_nodes.append(node.name)
+    anim_nodes = [node.name for node in nd if node.blender_object != 'none']
 
     scene.frame_current = scene.frame_start
 
@@ -1117,6 +1116,72 @@ def set_motion_paths_netcdf(context):
 
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
+
+def set_motion_paths_live(context, nc, anim_nodes, step):
+    """ inserts a new keyframe 'live' during a running simulation,
+    relying on a synced netcdf output database 
+
+    Inputs:
+        - context:      the regular Blender context
+        - nc:           netCDF4 Dataset of the MBDyn output database
+        - anim_nodes:   list of nodes to be animated
+        - step:         output step to load to the new configuration
+    """
+
+    scene = context.scene
+    mbs = scene.mbdyn
+    nd = mbs.nodes
+    ed = mbs.elems
+
+    # we'll insert a new frame, at the end of the current sequence
+    scene.frame_current += 1
+
+    for ndx in anim_nodes:
+        
+        dictobj = nd[ndx]
+        if not(dictobj.output):
+            continue
+
+        obj = bpy.data.objects[dictobj.blender_object]
+        obj.select_set(state = True)
+        node_var = 'node.struct.' + str(dictobj.int_label) + '.'
+        par = dictobj.parametrization
+        
+        X = nc.variables[node_var + 'X'][step]
+        obj.location = Vector((X))
+        obj.keyframe_insert(data_path = "location")
+        if par == 'PHI':
+            Phi = nc.variables[node_var + 'Phi'][step]
+            rotvec = Vector((Phi))
+            rotvec_norm = rotvec.normalized()
+            obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
+                    rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
+            obj.keyframe_insert(data_path = "rotation_axis_angle")
+        elif par[0:5] == 'EULER':
+            angles = math.radians(1.0)*nc.variables[node_var + 'E'][step]
+            obj.rotation_euler = Euler( Vector((\
+                                 angles[int(par[5]) - 1],\
+                                 angles[int(par[6]) - 1],\
+                                 angles[int(par[7]) - 1],\
+                                 )),\
+                                 axes[par[7]] + axes[par[6]] + axes[par[5]] )
+            obj.keyframe_insert(data_path = "rotation_euler")
+        elif par == 'MATRIX':
+            obj.rotation_quaternion = Matrix((nc.variables[node_var + 'R'][step])).transposed().to_quaternion()
+            obj.keyframe_insert(data_path = "rotation_quaternion")
+        else:
+            # Should not be reached
+            print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+            return False
+        obj.select_set(state = False)
+        
+    layers = context.scene.view_layers
+    layers.update()
+    return True
+    
+# -----------------------------------------------------------
+# end of set_motion_paths_live() function
+
 
 class BlenderHandler(logging.Handler):
     def emit(self, record):

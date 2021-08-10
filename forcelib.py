@@ -538,17 +538,16 @@ def update_structural_force(elem, insert_keyframe = False):
     if mbs.use_netcdf:
 
         tdx = int(scene.frame_current * mbs.load_frequency)
-        ncfile = os.path.join(os.path.dirname(mbs.file_path), \
-                mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
-
-        node = nd['node_' + str(elem.nodes[0].int_label)]
-        nodeOBJ = bpy.data.objects[node.blender_object]
-        R0 = nodeOBJ.matrix_world.to_3x3().normalized()
-        
-        obj = bpy.data.objects[elem.blender_object]
+        ncfile = os.path.join(mbs.file_path, mbs.file_basename + '.nc')
        
         try: 
+            nc = Dataset(ncfile, "r")
+        
+            node = nd['node_' + str(elem.nodes[0].int_label)]
+            nodeOBJ = bpy.data.objects[node.blender_object]
+            R0 = nodeOBJ.matrix_world.to_3x3().normalized()
+            
+            obj = bpy.data.objects[elem.blender_object]
             F = Vector(( nc.variables['elem.force.' + str(elem.int_label) + '.F'][tdx,:] ))
             Fl = R0.transposed()@F
             obj.rotation_quaternion = (-Fl).to_track_quat('-Z', 'Y')
@@ -559,6 +558,14 @@ def update_structural_force(elem, insert_keyframe = False):
                         # force beyond the last timestep
             else:
                 raise
+        except KeyError:
+            # force not found: print a warning, but nothing more
+            print("BLENDYN::update_structural_force(): force output not found")
+            pass
+        except OSError as err:
+            # possibly, we're asking for the force output too soon
+            print("BLENDYN::update_structural_force(): OSError: {}".format(err))
+
     else:
         pass
 # -----------------------------------------------------------

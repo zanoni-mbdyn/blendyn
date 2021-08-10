@@ -350,7 +350,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     input_basename: StringProperty(
             name = "Input File basename",
             description = "Base name of Input File",
-            default = "not yet selected"
+            default = "not selected"
     )
     # String representing path of MBDyn Installation
     install_path: StringProperty(
@@ -389,6 +389,12 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     overwrite: BoolProperty(
             name = "Overwrite Property",
             description = "True if the user wants to overwrite the existing output files",
+            default = False
+    )
+    # Do we want to live-animate the current scene?
+    live_animation: BoolProperty(
+            name = "Live Animation",
+            description = "Animate the current scene during the simulation",
             default = False
     )
     del_log: BoolProperty(
@@ -1211,6 +1217,12 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
     bl_label = "Run MBDyn Simulation"
 
     timer = None
+    nc = None
+    anim_nodes = None
+
+    status = ''
+    percent = 0
+    next_anim_step = int(0)
 
     def execute(self, context):
         mbs = context.scene.mbdyn
@@ -1222,12 +1234,11 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
             os.environ[variable] = value
 
         mbdyn_env = os.environ.copy()
-
         mbdyn_env['PATH'] = mbs.install_path + ":" + mbdyn_env['PATH']
-
         command_line_options = mbs.cmd_options
-
         command = ('mbdyn {0} {1}').format(command_line_options, mbs.input_path)
+
+        selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
 
         if not mbs.overwrite:
             mbs.sim_num += 1
@@ -1250,18 +1261,29 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
             command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
+  
+        if mbs.live_animation:
+            ncfile = os.path.join(mbs.file_path, mbs.file_basename + '.nc')
+            try:
+                self.nc = Dataset(ncfile, 'r')
+            except FileNotFoundError:
+                message = "Output NetCDF file not found! Aborting live update..."
+                self.report({'WARNING'}, message)
+                baseLogger.warning(selftag + message)
 
-        self.timer = context.window_manager.event_timer_add(0.5, context.window)
+            self.anim_nodes = [node.name for node in mbs.nodes if node.blender_object != 'none'] 
+           
+        self.timer = context.window_manager.event_timer_add(0.5, window = context.window)
         context.window_manager.modal_handler_add(self)
 
-        selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
         message = "Started MBDyn simulation... "
         self.report({'INFO'}, message)
         baseLogger.info(selftag + message)
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
-        mbs = context.scene.mbdyn
+        scene = context.scene
+        mbs = scene.mbdyn
 
         file = os.path.join(mbs.file_path, mbs.file_basename)
 
@@ -1269,24 +1291,28 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
             context.window_manager.event_timer_remove(self.timer)
             return {'CANCELLED'}
 
-        status = ''
-        percent = 0
-
         if event.type == 'TIMER':
             context.area.tag_redraw()
             if os.path.exists(file + '.out'):
                 try:
-                    status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
-                    status = status.split(' ')[2]
-                    percent = (float(status)/mbs.final_time)*100
+                    self.status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
+                    statustkn = self.status.split(' ')
+                    currstep = int(statustkn[1])
+                    currsimtime = float(statustkn[2])
+                    self.percent = (currsimtime/mbs.final_time)*100
+                    if mbs.live_animation and (currstep >= self.next_anim_step):
+                        asteps = range(self.next_anim_step, currstep, int(mbs.load_frequency))
+                        for astep in asteps:
+                            set_motion_paths_live(context, self.nc, self.anim_nodes, astep)
+                        self.next_anim_step = asteps[-1] + int(mbs.load_frequency)
                 except IndexError:
                     pass
                 except ValueError:
                     pass
-            mbs.sim_status = percent
-            print(str(round(percent)) + '% completed')
+            mbs.sim_status = self.percent
+            print(str(round(self.percent)) + '% completed')
 
-        if percent >= 100:
+        if self.percent >= 100:
             context.window_manager.event_timer_remove(self.timer)
 
             si_retval = {'FINISHED'}
@@ -1313,12 +1339,18 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
 
     def invoke(self, context, event):
         mbs = context.scene.mbdyn
-        parse_input_file(context)
+        selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
+        if not mbs.input_basename == "not selected":
+            parse_input_file(context)
+        else:
+            message = "The input file has not been selected yet"
+            self.report({'ERROR'}, message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
 
         mbs.mbdyn_running = True
 
         if not mbs.final_time:
-            selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
             message = "Enter final time to start the simulation. Aborting..."
             self.report({'ERROR'}, message)
             baseLogger.error(selftag + message)
@@ -1599,6 +1631,7 @@ class BLENDYN_PT_simulation(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col = layout.column(align = True)
         col.prop(mbs, "overwrite", text = "Overwrite Previous Files")
         col.prop(mbs, "force_text_import", text = "Always load text output")
+        col.prop(mbs, "live_animation", text = "Live Animation")
 
         col = layout.column(align = True)
         col.label(text = "Command-line options")
