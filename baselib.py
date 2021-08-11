@@ -800,13 +800,13 @@ def set_motion_paths_mov(context):
                     first[ndx] = np.array(next(reader)).astype(np.float)
                 
                 if freq > 1:
-                    frac = np.ceil(frame) - frame
+                    frac = frame % 1
                     for ndx in range(mbs.num_nodes):
                         second[ndx] = np.array(next(reader)).astype(np.float)
 
                     for ndx in range(mbs.num_nodes):
                         try:
-                            answer = frac*first[ndx] + (1 - frac)*second[ndx]
+                            answer = (1 - frac)*first[ndx] + frac*second[ndx]
                             obj = bpy.data.objects[anim_objs[round(answer[0])]]
                             obj.select_set(state = True)
                             set_obj_locrot_mov(obj, answer)
@@ -882,45 +882,17 @@ def get_display_group(self, context):
 
     return [(group_name, group_name, "") for group_name in dg.keys()]
 
-def netcdf_helper(nc, scene, key):
-    mbs = scene.mbdyn
-    freq = mbs.load_frequency
-    tdx = scene.frame_current*freq
-    frac = np.ceil(tdx) - tdx
+def netcdf_interp2_lerp(nc, key, step1, step2, frac):
+    first = Vector((nc.variables[key][step1]))
+    second = Vector((nc.variables[key][step2]))
+    return first.lerp(second, frac)
 
-    first = Vector((nc.variables[key][int(tdx)]))
-    second = Vector((nc.variables[key][int(np.ceil(tdx))]))
-    # return = first*frac + second*(1 - frac)
-    return  first.lerp(second, 1 - frac)
+def quat_interp_slerp(q1, q2, frac):
+    return q1.slerp(q2, frac)
 
-def netcdf_helper_phi(nc, scene, key):
-    mbs = scene.mbdyn
-    freq = mbs.load_frequency
-    tdx = scene.frame_current*freq
-    frac = np.ceil(tdx) - tdx
-
-    first = Vector((nc.variables[key][int(tdx)]))
-    second = Vector((nc.variables[key][int(np.ceil(tdx))]))
-    return first.lerp(second, 1 - frac)
-
-def netcdf_helper_rmat(nc, scene, var):
-    mbs = scene.mbdyn
-    freq = mbs.load_frequency
-    tdx = scene.frame_current*freq
-    frac = np.ceil(tdx) - tdx
-    
-    first = Matrix((nc.variables[var.variable][int(tdx)]))
-    second = Matrix((nc.variables[var.variable][int(np.ceil(tdx))]))
-    return first.lerp(second, 1 - frac) 
-
-def netcdf_helper_euler(nc, scene, key, par):
-    mbs = scene.mbdyn
-    freq = mbs.load_frequency
-    tdx = scene.frame_current*freq
-    frac = np.ceil(tdx) - tdx
-
-    v1 = math.radians(1.0)*nc.variables[key][int(tdx)]
-    v2 = math.radians(1.0)*nc.variables[key][int(np.ceil(tdx))]
+def netcdf_interp2_euler(nc, key, par, step1, step2, frac):
+    v1 = math.radians(1.0)*nc.variables[key][step1]
+    v2 = math.radians(1.0)*nc.variables[key][step2]
     order = axes[par[7]] + axes[par[6]] + axes[par[5]]
     E1 = Euler( Vector((v1[int(par[5]) - 1], \
                         v1[int(par[6]) - 1], \
@@ -932,41 +904,50 @@ def netcdf_helper_euler(nc, scene, key, par):
                         order)
     q1 = E1.to_quaternion()
     q2 = E2.to_quaternion()
-    return (q1.slerp(q2, 1 - frac)).to_euler(order, E1)
+    return (quat_interp_slerp(q1, q2, frac)).to_euler(order, E1)
 
-# def netcdf_helper_rvars(nc, scene, var):
-#     mbs = scene.mbdyn
-#     freq = mbs.load_frequency
-#     tdx = scene.frame_current*freq
-#     frac = np.ceil(tdx) - tdx
-# 
-#     first = nc.variables[var.variable][int(tdx)]
-#     second = nc.variables[var.variable][int(np.ceil(tdx))]
-#     answer = first*frac + second*(1 - frac)
-# 
-#     dims = len(answer.shape)
-# 
-#     if (dims == 1):
-#         for ii in range(len(answer)):
-#             if (var.components[ii]):
-#                 var.value[ii] = answer[ii]
-#     elif (dims == 2):
-#         for ii in range(3):
-#             for jj in range(3):
-#                 if var.components[ii + jj]:
-#                     var.value[ii + jj] = answer[ii,jj]
-# 
-#     return answer
+def netcdf_interp2_mat(nc, key, step1, step2, frac):
+    q1 = Matrix((nc.variables[key][step1])).to_quaterion()
+    q1 = Matrix((nc.variables[key][step2])).to_quaternion()
+    return quat_interp_slerp(q1, q2, frac)
+
+def netcdf_helper(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = tdx % 1 
+    return netcdf_interp2_lerp(nc, key, int(tdx), int(np.ceil(tdx)), frac)
+
+def netcdf_helper_phi(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = tdx % 1 
+    return netcdf_interp2_lerp(nc, key, int(tdx), int(np.ceil(tdx)), frac)
+
+def netcdf_helper_rmat(nc, scene, key):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = tdx % 1
+    return netcdf_interp2_mat(nc, key, int(tdx), int(np.ceil(tdx)), frac)
+
+def netcdf_helper_euler(nc, scene, key, par):
+    mbs = scene.mbdyn
+    freq = mbs.load_frequency
+    tdx = scene.frame_current*freq
+    frac = tdx % 1
+    return netcdf_interp2_euler(nc, key, par, int(tdx), int(np.ceil(tdx)), frac)
 
 def netcdf_helper_quat(nc, scene, key):
     mbs = scene.mbdyn
     freq = mbs.load_frequency
     tdx = scene.frame_current * freq
-    frac = np.ceil(tdx) - tdx
+    frac = tdx % 1
 
     q_first = Matrix((nc.variables[key][int(tdx)])).transposed().to_quaternion()
     q_second = Matrix((nc.variables[key][int(np.ceil(tdx))])).transposed().to_quaternion()
-    return q_first.slerp(q_second, 1 - frac)
+    return quat_interp_slerp(q_first, q_second, frac)
 
 def parse_render_string(var, components):
     if hasattr(var, '__iter__'):
@@ -1062,6 +1043,7 @@ def set_motion_paths_netcdf(context):
         obj.select_set(state = True)
         node_var = 'node.struct.' + str(dictobj.int_label) + '.'
         par = dictobj.parametrization
+
         if par == 'PHI':
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
@@ -1084,13 +1066,7 @@ def set_motion_paths_netcdf(context):
                 obj.location = Vector((loc))
                 obj.keyframe_insert(data_path = "location")
 
-                angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
-                obj.rotation_euler = Euler( Vector((\
-                                     angles[int(par[5]) - 1],\
-                                     angles[int(par[6]) - 1],\
-                                     angles[int(par[7]) - 1],\
-                                     )),\
-                                     axes[par[7]] + axes[par[6]] + axes[par[5]] )
+                obj.rotation_euler = netcdf_helper_euler(nc. scene, node_var + 'E', par[5:8])
                 obj.keyframe_insert(data_path = "rotation_euler")
         elif par == 'MATRIX':
             for frame in range(scene.frame_start, scene.frame_end):
@@ -1100,8 +1076,7 @@ def set_motion_paths_netcdf(context):
                 obj.location = Vector((answer))
                 obj.keyframe_insert(data_path = "location")
 
-                obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
-
+                obj.rotation_quaternion = netcdf_helper_rmat(nc, scene, node_var + 'R')
                 obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
@@ -1126,15 +1101,16 @@ def set_motion_paths_live(context, nc, anim_nodes, step):
         - nc:           netCDF4 Dataset of the MBDyn output database
         - anim_nodes:   list of nodes to be animated
         - step:         output step to load to the new configuration
+
+    If step is not an integer, an interpolation between two neighboring 
+    output time steps is performed, with the appropriate method for the 
+    type of kinematic variable involved.
     """
 
     scene = context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
     ed = mbs.elems
-
-    # we'll insert a new frame, at the end of the current sequence
-    scene.frame_current += 1
 
     for ndx in anim_nodes:
         
@@ -1150,33 +1126,52 @@ def set_motion_paths_live(context, nc, anim_nodes, step):
         X = nc.variables[node_var + 'X'][step]
         obj.location = Vector((X))
         obj.keyframe_insert(data_path = "location")
+
+        frac = step % 1
+        
         if par == 'PHI':
-            Phi = nc.variables[node_var + 'Phi'][step]
+            if frac < 1e-2: 
+                # don't bother interpolating if we are basically using an integer load frequency
+                Phi = nc.variables[node_var + 'Phi'][step]
+            else: # frac >= 1e-2
+                Phi = netcdf_interp2_lerp(nc, node_var + 'Phi', round(step), round(step) + 1, frac)
             rotvec = Vector((Phi))
             rotvec_norm = rotvec.normalized()
             obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                     rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
             obj.keyframe_insert(data_path = "rotation_axis_angle")
         elif par[0:5] == 'EULER':
-            angles = math.radians(1.0)*nc.variables[node_var + 'E'][step]
-            obj.rotation_euler = Euler( Vector((\
-                                 angles[int(par[5]) - 1],\
-                                 angles[int(par[6]) - 1],\
-                                 angles[int(par[7]) - 1],\
-                                 )),\
-                                 axes[par[7]] + axes[par[6]] + axes[par[5]] )
+            if frac < 1e-2:
+                # don't bother interpolating if we are basically using an integer load frequency
+                angles = math.radians(1.0)*nc.variables[node_var + 'E'][step]
+            else: # frac >= 1e-2
+                angles = netcdf_interp2_euler(nc, node_var + 'E', round(step), round(step) + 1, frac)
+            obj.rotation_euler = angles
             obj.keyframe_insert(data_path = "rotation_euler")
         elif par == 'MATRIX':
-            obj.rotation_quaternion = Matrix((nc.variables[node_var + 'R'][step])).transposed().to_quaternion()
+            if frac < 1e-2:
+                # don't bother interpolating if we are basically using an integer load frequency
+                obj.rotation_quaternion = \
+                        Matrix((nc.variables[node_var + 'R'][step])).transposed().to_quaternion()
+            else: # frac >= 1e-2
+                obj.rotation_quaternion = \
+                        netcdf_interp2_mat(nc, node_var + 'R', round(step), round(step) + 1, frac)
             obj.keyframe_insert(data_path = "rotation_quaternion")
         else:
             # Should not be reached
             print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
             return False
         obj.select_set(state = False)
-        
-    layers = context.scene.view_layers
-    layers.update()
+
+    # unsafe?
+    # layers = context.scene.view_layers
+    # layers.update()
+
+    # tag the current area for redraw
+    context.area.tag_redraw()
+    
+    # we'll insert the new frame at the end of the current sequence
+    scene.frame_current += 1
     return True
     
 # -----------------------------------------------------------

@@ -43,6 +43,8 @@ import numpy as np
 import subprocess
 import json
 
+# import traceback
+
 try:
     from netCDF4 import Dataset
 except ImportError as ierr:
@@ -1300,17 +1302,24 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
                     currstep = int(statustkn[1])
                     currsimtime = float(statustkn[2])
                     self.percent = (currsimtime/mbs.final_time)*100
-                    if mbs.live_animation and (currstep >= self.next_anim_step):
-                        asteps = range(self.next_anim_step, currstep, int(mbs.load_frequency))
-                        for astep in asteps:
-                            set_motion_paths_live(context, self.nc, self.anim_nodes, astep)
-                        self.next_anim_step = asteps[-1] + int(mbs.load_frequency)
-                except IndexError:
+                    if mbs.live_animation and (currstep > self.next_anim_step):
+                        asteps = np.arange(self.next_anim_step, currstep, mbs.load_frequency)
+                        if len(asteps):
+                            for astep in asteps:
+                                set_motion_paths_live(context, self.nc, self.anim_nodes, astep)
+                            self.next_anim_step = asteps[-1] + mbs.load_frequency
+                except IndexError as err:
+                    print("BLENDYN_OT_run_mbdyn_simulation::IndexError: {}".format(err))
+                    tb = traceback.format_exc()
+                    print(tb)
                     pass
-                except ValueError:
+                except ValueError as err:
+                    print("BLENDYN_OT_run_mbdyn_simulation::ValueError: {}".format(err))
+                    # tb = traceback.format_exc()
+                    # print(tb)
                     pass
             mbs.sim_status = self.percent
-            print(str(round(self.percent)) + '% completed')
+            # print(str(round(self.percent)) + '% completed')
 
         if self.percent >= 100:
             context.window_manager.event_timer_remove(self.timer)
