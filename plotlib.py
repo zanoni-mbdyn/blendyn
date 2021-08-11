@@ -35,7 +35,7 @@ except ModuleNotFoundError as ierr:
 HAVE_CAIROSVG = False
 try:
     import cairosvg
-    HAVE_CAIROSG = True
+    HAVE_CAIROSVG = True
 except ModuleNotFoundError as ierr:
     print("BLENDYN::plotlib.py: could not import cairosvg. Plots will only be saved"\
             + "in .svg format, and not displayed in Blender UI.")
