@@ -1161,8 +1161,9 @@ def delete_log():
     if not(bpy.data.is_saved) or mbs.del_log:
         try:
             print("BLENDYN::logging_shutdown()::INFO: deleting log files.")
-            os.remove(logFile)
-            print("Blendyn::delete_log(): removed file" + logFile)
+            if os.path.exists(logFile):
+                os.remove(logFile)
+                print("Blendyn::delete_log(): removed file" + logFile)
         except NameError as ex:
             print("Blendyn::delete_log(): NameError:" + str(e))
             pass
