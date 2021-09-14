@@ -388,7 +388,7 @@ def spawn_revolute_pin_element(elem, context):
 
         # load the wireframe revolute joint object from the library
         bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object'), filename = 'revolute.pin')
+            'library', 'joints.blend', 'Object'), filename = 'revolute pin')
 
         # the append operator leaves just the imported object selected
         revjOBJ = bpy.context.selected_objects[0]
