@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file aerolib.py
-# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2021 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #

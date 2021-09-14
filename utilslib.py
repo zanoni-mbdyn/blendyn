@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file utilslib.py
-# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2021 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -191,6 +191,7 @@ class BLENDYN_OT_load_section(bpy.types.Operator, ImportHelper):
                     poly.points[-1].co = Vector(( float(row[0]), float(row[1]), 0.0, 0.0 ))
 
                 obj = bpy.data.objects.new(name, cvdata)
+                obj.data.dimensions = '3D'
                 scol.objects.link(obj)
              
                 for item in bpy.context.scene.objects:
