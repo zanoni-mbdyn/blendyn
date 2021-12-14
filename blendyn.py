@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file blendyn.py
-# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2021 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -22,7 +22,7 @@
 # ***** END GPL LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-import os
+import os, atexit
 
 import bpy
 import bmesh
@@ -394,7 +394,8 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     del_log: BoolProperty(
             name = "Log property",
             description = "True if the user wants to delete log files on exit",
-            default = False
+            default = False,
+            update = update_del_log
     )
     render_nc_vars: EnumProperty(
             items = get_render_vars,

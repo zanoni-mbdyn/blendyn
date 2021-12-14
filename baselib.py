@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # Blendyn -- file baselib.py
-# Copyright (C) 2015 -- 2020 Andrea Zanoni -- andrea.zanoni@polimi.it
+# Copyright (C) 2015 -- 2021 Andrea Zanoni -- andrea.zanoni@polimi.it
 # --------------------------------------------------------------------------
 # ***** BEGIN GPL LICENSE BLOCK *****
 #
@@ -150,7 +150,8 @@ def setup_import(filepath, context):
             print(message)
             logging.info(message)
             pass
-
+        # by default, we remove the log files on exit
+        atexit.register(delete_log)
         get_plot_vars_glob(context)
     else:
         mbs.use_netcdf = False
@@ -1156,29 +1157,42 @@ def log_messages(mbs, baseLogger, saved_blend):
                     "caught PermissionError exception {0}".format(ex))
 
 def delete_log():
-    mbs = bpy.context.scene.mbdyn
-
-    if not(bpy.data.is_saved) or mbs.del_log:
-        try:
-            print("BLENDYN::logging_shutdown()::INFO: deleting log files.")
+    try:
+        print("BLENDYN::logging_shutdown()::INFO: deleting log files.")
+        if os.path.exists(logFile):
             os.remove(logFile)
             print("Blendyn::delete_log(): removed file" + logFile)
-        except NameError as ex:
-            print("Blendyn::delete_log(): NameError:" + str(e))
-            pass
+    except NameError as ex:
+        print("Blendyn::delete_log(): NameError:" + str(e))
+        pass
+
+def donot_delete_log():
+    mbs = bpy.context.scene.mbdyn
+    if not(mbs.del_log):
+        atexit.unregister(delete_log)
 
 def logging_shutdown():
-
-
     print("BLENDYN::logging_shutdown()::INFO: shutting down logs.")
-    logging.shutdown()
-
     print("BLENDYN::logging_shutdown()::INFO: removing handlers.")
     logger = logging.getLogger()
     for handler in logger.handlers:
+        try:
+            handler.acquire()
+            handler.flush()
+            handler.close()
+        except (OSError, ValueError):
+            pass
+        finally:
+            handler.release()
         logger.removeHandler(handler)
     print("BLENDYN::logging_shutdown()::INFO: done.")
-    
-    delete_log()
 
+def update_del_log(self, context):
+    mbs = context.scene.mbdyn
+    if mbs.del_log:
+        atexit.register(delete_log)
+    else:
+        atexit.unregister(delete_log)
+
+bpy.app.handlers.save_post.append(donot_delete_log)
 atexit.register(logging_shutdown)
