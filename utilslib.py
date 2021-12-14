@@ -38,6 +38,7 @@ from . dependencies import *
 import os
 import subprocess
 import imp
+import sys
 
 import csv
 
@@ -50,7 +51,7 @@ def install_pip():
 
     try:
         # Check if pip is already installed
-        subprocess.run([bpy.app.binary_path_python, "-m", "pip", "--version"], check = True)
+        subprocess.run([sys.executable, "-m", "pip", "--version"], check = True)
     except subprocess.CalledProcessError:
         import os
         import ensurepip
@@ -91,7 +92,7 @@ def install_module(module_name, package_name = None, global_name = None):
     if not(os.path.isdir(modulesdir)):
         os.mkdir(modulesdir, 0o755)
     # Try to install the package. This may fail with subprocess.CalledProcessError
-    subprocess.run([bpy.app.binary_path_python, "-m", "pip", "install", "-t", modulesdir, package_name], check = True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-t", modulesdir, package_name], check = True)
 
 # -----------------------------------------------------------
 # end of install_module() function 
