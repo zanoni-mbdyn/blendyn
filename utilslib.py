@@ -411,9 +411,12 @@ def cquat(q):
 def set_active_collection(coll_name):
     """ Changes the active collection to coll_name after searching
         for it with recur_layer_collection() """
-    curr_layer_collection = bpy.context.view_layer.layer_collection
-    new_layer_collection = recur_layer_collection(curr_layer_collection, coll_name)
-    bpy.context.view_layer.active_layer_collection = new_layer_collection
+    try:
+        curr_layer_collection = bpy.context.view_layer.layer_collection
+        new_layer_collection = recur_layer_collection(curr_layer_collection, coll_name)
+        bpy.context.view_layer.active_layer_collection = new_layer_collection
+    except TypeError:
+        pass
 # -----------------------------------------------------------
 # end of set_active_collection function
 
