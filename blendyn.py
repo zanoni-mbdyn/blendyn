@@ -1454,7 +1454,6 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         row = layout.row()
 
         col = layout.column(align = True)
-        col.label(text = "MBDyn Standard Import")
         col.operator(BLENDYN_OT_standard_import.bl_idname,\
                 text = "Standard Import")
 
