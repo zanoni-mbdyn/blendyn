@@ -138,7 +138,7 @@ def setup_import(filepath, context):
 
             for ii in range(0, len(NVecs)):
                 eigsol = mbs.eigensolutions.add()
-                eigsol.index = float(NVecs[ii][4:-10])
+                eigsol.index = int(NVecs[ii][4:-10])
                 eigsol.step = eig_step[eigsol.index]
                 eigsol.time = eig_time[eigsol.index]
                 eigsol.dCoef = eig_dCoef[eigsol.index]
