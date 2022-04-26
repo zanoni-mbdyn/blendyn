@@ -381,7 +381,7 @@ def parse_log_file(context):
             mbs.num_timesteps = len(nc.variables["time"])
         else:
             mbs.num_nodes = nn
-            mbs.num_timesteps = mbs.num_rows/mbs.num_nodes
+            mbs.num_timesteps = int(mbs.num_rows/mbs.num_nodes)
         
         mbs.is_ready = True
         ret_val = {'FINISHED'}
