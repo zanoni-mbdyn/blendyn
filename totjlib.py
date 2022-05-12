@@ -310,7 +310,7 @@ def spawn_total_joint_element(elem, context):
         totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])@q1
 
         OBJs = list()
-        OBJs.append(totOBJ);
+        OBJs.append(totjOBJ);
 
         # display traslation arrows
         pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
