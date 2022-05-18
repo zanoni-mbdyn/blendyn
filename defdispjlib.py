@@ -146,29 +146,28 @@ def spawn_deformable_displacement_joint_element(elem, context):
         RF2.name = elem.name + '_RF2'
         RF2 = bpy.data.objects[elem.name + '_RF2']
 
+        pN1, q1, S1 = n1OBJ.matrix_basis.decompose()
+        pN2, q2, S2 = n2OBJ.matrix_basis.decompose()
+
         # place the joint objects in the position defined relative to node 1
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-        R2 = n2OBJ.rotation_quaternion.to_matrix()
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
-        ddOBJ.location = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
+        ddOBJ.location = pN1 + q1.to_matrix()@Vector(elem.offsets[0].value[0:])
         ddOBJ.rotation_mode = 'QUATERNION'
         ddOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
 
-        RF1.location = n1OBJ.location + R1@Vector(( f1[0], f1[1], f1[2] ))
+        RF1.location = pN1 + q1.to_matrix()@Vector(elem.offsets[0].value[0:])
         RF1.rotation_mode = 'QUATERNION'
         RF1.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
         parenting(RF1, n1OBJ)
         RF1.hide_set(state = True)
 
-        RF2.location = n2OBJ.location + R1@Vector(( f2[0], f2[1], f2[2] ))
+        RF2.location = pN2 + q2.to_matrix()@Vector(elem.offsets[0].value[0:])
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])
         parenting(RF2, n2OBJ)
         RF2.hide_set(state = True)
 
         # automatic scaling
-        s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
+        s = (.5/sqrt(3.))*(S1.magnitude + S2.magnitude)
         ddOBJ.scale = Vector((s, s, s))
 
         # parenting of wireframe objects
