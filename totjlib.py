@@ -295,10 +295,9 @@ def spawn_total_joint_element(elem, context):
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
         set_active_collection(elcol.name)
-        
+
         # load the wireframe total joint object from the library
-        lib_path = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object')
+        lib_path = os.path.join(mbs.addon_path, 'library', 'joints.blend', 'Object')
         bpy.ops.wm.append(directory = lib_path, filename = 'total')
 
         # the append operator leaves just the imported object selected
@@ -330,7 +329,7 @@ def spawn_total_joint_element(elem, context):
                 # rotate it according to "position orientation" w.r.t. node 1
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])@q1
-            
+        
         # display rotation arrows
         rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
         for kk in range(3):
@@ -341,7 +340,7 @@ def spawn_total_joint_element(elem, context):
     
                 obj = bpy.context.selected_objects[0]
                 OBJs.append(obj)
-    
+                
                 # position it correctly
                 obj.location = n1OBJ.location +R1@Vector(( elem.offsets[0].value[0:] ))
                 
@@ -360,7 +359,7 @@ def spawn_total_joint_element(elem, context):
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
         totjOBJ.scale = Vector(( s, s, s ))
-    
+
         # create an object representing the RF used to express the relative
         # position w.r.t. node 1, for model debuggingi
         RF1p = bpy.data.objects.new(totjOBJ.name + '_RF1_pos', None)

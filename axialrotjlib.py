@@ -189,23 +189,16 @@ def spawn_axialrot_element(elem, context):
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + \
         n2OBJ.scale.magnitude)
         axialrotjOBJ.scale = Vector(( s, s, s ))
-
-        # joint offsets with respect to nodes
-        f1 = elem.offsets[0].value
-        f2 = elem.offsets[1].value
-        q1 = elem.rotoffsets[0].value
-        q2 = elem.rotoffsets[1].value
     
         # project offsets in global frame
-        R1 = n1OBJ.rotation_quaternion.to_matrix()
-        R2 = n2OBJ.rotation_quaternion.to_matrix()
-        p1 = Vector(( f1[0], f1[1], f1[2] ))
-        p2 = Vector(( f2[0], f2[1], f2[2] ))
+        pN1, q1, S1 = n1OBJ.matrix_basis.decompose()
+        pN2, q2, S2 = n1OBJ.matrix_basis.decompose()
 
         # place the joint object in the position defined relative to node 2
-        axialrotjOBJ.location = p1
+        # axialrotjOBJ.location = n1OBJ.location + R1@Vector(elem.offsets[0].value[0:])
+        axialrotjOBJ.location = pN1 + q1.to_matrix()@Vector(elem.offsets[0].value[0:])
         axialrotjOBJ.rotation_mode = 'QUATERNION'
-        axialrotjOBJ.rotation_quaternion = Quaternion(( q1[0], q1[1], q1[2], q1[3] ))
+        axialrotjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])
 
         # set parenting of wireframe obj
         parenting(axialrotjOBJ, n1OBJ)
