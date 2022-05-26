@@ -215,13 +215,14 @@ def spawn_gimbal_element(elem, context):
         # rotate it according to "position orientation" w.r.t. node 1
         gimbal_childobj.rotation_mode = 'QUATERNION'
         gimbal_childobj.rotation_quaternion = q2@n2OBJ.rotation_quaternion
-    
-        bpy.ops.object.select_all(action = 'DESELECT')
-        gimbal_childobj.select_set(state = True)    
-        gimbaljOBJ.select_set(state = True)
-        bpy.context.view_layer.objects.active = gimbaljOBJ
-        bpy.ops.object.join()
-    
+   
+        # join objects, with context override
+        gimbaljOBJs = [gimbaljOBJ, gimbal_childobj]
+        ctx = bpy.context.copy()
+        ctx['active_object'] = gimbaljOBJs[0]
+        ctx['selected_editable_objects'] = gimbaljOBJs
+        bpy.ops.object.join(ctx)
+     
         # set parenting of wireframe obj
         parenting(gimbaljOBJ, n1OBJ)
      
