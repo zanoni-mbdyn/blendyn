@@ -295,10 +295,9 @@ def spawn_total_joint_element(elem, context):
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['joints'].children.link(elcol)
         set_active_collection(elcol.name)
-        
+
         # load the wireframe total joint object from the library
-        lib_path = os.path.join(mbs.addon_path,\
-            'library', 'joints.blend', 'Object')
+        lib_path = os.path.join(mbs.addon_path, 'library', 'joints.blend', 'Object')
         bpy.ops.wm.append(directory = lib_path, filename = 'total')
 
         # the append operator leaves just the imported object selected
@@ -310,6 +309,9 @@ def spawn_total_joint_element(elem, context):
         totjOBJ.rotation_mode = 'QUATERNION'
         totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])@q1
 
+        OBJs = list()
+        OBJs.append(totjOBJ);
+
         # display traslation arrows
         pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
         for kk in range(3):
@@ -319,6 +321,7 @@ def spawn_total_joint_element(elem, context):
                     return {'LIBRARY_ERROR'}
             
                 obj = bpy.context.selected_objects[0]
+                OBJs.append(obj)
 
                 # position it correctly, in global frame
                 obj.location = n1OBJ.location + R1@Vector(( fP1[0], fP1[1], fP1[2] ))
@@ -326,11 +329,7 @@ def spawn_total_joint_element(elem, context):
                 # rotate it according to "position orientation" w.r.t. node 1
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value[0:])@q1
-            
-                totjOBJ.select_set(state = True)
-                bpy.context.view_layer.objects.active = totjOBJ
-                bpy.ops.object.join()
-
+        
         # display rotation arrows
         rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
         for kk in range(3):
@@ -340,23 +339,27 @@ def spawn_total_joint_element(elem, context):
                     return {'LIBRARY_ERROR'}
     
                 obj = bpy.context.selected_objects[0]
-    
+                OBJs.append(obj)
+                
                 # position it correctly
                 obj.location = n1OBJ.location +R1@Vector(( elem.offsets[0].value[0:] ))
                 
                 # rotate it according to "rotation orientation" w.r.t. node 1
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = Quaternion(elem.rotoffsets[1].value[0:])@q1
-                totjOBJ.select_set(state = True)
-                bpy.context.view_layer.objects.active = totjOBJ
-                bpy.ops.object.join()
      
         # TODO: display also velocity contraints arrows
     
+        # join objects, with context override
+        ctx = context.copy()
+        ctx['active_object'] = OBJs[0]
+        ctx['selected_editable_objects'] = OBJs
+        bpy.ops.object.join(ctx)
+
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
         totjOBJ.scale = Vector(( s, s, s ))
-    
+
         # create an object representing the RF used to express the relative
         # position w.r.t. node 1, for model debuggingi
         RF1p = bpy.data.objects.new(totjOBJ.name + '_RF1_pos', None)
@@ -460,7 +463,10 @@ def spawn_total_pin_joint_element(elem, context):
         totjOBJ.location = elem.offsets[0].value
         totjOBJ.rotation_mode = 'QUATERNION'
         totjOBJ.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-    
+   
+        OBJs = list()
+        OBJs.append(totjOBJ)
+
         # display traslation arrows
         pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
         for kk in range(3):
@@ -470,6 +476,7 @@ def spawn_total_pin_joint_element(elem, context):
                     return {'LIBRARY_ERROR'}
                 
                 obj = bpy.context.selected_objects[0]
+                OBJs.append(obj)
     
                 # position it correctly
                 obj.location = elem.offsets[0].value
@@ -477,11 +484,8 @@ def spawn_total_pin_joint_element(elem, context):
                 # rotate it according to "position orientation" w.r.t. node 1
                 obj.rotation_mode = 'QUATERNION'
                 obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-                
-                totjOBJ.select_set(state = True)
-                bpy.context.view_layer.objects.active = totjOBJ
-                bpy.ops.object.join()
-    
+           
+        # display rotation arrows
         rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
         for kk in range(3):
             if not(elem.offsets[3].value[kk]):
@@ -490,20 +494,23 @@ def spawn_total_pin_joint_element(elem, context):
                     return {'LIBRARY_ERROR'}
     
                 obj = bpy.context.selected_objects[0]
+                OBJs.append(obj)
                
                 # position it correctly
                 obj.location = elem.offsets[0].value
     
                 # rotate it according to "rotation orientation" w.r.t. node 1
                 obj.rotation_mode = 'QUATERNION'
-                obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value)
-                totjOBJ.select_set(state = True)
-                bpy.context.view_layer.objects.active = totjOBJ
-                bpy.ops.object.join()
-    
+                obj.rotation_quaternion = Quaternion(elem.rotoffsets[0].value) 
     
         # TODO: display also velocity contraints arrows
-    
+
+        # join objects, with context override
+        ctx = context.copy()
+        ctx['active_object'] = OBJs[0]
+        ctx['selected_editable_objects'] = OBJs
+        bpy.ops.object.join(ctx)
+
         # automatic scaling
         s = (1./sqrt(3.))*n1OBJ.scale.magnitude
         totjOBJ.scale = Vector(( s, s, s ))
