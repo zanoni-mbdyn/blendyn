@@ -41,6 +41,8 @@ from . eigenlib     import *
 from . elements     import *
 from . components   import *
 from . baselib      import *
+from . matplotlib   import *
+from . pygalplotlib import *
 from . plotlib      import *
 from . blendyn      import *
 
@@ -87,6 +89,13 @@ classes = (
         BLENDYN_OT_import_total_pin,
         BLENDYN_PT_bevel,
         BLENDYN_OT_import_reference,
+        BLENDYN_OT_mplot_var_scene,
+        BLENDYN_OT_mplot_var_object,
+        BLENDYN_OT_mplot_variables_list,
+        BLENDYN_OT_mplot_var_sxx_scene,
+        BLENDYN_OT_mplot_var_sxx_object,
+        BLENDYN_OT_mplot_trajectory_object,
+        BLENDYN_OT_mplot_trajectory_scene,
         BLENDYN_OT_plot_var_sxx_scene,
         BLENDYN_OT_plot_var_sxx_object,
         BLENDYN_OT_plot_variables_list,

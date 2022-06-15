@@ -282,12 +282,7 @@ class BLENDYN_PG_plot_vars(bpy.types.PropertyGroup):
             description = "Frequency in plotting",
             default = 1
     )
-    plot_type: EnumProperty(
-            items = [("TIME_HISTORY", "Time history", "Time history", '', 1),\
-                    ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)], \
-                    name = "plot type",
-                    default = "TIME_HISTORY"
-    )
+
     fft_remove_mean: BoolProperty(
             name = "Subtract mean",
             description = "Subtract the mean value before calculating the FFT",
@@ -679,6 +674,20 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Plot variable index",
             description = "index of the current variable to be plotted",
             default = 0
+    )
+    plot_engine: EnumProperty(
+        items=[("PYGAL", "Pygal", "Pygal", '', 2), \
+               ("MATPLOTLIB", "Matplotlib", "Matplotlib", '', 1), \
+               ("BOKEH", "Bokeh", "bokeh", '', 3)], \
+        name="plot engine",
+        default="MATPLOTLIB"
+    )
+    plot_type: EnumProperty(
+        items=[("TIME_HISTORY", "Time history", "Time history", '', 1), \
+               ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2), \
+               ("TRAJECTORY", "Trajectory", "Trajectory", '', 3)], \
+        name="plot type",
+        default="TIME_HISTORY"
     )
 
     if HAVE_PLOT:
