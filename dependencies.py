@@ -73,10 +73,20 @@ psutil_deps = (\
         Dependency("psutil", None, None),\
         )
 
+plotting_matplotlib_deps = (\
+        Dependency("matplotlib", None, None),\
+)
+
+plotting_bokeh_deps = (
+        Dependency("bokeh", None, None),
+)
+
 # Dictionary of dependencies
 deps = {
     "Numpy": numpy_deps,
     "Support for NetCDF output": netcdf_deps,
     "Plotting - Pygal": plotting_pygal_deps,
+    "Plotting - Matplotlib": plotting_matplotlib_deps,
+    "Plotting - Bokeh": plotting_bokeh_deps,
     "Running MBDyn from Blender UI -- WARNING: Needs Python headers! ---": psutil_deps
-    }
+}
