@@ -27,6 +27,7 @@ import bpy
 from .elementlib import *
 from .matplotlib import *
 from .pygalplotlib import *
+from .bokehplotlib import *
 import os
 
 class BLENDYN_UL_plot_var_list(bpy.types.UIList):
@@ -323,7 +324,8 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                                 text = "Plot variable")
                     elif mbs.plot_engine == "BOKEH":
                         row = layout.row()
-                        row.label(text="This engine is not support!")
+                        row.operator(BLENDYN_OT_mplot_var_object.bl_idname, \
+                                     text="Plot variable")
                 elif mbs.plot_type == "AUTOSPECTRUM":
                     row = layout.row()
                     row.prop(pvar, "plot_xrange_min", text="Plot frequency min")
@@ -341,10 +343,9 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                                      text="Plot variable Autospectrum")
                     elif mbs.plot_engine == "BOKEH":
                         row = layout.row()
-                        row.label(text="This engine is not support!")
+                        row.operator(BLENDYN_OT_bplot_var_sxx_object.bl_idname, \
+                                     text="Plot variable Autospectrum")
                 elif mbs.plot_type == "TRAJECTORY":
-                    row = layout.row()
-                    row.prop(pvar, "fft_remove_mean")
                     if mbs.plot_engine == "PYGAL":
                         row = layout.row()
                         row.label(text="This engine is not support!")
@@ -354,7 +355,8 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                                      text="Plot variable trajectory")
                     elif mbs.plot_engine == "BOKEH":
                         row = layout.row()
-                        row.label(text="This engine is not support!")
+                        row.operator(BLENDYN_OT_bplot_trajectory_object.bl_idname, \
+                                     text="Plot variable trajectory")
             except KeyError:
                 pass
         else:
@@ -451,7 +453,8 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                                      text = "Plot variable")
                     elif mbs.plot_engine == "BOKEH":
                         row = layout.row()
-                        row.label(text="This plot engine is not support!")
+                        row.operator(BLENDYN_OT_bplot_var_scene.bl_idname, \
+                                     text="Plot variable")
                 elif mbs.plot_type == "AUTOSPECTRUM":
                     row = layout.row()
                     row.prop(pvar, "fft_remove_mean")
@@ -469,7 +472,8 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                                      text = "Plot variable Autospectrum")
                     elif mbs.plot_engine == "BOKEH":
                         row = layout.row()
-                        row.label(text="This plot engine is not support!")
+                        row.operator(BLENDYN_OT_bplot_var_sxx_scene.bl_idname, \
+                                     text="Plot variable Autospectrum")
                 elif mbs.plot_type == "TRAJECTORY":
                     if mbs.plot_engine == "PYGAL":
                         row = layout.row()
@@ -480,7 +484,8 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                                      text = "Plot variable trajectory")
                     elif mbs.plot_engine == "BOKEH":
                         row = layout.row()
-                        row.label(text="This plot engine is not support!")
+                        row.operator(BLENDYN_OT_bplot_trajectory_scene.bl_idname, \
+                                     text="Plot variable trajectory")
             except IndexError:
                 pass
 
@@ -501,6 +506,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
             row = layout.row()
             row.operator(BLENDYN_OT_delete_render_variable.bl_idname, \
                     text = 'Delete Display Variable')
+            row = layout.row()
             row.operator(BLENDYN_OT_delete_all_render_variables.bl_idname, text = 'Clear')
 
             # plot controls
@@ -514,7 +520,8 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         text="Plot variables in List")
             elif mbs.plot_engine == "BOKEH":
                 row = layout.row()
-                row.label(text = "This engine is not supported!")
+                row.operator(BLENDYN_OT_bplot_variables_list.bl_idname, \
+                             text="Plot variables in List")
 
             row.prop(mbs, "plot_group", text = "Plot Group")
             layout.separator()
