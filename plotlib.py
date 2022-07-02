@@ -323,6 +323,12 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                         row.operator(BLENDYN_OT_mplot_var_object.bl_idname,\
                                 text = "Plot variable")
                     elif mbs.plot_engine == "BOKEH":
+                        box = layout.box()
+                        split = box.split(factor=1. / 2.)
+                        column = split.column()
+                        column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                        column = split.column()
+                        column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
                         row.operator(BLENDYN_OT_mplot_var_object.bl_idname, \
                                      text="Plot variable")
@@ -342,6 +348,12 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                         row.operator(BLENDYN_OT_mplot_var_sxx_object.bl_idname,\
                                      text="Plot variable Autospectrum")
                     elif mbs.plot_engine == "BOKEH":
+                        box = layout.box()
+                        split = box.split(factor=1. / 2.)
+                        column = split.column()
+                        column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                        column = split.column()
+                        column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
                         row.operator(BLENDYN_OT_bplot_var_sxx_object.bl_idname, \
                                      text="Plot variable Autospectrum")
@@ -354,6 +366,12 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                         row.operator(BLENDYN_OT_mplot_trajectory_object.bl_idname, \
                                      text="Plot variable trajectory")
                     elif mbs.plot_engine == "BOKEH":
+                        box = layout.box()
+                        split = box.split(factor=1. / 2.)
+                        column = split.column()
+                        column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                        column = split.column()
+                        column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
                         row.operator(BLENDYN_OT_bplot_trajectory_object.bl_idname, \
                                      text="Plot variable trajectory")
@@ -452,6 +470,12 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         row.operator(BLENDYN_OT_mplot_var_scene.bl_idname,\
                                      text = "Plot variable")
                     elif mbs.plot_engine == "BOKEH":
+                        box = layout.box()
+                        split = box.split(factor=1. / 2.)
+                        column = split.column()
+                        column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                        column = split.column()
+                        column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
                         row.operator(BLENDYN_OT_bplot_var_scene.bl_idname, \
                                      text="Plot variable")
@@ -471,6 +495,12 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         row.operator(BLENDYN_OT_mplot_var_sxx_scene.bl_idname,\
                                      text = "Plot variable Autospectrum")
                     elif mbs.plot_engine == "BOKEH":
+                        box = layout.box()
+                        split = box.split(factor=1. / 2.)
+                        column = split.column()
+                        column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                        column = split.column()
+                        column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
                         row.operator(BLENDYN_OT_bplot_var_sxx_scene.bl_idname, \
                                      text="Plot variable Autospectrum")
@@ -483,6 +513,12 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                         row.operator(BLENDYN_OT_mplot_trajectory_scene.bl_idname,\
                                      text = "Plot variable trajectory")
                     elif mbs.plot_engine == "BOKEH":
+                        box = layout.box()
+                        split = box.split(factor=1. / 2.)
+                        column = split.column()
+                        column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                        column = split.column()
+                        column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
                         row.operator(BLENDYN_OT_bplot_trajectory_scene.bl_idname, \
                                      text="Plot variable trajectory")
@@ -519,6 +555,12 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
                 row.operator(BLENDYN_OT_mplot_variables_list.bl_idname,\
                         text="Plot variables in List")
             elif mbs.plot_engine == "BOKEH":
+                box = layout.box()
+                split = box.split(factor=1. / 2.)
+                column = split.column()
+                column.prop(mbs, "show_in_localhost", text="Show in localhost")
+                column = split.column()
+                column.prop(mbs, "save_as_png", index=1, text="Save as png")
                 row = layout.row()
                 row.operator(BLENDYN_OT_bplot_variables_list.bl_idname, \
                              text="Plot variables in List")

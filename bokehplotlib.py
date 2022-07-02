@@ -148,13 +148,17 @@ class BLENDYN_OT_bplot_var_scene(bpy.types.Operator):
         outfname = os.path.join(plot_dir, basename)
 
         ## Save image in .html format and .png format
-        output_file(filename = basename+".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        print(rel_path)
+        output_file(filename = rel_path+".html")
         save(p)
-        Path(os.getcwd()+"/"+basename+".html").rename(outfname+".html")
-        hti = Html2Image()
-        hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (820,820))
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(p)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (820,820))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_var_scene::execute() " \
                   + "Variable " + pvar.name + " plotted"
@@ -301,13 +305,16 @@ class BLENDYN_OT_bplot_var_sxx_scene(bpy.types.Operator):
         outfname = os.path.join(plot_dir, basename)
 
         ## Save plot as .html and .png file
-        output_file(filename=basename + ".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        output_file(filename = rel_path+".html")
         save(p)
-        Path(os.getcwd() + "/" + basename + ".html").rename(outfname + ".html")
-        hti = Html2Image()
-        hti.screenshot(html_file=outfname + ".html", save_as=basename + ".png", size = (820,820))
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(p)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (820,820))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_var_sxx_scene::execute(): " \
                   + "Variable " + pvar.name + " autospectrum plotted"
@@ -447,20 +454,23 @@ class BLENDYN_OT_bplot_var_sxx_object(bpy.types.Operator):
             basename = basename + ".00" + str(kk)
         outfname = os.path.join(plot_dir, basename)
         # Save graph as .html and .png file
-        output_file(filename=basename + ".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        print(rel_path)
+        output_file(filename = rel_path+".html")
         save(p)
-        Path(os.getcwd() + "/" + basename + ".html").rename(outfname + ".html")
-        hti = Html2Image()
-        hti.screenshot(html_file=outfname + ".html", save_as=basename + ".png", size = (820,820))
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(p)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (820,820))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_var_sxx_object::execute(): " \
                   + "Variable " + pvar.name + " autospectrum plotted"
         self.report({'INFO'}, message)
         baseLogger.info(message)
         return {'FINISHED'}
-
 # ---------------------------------------------------------------------
 # End of BLENDYN_OT_bplot_var_sxx_object
 
@@ -565,13 +575,16 @@ class BLENDYN_OT_bplot_var_object(bpy.types.Operator):
         outfname = os.path.join(plot_dir, basename)
 
         ## Save image in .html and .png format
-        output_file(filename=basename + ".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        output_file(filename = rel_path+".html")
         save(p)
-        Path(os.getcwd() + "/" + basename + ".html").rename(outfname + ".html")
-        hti = Html2Image()
-        hti.screenshot(html_file=outfname + ".html", save_as=basename + ".png", size = (820,820))
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(p)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (820,820))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_var_object::execute() " \
                   + "Variable " + pvar.name + " plotted"
@@ -682,13 +695,16 @@ class BLENDYN_OT_bplot_variables_list(bpy.types.Operator):
         outfname = os.path.join(plot_dir, basename)
 
         #Save graph as .html and .png file
-        output_file(filename=basename + ".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        output_file(filename = rel_path+".html")
         save(p)
-        Path(os.getcwd() + "/" + basename + ".html").rename(outfname + ".html")
-        hti = Html2Image()
-        hti.screenshot(html_file=outfname + ".html", save_as=basename + ".png", size = (820,820))
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(p)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (820,820))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_variables_list::execute() " \
                   + "Variable " + " plotted"
@@ -768,14 +784,16 @@ class BLENDYN_OT_bplot_trajectory_object(bpy.types.Operator):
         outfname = os.path.join(plot_dir, basename)
 
         ## Save image in .html and .png format
-        output_file(filename=basename + ".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        output_file(filename = rel_path+".html")
         save(fig)
-        hti = Html2Image()
-        hti.screenshot(html_file= os.getcwd()+"/"+ basename + ".html",
-                       save_as=basename + ".png", size = (1220, 430))
-        Path(os.getcwd() + "/" + basename + ".html").rename(outfname + ".html")
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(fig)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (1220,430))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_trajectory_object::execute() " \
                   + "Variable " + pvar.name + " plotted"
@@ -854,13 +872,16 @@ class BLENDYN_OT_bplot_trajectory_scene(bpy.types.Operator):
             basename = basename + ".00" + str(kk)
         outfname = os.path.join(plot_dir, basename)
         ## Save image in .html and .png format
-        output_file(filename=basename + ".html")
+        rel_path = os.path.relpath(outfname, start=os.getcwd())
+        output_file(filename = rel_path+".html")
         save(fig)
-        hti = Html2Image()
-        hti.screenshot(html_file= os.getcwd()+ "/" + basename + ".html", save_as=basename + ".png", size = (1220, 430))
-        Path(os.getcwd() + "/" + basename + ".html").rename(outfname + ".html")
-        Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
-        bpy.ops.image.open(filepath=outfname + ".png")
+        if mbs.show_in_localhost:
+            show(fig)
+        if mbs.save_as_png:
+            hti = Html2Image()
+            hti.screenshot(html_file = outfname+".html", save_as = basename+".png", size = (1220,430))
+            Path(os.getcwd() + "/" + basename + ".png").rename(outfname + ".png")
+            bpy.ops.image.open(filepath=outfname + ".png")
 
         message = "BLENDYN_OT_bplot_trajectory_scene::execute() " \
                   + "Variable " + pvar.name + " plotted"

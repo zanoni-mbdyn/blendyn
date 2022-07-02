@@ -617,7 +617,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Scaling Factor",
             default = 1.0
     )
-    # Lower limit of range import for elemens
+    # Lower limit of range import for elements
     min_elem_import: IntProperty(
             name = "first element to import",
             description = "Lower limit of integer labels for range import for elements",
@@ -688,6 +688,16 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
                ("TRAJECTORY", "Trajectory", "Trajectory", '', 3)], \
         name="plot type",
         default="TIME_HISTORY"
+    )
+
+    show_in_localhost: BoolProperty(
+        description = "Are you want to show your plot in localhost?",
+        default = False
+    )
+
+    save_as_png: BoolProperty(
+        description = "Are you want to save your plot as png?",
+        default = False
     )
 
     if HAVE_PLOT:
