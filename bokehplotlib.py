@@ -142,7 +142,7 @@ class BLENDYN_OT_bplot_var_scene(bpy.types.Operator):
         outfname = os.path.join(plot_dir, basename)
         if os.path.exists(outfname + ".png"):
             kk = 1
-            while os.path.exists(outfname + ".00" + str(kk) + ".html"):
+            while os.path.exists(outfname + ".00" + str(kk) + ".png"):
                 kk = kk + 1
             basename = basename + ".00" + str(kk)
         outfname = os.path.join(plot_dir, basename)

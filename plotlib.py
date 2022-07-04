@@ -330,7 +330,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
                         column = split.column()
                         column.prop(mbs, "save_as_png", index=1, text="Save as png")
                         row = layout.row()
-                        row.operator(BLENDYN_OT_mplot_var_object.bl_idname, \
+                        row.operator(BLENDYN_OT_bplot_var_object.bl_idname, \
                                      text="Plot variable")
                 elif mbs.plot_type == "AUTOSPECTRUM":
                     row = layout.row()
