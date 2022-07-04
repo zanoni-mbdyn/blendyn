@@ -43,6 +43,7 @@ from . components   import *
 from . baselib      import *
 from . matplotlib   import *
 from . pygalplotlib import *
+from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
 
@@ -96,6 +97,13 @@ classes = (
         BLENDYN_OT_mplot_var_sxx_object,
         BLENDYN_OT_mplot_trajectory_object,
         BLENDYN_OT_mplot_trajectory_scene,
+        BLENDYN_OT_bplot_var_scene,
+        BLENDYN_OT_bplot_var_object,
+        BLENDYN_OT_bplot_variables_list,
+        BLENDYN_OT_bplot_var_sxx_scene,
+        BLENDYN_OT_bplot_var_sxx_object,
+        BLENDYN_OT_bplot_trajectory_object,
+        BLENDYN_OT_bplot_trajectory_scene,
         BLENDYN_OT_plot_var_sxx_scene,
         BLENDYN_OT_plot_var_sxx_object,
         BLENDYN_OT_plot_variables_list,
