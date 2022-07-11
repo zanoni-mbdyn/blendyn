@@ -126,6 +126,11 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             description = "Collector of rotational offsets of element attach R.Fs."
             )
 
+    beam_number: IntProperty(
+            name="Number beam3",
+            description="Number of beam3 connected with beam slider"
+            )
+
     import_function: StringProperty(
             name = "Import operator",
             description = "Id name of the class defining the import operator for the element"

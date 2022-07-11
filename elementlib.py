@@ -37,6 +37,7 @@ from .aerolib import *
 from .angularjlib import *
 from .axialrotjlib import *
 from .beamlib import *
+from .beamsliderlib import *
 from .bodylib import *
 from .brakejlib import *
 from .carjlib import *
@@ -70,6 +71,7 @@ def parse_elements(context, jnt_type, rw):
             "aero3": parse_aero3,
             "beam2": parse_beam2,
             "beam3": parse_beam3,
+            "beamslider": paser_beam_slider,
             "body": parse_body,
             "cardanohinge": parse_cardano_hinge,
             "cardanopin": parse_cardano_pin,

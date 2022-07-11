@@ -59,6 +59,7 @@ classes = (
         BLENDYN_OT_import_beam2,
         BLENDYN_OT_import_beam3,
         BLENDYN_OT_update_beam3,
+        BLENDYN_OT_import_beam_slider,
         BLENDYN_OT_import_body,
         BLENDYN_OT_import_brake,
         BLENDYN_OT_import_cardano_hinge,
