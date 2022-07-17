@@ -34,7 +34,7 @@ from math import *
 
 from .utilslib import *
 
-DEFORMABLE_ELEMENTS = {'beam3', 'beam2', 'shell4', 'membrane4'}
+DEFORMABLE_ELEMENTS = {'beam3', 'beam2', 'shell4', 'membrane4', 'modal'}
 
 import pdb
 
@@ -93,7 +93,7 @@ def add_mesh_component(context, component):
     ed = mbs.elems
 
     # helper functions: add bones to armature of component for each
-    # type of elemens
+    # type of elements
 
     def add_comp_armature_bones_plate(armOBJ, armature, component, celem):
         # shell and membrane elements
@@ -127,6 +127,9 @@ def add_mesh_component(context, component):
         L3 = t3.length
         t4 = (pN1 - pN4)
         L4 = t4.length
+
+        if L1 == 0 or L2 == 0 or L3 == 0 or L4 == 0:
+            return {'ZERO VOLUME BONE'}
 
         t1.normalize()
         t2.normalize()
@@ -381,6 +384,7 @@ def add_mesh_component(context, component):
         pRF2 = RF2.matrix_world.to_translation()
         pRF3 = RF3.matrix_world.to_translation()
 
+
         t1 = -3*pRF1 + 4*pRF2 - pRF3
         t1.normalize()
         t2 = -pRF1 + pRF3
@@ -390,7 +394,10 @@ def add_mesh_component(context, component):
       
         # approximate length (FIXME: use 'exact' length?)
         L1 = (pRF2 - pRF1).length
-        L2 = (pRF3 - pRF2).length 
+        L2 = (pRF3 - pRF2).length
+
+        if L1 == 0  or L2 == 0:
+            return {'ZERO VOLUME BONE'}
 
         # enter edit mode and add bones
         bpy.context.view_layer.objects.active = armOBJ
@@ -507,6 +514,7 @@ def add_mesh_component(context, component):
         pRF1 = RF1.matrix_world.to_translation()
         pRF2 = RF2.matrix_world.to_translation()
 
+
         # unit vector pointing along beam axis from RF1
         t1 = -pRF1 + pRF2
         t1.normalize()
@@ -514,9 +522,14 @@ def add_mesh_component(context, component):
         # beam length
         L = (pRF2 - pRF1).length
 
+        if L == 0:
+            return {'ZERO VOLUME BONE'}
+
         # enter edit mode and add bones
-        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-        edit_bones = armature.edit_bones 
+
+        bpy.context.view_layer.objects.active = armOBJ
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+        edit_bones = armature.edit_bones
 
         # node 1
         bN1 = edit_bones.new(RF1.name)
@@ -581,6 +594,97 @@ def add_mesh_component(context, component):
         # -------------------------------------------------------
         # end of add_comp_armature_bones_beam2() helper function
 
+    def add_comp_armature_bones_modal(armOBJ, armature, component, celem):
+        elem = ed[celem.elem]
+        elcol = bpy.data.collections[elem.name]
+
+
+        for connect in elem.fem_connects:
+            node_objs = []
+            N1 = elcol.objects[nd["node_" + str(connect.node_1_int_label)].blender_object]
+            N2 = elcol.objects[nd["node_" + str(connect.node_2_int_label)].blender_object]
+            lN1 = N1.location
+            lN2 = N2.location
+            pN1 = Vector((lN1[0], lN1[1], lN1[2]))
+            pN2 = Vector((lN2[0], lN2[1], lN2[2]))
+            if pN1 == pN2:
+                return {'ZERO VOLUME BONE'}
+
+            # unit vector pointing along connect axis from N1
+            t1 = -pN1 + pN2
+            t1.normalize()
+
+            # connect length
+            L = (pN2 - pN1).length
+
+            # enter edit mode and add bones
+            bpy.context.view_layer.objects.active = armOBJ
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+            edit_bones = armature.edit_bones
+
+            # node 1
+            bN1 = edit_bones.new(connect.name +'_'+ N1.name)
+            bN1.head = pN1
+            bN1.tail = pN1 + 0.001 * t1 * L
+            bN1.use_deform = False
+            # node 2
+            bN2 = edit_bones.new(connect.name +'_'+ N2.name)
+            bN2.head = pN2 - 0.001 * t1 * L
+            bN2.tail = pN2
+            bN2.use_deform = False
+            # volume 1 (node 1 -- node 2)
+            bV1 = edit_bones.new(connect.name + '_V1')
+            bV1.head = bN1.tail
+            bV1.tail = bN2.head
+            bV1.bbone_segments = celem.arm_ns
+            # parenting
+            bV1.parent = bN1
+            armOBJ.data.display_type = 'BBONE'
+
+            # contraints
+            bpy.ops.object.mode_set(mode='POSE', toggle=False)
+
+            # volume 1
+            V1 = armOBJ.pose.bones[connect.name + '_V1']
+            stV1N2 = V1.constraints.new(type='STRETCH_TO')
+            stV1N2.target = N2
+            #stV1N2.subtarget = N2.name
+            V1 = armOBJ.data.bones[connect.name + '_V1']
+            V1.bbone_handle_type_start = 'TANGENT'
+            V1.bbone_custom_handle_start = armOBJ.data.bones[connect.name +'_'+N1.name]
+            V1.bbone_handle_type_end = 'TANGENT'
+            V1.bbone_custom_handle_end = armOBJ.data.bones[connect.name +'_'+N2.name]
+            # node 1
+            pbN1 = armOBJ.pose.bones[connect.name +'_'+ N1.name]
+            clpbN1 = pbN1.constraints.new(type='COPY_LOCATION')
+            clpbN1.target = N1
+            crpbN1 = pbN1.constraints.new(type='CHILD_OF')
+            crpbN1.use_location_x = False
+            crpbN1.use_location_y = False
+            crpbN1.use_location_z = False
+            crpbN1.use_scale_x = False
+            crpbN1.use_scale_y = False
+            crpbN1.use_scale_z = False
+            crpbN1.target = N1
+            crpbN1.inverse_matrix = N1.matrix_world.inverted()
+            # node 2
+            pbN2 = armOBJ.pose.bones[connect.name +'_'+ N2.name]
+            clpbN2 = pbN2.constraints.new(type='COPY_LOCATION')
+            clpbN2.target = N2
+            crpbN2 = pbN2.constraints.new(type='CHILD_OF')
+            crpbN2.use_location_x = False
+            crpbN2.use_location_y = False
+            crpbN2.use_location_z = False
+            crpbN2.use_scale_x = False
+            crpbN2.use_scale_y = False
+            crpbN2.use_scale_z = False
+            crpbN2.target = N2
+            crpbN2.inverse_matrix = N2.matrix_world.inverted()
+
+            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        # -------------------------------------------------------
+        # end of add_comp_armature_bones_modal() helper function
+
     # add the armature object
     armature = bpy.data.armatures.new(component.name)
     armOBJ = bpy.data.objects.new(component.name, armature)
@@ -603,6 +707,8 @@ def add_mesh_component(context, component):
             add_comp_armature_bones_beam2(armOBJ, armature, component, celem)
         elif elem.type in {'shell4', 'membrane4'}:
             add_comp_armature_bones_plate(armOBJ, armature, component, celem)
+        elif elem.type in {'modal'}:
+            add_comp_armature_bones_modal(armOBJ, armature, component, celem)
         else:
             return {'ELEM_TYPE_UNSUPPORTED'}
 
@@ -622,15 +728,18 @@ def add_mesh_component(context, component):
     component.armature = armature
 
     retval = {'FINISHED'}
+
     if component.object:
+        ## Set parent
         compOBJ = bpy.data.objects[component.object]
+        if compOBJ.name not in mccol.objects.keys():
+            mccol.objects.link(compOBJ)
         compOBJ.select_set(state = True)
         armOBJ.select_set(state = True)
         bpy.context.view_layer.objects.active = armOBJ
         retval = bpy.ops.object.parent_set(type = 'ARMATURE_AUTO')
         bpy.ops.object.select_all(action = 'DESELECT')
-        if compOBJ.name not in mccol.objects.keys():
-            mccol.objects.link(compOBJ)
+
 
     if retval == {'FINISHED'}:
         return retval

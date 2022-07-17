@@ -36,6 +36,9 @@ import ntpath, os, csv
 
 from .elementlib import *
 
+
+
+
 class BLENDYN_PG_elem_pos_offset(bpy.types.PropertyGroup):
     value: FloatVectorProperty(
         name = "Offset value",
@@ -68,6 +71,28 @@ class BLENDYN_PG_nodes_collection(bpy.types.PropertyGroup):
 # -----------------------------------------------------------
 # end of BLENDYN_PG_nodes_collection class
 bpy.utils.register_class(BLENDYN_PG_nodes_collection)
+
+
+class BLENDYN_PG_fem_connection(bpy.types.PropertyGroup):
+    name: StringProperty(
+        name = "FEM connection name",
+        description = " Name of FEM connection"
+        )
+
+    node_1_int_label: EnumProperty(
+        items = get_fem_connect_node1,
+        name = "Node 1 FEM connection",
+        description = "Node 1 in FEM connection for Modal visualization using armature",
+        )
+
+    node_2_int_label: EnumProperty(
+        items = get_fem_connect_node2,
+        name = "Node 2 FEM connection",
+        description = "Node 2 in FEM connection for Modal visualization using armature",
+    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_modal_fem_nodes class
+bpy.utils.register_class(BLENDYN_PG_fem_connection)
 
 
 class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
@@ -106,6 +131,30 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             type = BLENDYN_PG_nodes_collection,
             name = "Connected nodes",
             description = "MBDyn nodes that the element connects"
+            )
+
+    node_index: IntProperty(
+            name = "Index of element node",
+            description = "Index using for displaying element nodes in Component Panel",
+            default = 0
+            )
+
+    fem_connects: CollectionProperty(
+            type = BLENDYN_PG_fem_connection,
+            name = "FEM collection",
+            description = "FEM connection for modal visualisation"
+            )
+
+    connect_index: IntProperty(
+            name = "Index of modal connection",
+            description = "Index using for displaying modal fem connection in Component Panel",
+            default = -1
+            )
+
+    selected_node: EnumProperty(
+            items = get_nodes_for_modal,
+            name = "Group of nodes would be selected to be modal fem node",
+            description = "Group of nodes would be selected to be modal fem node",
             )
 
     magnitude: FloatProperty(

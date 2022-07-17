@@ -50,6 +50,7 @@ from .gimbaljlib import *
 from .inlinejlib import *
 from .inplanejlib import *
 from .linearjlib import *
+from .modallib import *
 from .prismjlib import *
 from .revjlib import *
 from .rodjlib import *
@@ -71,12 +72,13 @@ def parse_elements(context, jnt_type, rw):
             "aero3": parse_aero3,
             "beam2": parse_beam2,
             "beam3": parse_beam3,
-            "beamslider": paser_beam_slider,
+            "beamslider": parse_beam_slider,
             "body": parse_body,
             "cardanohinge": parse_cardano_hinge,
             "cardanopin": parse_cardano_pin,
             "clamp": parse_clamp,
             "deformabledisplacementjoint": parse_deformable_displacement,
+            "modal": parse_modal,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
             "revoluterotation": parse_revolute_rot,
@@ -186,6 +188,32 @@ def get_elems_types(self, context):
     return [(etype, etype, "%s elements"%etype) for etype in elem_types]
 
 ## Utility functions
+
+
+def get_fem_connect_node1(self, context):
+    mbs = context.scene.mbdyn
+    elem = mbs.elems[mbs.comp_selected_elem]
+    node1_int = [node.int_label for node in elem.nodes]
+    return [(str(node_int), str(node_int), "") for node_int in node1_int]
+
+def get_fem_connect_node2(self, context):
+    mbs = context.scene.mbdyn
+    elem = mbs.elems[mbs.comp_selected_elem]
+    node2_int = [node.int_label for node in elem.nodes]
+    return [(str(node_int), str(node_int), "") for node_int in node2_int]
+
+
+def get_nodes_for_modal(self, context):
+    mbs = context.scene.mbdyn
+    nd = mbs.nodes
+    selected_nodes = []
+    for node in nd:
+        int_label = node.int_label
+        if int_label not in [node.int_label for node in mbs.elems[mbs.comp_selected_elem].nodes]:
+            selected_nodes.append(int_label)
+    return [(str(int_label), str(int_label), "") for int_label in selected_nodes]
+
+
 def fmin(x):
     min = x[0]
     loc = 0

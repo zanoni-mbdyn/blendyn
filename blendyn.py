@@ -563,6 +563,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "MBDyn elements collection index",
             default = 0
     )
+
     # MBDyn's node count
     num_nodes: IntProperty(
             name = "MBDyn nodes number",
@@ -2117,6 +2118,59 @@ class BLENDYN_PT_components(bpy.types.Panel):
                 comp, "elements", \
                 comp, "el_index")
             col.prop(mbs, "comp_selected_elem", text = "Add")
+            if mbs.comp_selected_elem[:5] == "modal":
+                col = layout.column()
+                col.label(text="Modal node:")
+                row = col.row()
+                row.template_list("BLENDYN_UL_modal_nodes_list", \
+                                  "Modal nodes", \
+                                  mbs.elems[mbs.comp_selected_elem], "nodes", \
+                                  mbs.elems[mbs.comp_selected_elem], "node_index")
+                row = col.row()
+                row.prop(mbs.elems[mbs.comp_selected_elem], "selected_node", text = "Add:")
+                row = col.row()
+                split = row.split(factor = 0.5)
+                col1 = split.column()
+                col1.operator(BLENDYN_OT_element_add_node.bl_idname,
+                             text="Add node")
+                col2 = split.column()
+                col2.operator(BLENDYN_OT_element_remove_node.bl_idname,
+                              text="Remove node")
+                row = col.row()
+                row.operator(BLENDYN_OT_element_add_all_selected_nodes.bl_idname,
+                             text = "Add all selected node")
+                row.operator(BLENDYN_OT_element_remove_all_nodes.bl_idname,
+                             text = "Remove all nodes")
+
+                ## FEM Connection panel
+                col = layout.column()
+                col.label(text="Modal FEM Connect:")
+                row = col.row()
+                split = row.split(factor = 0.4)
+                col = split.column()
+                col.label(text="Name")
+                col = split.column()
+                split = col.split(factor = 0.5)
+                col = split.column()
+                col.label(text="Node 1")
+                col = split.column()
+                col.label(text="Node 2")
+                col = layout.column()
+                row = col.row()
+                row.template_list("BLENDYN_UL_fem_connections_list", \
+                                  "Modal FEM connections", \
+                                  mbs.elems[mbs.comp_selected_elem], "fem_connects", \
+                                  mbs.elems[mbs.comp_selected_elem], "connect_index")
+                row = col.row()
+                row.operator(BLENDYN_OT_element_add_new_connect.bl_idname,
+                             text = "Add new connect")
+                row.operator(BLENDYN_OT_element_remove_connect.bl_idname,
+                             text = "Remove connect")
+                row.operator(BLENDYN_OT_element_remove_all_connects.bl_idname,
+                             text = "Remove all connect")
+
+
+            col = layout.column()
             col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
                     text = "Add Element")
             col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \

@@ -116,6 +116,37 @@ class BLENDYN_UL_components_list(bpy.types.UIList):
 # end of BLENDYN_UL_components_list class
 bpy.utils.register_class(BLENDYN_UL_components_list)
 
+class BLENDYN_UL_modal_nodes_list(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        if self.layout_type in {'DEFAULT', "COMPACT"}:
+            layout.label(text = "node_"+str(item.int_label), icon = "CUBE")
+        elif self.layout_type in {"GRID"}:
+            layout.alignment = "CENTER"
+            layout.label(text = '', icon = "CUBE")
+# -----------------------------------------------------------
+# end of BLENDYN_UL_modal_nodes_list class
+bpy.utils.register_class(BLENDYN_UL_modal_nodes_list)
+
+
+class BLENDYN_UL_fem_connections_list(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            row = layout.row()
+            split = row.split(factor = 0.4)
+            col = split.column()
+            col.label(text = item.name)
+            col = split.column()
+            split = col.split(factor = 0.5)
+            col = split.column()
+            col.prop(item, "node_1_int_label", icon = "CUBE", text = "")
+            col = split.column()
+            col.prop(item, "node_2_int_label", icon = "CUBE", text = "")
+        elif self.layout_type in {"GRID"}:
+            layout.alignment = "CENTER"
+            layout.label(text='', icon='CUBE')
+# -----------------------------------------------------------
+# end of BLENDYN_UL_fem_connections_list class
+bpy.utils.register_class(BLENDYN_UL_fem_connections_list)
 
 class BLENDYN_UL_component_elements_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -257,6 +288,10 @@ class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
             print(message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
+        elif retval == {'ZERO VOLUME BONE'}:
+            message = "cannot create bone from one node or two nodes at the same position."
+            print(message)
+            baseLogger.error(selftag + message)
         elif retval == {'ARMATURE_PARENT_FAILED'}:
             message = "unable to parent mesh to armature."
             print(message)
@@ -339,24 +374,6 @@ class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_remove_elem class
 
-class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
-    """ Removes an element to the component list and reorders
-        the others """
-    bl_idname = "blendyn.component_remove_elem"
-    bl_label = "Remove an element from a MBDyn component"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-        component = mbs.components[mbs.cd_index]
-        component.elements.remove(component.el_index)
-        for idx in range(len(component.elements)):
-            component.elements[idx].str_idx = idx
-        return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_component_remove_elem class
 
 class BLENDYN_OT_component_remove_all_elems(bpy.types.Operator):
     """ Removes all elements to the component list """
@@ -384,7 +401,7 @@ class BLENDYN_OT_component_add_selected_elems(bpy.types.Operator):
         ed = mbs.elems
         component = mbs.components[mbs.cd_index]
         sel_elems = [ed[obj.mbdyn.dkey] for obj in bpy.context.selected_objects \
-                if (obj.mbdyn.type == 'element') and (ed[obj.mbdyn.dkey].type in DEFORMABLE_ELEMENTS) ]
+                if (obj.mbdyn.type == 'element') and (ed[obj.mbdyn.dkey].type not in {'modal'}) and (ed[obj.mbdyn.dkey].type in DEFORMABLE_ELEMENTS) ]
         for idx in range(len(sel_elems)):
             celem = component.elements.add()
             celem.elem = sel_elems[idx].name
@@ -395,3 +412,169 @@ class BLENDYN_OT_component_add_selected_elems(bpy.types.Operator):
         return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add_selected_elems class
+
+class BLENDYN_OT_element_add_node(bpy.types.Operator):
+    """ Add the chosen node into modal object node list"""
+    bl_idname = "blendyn.element_add_node"
+    bl_label = "Add selected node into modal object node list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        if elem.selected_node:
+            modal_node = elem.nodes.add()
+            modal_node.int_label = int(elem.selected_node)
+            nd = mbs.nodes
+            elcol = bpy.data.collections[mbs.comp_selected_elem]
+            nOBJ = bpy.data.objects[nd["node_" + str(modal_node.int_label)].blender_object]
+            elcol.objects.link(nOBJ)
+            elem.node_index += 1
+            return {'FINISHED'}
+        else:
+            selftag = "BLENDYN_OT_element_add_node::execute(): "
+            message = "No node left"
+            print(message)
+            baseLogger.info(selftag + message)
+            return {'CANCELLED'}
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_add_node class
+
+class BLENDYN_OT_element_remove_node(bpy.types.Operator):
+    """ Remove the chosen node out of modal object node list"""
+    bl_idname = "blendyn.element_remove_node"
+    bl_label = "Remove last node from modal object node list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+
+        for i in range(len(elem.fem_connects)):
+            connect = elem.fem_connects[i]
+            if connect.node_1_int_label == str(elem.nodes[-1].int_label) or connect.node_2_int_label == str(elem.nodes[-1].int_label):
+                elem.fem_connects.remove(i)
+                elem.connect_index -= 1
+        nd = mbs.nodes
+        elcol = bpy.data.collections[mbs.comp_selected_elem]
+        nOBJ = bpy.data.objects[nd["node_" + str(elem.nodes[-1].int_label)].blender_object]
+        elcol.objects.unlink(nOBJ)
+        elem.nodes.remove(elem.node_index)
+        elem.node_index -= 1
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_remove_node class
+
+class BLENDYN_OT_element_add_all_selected_nodes(bpy.types.Operator):
+    """ Add all selected node into modal object node list"""
+    bl_idname = "blendyn.element_add_all_selected_nodes"
+    bl_label = "Add all selected node into modal object node list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        component = mbs.components[mbs.cd_index]
+        elem = mbs.elems[mbs.comp_selected_elem]
+        sel_nodes = [nd[obj.mbdyn.dkey] for obj in bpy.context.selected_objects \
+                     if (obj.mbdyn.dkey[:4] == 'node') and nd[obj.mbdyn.dkey].int_label not in [node.int_label for node in elem.nodes]]
+        for idx in range(len(sel_nodes)):
+            node = elem.nodes.add()
+            node.int_label = sel_nodes[idx].int_label
+            nd = mbs.nodes
+            elcol = bpy.data.collections[mbs.comp_selected_elem]
+            nOBJ = bpy.data.objects[nd["node_"+str(node.int_label)].blender_object]
+            elcol.objects.link(nOBJ)
+            elem.node_index += 1
+        return {'FINISHED'}
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_add_all_selected_nodes class
+
+class BLENDYN_OT_element_remove_all_nodes(bpy.types.Operator):
+    """Remove all nodes from the current modal object node list"""
+    bl_idname = "blendyn.element_remove_all_nodes"
+    bl_label = "Remove all nodes from the current modal object node list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        nd = mbs.nodes
+        elcol = bpy.data.collections[mbs.comp_selected_elem]
+        for node in elem.nodes:
+            nOBJ = bpy.data.objects[nd["node_" + str(node.int_label)].blender_object]
+            elcol.objects.unlink(nOBJ)
+        elem.nodes.clear()
+        elem.fem_connects.clear()
+        elem.node_index = -1
+        elem.connect_index = -1
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_remove_all_nodes class
+
+
+class BLENDYN_OT_element_add_new_connect(bpy.types.Operator):
+    """Add one new connect into current modal object for armature simulation"""
+    bl_idname = "blendyn.element_add_new_connect"
+    bl_label = "Add one new connect into current modal object connects list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        connect = elem.fem_connects.add()
+        connect.name = 'fem_connect_' + str(len(elem.fem_connects))
+        elem.connect_index += 1
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_add_new_connect class
+
+
+class BLENDYN_OT_element_remove_connect(bpy.types.Operator):
+    """Remove last connect from current modal object connects list"""
+    bl_idname = "blendyn.element_remove_connect"
+    bl_label = "Remove last connect from the current modal object connects list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        if elem.connect_index != -1:
+            elem.fem_connects.remove(elem.connect_index)
+            elem.connect_index -= 1
+            return {"FINISHED"}
+        else:
+            selftag = "BLENDYN_OT_element_remove_connect::execute()"
+            message = "No connect to remove"
+            print(message)
+            baseLogger.info(selftag+message)
+            return {'CANCELLED'}
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_remove_connect class
+
+
+class BLENDYN_OT_element_remove_all_connects(bpy.types.Operator):
+    """Remove all connects from the current modal object connects list"""
+    bl_idname = "blendyn.element_remove_all_connects"
+    bl_label = "Remove all connects from the current modal object connects list for armature visualisation"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        elem.fem_connects.clear()
+        elem.connect_index = -1
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_element_remove_all_connects class
