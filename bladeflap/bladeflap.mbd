@@ -1,0 +1,330 @@
+# bladeflap.mbd -- Single helicopter rotor blade flapping in vacuum
+#
+# MBDyn (C) is a multibody analysis code. 
+# http://www.mbdyn.org
+# 
+# Copyright (C) 1996-2008
+# 
+# Pierangelo Masarati	<masarati@aero.polimi.it>
+# Paolo Mantegazza	<mantegazza@aero.polimi.it>
+# 
+# Aerospace Science and Technology Department - Politecnico di Milano
+# via La Masa, 34 - 20156 Milano, Italy
+# http://www.aero.polimi.it
+# 
+# Changing this copyright notice is forbidden.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation (version 2 of the License).
+# 
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# File modified by Andrea Zanoni <andrea.zanoni@polimi.it>
+# and distributed with Blendyn: a Blender add-on for post-processing MBDyn
+# output.
+# https://github.com/zanoni-mbdyn/blendyn
+
+begin: data;
+	integrator: initial value;
+end: data;
+
+set: integer GROUND = 1;
+set: integer HUB = 2;
+set: integer BLADE1_FLAP = 10;
+set: integer BLADE1_MIDDLE = 11;
+set: integer BLADE1_TIP = 12;
+
+set: real OMEGA = 40.84;		# radian/s, hub angular velocity
+set: real R = 5.5;			# m, rotor radius
+set: real FLAP_OFFSET = 0.04*R;		# m, flap hinge offset
+set: real M = 50.;			# kg, mass of the blade 
+set: real SPAN = (R - FLAP_OFFSET);	# m, blade length
+
+begin: initial value;
+	initial time: 0.;
+	
+	final time: (1./OMEGA)*70.;	# revolutions
+	# final time: (1./OMEGA) * 4.;  	# for eigenanalysis
+	
+	time step: (1./OMEGA) / 250.;	# time step must allow at least 100 steps/rev
+
+	max iterations: 60;
+	tolerance: 1.e-6;
+
+	linear solver: naive, colamd;
+	output: counter;
+	# output: residual;
+
+	derivatives tolerance: 1e-1;
+	
+	/*
+	eigenanalysis: (1./OMEGA) * 3.,
+		use lapack,
+		output eigenvectors,
+		output geometry;
+	*/
+end: initial value;
+
+begin: control data;
+	structural nodes: 
+		+1	# ground (clamped)
+		+1	# hub (imposed angular velocity)
+		+1	# blade_tip (hinged to hub, flap only)
+		+1  	# blade_middle
+		+1  	# blade_flap
+	;
+	rigid bodies:
+		+3	# blade discretization
+	;
+	joints:
+		+1	# ground clamp
+		+1	# imposed angular velocity between hub and ground
+		+1	# flap hinge between hub and blade
+		+1  	# deformable hinge
+		+2	# nodes imposed motion
+	;
+	beams: 
+		+1	# blade beam
+	;
+
+	/*
+	forces:
+		+1	# perturbation
+	;
+	*/
+
+	output results: netcdf;
+
+	/* for eigenanalysis
+	rigid body kinematics:
+		const, angular velocity, 0.0, 0.0, OMEGA;
+	*/
+end: control data;
+
+/*
+
+       ^ z, OMEGA
+       |
+       |   7 y
+       |  /
+       | /
+       |/      flap hinge
+       +---o---------------> x
+     FLAP_OFFSET
+                         R
+
+                           /-----------------
+   flap frequency         /    3 FLAP_OFFSET
+   --------------  = -\  / 1 + - ----------- = 6,690 Hz
+       OMEGA           \/      2      R
+
+ */
+
+reference: GROUND,
+	null, 
+	eye, 
+	null, 
+	null;
+
+reference: HUB,
+	reference, GROUND, null,
+	reference, GROUND, eye,
+	reference, GROUND, null,
+	# reference, GROUND, 0., 0., OMEGA;
+	reference, GROUND, 0., 0., 0.;  # for eigenanalysis
+
+reference: BLADE1_FLAP,
+	reference, HUB, FLAP_OFFSET, 0., 0.,
+	reference, HUB, eye,
+	reference, HUB, null,
+	reference, HUB, null;
+
+/* axis 1: blade axis in blade's reference frame
+ * axis 2: chordwise direction in blade's reference frame
+ * axis 3: out-of-plane direction in blade's reference frame
+ */
+ 
+reference: BLADE1_MIDDLE,
+	reference, BLADE1_FLAP, SPAN/2., 0., 0.,
+	reference, BLADE1_FLAP, eye,
+	reference, BLADE1_FLAP, null,
+	reference, BLADE1_FLAP, null;
+	
+ 
+reference: BLADE1_TIP,
+	reference, BLADE1_FLAP, SPAN, 0., 0.,
+	reference, BLADE1_FLAP, eye,
+	reference, BLADE1_FLAP, null,
+	reference, BLADE1_FLAP, null;
+
+begin: nodes;
+	structural: GROUND, static,
+		reference, GROUND, null, 
+		reference, GROUND, eye, 
+		reference, GROUND, null, 
+		reference, GROUND, null;
+
+	structural: HUB, static,
+		reference, HUB, null, 
+		reference, HUB, eye, 
+		reference, HUB, null, 
+		reference, HUB, null;
+	
+	structural: BLADE1_FLAP, dynamic,
+		reference, BLADE1_FLAP, null,
+		reference, BLADE1_FLAP, eye,
+		reference, BLADE1_FLAP, null,
+		reference, BLADE1_FLAP, null;
+
+	structural: BLADE1_MIDDLE, dynamic,
+		reference, BLADE1_MIDDLE, null, 
+		reference, BLADE1_MIDDLE, eye, 
+		reference, BLADE1_MIDDLE, null, 
+		reference, BLADE1_MIDDLE, null;
+		
+	structural: BLADE1_TIP, dynamic,
+		reference, BLADE1_TIP, null,
+		reference, BLADE1_TIP, eye,
+		reference, BLADE1_TIP, null,
+		reference, BLADE1_TIP, null;
+end: nodes;
+
+begin: elements;
+	joint: GROUND, clamp, GROUND, node, node;
+
+	joint: HUB, axial rotation,
+		GROUND,
+			reference, GROUND, null,
+			hinge, reference, GROUND, eye,	
+		HUB,
+			reference, GROUND, null,
+			hinge, reference, GROUND, eye,
+		# const, OMEGA;
+		const, 0.;	# for eigenanalysis
+
+	/* revolute joint axis about joint's local axis 3
+	 * which corresponds to axis 2 in blade's reference frame
+	 */
+	/*
+	joint: BLADE1_FLAP, revolute hinge,
+		HUB,
+			reference, BLADE1_FLAP, null,
+			hinge,
+				1, 1., 0., 0.,	# blade axis unchanged
+				3, 0., 1., 0.,	# axis 3 parallel to chord
+		BLADE1_FLAP,
+			reference, BLADE1_FLAP, null,
+			hinge,
+				1, 1., 0., 0.,	# blade axis unchanged
+				3, 0., 1., 0.;	# axis 3 parallel to chord
+	*/
+
+	joint: BLADE1_FLAP, total joint,
+		HUB,
+			position, reference, BLADE1_FLAP, null,
+			position orientation, reference, BLADE1_FLAP, eye,
+			rotation orientation, reference, BLADE1_FLAP, eye,
+		BLADE1_FLAP,
+			position, reference, BLADE1_FLAP, null,
+			position orientation, reference, BLADE1_FLAP, eye,
+			rotation orientation, reference, BLADE1_FLAP, eye,
+		position constraint, 1, 1, 1, null,
+		# orientation constraint, 1, 0, 1, null;
+		orientation constraint, 1, 0, 0, null;
+
+	joint: BLADE1_FLAP+1, deformable hinge,
+		HUB,
+			hinge,
+			1, 1., 0., 0.,
+			3, 0., 1., 0.,
+		BLADE1_FLAP,
+			hinge,
+			1, 1., 0., 0., 
+			3, 0., 1., 0.,
+			linear elastic isotropic, 8.5e4;
+
+	include: "beam.prop";
+	
+	body: BLADE1_FLAP, BLADE1_FLAP,
+		m1,
+		reference, BLADE1_FLAP, SPAN/8., 0., 0.,
+		diag, Jx1, Jy1, Jz1;
+		
+	body: BLADE1_MIDDLE, BLADE1_MIDDLE,
+		m2, 
+		reference, BLADE1_MIDDLE, null,
+		diag, Jx2, Jy2, Jz2;
+		
+	body: BLADE1_TIP, BLADE1_TIP,
+		m3,
+		reference, BLADE1_TIP, -SPAN/8., 0., 0.,
+		diag, Jx3, Jy3, Jz3;
+		
+	beam: 1,
+		BLADE1_FLAP, null,
+		BLADE1_MIDDLE, null,
+		BLADE1_TIP, null,
+		eye,
+		linear elastic generic, 
+		diag, EA, GAy, GAz, GJ, EJy, EJz,
+		same, 
+		same;
+
+	joint: BLADE1_FLAP + 2, total pin joint,
+		BLADE1_FLAP,
+			position, reference, node, null,
+			position orientation, reference, node, eye,
+			rotation orientation, reference, node, eye,
+		# GROUND,
+			position, reference, other node, null,
+			position orientation, reference, other node, eye,
+			rotation orientation, reference, other node, eye,
+		position constraint, 0, 0, 0, null,
+		orientation constraint, 0, 1, 1, 
+			component, 
+				const, 0.,
+				const, 0.,
+				cosine, 0.01, pi, 7.5*pi/180., half, 0.;
+
+	joint: BLADE1_FLAP + 3, total pin joint,
+		BLADE1_TIP,
+			position, reference, node, null,
+			position orientation, reference, node, eye,
+			rotation orientation, reference, node, eye,
+		# GROUND,
+			position, reference, other node, null,
+			position orientation, reference, other node, eye,
+			rotation orientation, reference, other node, eye,
+		position constraint, 1, 1, 1, null,
+		orientation constraint, 0, 1, 1, 
+			component, 
+				const, 0.,
+				const, 0.,
+				cosine, 0.01, pi, -7.5*pi/180., half, 0.;
+
+	/*
+	# perturbation: comment out for eigenanalysis
+	force: BLADE1_TIP, absolute,
+		BLADE1_TIP,
+		position, null,
+		0., 0., 1.,
+			frequency sweep,
+			0.,		# initial time
+			linear, 0., 1.,	# angular velocity drive caller: linear, <const_coeff>, <slope>
+			const, 1.,	# amplitude drive caller
+			0.,             # initial value
+			forever,	
+			1.;		# final value
+	*/
+end: elements;
+
+# vim:ft=mbd

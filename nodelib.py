@@ -233,10 +233,8 @@ def parse_node(context, rw):
 #  representing an MBDyn node
 def spawn_node_obj(context, node):
     mbs = context.scene.mbdyn
-
     if (node.string_label in bpy.data.objects) or ("node_" + str(node.int_label) in bpy.data.objects):
         return False
-
     if mbs.node_object == "ARROWS":
         bpy.ops.object.empty_add(type = 'ARROWS', location = node.initial_pos)
         return True

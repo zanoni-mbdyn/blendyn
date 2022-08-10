@@ -73,28 +73,6 @@ class BLENDYN_PG_nodes_collection(bpy.types.PropertyGroup):
 bpy.utils.register_class(BLENDYN_PG_nodes_collection)
 
 
-class BLENDYN_PG_fem_connection(bpy.types.PropertyGroup):
-    name: StringProperty(
-        name = "FEM connection name",
-        description = " Name of FEM connection"
-        )
-
-    node_1_int_label: EnumProperty(
-        items = get_fem_connect_node1,
-        name = "Node 1 FEM connection",
-        description = "Node 1 in FEM connection for Modal visualization using armature",
-        )
-
-    node_2_int_label: EnumProperty(
-        items = get_fem_connect_node2,
-        name = "Node 2 FEM connection",
-        description = "Node 2 in FEM connection for Modal visualization using armature",
-    )
-# -----------------------------------------------------------
-# end of BLENDYN_PG_modal_fem_nodes class
-bpy.utils.register_class(BLENDYN_PG_fem_connection)
-
-
 class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
     dkey: StringProperty(
             name = "Key of element to be updated",
@@ -104,11 +82,84 @@ class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
 # end of BLENDYN_PG_elem_to_be_updated class
 bpy.utils.register_class(BLENDYN_PG_elem_to_be_updated)
 
+## Modes Dictionary: contains modes information for each node
+class BLENDYN_PG_modal_modes_dictionary(bpy.types.PropertyGroup):
+    mode_shape: FloatVectorProperty(
+        name="Mode shape value",
+        description="Mode boundary in three directions",
+        size=3,
+        precision=6
+    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_modal_modes_dictionary class
+bpy.utils.register_class(BLENDYN_PG_modal_modes_dictionary)
+
+## Nodes Dictionary: contains nodes informations
+class BLENDYN_PG_modal_nodes_dictionary(bpy.types.PropertyGroup):
+    mbclass: StringProperty(
+            name = "Class of MBDyn element",
+            description  = ""
+    )
+    modal_int_label: IntProperty(
+            name = "Modal node integer label",
+            description = "Modal node integer label",
+    )
+    string_label: StringProperty(
+            name = "node string label",
+            description = "Node string label",
+            default = "none"
+    )
+    blender_object: StringProperty(
+            name = "blender object label",
+            description = "Blender object",
+            default = "none"
+    )
+    relative_pos: FloatVectorProperty(
+            name = "modal node relative position",
+            description = "Modal node relative position with reference node",
+            size = 3,
+            precision = 6
+    )
+    is_imported: BoolProperty(
+            name = "Is imported flag",
+            description = "Flag set to true at the end of the import process"
+    )
+
+    mode: CollectionProperty(
+            name = "Modal mode",
+            description = "Modal mode",
+            type = BLENDYN_PG_modal_modes_dictionary
+    )
+
+# -----------------------------------------------------------
+# end of BLENDYN_PG_modal_nodes_dictionary class
+bpy.utils.register_class(BLENDYN_PG_modal_nodes_dictionary)
 
 class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
     mbclass: StringProperty(
             name = "Class of MBDyn element",
             description  = ""
+            )
+
+    fem_path: StringProperty(
+            name="FEM File Path",
+            description="Path of Modal FEM file",
+            default="not yet selected"
+            )
+
+    modal_node: CollectionProperty(
+            name = "Modal nodes",
+            type = BLENDYN_PG_modal_nodes_dictionary
+    )
+
+    nb_modal_node: IntProperty(
+            name="Number of FEM nodes",
+            description= "Number of current FEM nodes if the element is modal joints"
+            )
+
+    nb_modal_mode: IntProperty(
+            name = "Number of Modal modes",
+            description = "Number of modal modes"
             )
 
     type: StringProperty(
@@ -131,30 +182,6 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             type = BLENDYN_PG_nodes_collection,
             name = "Connected nodes",
             description = "MBDyn nodes that the element connects"
-            )
-
-    node_index: IntProperty(
-            name = "Index of element node",
-            description = "Index using for displaying element nodes in Component Panel",
-            default = 0
-            )
-
-    fem_connects: CollectionProperty(
-            type = BLENDYN_PG_fem_connection,
-            name = "FEM collection",
-            description = "FEM connection for modal visualisation"
-            )
-
-    connect_index: IntProperty(
-            name = "Index of modal connection",
-            description = "Index using for displaying modal fem connection in Component Panel",
-            default = -1
-            )
-
-    selected_node: EnumProperty(
-            items = get_nodes_for_modal,
-            name = "Group of nodes would be selected to be modal fem node",
-            description = "Group of nodes would be selected to be modal fem node",
             )
 
     magnitude: FloatProperty(

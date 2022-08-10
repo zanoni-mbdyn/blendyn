@@ -569,6 +569,12 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "MBDyn nodes number",
             description = "MBDyn node count"
     )
+
+    num_modal_modes: IntProperty(
+            name = "Total modal modes number",
+            description = "Total modal node number in .mod file"
+    )
+
     # MBDyn's time steps count
     num_timesteps: IntProperty(
             name = "MBDyn time steps",
@@ -875,6 +881,42 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_stardard_import class
 
+class BLENDYN_OT_read_modal_fem_file(bpy.types.Operator):
+    """ Imports modal nodes by parsing the .fem file """
+    bl_idname = "blendyn.read_modal_fem_file"
+    bl_label = "Modal .fem file parsing"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        modal_elem = ed[mbs.comp_selected_elem]
+        number_modal_modes(context)
+        ret_val = parse_modal_fem_file(modal_elem, context)
+
+        selftag = 'BLENDYN_OT_read_modal_fem_file::execute(): '
+        if ret_val == {'FEM_NOT_FOUND'}:
+            message = ".fem file not found"
+            self.report({'ERROR'}, message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+        elif ret_val == {'FINISHED'}:
+            message = "All modal nodes imported successfully"
+            self.report({'INFO'}, message)
+            baseLogger.info(selftag + message)
+            return {'FINISHED'}
+        else:
+            # should not be reached
+            message = "Unknown error in reading .log file."\
+                    + "The return value of parse_log_file() was: {}".format(ret_val)
+            self.report({'ERROR'}, message)
+            baseLogger.info(selftag + message)
+            return {'CANCELLED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_read_modal_fem_file class
+
 
 class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
     """ Imports MBDyn nodes and elements by parsing the .log file """
@@ -994,6 +1036,29 @@ class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_select_output_file class
 
+class BLENDYN_OT_select_modal_fem_file(bpy.types.Operator, ImportHelper):
+    """ Sets MBDyn's output files path and basename """
+    bl_idname = "blendyn.select_modal_fem_file"
+    bl_label = "Select modal fem file"
+
+    filter_glob: StringProperty(
+            default = "*.fem",
+            options = {'HIDDEN'},
+            )
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        elem.fem_path = self.filepath
+        baseLogger.handlers = []
+        log_messages(mbs, baseLogger, False)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_select_modal_fem_file class
 
 class BLENDYN_OT_assign_labels(bpy.types.Operator):
     """ Assigns 'recognisable' labels to MBDyn nodes and elements by
@@ -2118,58 +2183,20 @@ class BLENDYN_PT_components(bpy.types.Panel):
                 comp, "elements", \
                 comp, "el_index")
             col.prop(mbs, "comp_selected_elem", text = "Add")
-            if mbs.comp_selected_elem[:5] == "modal":
+            if mbs.comp_selected_elem[:5] == 'modal':
                 col = layout.column()
-                col.label(text="Modal node:")
-                row = col.row()
-                row.template_list("BLENDYN_UL_modal_nodes_list", \
-                                  "Modal nodes", \
-                                  mbs.elems[mbs.comp_selected_elem], "nodes", \
-                                  mbs.elems[mbs.comp_selected_elem], "node_index")
-                row = col.row()
-                row.prop(mbs.elems[mbs.comp_selected_elem], "selected_node", text = "Add:")
+                col.operator(BLENDYN_OT_select_modal_fem_file.bl_idname,
+                             text = "Choose FEM file")
+                col.label(text = "FEM file path:")
+                col.prop(mbs.elems[mbs.comp_selected_elem], "fem_path", text = "")
                 row = col.row()
                 split = row.split(factor = 0.5)
-                col1 = split.column()
-                col1.operator(BLENDYN_OT_element_add_node.bl_idname,
-                             text="Add node")
-                col2 = split.column()
-                col2.operator(BLENDYN_OT_element_remove_node.bl_idname,
-                              text="Remove node")
-                row = col.row()
-                row.operator(BLENDYN_OT_element_add_all_selected_nodes.bl_idname,
-                             text = "Add all selected node")
-                row.operator(BLENDYN_OT_element_remove_all_nodes.bl_idname,
-                             text = "Remove all nodes")
-
-                ## FEM Connection panel
-                col = layout.column()
-                col.label(text="Modal FEM Connect:")
-                row = col.row()
-                split = row.split(factor = 0.4)
                 col = split.column()
-                col.label(text="Name")
+                col.operator(BLENDYN_OT_read_modal_fem_file.bl_idname,
+                             text = "Load FEM file")
                 col = split.column()
-                split = col.split(factor = 0.5)
-                col = split.column()
-                col.label(text="Node 1")
-                col = split.column()
-                col.label(text="Node 2")
-                col = layout.column()
-                row = col.row()
-                row.template_list("BLENDYN_UL_fem_connections_list", \
-                                  "Modal FEM connections", \
-                                  mbs.elems[mbs.comp_selected_elem], "fem_connects", \
-                                  mbs.elems[mbs.comp_selected_elem], "connect_index")
-                row = col.row()
-                row.operator(BLENDYN_OT_element_add_new_connect.bl_idname,
-                             text = "Add new connect")
-                row.operator(BLENDYN_OT_element_remove_connect.bl_idname,
-                             text = "Remove connect")
-                row.operator(BLENDYN_OT_element_remove_all_connects.bl_idname,
-                             text = "Remove all connect")
-
-
+                col.operator(BLENDYN_OT_modal_node_import_all.bl_idname,
+                             text = "Import all modal nodes")
             col = layout.column()
             col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
                     text = "Add Element")
@@ -2275,6 +2302,85 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
         return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_all class
+
+
+class BLENDYN_OT_modal_node_import_all(bpy.types.Operator):
+    """ Imports all the MBDyn nodes into the Blender scene """
+    bl_idname = "blendyn.modal_node_import_all"
+    bl_label = "Add Modal nodes to scene"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
+        added_modal_nodes = 0
+        selftag = "BLENDYN_OT_modal_node_import_all::execute(): "
+
+        try:
+            ncol = bpy.data.collections['mbdyn.nodes']
+            fcol = ncol.children['fem_nodes']
+            set_active_collection('fem_nodes')
+        except KeyError:
+            message =  "could not find the 'fem' collection"
+            print(message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+
+        wm = bpy.context.window_manager
+        Sum_Nnodes = 0
+        Sum_added_nodes = 0
+        for elem in ed:
+            Nnodes = len(elem.modal_node)
+            Sum_Nnodes += Nnodes
+            wm.progress_begin(0, Nnodes)
+            added_nodes = 0
+            for modal_node in elem.modal_node:
+                if not(spawn_modal_node_obj(context, elem, modal_node)):
+                    message = "Could not spawn the Blender object assigned to modal node " \
+                              + str(modal_node.name)\
+                              + ". Object already present?"
+                    self.report({'ERROR'}, message)
+                    baseLogger.error(selftag + message)
+                    return {'CANCELLED'}
+                obj = context.active_object
+                obj.mbdyn.type = 'node'
+                obj.mbdyn.dkey = modal_node.name
+                if modal_node.string_label != "none":
+                    obj.name = modal_node.string_label
+                else:
+                    obj.name = modal_node.name
+                modal_node.blender_object = obj.name
+
+                message = "added modal node " \
+                          + str(modal_node.name) \
+                          + " to scene and associated with object " + obj.name
+                added_nodes += 1
+                baseLogger.info(selftag + message)
+                wm.progress_update(added_nodes)
+            wm.progress_end()
+            Sum_added_nodes += added_nodes
+
+        set_active_collection('Master Collection')
+        if (Sum_added_nodes == Sum_Nnodes):
+            message =  "All modal nodes imported successfully"
+            self.report({'INFO'}, message)
+            baseLogger.info(selftag + message)
+            return {'FINISHED'}
+        elif Sum_added_nodes == 0:
+            message = "No modal nodes imported"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(selftag + message)
+            return {'CANCELLED'}
+        else:
+            message = "Not every modal node was imported."
+            self.report({'WARNING'}, message)
+            baseLogger.warning(selftag + message)
+            return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_modal_node_import_all class
 
 
 class BLENDYN_OT_node_import_single(bpy.types.Operator):

@@ -190,30 +190,6 @@ def get_elems_types(self, context):
 ## Utility functions
 
 
-def get_fem_connect_node1(self, context):
-    mbs = context.scene.mbdyn
-    elem = mbs.elems[mbs.comp_selected_elem]
-    node1_int = [node.int_label for node in elem.nodes]
-    return [(str(node_int), str(node_int), "") for node_int in node1_int]
-
-def get_fem_connect_node2(self, context):
-    mbs = context.scene.mbdyn
-    elem = mbs.elems[mbs.comp_selected_elem]
-    node2_int = [node.int_label for node in elem.nodes]
-    return [(str(node_int), str(node_int), "") for node_int in node2_int]
-
-
-def get_nodes_for_modal(self, context):
-    mbs = context.scene.mbdyn
-    nd = mbs.nodes
-    selected_nodes = []
-    for node in nd:
-        int_label = node.int_label
-        if int_label not in [node.int_label for node in mbs.elems[mbs.comp_selected_elem].nodes]:
-            selected_nodes.append(int_label)
-    return [(str(int_label), str(int_label), "") for int_label in selected_nodes]
-
-
 def fmin(x):
     min = x[0]
     loc = 0

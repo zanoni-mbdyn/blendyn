@@ -1,0 +1,66 @@
+# Dynamics and Aeroelasticity of Rotors 
+# MBDyn training #2
+# Introduction to rotor dynamics with MBDyn
+# author Giuseppe Quaranta <giuseppe.quaranta@polimi.it>
+# This is part of the MBDyn model of the AS330 Puma
+# vim: ft=mbd
+
+# blade label offsets
+set: const integer BLADE_1 = 1000;
+set: const integer BLADE_2 = 2000;
+set: const integer BLADE_3 = 3000;
+set: const integer BLADE_4 = 4000;
+
+set: integer CURR_BLADE = 0;
+
+# blade azimuthal offsets
+set: const real psi_1 =   0.*deg2rad;	# rad
+set: const real psi_2 =  90.*deg2rad;	# rad
+set: const real psi_3 = 180.*deg2rad;	# rad
+set: const real psi_4 = 270.*deg2rad;	# rad
+
+# current blade azimuth
+set: real curr_psi = 0.;
+
+# lag hinge label offset
+set: const integer BLADE_LAG 	= 100;
+# flap body label offset
+set: const integer BLADE_FLAP 	= 200;
+# pitch body label offset
+set: const integer BLADE_PITCH 	= 300;
+# pitch link label offset
+set: const integer PITCH_LINK 	= 400;
+# blade root label offset
+
+set: const real blade_radius 	= 7.490;	# m
+set: const real lag_hinge    	= 0.269;	# m
+set: const real flap_hinge   	= 0.289;	# m
+set: const real pitch_bearing 	= 0.432;	# m 
+set: const real pitch_link_x 	= 0.289;	# m
+set: const real pitch_link_y 	= 0.181;	# m
+set: const real pitch_link_length = 0.4;	# m 
+
+# aerodynamics
+set: const real blade_chord 	= 0.537;	# m
+set: const real blade_cutout 	= 2.080;	# m
+set: const real blade_aero_span = (blade_radius - blade_cutout); 	# m
+set: const real blade_thickness = .12; 		# %, airfoil thickness
+set: const integer integration_points = 5;
+set: const integer aero_jacobian = 1;
+set: const integer NACA0012 	= 12;
+c81 data: NACA0012, "naca0012.c81";
+set: const real coll_75		= - 4.118 * deg2rad; # rad 
+
+
+
+set: const real prelag 		= 0.*deg2rad;	# rad
+set: const real preflap 	= 0.*deg2rad;	# rad
+set: const real prepitch 	= 0.*deg2rad;
+
+set: real lead_lag_damping	= 7000.0 *1.0; # N m s / rad
+set: real lead_lag_stiffness	= 0.0; 		# N m / rad
+set: real flap_damping		= 0.0; 		# N m s / rad
+set: real flap_stiffness	= 0.0; 		# N m / rad
+set: real pitch_link_dampingf	= 1.0e-3; 		#  
+set: real pitch_link_stiffness	= 33032.0 /pitch_link_y^2/1.8; 	# N / m 
+set: const real coll_pitch_tau  = 5.525; # rad/m

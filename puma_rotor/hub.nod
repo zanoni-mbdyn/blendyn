@@ -1,0 +1,42 @@
+# Dynamics and Aeroelasticity of Rotors 
+# MBDyn training #2
+# Introduction to rotor dynamics with MBDyn
+# author Giuseppe Quaranta <giuseppe.quaranta@polimi.it>
+# This is part of the MBDyn model of the AS330 Puma
+# vim: ft=mbd
+
+	# hub
+	structural: CURR_ROTOR + HUB, static, 
+		reference, CURR_ROTOR + HUB, null, 
+		reference, CURR_ROTOR + HUB, eye,
+		reference, CURR_ROTOR + HUB, null, 
+		reference, CURR_ROTOR + HUB, null;
+
+	# fixed swashplate
+	structural: CURR_ROTOR + SWASHPLATE_FIXED, static,
+		reference, CURR_ROTOR + SWASHPLATE_FIXED, null,
+		reference, CURR_ROTOR + SWASHPLATE_FIXED, eye,
+		reference, CURR_ROTOR + SWASHPLATE_FIXED, null,
+		reference, CURR_ROTOR + SWASHPLATE_FIXED, null;
+
+	# rotating swashplate
+	structural: CURR_ROTOR + SWASHPLATE_ROTATING, static,
+		reference, CURR_ROTOR + SWASHPLATE_ROTATING, null,
+		reference, CURR_ROTOR + SWASHPLATE_ROTATING, eye,
+		reference, CURR_ROTOR + SWASHPLATE_ROTATING, null,
+		reference, CURR_ROTOR + SWASHPLATE_ROTATING, null;
+
+	/*
+	# swashplate actuators
+	abstract: CURR_ROTOR + SW_ACTUATOR_COLLECTIVE, 0.;
+	abstract: CURR_ROTOR + SW_ACTUATOR_FORE_AFT, 0.;
+	abstract: CURR_ROTOR + SW_ACTUATOR_LATERAL, 0.;
+
+	# swashplate controls
+	abstract: CURR_ROTOR + SW_COLLECTIVE, 0.;
+	abstract: CURR_ROTOR + SW_FORE_AFT, 0.;
+	abstract: CURR_ROTOR + SW_LATERAL, 0.;
+	
+	*/
+
+# vim: ft=mbd

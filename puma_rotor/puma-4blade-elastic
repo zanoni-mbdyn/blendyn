@@ -1,0 +1,287 @@
+# Dynamics and Aeroelasticity of Rotors 
+# MBDyn training #2
+# Introduction to rotor dynamics with MBDyn
+# Rigid rotor blade 
+# author Giuseppe Quaranta <giuseppe.quaranta@polimi.it>
+# This is part of the MBDyn model of the AS330 Puma described in
+#
+# William G. Bousman, Colin Young, Francois Toulmay, Neil E. Gilbert,
+# Roger C. Strawn, Judith V. Miller, Thomas H. Maier, Michel Costes,
+# Philippe Beaumier: "A Comparison of Lifting-Line and CFD Methods
+# with Flight Test Data from a Research Puma Helicopter",
+# NASA TM 110421, October 1996
+# vim: ft=mbd
+
+
+begin: data;
+	integrator: initial value;
+end: data;
+
+include: "puma.set";
+include: "blade.set"; 
+include: "blade-elastic.set"; 
+include: "airframe.set"; 
+
+set: const integer GROUND = 1;
+set: BLADE_N = 4;
+
+
+begin: initial value; 
+	initial time: 0.; 
+	final time: (1./omega_h) * 25.;	# revolutions 
+	time step: (1./omega_h) / 250.;	# time step must allow at least 100 steps/rev
+
+
+	method: ms, .6;
+
+	max iterations: 100; 
+	tolerance: 1.e-5;
+
+	# linear solver: naive, colamd;
+	# nonlinear solver: newton raphson, modified, 4;
+
+
+	derivatives tolerance:  1.e-1;
+	derivatives max iterations:  10;
+	derivatives coefficient:  1.e-11;
+
+ 	# output: iterations;
+	# output: residual;
+
+
+	eigenanalysis: (1./omega_h) * 24.,
+		use lapack,
+		output eigenvectors,
+		output geometry;
+
+
+end: initial value;
+
+
+
+begin: control data;
+
+#	rigid body kinematics:
+#		const, angular velocity, 0., 0., omega100;
+
+ #	default output: none;
+
+	structural nodes: 
+		+1		# ground (clamped) 
+		+1		# hub (imposed angular velocity) 
+		+2 		# swashplate fixed, rotating
+		+BLADE_N * (
+		 2      	# blade root bodies (lag-flap, flap-pitch)
+		+BLADE_NODES	# blade 
+		)
+	; 
+	
+	/* 
+	abstract nodes:
+		+6		# swashplate
+	;
+	*/
+
+	rigid bodies: 
+		BLADE_N * (
+		+2		# blade hinges
+		+BLADE_NODES	# rigid bodies
+		)
+	; 
+	
+	joints: 
+		+1		# ground clamp 
+		+1		# hub rotation 
+		+3 		# swashplate
+		+ BLADE_N * ( 
+		+2		# flap-lag hinges
+		+1		# lag damping and stiffness 
+		+1		# flap damping and stiffness 
+		+1		# pitch bearing 
+		+1		# pitch link
+		) 
+	;
+
+	air properties; 
+	
+	induced velocity elements:
+		+1
+	; 
+
+	beams:
+		BLADE_N *
+	 	(1 * BLADE_NBEAMS)
+	;
+	
+	aerodynamic elements: 
+		BLADE_N *
+	 	(1 * BLADE_NBEAMS)
+	;
+
+	forces: 
+		+1 * BLADE_N		# perturbation 
+	;
+
+	output results: netcdf, no text;
+ 
+end: control data;
+
+set: real omega = omega100;
+#set: real omega = 0.0;
+# pitch input
+#set: real theta_coll 		= 1. * deg2rad;
+set: real theta_coll 		= - coll_75 + 9.5 * deg2rad;
+set: real theta_fore_aft 	= 0.0 * deg2rad;
+set: real theta_lateral 	= 0.0 * deg2rad;
+
+
+# reference systems
+
+reference: HUBC,
+        reference, global, x_hubc, y_hubc, z_hubc,
+#        reference, global, 0., 0., 0.,  
+        reference, global, eye,
+        reference, global, null,
+        reference, global, null;
+
+set: CURR_ROTOR = MAIN_ROTOR;
+include: "puma.ref";
+
+set: CURR_BLADE = BLADE_1;
+set: curr_psi = psi_1;
+include: "blade-root.ref";
+
+set: CURR_BLADE = BLADE_2;
+set: curr_psi = psi_2;
+include: "blade-root.ref";
+
+set: CURR_BLADE = BLADE_3;
+set: curr_psi = psi_3;
+include: "blade-root.ref";
+
+set: CURR_BLADE = BLADE_4;
+set: curr_psi = psi_4;
+include: "blade-root.ref";
+
+begin: nodes; 
+
+	set: CURR_ROTOR = MAIN_ROTOR;
+
+	structural: MAIN_ROTOR, static, 
+		reference, MAIN_ROTOR, null, 
+		reference, MAIN_ROTOR, eye, 
+		reference, MAIN_ROTOR, null, 
+		reference, MAIN_ROTOR, null;
+
+	include: "hub.nod";
+
+	# blade 1
+	set: CURR_BLADE = BLADE_1;
+	set: curr_psi = psi_1;
+	include: "blade-root.nod";
+	include: "blade-elastic-body.nod";
+
+	# blade 2
+	set: CURR_BLADE = BLADE_2;
+	set: curr_psi = psi_2;
+	include: "blade-root.nod";
+	include: "blade-elastic-body.nod";
+
+	# blade 3
+	set: CURR_BLADE = BLADE_3;
+	set: curr_psi = psi_3;
+	include: "blade-root.nod";
+	include: "blade-elastic-body.nod";
+
+	# blade 4
+	set: CURR_BLADE = BLADE_4;
+	set: curr_psi = psi_4;
+	include: "blade-root.nod";
+	include: "blade-elastic-body.nod";
+
+end: nodes;
+
+
+
+
+begin: elements; 
+	
+		
+	joint: GROUND, clamp, MAIN_ROTOR, node, node;
+
+
+	set: CURR_ROTOR = MAIN_ROTOR;
+	air properties: std, SI, reference altitude, 0., null;
+	#air properties: 0.0, 340.0, null;
+
+	induced velocity: CURR_ROTOR,
+		rotor, CURR_ROTOR, CURR_ROTOR + HUB,
+		induced velocity,
+#				no;
+	 		uniform, omega100, blade_radius, delay, .9, correction,1.1 , 1.1 , tolerance, 1e-3, max iterations, 10;
+   
+	set: integer BASE_BODY = CURR_ROTOR;
+	include: "hub.elm";
+
+	# blade 1
+	set: CURR_BLADE = BLADE_1;
+	set: curr_psi = psi_1;
+	include: "blade-root.elm";
+	include: "blade-root-body.elm";
+	include: "blade-elastic-body.elm";
+	include: "blade-elastic-aero.elm";
+	
+	force: CURR_ROTOR + CURR_BLADE, 
+		absolute, CURR_ROTOR + CURR_BLADE + BLADE_BODY, 
+		position, null, 0., 0., 1.,
+			 const, 0.;
+#			 sine, 0., 5.*omega100, 1.e5, one, 0.; 
+	# blade 2
+	set: CURR_BLADE = BLADE_2;
+	set: curr_psi = psi_2;
+	include: "blade-root.elm";
+	include: "blade-root-body.elm";
+	include: "blade-elastic-body.elm";
+	include: "blade-elastic-aero.elm";
+	
+	force: CURR_ROTOR + CURR_BLADE, 
+		absolute, CURR_ROTOR + CURR_BLADE + BLADE_BODY, 
+		position, null, 0., 0., 1.,
+			 const, 0.;
+#			 sine, 0., 5.*omega100, 1.e5, one, 0.; 
+
+#	# blade 3
+	set: CURR_BLADE = BLADE_3;
+	set: curr_psi = psi_3;
+	include: "blade-root.elm";
+	include: "blade-root-body.elm";
+	include: "blade-elastic-body.elm";
+	include: "blade-elastic-aero.elm";
+	
+	force: CURR_ROTOR + CURR_BLADE, 
+		absolute, CURR_ROTOR + CURR_BLADE + BLADE_BODY, 
+		position, null, 0., 0., 1.,
+			 const, 0.;
+#			 sine, 0., 5.*omega100, 1.e5, one, 0.; 
+
+#	# blade 4
+	set: CURR_BLADE = BLADE_4;
+	set: curr_psi = psi_4;
+	include: "blade-root.elm";
+	include: "blade-root-body.elm";
+	include: "blade-elastic-body.elm";
+	include: "blade-elastic-aero.elm";
+	
+	force: CURR_ROTOR + CURR_BLADE, 
+		absolute, CURR_ROTOR + CURR_BLADE + BLADE_BODY, 
+		position, null, 0., 0., 1.,
+			 const, 0.;
+#			 sine, 0., 5.*omega100, 1.e5, one, 0.; 
+#
+#	inertia: 1, 
+#		position, reference, CURR_ROTOR + CURR_BLADE + BLADE_FLAP, null,
+#		orientation, reference, CURR_ROTOR + CURR_BLADE + BLADE_FLAP, eye,
+#		body, CURR_ROTOR + CURR_BLADE + BLADE_BODY; 
+end: elements;
+
+# vim:ft=mbd

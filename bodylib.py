@@ -129,6 +129,8 @@ def spawn_body_element(elem, context):
 
         # automatic scaling
         s = n1OBJ.scale.magnitude*(1./sqrt(3.))
+        print("body node scale")
+        print(n1OBJ.scale.magnitude)
         bodyOBJ.scale = Vector(( s, s, s ))
 
         # element offset with respect to nodes

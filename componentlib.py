@@ -597,12 +597,10 @@ def add_mesh_component(context, component):
     def add_comp_armature_bones_modal(armOBJ, armature, component, celem):
         elem = ed[celem.elem]
         elcol = bpy.data.collections[elem.name]
-
-
-        for connect in elem.fem_connects:
-            node_objs = []
-            N1 = elcol.objects[nd["node_" + str(connect.node_1_int_label)].blender_object]
-            N2 = elcol.objects[nd["node_" + str(connect.node_2_int_label)].blender_object]
+        for node_int_label in range(elem.nb_modal_node-1):
+            modal_node = elem.modal_node["node_" + str(elem.int_label) + '_'+ str(node_int_label)]
+            N1 = elcol.objects[elem.modal_node["node_" + str(elem.int_label) + '_'+ str(node_int_label)].blender_object]
+            N2 = elcol.objects[elem.modal_node["node_" + str(elem.int_label) + '_'+ str(node_int_label+1)].blender_object]
             lN1 = N1.location
             lN2 = N2.location
             pN1 = Vector((lN1[0], lN1[1], lN1[2]))
@@ -623,17 +621,17 @@ def add_mesh_component(context, component):
             edit_bones = armature.edit_bones
 
             # node 1
-            bN1 = edit_bones.new(connect.name +'_'+ N1.name)
+            bN1 = edit_bones.new(modal_node.name +'_'+ N1.name)
             bN1.head = pN1
             bN1.tail = pN1 + 0.001 * t1 * L
             bN1.use_deform = False
             # node 2
-            bN2 = edit_bones.new(connect.name +'_'+ N2.name)
+            bN2 = edit_bones.new(modal_node.name +'_'+ N2.name)
             bN2.head = pN2 - 0.001 * t1 * L
             bN2.tail = pN2
             bN2.use_deform = False
             # volume 1 (node 1 -- node 2)
-            bV1 = edit_bones.new(connect.name + '_V1')
+            bV1 = edit_bones.new(modal_node.name + '_V1')
             bV1.head = bN1.tail
             bV1.tail = bN2.head
             bV1.bbone_segments = celem.arm_ns
@@ -645,17 +643,17 @@ def add_mesh_component(context, component):
             bpy.ops.object.mode_set(mode='POSE', toggle=False)
 
             # volume 1
-            V1 = armOBJ.pose.bones[connect.name + '_V1']
+            V1 = armOBJ.pose.bones[modal_node.name + '_V1']
             stV1N2 = V1.constraints.new(type='STRETCH_TO')
             stV1N2.target = N2
             #stV1N2.subtarget = N2.name
-            V1 = armOBJ.data.bones[connect.name + '_V1']
+            V1 = armOBJ.data.bones[modal_node.name + '_V1']
             V1.bbone_handle_type_start = 'TANGENT'
-            V1.bbone_custom_handle_start = armOBJ.data.bones[connect.name +'_'+N1.name]
+            V1.bbone_custom_handle_start = armOBJ.data.bones[modal_node.name +'_'+N1.name]
             V1.bbone_handle_type_end = 'TANGENT'
-            V1.bbone_custom_handle_end = armOBJ.data.bones[connect.name +'_'+N2.name]
+            V1.bbone_custom_handle_end = armOBJ.data.bones[modal_node.name +'_'+N2.name]
             # node 1
-            pbN1 = armOBJ.pose.bones[connect.name +'_'+ N1.name]
+            pbN1 = armOBJ.pose.bones[modal_node.name +'_'+ N1.name]
             clpbN1 = pbN1.constraints.new(type='COPY_LOCATION')
             clpbN1.target = N1
             crpbN1 = pbN1.constraints.new(type='CHILD_OF')
@@ -668,7 +666,7 @@ def add_mesh_component(context, component):
             crpbN1.target = N1
             crpbN1.inverse_matrix = N1.matrix_world.inverted()
             # node 2
-            pbN2 = armOBJ.pose.bones[connect.name +'_'+ N2.name]
+            pbN2 = armOBJ.pose.bones[modal_node.name +'_'+ N2.name]
             clpbN2 = pbN2.constraints.new(type='COPY_LOCATION')
             clpbN2.target = N2
             crpbN2 = pbN2.constraints.new(type='CHILD_OF')

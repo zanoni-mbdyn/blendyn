@@ -1,0 +1,22 @@
+# Dynamics and Aeroelasticity of Rotors 
+# MBDyn training #2
+# Introduction to rotor dynamics with MBDyn
+# author Giuseppe Quaranta <giuseppe.quaranta@polimi.it>
+# This is part of the MBDyn model of the AS330 Puma
+# vim: ft=mbd
+
+	structural: CURR_ROTOR + CURR_BLADE + BLADE_LAG, dynamic, 
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_LAG, null, 
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_LAG, eye, 
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_LAG, null,
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_LAG, null, 
+		output, yes; 
+
+	structural: CURR_ROTOR + CURR_BLADE + BLADE_FLAP, dynamic, 
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_FLAP, null, 
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_FLAP, eye, 
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_FLAP, null,
+		reference,CURR_ROTOR + CURR_BLADE + BLADE_FLAP, null, 
+		output, yes; 
+
+# vim: ft=mbd

@@ -1,0 +1,18 @@
+# Dynamics and Aeroelasticity of Rotors
+# MBDyn training #2
+# Introduction to rotor dynamics with MBDyn
+# Rigid rotor blade
+# author Giuseppe Quaranta <giuseppe.quaranta@polimi.it>
+# This is part of the MBDyn model of the AS330 Puma
+# vim: ft=mbd
+
+
+set: integer AIRFRAME 			= 20;
+set: const integer PRINCIPAL_LG_R 	= 30;
+set: const integer PRINCIPAL_LG_L 	= 40;
+set: const integer FRONT_LG 		= 50;
+set: const integer DISP_STIFF 		= 60;
+set: const integer ROT_STIFF 		= 70;
+
+set: real airframe_damp		= 1.e-2;
+
