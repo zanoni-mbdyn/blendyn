@@ -683,11 +683,9 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             default = 0
     )
     plot_engine: EnumProperty(
-        items=[("PYGAL", "Pygal", "Pygal", '', 2), \
-               ("MATPLOTLIB", "Matplotlib", "Matplotlib", '', 1), \
-               ("BOKEH", "Bokeh", "bokeh", '', 3)], \
+        items= get_plot_engine(),
         name="plot engine",
-        default="MATPLOTLIB"
+        description = 'List of available plot engine'
     )
     plot_type: EnumProperty(
         items=[("TIME_HISTORY", "Time history", "Time history", '', 1), \
