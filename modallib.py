@@ -252,7 +252,7 @@ def parse_modal_fem_file(elem, context):
             # Move down one rows
             rw = next(reader)
             modal_node_list = []
-            while rw[0] != '**':
+            while len(rw)>0 and rw[0] != '**':
                 for node_label in rw:
                     try:
                         node = elem.modal_node['node_' + str(elem.int_label) + '_' + str(node_label)]
@@ -291,18 +291,14 @@ def parse_modal_fem_file(elem, context):
             # Parse the mode shape
             rw = next(reader)
             rw = next(reader)
-            print(modal_node_list)
             for _ in range(int(elem.nb_modal_mode)):
                 mode = rw[-1]
-                print(mode)
                 rw = next(reader)
                 for modal_node_name in modal_node_list:
-                    print(modal_node_name)
                     try:
                         elem.modal_node[modal_node_name].mode[str(mode)].mode_shape = Vector(( float(rw[0]), float(rw[1]), float(rw[2])))
                         rw = next(reader)
                     except KeyError:
-                        print('Move into except Keyerror')
                         new_mode = elem.modal_node[modal_node_name].mode.add()
                         new_mode.name = str(mode)
                         new_mode.mode_shape = Vector((float(rw[0]), float(rw[1]), float(rw[2])))

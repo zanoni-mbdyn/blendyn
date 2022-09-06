@@ -251,6 +251,7 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             description = "Function that updates the visualization of the element",
             default = 'none'
             )
+
 # -----------------------------------------------------------
 # end of BLENDYN_PG_elems_dictionary class
 bpy.utils.register_class(BLENDYN_PG_elems_dictionary)

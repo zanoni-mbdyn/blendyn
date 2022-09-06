@@ -597,10 +597,10 @@ def add_mesh_component(context, component):
     def add_comp_armature_bones_modal(armOBJ, armature, component, celem):
         elem = ed[celem.elem]
         elcol = bpy.data.collections[elem.name]
-        for node_int_label in range(elem.nb_modal_node-1):
-            modal_node = elem.modal_node["node_" + str(elem.int_label) + '_'+ str(node_int_label)]
-            N1 = elcol.objects[elem.modal_node["node_" + str(elem.int_label) + '_'+ str(node_int_label)].blender_object]
-            N2 = elcol.objects[elem.modal_node["node_" + str(elem.int_label) + '_'+ str(node_int_label+1)].blender_object]
+        for i in range(elem.nb_modal_node-1):
+            modal_node = elem.modal_node[i]
+            N1 = elcol.objects[elem.modal_node[i].blender_object]
+            N2 = elcol.objects[elem.modal_node[i+1].blender_object]
             lN1 = N1.location
             lN2 = N2.location
             pN1 = Vector((lN1[0], lN1[1], lN1[2]))

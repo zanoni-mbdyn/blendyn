@@ -687,6 +687,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
         name="plot engine",
         description = 'List of available plot engine'
     )
+
     plot_type: EnumProperty(
         items=[("TIME_HISTORY", "Time history", "Time history", '', 1), \
                ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2), \
@@ -704,6 +705,39 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
         description = "Are you want to save your plot as png?",
         default = False
     )
+
+    sim_stress: BoolProperty(
+        description =  "Should we simulate stress or not?",
+        default = False
+    )
+
+    internal_visualize: EnumProperty(
+        items=[("Internal Force", "Internal Force", "Internal Force", '', 1), \
+               ("Internal Moment", "Internal Moment", "Internal Moment", '', 2)],
+        name="Internal Visualization Mode",
+        default="Internal Force"
+    )
+
+    internal_visualize_dimension: EnumProperty(
+        items = [("X","X","X",'',1),
+                 ("Y","Y","Y",'',2),
+                 ("Z","Z","Z",'',3)],
+        name = "Internal Visualization dimension",
+        default = 'X'
+    )
+
+    color_min_boundary: FloatProperty(
+        name = "Min color boundary",
+        description = "Lower limitation of internal force/moment visualization",
+        default = -10
+    )
+
+    color_max_boundary: FloatProperty(
+        name = "Max color boundary",
+        description = "Upper limitation of internal force/moment visualization",
+        default = 10
+    )
+
 
     if HAVE_PLOT:
         plot_sxy_varX: StringProperty(
@@ -729,12 +763,14 @@ class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
         description = "Type of MBDyn entity associated with object",
         default = 'none'
     )
+
     # Dictionary key
     dkey: StringProperty(
         name = "MBDyn dictionary index",
         description = "Index of the entry of the MBDyn dictionary relative to the object",
         default = 'none'
     )
+
     # Specific for plotting
     if HAVE_PLOT:
         plot_var_index: IntProperty(
@@ -742,7 +778,6 @@ class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
             description = "index of the current variable to be plotted",
             default = 0
         )
-
 # -----------------------------------------------------------
 # end of BLENDYN_PG_settings_object class
 
@@ -860,6 +895,7 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
             bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
             bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
             bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
+            bpy.ops.blendyn.import_stress('EXEC_DEFAULT')
         except RuntimeError as re:
             message = "BLENDYN_OT_standard_import::modal(): something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
@@ -1448,7 +1484,7 @@ class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
 
         remove_oldframes(context)
 
-        if not(context.scene.mbdyn.use_netcdf):
+        if not(mbs.use_netcdf):
             ret_val = set_motion_paths_mov(context)
         else:
             ret_val = set_motion_paths_netcdf(context)
@@ -1533,9 +1569,31 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col.label(text = "MBDyn simulation results")
         col.operator(BLENDYN_OT_select_output_file.bl_idname, \
                 text = "Select results file")
+        if mbs.use_netcdf:
+            row = layout.row()
+            col = layout.column(align = True)
+            col.prop(mbs, "sim_stress", text = "Import internal property")
+            if mbs.sim_stress:
+                col = layout.column(align = True)
+                col.prop(mbs, "internal_visualize", text = "Type ")
+                col.prop(mbs, "internal_visualize_dimension", text="Dim ")
+                row = col.row()
+                split = row.split(factor=0.5)
+                col = split.column()
+                col.label(text="Min")
+                col = split.column()
+                col.label(text="Max")
 
-        row = layout.row()
+                col = layout.column(align = True)
+                row = col.row()
+                split = row.split(factor = 0.5)
+                col = split.column()
+                col.prop(mbs, 'color_min_boundary', text = "")
+                col = split.column()
+                col.prop(mbs, 'color_max_boundary', text = "")
 
+                col = layout.column(align=True)
+                col.operator(BLENDYN_OT_color_boundary_autosetup.bl_idname, text = "Autosetup Boundary")
         col = layout.column(align = True)
         col.operator(BLENDYN_OT_standard_import.bl_idname,\
                 text = "Standard Import")
@@ -2325,46 +2383,42 @@ class BLENDYN_OT_modal_node_import_all(bpy.types.Operator):
             return {'CANCELLED'}
 
         wm = bpy.context.window_manager
-        Sum_Nnodes = 0
-        Sum_added_nodes = 0
-        for elem in ed:
-            Nnodes = len(elem.modal_node)
-            Sum_Nnodes += Nnodes
-            wm.progress_begin(0, Nnodes)
-            added_nodes = 0
-            for modal_node in elem.modal_node:
-                if not(spawn_modal_node_obj(context, elem, modal_node)):
-                    message = "Could not spawn the Blender object assigned to modal node " \
-                              + str(modal_node.name)\
-                              + ". Object already present?"
-                    self.report({'ERROR'}, message)
-                    baseLogger.error(selftag + message)
-                    return {'CANCELLED'}
-                obj = context.active_object
-                obj.mbdyn.type = 'node'
-                obj.mbdyn.dkey = modal_node.name
-                if modal_node.string_label != "none":
-                    obj.name = modal_node.string_label
-                else:
-                    obj.name = modal_node.name
-                modal_node.blender_object = obj.name
+        elem = ed[mbs.comp_selected_elem]
+        Nnodes = len(elem.modal_node)
+        wm.progress_begin(0, Nnodes)
+        added_nodes = 0
+        for modal_node in elem.modal_node:
+            if not(spawn_modal_node_obj(context, elem, modal_node)):
+                message = "Could not spawn the Blender object assigned to modal node " \
+                          + str(modal_node.name)\
+                          + ". Object already present?"
+                self.report({'ERROR'}, message)
+                baseLogger.error(selftag + message)
+                return {'CANCELLED'}
+            obj = context.active_object
+            obj.mbdyn.type = 'node'
+            obj.mbdyn.dkey = modal_node.name
+            if modal_node.string_label != "none":
+                obj.name = modal_node.string_label
+            else:
+                obj.name = modal_node.name
+            modal_node.blender_object = obj.name
 
-                message = "added modal node " \
-                          + str(modal_node.name) \
-                          + " to scene and associated with object " + obj.name
-                added_nodes += 1
-                baseLogger.info(selftag + message)
-                wm.progress_update(added_nodes)
-            wm.progress_end()
-            Sum_added_nodes += added_nodes
+            message = "added modal node " \
+                      + str(modal_node.name) \
+                      + " to scene and associated with object " + obj.name
+            added_nodes += 1
+            baseLogger.info(selftag + message)
+            wm.progress_update(added_nodes)
+        wm.progress_end()
 
         set_active_collection('Master Collection')
-        if (Sum_added_nodes == Sum_Nnodes):
+        if (Nnodes == added_nodes):
             message =  "All modal nodes imported successfully"
             self.report({'INFO'}, message)
             baseLogger.info(selftag + message)
             return {'FINISHED'}
-        elif Sum_added_nodes == 0:
+        elif added_nodes == 0:
             message = "No modal nodes imported"
             self.report({'WARNING'}, message)
             baseLogger.warning(selftag + message)

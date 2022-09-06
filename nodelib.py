@@ -147,7 +147,6 @@ def parse_node(context, rw):
             R[2][0] = float(rw[13])
             R[2][1] = float(rw[14])
             R[2][2] = float(rw[15])
-            print(str(R))
             return R.to_quaternion(), 'MATRIX'
         elif par[0:5] == 'euler':
             try:

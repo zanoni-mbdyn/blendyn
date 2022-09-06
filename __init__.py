@@ -48,6 +48,7 @@ from . pygalplotlib import *
 from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
+from . stresslib    import *
 
 classes = (
         BLENDYN_OT_install_dependencies,
@@ -92,6 +93,7 @@ classes = (
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
         BLENDYN_OT_import_total_pin,
+        BLENDYN_OT_color_boundary_autosetup,
         BLENDYN_PT_bevel,
         BLENDYN_OT_import_reference,
         BLENDYN_OT_mplot_var_scene,
@@ -152,6 +154,7 @@ classes = (
         BLENDYN_OT_select_modal_fem_file,
         BLENDYN_OT_read_modal_fem_file,
         BLENDYN_OT_modal_node_import_all,
+        BLENDYN_OT_import_stress,
         BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
