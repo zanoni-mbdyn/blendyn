@@ -1572,7 +1572,7 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         if mbs.use_netcdf:
             row = layout.row()
             col = layout.column(align = True)
-            col.prop(mbs, "sim_stress", text = "Import internal properties"
+            col.prop(mbs, "sim_stress", text = "Import internal properties")
             if mbs.sim_stress:
                 col = layout.column(align = True)
                 col.prop(mbs, "internal_visualize", text = "Type ")
