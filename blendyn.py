@@ -707,7 +707,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
     )
 
     sim_stress: BoolProperty(
-        description =  "Should we simulate stress or not?",
+        description =  "Should we visualize stresses/strains or not?",
         default = False
     )
 
