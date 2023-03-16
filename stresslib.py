@@ -26,12 +26,16 @@
 import bpy
 import os
 import math
-from netCDF4 import Dataset
 from mathutils import *
-import numpy as np
-import colorsys
 import logging
-
+try:
+    from netCDF4 import Dataset
+    import numpy as np
+    import colorsys
+except ModuleNotFoundError as ierr:
+    print("BLENDYN::stresslib.py: could not import dependencies. Visualization of internal stresses and strains " \
+          + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
 
 def ColorRamp_Position(head_pos, eval_pos, tail_pos):
     size = math.sqrt((head_pos[0]-tail_pos[0])**2+(head_pos[1]-tail_pos[1])**2+(head_pos[2]-tail_pos[2])**2)
@@ -902,4 +906,8 @@ class BLENDYN_OT_color_boundary_autosetup(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 #-----------------------------------------------------------------------------
+<<<<<<< HEAD
 # end of BLENDYN_OT_color_boundary_autosetup class
+=======
+# end of BLENDYN_OT_color_boundary_autosetup class
+>>>>>>> bugfix

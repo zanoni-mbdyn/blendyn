@@ -1371,7 +1371,7 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
-        self.timer = context.window_manager.event_timer_add(0.5, context.window)
+        self.timer = context.window_manager.event_timer_add(0.5, window=context.window)
         context.window_manager.modal_handler_add(self)
 
         selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
@@ -1398,7 +1398,7 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
                 try:
                     status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
                     status = status.split(' ')[2]
-                    percent = (float(status)/mbs.final_time)*100
+                    percent = int((float(status)/mbs.final_time)*100)
                 except IndexError:
                     pass
                 except ValueError:
