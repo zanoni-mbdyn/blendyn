@@ -906,8 +906,4 @@ class BLENDYN_OT_color_boundary_autosetup(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 #-----------------------------------------------------------------------------
-<<<<<<< HEAD
 # end of BLENDYN_OT_color_boundary_autosetup class
-=======
-# end of BLENDYN_OT_color_boundary_autosetup class
->>>>>>> bugfix
