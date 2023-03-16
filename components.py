@@ -257,6 +257,10 @@ class BLENDYN_OT_component_add_confirm(bpy.types.Operator):
             print(message)
             baseLogger.error(selftag + message)
             return {'CANCELLED'}
+        elif retval == {'ZERO VOLUME BONE'}:
+            message = "cannot create bone from one node or two nodes at the same position."
+            print(message)
+            baseLogger.error(selftag + message)
         elif retval == {'ARMATURE_PARENT_FAILED'}:
             message = "unable to parent mesh to armature."
             print(message)
@@ -339,24 +343,6 @@ class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_remove_elem class
 
-class BLENDYN_OT_component_remove_elem(bpy.types.Operator):
-    """ Removes an element to the component list and reorders
-        the others """
-    bl_idname = "blendyn.component_remove_elem"
-    bl_label = "Remove an element from a MBDyn component"
-
-    def execute(self, context):
-        mbs = context.scene.mbdyn
-        component = mbs.components[mbs.cd_index]
-        component.elements.remove(component.el_index)
-        for idx in range(len(component.elements)):
-            component.elements[idx].str_idx = idx
-        return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        return self.execute(context)
-# -----------------------------------------------------------
-# end of BLENDYN_OT_component_remove_elem class
 
 class BLENDYN_OT_component_remove_all_elems(bpy.types.Operator):
     """ Removes all elements to the component list """
@@ -384,7 +370,7 @@ class BLENDYN_OT_component_add_selected_elems(bpy.types.Operator):
         ed = mbs.elems
         component = mbs.components[mbs.cd_index]
         sel_elems = [ed[obj.mbdyn.dkey] for obj in bpy.context.selected_objects \
-                if (obj.mbdyn.type == 'element') and (ed[obj.mbdyn.dkey].type in DEFORMABLE_ELEMENTS) ]
+                if (obj.mbdyn.type == 'element') and (ed[obj.mbdyn.dkey].type not in {'modal'}) and (ed[obj.mbdyn.dkey].type in DEFORMABLE_ELEMENTS) ]
         for idx in range(len(sel_elems)):
             celem = component.elements.add()
             celem.elem = sel_elems[idx].name
@@ -395,3 +381,8 @@ class BLENDYN_OT_component_add_selected_elems(bpy.types.Operator):
         return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_component_add_selected_elems class
+
+
+
+
+

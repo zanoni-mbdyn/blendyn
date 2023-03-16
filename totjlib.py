@@ -506,7 +506,7 @@ def spawn_total_pin_joint_element(elem, context):
         # TODO: display also velocity contraints arrows
 
         # join objects, with context override
-        ctx = context.copy()
+        ctx = bpy.context.copy()
         ctx['active_object'] = OBJs[0]
         ctx['selected_editable_objects'] = OBJs
         bpy.ops.object.join(ctx)

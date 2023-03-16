@@ -39,6 +39,7 @@ from .elementlib import *
 from .rfmlib import *
 from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
+from .stresslib import *
 
 HAVE_PSUTIL = False
 try:
@@ -107,6 +108,30 @@ def get_plot_vars_glob(context):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var
 
+def get_plot_engine():
+    HAVE_MATPLOTLIB = True
+    HAVE_PYGAL = True
+    HAVE_BOKEH = True
+    try:
+        import matplotlib
+    except ImportError:
+        HAVE_MATPLOTLIB = False
+    try:
+        import pygal
+    except ImportError:
+        HAVE_PYGAL = False
+    try:
+        import bokeh
+    except ImportError:
+        HAVE_BOKEH = False
+    is_have_engine = [HAVE_PYGAL, HAVE_MATPLOTLIB, HAVE_BOKEH]
+    plot_engines = [("PYGAL", "Pygal", "Pygal", '', 2), \
+                    ("MATPLOTLIB", "Matplotlib", "Matplotlib", '', 1), \
+                    ("BOKEH", "Bokeh", "bokeh", '', 3)]
+    return [plot_engines[i] for i in range(len(is_have_engine)) if is_have_engine[i]]
+
+
+
 def update_driver_variables(self, context):
     mbs = bpy.context.scene.mbdyn
     pvar = mbs.plot_vars[mbs.plot_var_index]
@@ -162,6 +187,32 @@ def setup_import(filepath, context):
 
 # -----------------------------------------------------------
 # end of setup_import() function
+
+def number_modal_modes(context):
+    """Check for total modal modes in .mod file"""
+    mbs = context.scene.mbdyn
+    if os.path.isfile(os.path.join(os.path.dirname(mbs.file_path), mbs.file_basename + '.mod')):
+        mod_file = os.path.join(os.path.dirname(mbs.file_path), mbs.file_basename + '.mod')
+        with open(mod_file) as mdf:
+            reader_mod = csv.reader(mdf, delimiter = ' ', skipinitialspace = True)
+            rw_mod = next(reader_mod)
+            first_mode = rw_mod[0]
+            num_modal_modes = 0
+            while True:
+                num_modal_modes += 1
+                try:
+                    rw_mod = next(reader_mod)
+                except StopIteration:
+                    break
+                mode = rw_mod[0]
+                if mode == first_mode:
+                    break
+        mbs.num_modal_modes = num_modal_modes
+    else:
+        mbs.num_modal_modes = 0
+        pass
+#---------------------------------------------------------------
+# end of number_modal_modes() function
 
 def no_output(context):
     """Check for nodes with no output"""
@@ -713,7 +764,7 @@ def hide_or_delete(obj_names, missing):
             bpy.ops.object.delete()
 
 def set_motion_paths_mov(context):
-    """ Parses the .mov file and sets the nodes motion paths """
+    """ Parses the .mov file and .mod file then sets the nodes motion paths """
     # Debug message
     print("Blendyn::set_motion_paths_mov(): Setting Motion Paths using .mov output...")
 
@@ -732,8 +783,19 @@ def set_motion_paths_mov(context):
     mov_file = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.mov')
 
+    have_mod_file = True
+    if os.path.isfile(os.path.join(os.path.dirname(mbs.file_path), \
+                            mbs.file_basename + '.mod')):
+        mod_file = os.path.join(os.path.dirname(mbs.file_path), \
+                                mbs.file_basename + '.mod')
+    else:
+        have_mod_file = False
+
     # Debug message
-    print("Blendyn::set_motion_paths_mov(): Reading from file:", mov_file)
+    if have_mod_file:
+        print("Blendyn::set_motion_paths_mov(): Reading from file: {0} and {1}".format(mov_file, mod_file))
+    else:
+        print("Blendyn::set_motion_paths_mov(): Reading from file: {0}".format(mov_file))
 
     # total number of frames to be animated
     scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
@@ -747,85 +809,317 @@ def set_motion_paths_mov(context):
 
     # Cycle to establish which objects to animate
     anim_objs = dict()
-
     wm.progress_begin(scene.frame_start, scene.frame_end)
-    try:
-        with open(mov_file) as mf:
-            reader = csv.reader(mf, delimiter=' ', skipinitialspace=True)
+    if have_mod_file:
+        try:
+            with open(mod_file) as mdf:
+                with open(mov_file) as mvf :
+                    reader_mov = csv.reader(mvf, delimiter=' ', skipinitialspace=True)
+                    reader_mod = csv.reader(mdf, delimiter=' ', skipinitialspace=True)
+                    # first loop: we establish which object to animate
+                    scene.frame_current = scene.frame_start
 
-            # first loop: we establish which object to animate
-            scene.frame_current = scene.frame_start
+                    # skip to the first timestep to import
+                    for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
+                        next(reader_mov)
 
-            # skip to the first timestep to import
-            for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
-                next(reader)
+                    for ndx in range(int(mbs.start_time * mbs.num_modal_modes / mbs.time_step)):
+                        next(reader_mod)
 
-            first = []
-            second = []
-            for ndx in range(mbs.num_nodes):
-                rw = np.array(next(reader)).astype(np.float)
-                first.append(rw)
-                second.append(rw)
-
-                try:
-                    obj_name = nd['node_' + str(int(rw[0]))].blender_object
-
-                    if obj_name != 'none' and nd['node_' + str(int(rw[0]))].output:
-                        anim_objs[rw[0]] = obj_name
-                        obj = bpy.data.objects[obj_name]
-                        obj.select_set(state = True)
-                        set_obj_locrot_mov(obj, rw)
-                except KeyError:
-                    pass
-
-            # main for loop, from second frame to last
-            freq = mbs.load_frequency
-            Nskip = 0
-            if freq > 1:
-                Nskip = int(np.floor(freq)*mbs.num_nodes)
-
-            for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
-                scene.frame_current += 1
-                message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
-                print(message)
-                logging.info(message)
-
-                # skip (freq - 1)*N lines
-                for ii in range(Nskip):
-                    next(reader)
-
-                 
-                for ndx in range(mbs.num_nodes):
-                    first[ndx] = np.array(next(reader)).astype(np.float)
-                
-                if freq > 1:
-                    frac = np.ceil(frame) - frame
+                    first_mov = []
+                    second_mov = []
                     for ndx in range(mbs.num_nodes):
-                        second[ndx] = np.array(next(reader)).astype(np.float)
+                        rw_mov = np.array(next(reader_mov)).astype(np.float)
+                        first_mov.append(rw_mov)
+                        second_mov.append(rw_mov)
 
-                    for ndx in range(mbs.num_nodes):
                         try:
-                            answer = frac*first[ndx] + (1 - frac)*second[ndx]
-                            obj = bpy.data.objects[anim_objs[round(answer[0])]]
-                            obj.select_set(state = True)
-                            set_obj_locrot_mov(obj, answer)
+                            obj_name = nd['node_' + str(int(rw_mov[0]))].blender_object
+
+                            if obj_name != 'none' and nd['node_' + str(int(rw_mov[0]))].output:
+                                anim_objs[rw_mov[0]] = obj_name
+                                obj = bpy.data.objects[obj_name]
+                                obj.select_set(state = True)
+                                set_obj_locrot_mov(obj, rw_mov)
                         except KeyError:
                             pass
-                    first = second
-                else:
-                    for ndx in range(mbs.num_nodes):
-                        obj = bpy.data.objects[anim_objs[round(first[ndx][0])]]
-                        obj.select_set(state = True)
-                        set_obj_locrot_mov(obj, first[ndx])
+                    dg = bpy.context.evaluated_depsgraph_get()
+                    dg.update()
 
-                wm.progress_update(scene.frame_current)
-    except StopIteration:
-        pass
+                    # Initial position of modal nodes
+                    first_mod = []
+                    second_mod = []
+                    flag = False  # Whether we set up the node positions in the space
+                    mode_counter = 0
+
+                    for mdx in range(mbs.num_modal_modes):
+                        mode_counter += 1
+                        rw_mod = np.array(next(reader_mod)).astype(np.float)
+                        first_mod.append(rw_mod)
+                        second_mod.append(rw_mod)
+                        elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
+                        elem = ed['modal_'+ elem_int_label]
+                        elem_node = nd['node_'+ str(elem.nodes[0].int_label)]
+                        elem_nodeOJB = bpy.data.objects[elem_node.blender_object]
+                        for node in elem.modal_node:
+                            try:
+                                obj_name = node.blender_object
+                                if obj_name != 'none':
+                                    obj = bpy.data.objects[obj_name]
+                                    obj.select_set(state=True)
+                                    if not flag:
+                                        obj.location = elem_nodeOJB.matrix_world @ Vector(
+                                            (node.relative_pos[0] + rw_mod[1] * node.mode[mode_int_label].mode_shape[0],
+                                             node.relative_pos[1] + rw_mod[1] * node.mode[mode_int_label].mode_shape[1],
+                                             node.relative_pos[2] + rw_mod[1] * node.mode[mode_int_label].mode_shape[2],
+                                             1)).to_3d()
+                                    else:
+                                        obj.location += elem_nodeOJB.matrix_world @ Vector(
+                                            (rw_mod[1] * node.mode[mode_int_label].mode_shape[0],
+                                             rw_mod[1] * node.mode[mode_int_label].mode_shape[1],
+                                             rw_mod[1] * node.mode[mode_int_label].mode_shape[2],
+                                             1)).to_3d() - elem_nodeOJB.location
+                                    try:
+                                        if mode_counter == len(elem.modal_node[0].mode):
+                                            obj.keyframe_insert(data_path="location")
+                                        obj.rotation_euler = elem_nodeOJB.rotation_euler
+                                        obj.keyframe_insert(data_path="rotation_euler")
+                                    except KeyError:
+                                        pass
+                            except KeyError:
+                                pass
+                        if not flag:
+                            flag = True
+                        try:
+                            if mode_counter == len(elem.modal_node[0].mode):
+                                mode_counter = 0
+                                flag = False
+                        except KeyError:
+                            pass
+                    # main for loop, from second frame to last
+                    freq = mbs.load_frequency
+                    Nskip_mov = 0
+                    Nskip_mod = 0
+
+                    for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
+                        scene.frame_current += 1
+                        message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
+                        print(message)
+                        logging.info(message)
+
+                        # skip (freq - 1)*N lines
+                        if freq > 1:
+                            Nskip_mov = (int(frame) - int(frame - freq) - 2) * mbs.num_nodes
+                            Nskip_mod = (int(frame) - int(frame - freq) - 2) * mbs.num_modal_modes
+
+                        if Nskip_mov >= 0:
+                            for ii in range(Nskip_mov):
+                                next(reader_mov)
+                            for ndx in range(mbs.num_nodes):
+                                first_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                        if Nskip_mod >= 0:
+                            for ii in range(Nskip_mod):
+                                next(reader_mod)
+                            for ndx in range(mbs.num_modal_modes):
+                                first_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+
+                        if freq > 1:
+                            frac = np.ceil(frame) - frame
+                            for ndx in range(mbs.num_nodes):
+                                second_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                            for ndx in range(mbs.num_modal_modes):
+                                second_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+
+                            for ndx in range(mbs.num_nodes):
+                                try:
+                                    answer = frac*first_mov[ndx] + (1 - frac)*second_mov[ndx]
+                                    obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                                    obj.select_set(state = True)
+                                    set_obj_locrot_mov(obj, answer)
+                                except KeyError:
+                                    pass
+                            dg = bpy.context.evaluated_depsgraph_get()
+                            dg.update()
+
+                            flag = False  # Whether we set up the node positions in the space
+                            mode_counter = 0
+                            for mdx in range(mbs.num_modal_modes):
+                                mode_counter += 1
+                                elem_int_label, mode_int_label = str(first_mod[mdx][0]).split('.')
+                                elem = ed['modal_' + elem_int_label]
+                                elem_node = nd['node_' + str(elem.nodes[0].int_label)]
+                                elem_nodeOJB =  bpy.data.objects[elem_node.blender_object]
+                                answer = frac * first_mod[mdx] + (1 - frac) * second_mod[mdx]
+                                for node in elem.modal_node:
+                                    try:
+                                        obj_name = node.blender_object
+                                        if obj_name != 'none':
+                                            obj = bpy.data.objects[obj_name]
+                                            obj.select_set(state=True)
+                                            if not flag:
+                                                obj.location = elem_nodeOJB.matrix_world @ Vector(
+                                                    (node.relative_pos[0] + answer[1] *
+                                                     node.mode[mode_int_label].mode_shape[0],
+                                                     node.relative_pos[1] + answer[1] *
+                                                     node.mode[mode_int_label].mode_shape[1],
+                                                     node.relative_pos[2] + answer[1] *
+                                                     node.mode[mode_int_label].mode_shape[2], 1)).to_3d()
+                                            else:
+                                                obj.location += elem_nodeOJB.matrix_world @ Vector(
+                                                    (answer[1] * node.mode[mode_int_label].mode_shape[0],
+                                                     answer[1] * node.mode[mode_int_label].mode_shape[1],
+                                                     answer[1] * node.mode[mode_int_label].mode_shape[2],
+                                                     1)).to_3d() - elem_nodeOJB.location
+                                            try:
+                                                if mode_counter == len(elem.modal_node[0].mode):
+                                                    obj.keyframe_insert(data_path="location")
+                                                obj.rotation_euler = elem_nodeOJB.rotation_euler
+                                                obj.keyframe_insert(data_path="rotation_euler")
+                                            except KeyError:
+                                                pass
+                                    except KeyError:
+                                        pass
+                                if not flag:
+                                    flag = True
+                                try:
+                                    if mode_counter == len(elem.modal_node[0].mode):
+                                        mode_counter = 0
+                                        flag = False
+                                except KeyError:
+                                    pass
+
+                            first_mod = second_mod
+                            first_mov = second_mov
+                        else:
+                            for ndx in range(mbs.num_nodes):
+                                rw_mov = first_mov[ndx]
+                                obj = bpy.data.objects[anim_objs[round(rw_mov[0])]]
+                                obj.select_set(state = True)
+                                set_obj_locrot_mov(obj, rw_mov)
+                            dg = bpy.context.evaluated_depsgraph_get()
+                            dg.update()
+
+                            flag = False  # Whether we set up the node positions in the space
+                            mode_counter = 0
+                            for mdx in range(mbs.num_modal_modes):
+                                mode_counter += 1
+                                rw_mod = first_mod[mdx]
+                                elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
+                                elem = ed['modal_' + elem_int_label]
+                                elem_node = nd['node_' + str(elem.nodes[0].int_label)]
+                                elem_nodeOJB = bpy.data.objects[elem_node.blender_object]
+                                for node in elem.modal_node:
+                                    try:
+                                        obj_name = node.blender_object
+                                        if obj_name != 'none':
+                                            obj = bpy.data.objects[obj_name]
+                                            obj.select_set(state=True)
+                                            if not flag:
+                                                obj.location = elem_nodeOJB.matrix_world @ Vector(
+                                                    (node.relative_pos[0] + rw_mod[1] *
+                                                     node.mode[mode_int_label].mode_shape[0],
+                                                     node.relative_pos[1] + rw_mod[1] *
+                                                     node.mode[mode_int_label].mode_shape[1],
+                                                     node.relative_pos[2] + rw_mod[1] *
+                                                     node.mode[mode_int_label].mode_shape[2], 1)).to_3d()
+                                            else:
+                                                obj.location += elem_nodeOJB.matrix_world @ Vector(
+                                                    (rw_mod[1] * node.mode[mode_int_label].mode_shape[0],
+                                                     rw_mod[1] * node.mode[mode_int_label].mode_shape[1],
+                                                     rw_mod[1] * node.mode[mode_int_label].mode_shape[2],
+                                                     1)).to_3d() - elem_nodeOJB.location
+                                            try:
+                                                if mode_counter == len(elem.modal_node[0].mode):
+                                                    obj.keyframe_insert(data_path="location")
+                                                obj.rotation_euler = elem_nodeOJB.rotation_euler
+                                                obj.keyframe_insert(data_path="rotation_euler")
+                                            except KeyError:
+                                                pass
+                                    except KeyError:
+                                        pass
+                                if not flag:
+                                    flag = True
+                                try:
+                                    if mode_counter == len(elem.modal_node[0].mode):
+                                        mode_counter = 0
+                                        flag = False
+                                except KeyError:
+                                    pass
+                        wm.progress_update(scene.frame_current)
+
+        except IOError:
+            pass
+    else:
+        try:
+            with open(mov_file) as mvf:
+                reader_mov = csv.reader(mvf, delimiter=' ', skipinitialspace=True)
+                # first loop: we establish which object to animate
+                scene.frame_current = scene.frame_start
+
+                # skip to the first timestep to import
+                for ndx in range(int(mbs.start_time * mbs.num_nodes / mbs.time_step)):
+                    next(reader_mov)
+
+                first_mov = []
+                second_mov = []
+                for ndx in range(mbs.num_nodes):
+                    rw_mov = np.array(next(reader_mov)).astype(np.float)
+                    first_mov.append(rw_mov)
+                    second_mov.append(rw_mov)
+                    try:
+                        obj_name = nd['node_' + str(int(rw_mov[0]))].blender_object
+
+                        if obj_name != 'none' and nd['node_' + str(int(rw_mov[0]))].output:
+                            anim_objs[rw_mov[0]] = obj_name
+                            obj = bpy.data.objects[obj_name]
+                            obj.select_set(state=True)
+                            set_obj_locrot_mov(obj, rw_mov)
+                    except KeyError:
+                        pass
+                # main for loop, from second frame to last
+                freq = mbs.load_frequency
+                Nskip_mov = 0
+
+                for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
+                    scene.frame_current += 1
+                    message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
+                    print(message)
+                    logging.info(message)
+
+                    # skip (freq - 1)*N lines
+                    if freq > 1:
+                        Nskip_mov = (int(frame) - int(frame - freq) - 2) * mbs.num_nodes
+
+                    if Nskip_mov >= 0:
+                        for ii in range(Nskip_mov):
+                            next(reader_mov)
+                        for ndx in range(mbs.num_nodes):
+                            first_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+
+                    if freq > 1:
+                        frac = np.ceil(frame) - frame
+                        for ndx in range(mbs.num_nodes):
+                            second_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                        for ndx in range(mbs.num_nodes):
+                            try:
+                                answer = frac * first_mov[ndx] + (1 - frac) * second_mov[ndx]
+                                obj = bpy.data.objects[anim_objs[round(answer[0])]]
+                                obj.select_set(state=True)
+                                set_obj_locrot_mov(obj, answer)
+                            except KeyError:
+                                pass
+                        first_mov = second_mov
+                    else:
+                        for ndx in range(mbs.num_nodes):
+                            rw_mov = first_mov[ndx]
+                            obj = bpy.data.objects[anim_objs[round(rw_mov[0])]]
+                            obj.select_set(state=True)
+                            set_obj_locrot_mov(obj, rw_mov)
+                    wm.progress_update(scene.frame_current)
+        except IOError:
+            pass
     wm.progress_end()
-
     # Update deformable elements
-
-
     # Gets simulation time (FIXME: not the most clean and efficient way, for sure...)
     if mbs.simtime:
         mbs.simtime.clear()
@@ -836,10 +1130,10 @@ def set_motion_paths_mov(context):
     for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
         st.time = mbs.time_step * ii
-
     return {'FINISHED'}
 # -----------------------------------------------------------
 # end of set_motion_paths_mov() function
+
 
 def active_object_rel(bool1, bool2):
     if not bool1:
@@ -1008,19 +1302,193 @@ def comp_repr(components, variable, context):
 
     return comps
 
-def set_motion_paths_netcdf(context):
+def set_motion_modal_nodes(context, reader_mod, first_mod, second_mod, nctime, frame):
+    scene = context.scene
+    mbs = context.scene.mbdyn
+    ed = mbs.elems
+    nd = mbs.nodes
+    if scene.frame_current == scene.frame_start:
+        # Initial position of modal nodes
+        flag = False  # Whether we set up the node positions in the space
+        mode_counter = 0
+        for mdx in range(mbs.num_modal_modes):
+            mode_counter += 1
+            rw_mod = np.array(next(reader_mod)).astype(np.float)
+            first_mod.append(rw_mod)
+            second_mod.append(rw_mod)
+            elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
+            elem = ed['modal_' + str(elem_int_label)]
+            elem_node = nd['node_' + str(elem.nodes[0].int_label)]
+            elem_nodeOJB = bpy.data.objects[elem_node.blender_object]
+            for node in elem.modal_node:
+                try:
+                    obj_name = node.blender_object
+                    if obj_name != 'none':
+                        obj = bpy.data.objects[obj_name]
+                        obj.select_set(state=True)
+                        if not flag:
+                            obj.location = elem_nodeOJB.matrix_world @ Vector(
+                                (node.relative_pos[0] + rw_mod[1] * node.mode[mode_int_label].mode_shape[0],
+                                 node.relative_pos[1] + rw_mod[1] * node.mode[mode_int_label].mode_shape[1],
+                                 node.relative_pos[2] + rw_mod[1] * node.mode[mode_int_label].mode_shape[2], 1)).to_3d()
+                        else:
+                            obj.location += elem_nodeOJB.matrix_world @ Vector(
+                                (rw_mod[1] * node.mode[mode_int_label].mode_shape[0],
+                                 rw_mod[1] * node.mode[mode_int_label].mode_shape[1],
+                                 rw_mod[1] * node.mode[mode_int_label].mode_shape[2],
+                                 1)).to_3d() - elem_nodeOJB.location
+                        try:
+                            if mode_counter == len(elem.modal_node[0].mode):
+                                obj.keyframe_insert(data_path="location")
+                            obj.rotation_euler = elem_nodeOJB.rotation_euler
+                            obj.keyframe_insert(data_path="rotation_euler")
+                        except KeyError:
+                            pass
+                except KeyError:
+                    pass
+            if not flag:
+                flag = True
+            try:
+                if mode_counter == len(elem.modal_node[0].mode):
+                    mode_counter = 0
+                    flag = False
+            except KeyError:
+                pass
+    else:
+        freq = mbs.load_frequency
+        Nskip_mod = 0
+        if freq > 1:
+            Nskip_mod = (int(scene.frame_current * freq + nctime[0] / mbs.time_step) - int(
+                (scene.frame_current - 1) * freq + nctime[0] / mbs.time_step) - 2) * mbs.num_modal_modes
+        if Nskip_mod >= 0:
+            for ii in range(Nskip_mod):
+                next(reader_mod)
+            for ndx in range(mbs.num_modal_modes):
+                first_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
 
+        if freq > 1:
+            frac = np.ceil(frame) - frame
+            for ndx in range(mbs.num_modal_modes):
+                second_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+
+            flag = False  # Whether we set up the node positions in the space
+            mode_counter = 0
+            for mdx in range(mbs.num_modal_modes):
+                mode_counter += 1
+                rw_mod = first_mod[mdx]
+                elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
+                elem = ed['modal_' + str(elem_int_label)]
+                elem_node = nd['node_' + str(elem.nodes[0].int_label)]
+                elem_nodeOJB = bpy.data.objects[elem_node.blender_object]
+                for node in elem.modal_node:
+                    try:
+                        obj_name = node.blender_object
+                        if obj_name != 'none':
+                            answer = frac * first_mod[mdx] + (1 - frac) * second_mod[mdx]
+                            obj = bpy.data.objects[obj_name]
+                            obj.select_set(state=True)
+                            if not flag:
+                                obj.location = elem_nodeOJB.matrix_world @ Vector(
+                                    (node.relative_pos[0] + answer[1] * node.mode[mode_int_label].mode_shape[0],
+                                     node.relative_pos[1] + answer[1] * node.mode[mode_int_label].mode_shape[1],
+                                     node.relative_pos[2] + answer[1] * node.mode[mode_int_label].mode_shape[2],
+                                     1)).to_3d()
+                            else:
+                                obj.location += elem_nodeOJB.matrix_world @ Vector(
+                                    (answer[1] * node.mode[mode_int_label].mode_shape[0],
+                                     answer[1] * node.mode[mode_int_label].mode_shape[1],
+                                     answer[1] * node.mode[mode_int_label].mode_shape[2],
+                                     1)).to_3d() - elem_nodeOJB.location
+
+                            try:
+                                if mode_counter == len(elem.modal_node[0].mode):
+                                    obj.keyframe_insert(data_path="location")
+                                obj.rotation_euler = elem_nodeOJB.rotation_euler
+                                obj.keyframe_insert(data_path="rotation_euler")
+                            except KeyError:
+                                pass
+
+                    except KeyError:
+                        pass
+                if not flag:
+                    flag = True
+                try:
+                    if mode_counter == len(elem.modal_node[0].mode):
+                        mode_counter = 0
+                        flag = False
+                except KeyError:
+                    pass
+            first_mod = second_mod
+        else:
+            flag = False  # Whether we set up the node positions in the space
+            mode_counter = 0
+            for mdx in range(mbs.num_modal_modes):
+                mode_counter += 1
+                rw_mod = first_mod[mdx]
+                elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
+                elem = ed['modal_' + elem_int_label]
+                elem_node = nd['node_' + str(elem.nodes[0].int_label)]
+                elem_nodeOJB = bpy.data.objects[elem_node.blender_object]
+                for node in elem.modal_node:
+                    try:
+                        obj_name = node.blender_object
+                        if obj_name != 'none':
+                            obj = bpy.data.objects[obj_name]
+                            obj.select_set(state=True)
+                            if not flag:
+                                obj.location = elem_nodeOJB.matrix_world @ Vector(
+                                    (node.relative_pos[0] + float(rw_mod[1]) * node.mode[mode_int_label].mode_shape[0],
+                                     node.relative_pos[1] + float(rw_mod[1]) * node.mode[mode_int_label].mode_shape[1],
+                                     node.relative_pos[2] + float(rw_mod[1]) * node.mode[mode_int_label].mode_shape[2],
+                                     1)).to_3d()
+
+                            else:
+                                obj.location += elem_nodeOJB.matrix_world @ Vector(
+                                    (float(rw_mod[1]) * node.mode[mode_int_label].mode_shape[0],
+                                     float(rw_mod[1]) * node.mode[mode_int_label].mode_shape[1],
+                                     float(rw_mod[1]) * node.mode[mode_int_label].mode_shape[2],
+                                     1)).to_3d() - elem_nodeOJB.location
+                            try:
+                                if mode_counter == len(elem.modal_node[0].mode):
+                                    obj.keyframe_insert(data_path="location")
+                                obj.rotation_euler = elem_nodeOJB.rotation_euler
+                                obj.keyframe_insert(data_path="rotation_euler")
+                            except KeyError:
+                                pass
+                    except KeyError:
+                        pass
+                if not flag:
+                    flag = False
+                try:
+                    if mode_counter == len(elem.modal_node[0].mode):
+                        mode_counter = 0
+                        flag = False
+                except KeyError:
+                    pass
+    return first_mod, second_mod
+#---------------------------------------------------------------
+# end of set_motion_modal_nodes() function
+
+
+def set_motion_paths_netcdf(context):
     scene = context.scene
     mbs = scene.mbdyn
     nd = mbs.nodes
     ed = mbs.elems
     wm = context.window_manager
 
+    have_mod_file = True
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
+    if os.path.isfile(os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.mod')):
+        mod_file =  os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.mod')
+    else:
+        have_mod_file = False
+
     nc = Dataset(ncfile, "r")
     freq = mbs.load_frequency
-
     nctime = nc.variables["time"]
     mbs.time_step = nctime[1] - nctime[0]
     if nctime[0] == 0.0:
@@ -1051,71 +1519,121 @@ def set_motion_paths_netcdf(context):
         st.time = mbs.time_step * ii
 
     # set objects location and rotation
-    wm.progress_begin(1, len(anim_nodes))
-
-    kk = 0
-    for ndx in anim_nodes:
-
-        dictobj = nd[ndx]
-        if not(dictobj.output):
-            continue
-
-        obj = bpy.data.objects[dictobj.blender_object]
-        obj.select_set(state = True)
-        node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-        par = dictobj.parametrization
-        if par == 'PHI':
+    wm.progress_begin(scene.frame_start, scene.frame_end)
+    if have_mod_file:
+        with open(mod_file) as mdf:
+            reader_mod = csv.reader(mdf, delimiter=' ', skipinitialspace=True)
+            for ndx in range(int(mbs.start_time * mbs.num_modal_modes / mbs.time_step)):
+                next(reader_mod)
+            first_mod = []
+            second_mod = []
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
+                for ndx in anim_nodes:
+                    dictobj = nd[ndx]
+                    if not(dictobj.output):
+                        continue
 
-                answer = netcdf_helper(nc, scene, node_var + 'X')
-                obj.location = Vector((answer))
-                obj.keyframe_insert(data_path = "location")
+                    obj = bpy.data.objects[dictobj.blender_object]
+                    obj.select_set(state = True)
+                    node_var = 'node.struct.' + str(dictobj.int_label) + '.'
+                    par = dictobj.parametrization
+                    if par == 'PHI':
+                            answer = netcdf_helper(nc, scene, node_var + 'X')
+                            obj.location = Vector((answer))
+                            obj.keyframe_insert(data_path = "location")
 
-                answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
-                rotvec = Vector((answer))
-                rotvec_norm = rotvec.normalized()
-                obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
-                        rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
-                obj.keyframe_insert(data_path = "rotation_axis_angle")
-        elif par[0:5] == 'EULER':
-            for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current = frame
+                            answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
+                            rotvec = Vector((answer))
+                            rotvec_norm = rotvec.normalized()
+                            obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
+                                    rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
+                            obj.keyframe_insert(data_path = "rotation_axis_angle")
+                    elif par[0:5] == 'EULER':
+                            loc = netcdf_helper(nc, scene, node_var + 'X')
+                            obj.location = Vector((loc))
+                            obj.keyframe_insert(data_path = "location")
 
-                loc = netcdf_helper(nc, scene, node_var + 'X')
-                obj.location = Vector((loc))
-                obj.keyframe_insert(data_path = "location")
+                            angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
+                            obj.rotation_euler = Euler( Vector((\
+                                                 angles[int(par[5]) - 1],\
+                                                 angles[int(par[6]) - 1],\
+                                                 angles[int(par[7]) - 1],\
+                                                 )),\
+                                                 axes[par[7]] + axes[par[6]] + axes[par[5]] )
+                            obj.keyframe_insert(data_path = "rotation_euler")
+                    elif par == 'MATRIX':
+                            answer = netcdf_helper(nc, scene, node_var + 'X')
+                            obj.location = Vector((answer))
+                            obj.keyframe_insert(data_path = "location")
 
-                angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
-                obj.rotation_euler = Euler( Vector((\
-                                     angles[int(par[5]) - 1],\
-                                     angles[int(par[6]) - 1],\
-                                     angles[int(par[7]) - 1],\
-                                     )),\
-                                     axes[par[7]] + axes[par[6]] + axes[par[5]] )
-                obj.keyframe_insert(data_path = "rotation_euler")
-        elif par == 'MATRIX':
-            for frame in range(scene.frame_start, scene.frame_end):
-                scene.frame_current = frame
+                            obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
 
-                answer = netcdf_helper(nc, scene, node_var + 'X')
-                obj.location = Vector((answer))
-                obj.keyframe_insert(data_path = "location")
+                            obj.keyframe_insert(data_path = "rotation_quaternion")
+                    else:
+                        # Should not be reached
+                        print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+                        return {'CANCELLED'}
+                    obj.select_set(state = False)
+                dg = bpy.context.evaluated_depsgraph_get()
+                dg.update()
+                first_mod, second_mod = set_motion_modal_nodes(context, reader_mod, first_mod, second_mod, nctime, frame)
+                if mbs.sim_stress:
+                    update_stress(context)
+                wm.progress_update(scene.frame_current)
+    else:
+        for frame in range(scene.frame_start, scene.frame_end):
+            scene.frame_current = frame
+            for ndx in anim_nodes:
+                dictobj = nd[ndx]
+                if not (dictobj.output):
+                    continue
 
-                obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
+                obj = bpy.data.objects[dictobj.blender_object]
+                obj.select_set(state=True)
+                node_var = 'node.struct.' + str(dictobj.int_label) + '.'
+                par = dictobj.parametrization
+                if par == 'PHI':
+                    answer = netcdf_helper(nc, scene, node_var + 'X')
+                    obj.location = Vector((answer))
+                    obj.keyframe_insert(data_path="location")
 
-                obj.keyframe_insert(data_path = "rotation_quaternion")
-        else:
-            # Should not be reached
-            print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
-            return {'CANCELLED'}
-        obj.select_set(state = False)
-        kk = kk + 1
-        wm.progress_update(kk)
+                    answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
+                    rotvec = Vector((answer))
+                    rotvec_norm = rotvec.normalized()
+                    obj.rotation_axis_angle = Vector((rotvec.magnitude, \
+                                                      rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
+                    obj.keyframe_insert(data_path="rotation_axis_angle")
+                elif par[0:5] == 'EULER':
+                    loc = netcdf_helper(nc, scene, node_var + 'X')
+                    obj.location = Vector((loc))
+                    obj.keyframe_insert(data_path="location")
+
+                    angles = math.radians(1.0) * netcdf_helper(nc, scene, node_var + 'E')
+                    obj.rotation_euler = Euler(Vector((
+                                                angles[int(par[5]) - 1], \
+                                                angles[int(par[6]) - 1], \
+                                                angles[int(par[7]) - 1],)), \
+                                            axes[par[7]] + axes[par[6]] + axes[par[5]])
+                    obj.keyframe_insert(data_path="rotation_euler")
+                elif par == 'MATRIX':
+                    answer = netcdf_helper(nc, scene, node_var + 'X')
+                    obj.location = Vector((answer))
+                    obj.keyframe_insert(data_path="location")
+
+                    obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
+
+                    obj.keyframe_insert(data_path="rotation_quaternion")
+                else:
+                    # Should not be reached
+                    print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+                    return {'CANCELLED'}
+                obj.select_set(state=False)
+            if mbs.sim_stress:
+                update_stress(context)
+            wm.progress_update(scene.frame_current)
     wm.progress_end()
-
     return {'FINISHED'}
-
 # -----------------------------------------------------------
 # end of set_motion_paths_netcdf() function
 

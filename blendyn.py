@@ -282,12 +282,7 @@ class BLENDYN_PG_plot_vars(bpy.types.PropertyGroup):
             description = "Frequency in plotting",
             default = 1
     )
-    plot_type: EnumProperty(
-            items = [("TIME_HISTORY", "Time history", "Time history", '', 1),\
-                    ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2)], \
-                    name = "plot type",
-                    default = "TIME_HISTORY"
-    )
+
     fft_remove_mean: BoolProperty(
             name = "Subtract mean",
             description = "Subtract the mean value before calculating the FFT",
@@ -568,11 +563,18 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "MBDyn elements collection index",
             default = 0
     )
+
     # MBDyn's node count
     num_nodes: IntProperty(
             name = "MBDyn nodes number",
             description = "MBDyn node count"
     )
+
+    num_modal_modes: IntProperty(
+            name = "Total modal modes number",
+            description = "Total modal node number in .mod file"
+    )
+
     # MBDyn's time steps count
     num_timesteps: IntProperty(
             name = "MBDyn time steps",
@@ -622,7 +624,7 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Scaling Factor",
             default = 1.0
     )
-    # Lower limit of range import for elemens
+    # Lower limit of range import for elements
     min_elem_import: IntProperty(
             name = "first element to import",
             description = "Lower limit of integer labels for range import for elements",
@@ -680,6 +682,62 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             description = "index of the current variable to be plotted",
             default = 0
     )
+    plot_engine: EnumProperty(
+        items= get_plot_engine(),
+        name="plot engine",
+        description = 'List of available plot engine'
+    )
+
+    plot_type: EnumProperty(
+        items=[("TIME_HISTORY", "Time history", "Time history", '', 1), \
+               ("AUTOSPECTRUM", "Autospectrum", "Autospectrum", '', 2), \
+               ("TRAJECTORY", "Trajectory", "Trajectory", '', 3)], \
+        name="plot type",
+        default="TIME_HISTORY"
+    )
+
+    show_in_localhost: BoolProperty(
+        description = "Are you want to show your plot in localhost?",
+        default = False
+    )
+
+    save_as_png: BoolProperty(
+        description = "Are you want to save your plot as png?",
+        default = False
+    )
+
+    sim_stress: BoolProperty(
+        description =  "Should we visualize stresses/strains or not?",
+        default = False
+    )
+
+    internal_visualize: EnumProperty(
+        items=[("Internal Force", "Internal Force", "Internal Force", '', 1), \
+               ("Internal Moment", "Internal Moment", "Internal Moment", '', 2)],
+        name="Internal Visualization Mode",
+        default="Internal Force"
+    )
+
+    internal_visualize_dimension: EnumProperty(
+        items = [("X","X","X",'',1),
+                 ("Y","Y","Y",'',2),
+                 ("Z","Z","Z",'',3)],
+        name = "Internal Visualization dimension",
+        default = 'X'
+    )
+
+    color_min_boundary: FloatProperty(
+        name = "Min color boundary",
+        description = "Lower limitation of internal force/moment visualization",
+        default = -10
+    )
+
+    color_max_boundary: FloatProperty(
+        name = "Max color boundary",
+        description = "Upper limitation of internal force/moment visualization",
+        default = 10
+    )
+
 
     if HAVE_PLOT:
         plot_sxy_varX: StringProperty(
@@ -705,12 +763,14 @@ class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
         description = "Type of MBDyn entity associated with object",
         default = 'none'
     )
+
     # Dictionary key
     dkey: StringProperty(
         name = "MBDyn dictionary index",
         description = "Index of the entry of the MBDyn dictionary relative to the object",
         default = 'none'
     )
+
     # Specific for plotting
     if HAVE_PLOT:
         plot_var_index: IntProperty(
@@ -718,7 +778,6 @@ class BLENDYN_PG_settings_object(bpy.types.PropertyGroup):
             description = "index of the current variable to be plotted",
             default = 0
         )
-
 # -----------------------------------------------------------
 # end of BLENDYN_PG_settings_object class
 
@@ -836,6 +895,7 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
             bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
             bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
             bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
+            bpy.ops.blendyn.import_stress('EXEC_DEFAULT')
         except RuntimeError as re:
             message = "BLENDYN_OT_standard_import::modal(): something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
@@ -854,6 +914,42 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
 
 # -----------------------------------------------------------
 # end of BLENDYN_OT_stardard_import class
+
+class BLENDYN_OT_read_modal_fem_file(bpy.types.Operator):
+    """ Imports modal nodes by parsing the .fem file """
+    bl_idname = "blendyn.read_modal_fem_file"
+    bl_label = "Modal .fem file parsing"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        ed = mbs.elems
+        modal_elem = ed[mbs.comp_selected_elem]
+        number_modal_modes(context)
+        ret_val = parse_modal_fem_file(modal_elem, context)
+
+        selftag = 'BLENDYN_OT_read_modal_fem_file::execute(): '
+        if ret_val == {'FEM_NOT_FOUND'}:
+            message = ".fem file not found"
+            self.report({'ERROR'}, message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+        elif ret_val == {'FINISHED'}:
+            message = "All modal nodes imported successfully"
+            self.report({'INFO'}, message)
+            baseLogger.info(selftag + message)
+            return {'FINISHED'}
+        else:
+            # should not be reached
+            message = "Unknown error in reading .log file."\
+                    + "The return value of parse_log_file() was: {}".format(ret_val)
+            self.report({'ERROR'}, message)
+            baseLogger.info(selftag + message)
+            return {'CANCELLED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_read_modal_fem_file class
 
 
 class BLENDYN_OT_read_mbdyn_log_file(bpy.types.Operator):
@@ -974,6 +1070,29 @@ class BLENDYN_OT_select_output_file(bpy.types.Operator, ImportHelper):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_select_output_file class
 
+class BLENDYN_OT_select_modal_fem_file(bpy.types.Operator, ImportHelper):
+    """ Sets MBDyn's output files path and basename """
+    bl_idname = "blendyn.select_modal_fem_file"
+    bl_label = "Select modal fem file"
+
+    filter_glob: StringProperty(
+            default = "*.fem",
+            options = {'HIDDEN'},
+            )
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        elem = mbs.elems[mbs.comp_selected_elem]
+        elem.fem_path = self.filepath
+        baseLogger.handlers = []
+        log_messages(mbs, baseLogger, False)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_select_modal_fem_file class
 
 class BLENDYN_OT_assign_labels(bpy.types.Operator):
     """ Assigns 'recognisable' labels to MBDyn nodes and elements by
@@ -1252,7 +1371,7 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
 
         mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
 
-        self.timer = context.window_manager.event_timer_add(0.5, context.window)
+        self.timer = context.window_manager.event_timer_add(0.5, window=context.window)
         context.window_manager.modal_handler_add(self)
 
         selftag = "BLENDYN_OT_run_mbdyn_simulation::execute() "
@@ -1279,7 +1398,7 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
                 try:
                     status = LogWatcher.tail(file + '.out', 1)[0].decode('utf-8')
                     status = status.split(' ')[2]
-                    percent = (float(status)/mbs.final_time)*100
+                    percent = int((float(status)/mbs.final_time)*100)
                 except IndexError:
                     pass
                 except ValueError:
@@ -1365,7 +1484,7 @@ class BLENDYN_OT_set_motion_paths(bpy.types.Operator):
 
         remove_oldframes(context)
 
-        if not(context.scene.mbdyn.use_netcdf):
+        if not(mbs.use_netcdf):
             ret_val = set_motion_paths_mov(context)
         else:
             ret_val = set_motion_paths_netcdf(context)
@@ -1450,9 +1569,31 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col.label(text = "MBDyn simulation results")
         col.operator(BLENDYN_OT_select_output_file.bl_idname, \
                 text = "Select results file")
+        if mbs.use_netcdf:
+            row = layout.row()
+            col = layout.column(align = True)
+            col.prop(mbs, "sim_stress", text = "Import internal properties")
+            if mbs.sim_stress:
+                col = layout.column(align = True)
+                col.prop(mbs, "internal_visualize", text = "Type ")
+                col.prop(mbs, "internal_visualize_dimension", text="Dim ")
+                row = col.row()
+                split = row.split(factor=0.5)
+                col = split.column()
+                col.label(text="Min")
+                col = split.column()
+                col.label(text="Max")
 
-        row = layout.row()
+                col = layout.column(align = True)
+                row = col.row()
+                split = row.split(factor = 0.5)
+                col = split.column()
+                col.prop(mbs, 'color_min_boundary', text = "")
+                col = split.column()
+                col.prop(mbs, 'color_max_boundary', text = "")
 
+                col = layout.column(align=True)
+                col.operator(BLENDYN_OT_color_boundary_autosetup.bl_idname, text = "Autosetup Boundary")
         col = layout.column(align = True)
         col.operator(BLENDYN_OT_standard_import.bl_idname,\
                 text = "Standard Import")
@@ -2098,6 +2239,21 @@ class BLENDYN_PT_components(bpy.types.Panel):
                 comp, "elements", \
                 comp, "el_index")
             col.prop(mbs, "comp_selected_elem", text = "Add")
+            if mbs.comp_selected_elem[:5] == 'modal':
+                col = layout.column()
+                col.operator(BLENDYN_OT_select_modal_fem_file.bl_idname,
+                             text = "Choose FEM file")
+                col.label(text = "FEM file path:")
+                col.prop(mbs.elems[mbs.comp_selected_elem], "fem_path", text = "")
+                row = col.row()
+                split = row.split(factor = 0.5)
+                col = split.column()
+                col.operator(BLENDYN_OT_read_modal_fem_file.bl_idname,
+                             text = "Load FEM file")
+                col = split.column()
+                col.operator(BLENDYN_OT_modal_node_import_all.bl_idname,
+                             text = "Import all modal nodes")
+            col = layout.column()
             col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
                     text = "Add Element")
             col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \
@@ -2202,6 +2358,81 @@ class BLENDYN_OT_node_import_all(bpy.types.Operator):
         return self.execute(context)
 # -----------------------------------------------------------
 # end of BLENDYN_OT_node_import_all class
+
+
+class BLENDYN_OT_modal_node_import_all(bpy.types.Operator):
+    """ Imports all the MBDyn nodes into the Blender scene """
+    bl_idname = "blendyn.modal_node_import_all"
+    bl_label = "Add Modal nodes to scene"
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        nd = mbs.nodes
+        ed = mbs.elems
+        added_modal_nodes = 0
+        selftag = "BLENDYN_OT_modal_node_import_all::execute(): "
+
+        try:
+            ncol = bpy.data.collections['mbdyn.nodes']
+            fcol = ncol.children['fem_nodes']
+            set_active_collection('fem_nodes')
+        except KeyError:
+            message =  "could not find the 'fem' collection"
+            print(message)
+            baseLogger.error(selftag + message)
+            return {'CANCELLED'}
+
+        wm = bpy.context.window_manager
+        elem = ed[mbs.comp_selected_elem]
+        Nnodes = len(elem.modal_node)
+        wm.progress_begin(0, Nnodes)
+        added_nodes = 0
+        for modal_node in elem.modal_node:
+            if not(spawn_modal_node_obj(context, elem, modal_node)):
+                message = "Could not spawn the Blender object assigned to modal node " \
+                          + str(modal_node.name)\
+                          + ". Object already present?"
+                self.report({'ERROR'}, message)
+                baseLogger.error(selftag + message)
+                return {'CANCELLED'}
+            obj = context.active_object
+            obj.mbdyn.type = 'node'
+            obj.mbdyn.dkey = modal_node.name
+            if modal_node.string_label != "none":
+                obj.name = modal_node.string_label
+            else:
+                obj.name = modal_node.name
+            modal_node.blender_object = obj.name
+
+            message = "added modal node " \
+                      + str(modal_node.name) \
+                      + " to scene and associated with object " + obj.name
+            added_nodes += 1
+            baseLogger.info(selftag + message)
+            wm.progress_update(added_nodes)
+        wm.progress_end()
+
+        set_active_collection('Master Collection')
+        if (Nnodes == added_nodes):
+            message =  "All modal nodes imported successfully"
+            self.report({'INFO'}, message)
+            baseLogger.info(selftag + message)
+            return {'FINISHED'}
+        elif added_nodes == 0:
+            message = "No modal nodes imported"
+            self.report({'WARNING'}, message)
+            baseLogger.warning(selftag + message)
+            return {'CANCELLED'}
+        else:
+            message = "Not every modal node was imported."
+            self.report({'WARNING'}, message)
+            baseLogger.warning(selftag + message)
+            return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+# -----------------------------------------------------------
+# end of BLENDYN_OT_modal_node_import_all class
 
 
 class BLENDYN_OT_node_import_single(bpy.types.Operator):

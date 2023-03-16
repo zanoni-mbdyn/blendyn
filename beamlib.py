@@ -372,7 +372,7 @@ def spawn_beam3_element(elem, context):
     # try to find Blender objects associated with the nodes that
     # the element connects
 
-    # we store in elem.rotoffsets the initial otientation of the nodes,
+    # we store in elem.rotoffsets the initial ortientation of the nodes,
     # to then set the tilt of the bevel section relative to it
     try:
         n1 = nd['node_' + str(elem.nodes[0].int_label)].blender_object

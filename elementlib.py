@@ -37,6 +37,7 @@ from .aerolib import *
 from .angularjlib import *
 from .axialrotjlib import *
 from .beamlib import *
+from .beamsliderlib import *
 from .bodylib import *
 from .brakejlib import *
 from .carjlib import *
@@ -49,6 +50,7 @@ from .gimbaljlib import *
 from .inlinejlib import *
 from .inplanejlib import *
 from .linearjlib import *
+from .modallib import *
 from .prismjlib import *
 from .revjlib import *
 from .rodjlib import *
@@ -70,11 +72,13 @@ def parse_elements(context, jnt_type, rw):
             "aero3": parse_aero3,
             "beam2": parse_beam2,
             "beam3": parse_beam3,
+            "beamslider": parse_beam_slider,
             "body": parse_body,
             "cardanohinge": parse_cardano_hinge,
             "cardanopin": parse_cardano_pin,
             "clamp": parse_clamp,
             "deformabledisplacementjoint": parse_deformable_displacement,
+            "modal": parse_modal,
             "revolutehinge": parse_revolute_hinge,
             "revolutepin": parse_revolute_pin,
             "revoluterotation": parse_revolute_rot,
@@ -184,6 +188,8 @@ def get_elems_types(self, context):
     return [(etype, etype, "%s elements"%etype) for etype in elem_types]
 
 ## Utility functions
+
+
 def fmin(x):
     min = x[0]
     loc = 0

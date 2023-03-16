@@ -36,6 +36,9 @@ import ntpath, os, csv
 
 from .elementlib import *
 
+
+
+
 class BLENDYN_PG_elem_pos_offset(bpy.types.PropertyGroup):
     value: FloatVectorProperty(
         name = "Offset value",
@@ -79,11 +82,84 @@ class BLENDYN_PG_elem_to_be_updated(bpy.types.PropertyGroup):
 # end of BLENDYN_PG_elem_to_be_updated class
 bpy.utils.register_class(BLENDYN_PG_elem_to_be_updated)
 
+## Modes Dictionary: contains modes information for each node
+class BLENDYN_PG_modal_modes_dictionary(bpy.types.PropertyGroup):
+    mode_shape: FloatVectorProperty(
+        name="Mode shape value",
+        description="Mode boundary in three directions",
+        size=3,
+        precision=6
+    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_modal_modes_dictionary class
+bpy.utils.register_class(BLENDYN_PG_modal_modes_dictionary)
+
+## Nodes Dictionary: contains nodes informations
+class BLENDYN_PG_modal_nodes_dictionary(bpy.types.PropertyGroup):
+    mbclass: StringProperty(
+            name = "Class of MBDyn element",
+            description  = ""
+    )
+    modal_int_label: IntProperty(
+            name = "Modal node integer label",
+            description = "Modal node integer label",
+    )
+    string_label: StringProperty(
+            name = "node string label",
+            description = "Node string label",
+            default = "none"
+    )
+    blender_object: StringProperty(
+            name = "blender object label",
+            description = "Blender object",
+            default = "none"
+    )
+    relative_pos: FloatVectorProperty(
+            name = "modal node relative position",
+            description = "Modal node relative position with reference node",
+            size = 3,
+            precision = 6
+    )
+    is_imported: BoolProperty(
+            name = "Is imported flag",
+            description = "Flag set to true at the end of the import process"
+    )
+
+    mode: CollectionProperty(
+            name = "Modal mode",
+            description = "Modal mode",
+            type = BLENDYN_PG_modal_modes_dictionary
+    )
+
+# -----------------------------------------------------------
+# end of BLENDYN_PG_modal_nodes_dictionary class
+bpy.utils.register_class(BLENDYN_PG_modal_nodes_dictionary)
 
 class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
     mbclass: StringProperty(
             name = "Class of MBDyn element",
             description  = ""
+            )
+
+    fem_path: StringProperty(
+            name="FEM File Path",
+            description="Path of Modal FEM file",
+            default="not yet selected"
+            )
+
+    modal_node: CollectionProperty(
+            name = "Modal nodes",
+            type = BLENDYN_PG_modal_nodes_dictionary
+    )
+
+    nb_modal_node: IntProperty(
+            name="Number of FEM nodes",
+            description= "Number of current FEM nodes if the element is modal joints"
+            )
+
+    nb_modal_mode: IntProperty(
+            name = "Number of Modal modes",
+            description = "Number of modal modes"
             )
 
     type: StringProperty(
@@ -124,6 +200,11 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             type = BLENDYN_PG_elem_rot_offset,
             name = "Rotational offsets of attach R.Fs. of joint",
             description = "Collector of rotational offsets of element attach R.Fs."
+            )
+
+    beam_number: IntProperty(
+            name="Number beam3",
+            description="Number of beam3 connected with beam slider"
             )
 
     import_function: StringProperty(
@@ -170,6 +251,7 @@ class BLENDYN_PG_elems_dictionary(bpy.types.PropertyGroup):
             description = "Function that updates the visualization of the element",
             default = 'none'
             )
+
 # -----------------------------------------------------------
 # end of BLENDYN_PG_elems_dictionary class
 bpy.utils.register_class(BLENDYN_PG_elems_dictionary)

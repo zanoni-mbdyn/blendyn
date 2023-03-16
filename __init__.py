@@ -16,6 +16,7 @@ from . aerolib      import *
 from . angularjlib  import *
 from . axialrotjlib import *
 from . beamlib      import *
+from . beamsliderlib import *
 from . bodylib      import *
 from . brakejlib    import *
 from . carjlib      import *
@@ -27,6 +28,7 @@ from . gimbaljlib   import *
 from . inlinejlib   import *
 from . inplanejlib  import *
 from . linearjlib   import *
+from . modallib     import *
 from . prismjlib    import *
 from . revjlib      import *
 from . rodjlib      import *
@@ -41,8 +43,12 @@ from . eigenlib     import *
 from . elements     import *
 from . components   import *
 from . baselib      import *
+from . matplotlib   import *
+from . pygalplotlib import *
+from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
+from . stresslib    import *
 
 classes = (
         BLENDYN_OT_install_dependencies,
@@ -56,6 +62,8 @@ classes = (
         BLENDYN_OT_import_beam2,
         BLENDYN_OT_import_beam3,
         BLENDYN_OT_update_beam3,
+        BLENDYN_OT_import_beam_slider,
+        BLENDYN_OT_import_modal,
         BLENDYN_OT_import_body,
         BLENDYN_OT_import_brake,
         BLENDYN_OT_import_cardano_hinge,
@@ -85,8 +93,23 @@ classes = (
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
         BLENDYN_OT_import_total_pin,
+        BLENDYN_OT_color_boundary_autosetup,
         BLENDYN_PT_bevel,
         BLENDYN_OT_import_reference,
+        BLENDYN_OT_mplot_var_scene,
+        BLENDYN_OT_mplot_var_object,
+        BLENDYN_OT_mplot_variables_list,
+        BLENDYN_OT_mplot_var_sxx_scene,
+        BLENDYN_OT_mplot_var_sxx_object,
+        BLENDYN_OT_mplot_trajectory_object,
+        BLENDYN_OT_mplot_trajectory_scene,
+        BLENDYN_OT_bplot_var_scene,
+        BLENDYN_OT_bplot_var_object,
+        BLENDYN_OT_bplot_variables_list,
+        BLENDYN_OT_bplot_var_sxx_scene,
+        BLENDYN_OT_bplot_var_sxx_object,
+        BLENDYN_OT_bplot_trajectory_object,
+        BLENDYN_OT_bplot_trajectory_scene,
         BLENDYN_OT_plot_var_sxx_scene,
         BLENDYN_OT_plot_var_sxx_object,
         BLENDYN_OT_plot_variables_list,
@@ -128,6 +151,10 @@ classes = (
         BLENDYN_OT_component_remove_elem,
         BLENDYN_OT_component_remove_all_elems,
         BLENDYN_OT_component_add_selected_elems,
+        BLENDYN_OT_select_modal_fem_file,
+        BLENDYN_OT_read_modal_fem_file,
+        BLENDYN_OT_modal_node_import_all,
+        BLENDYN_OT_import_stress,
         BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
