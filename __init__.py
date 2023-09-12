@@ -180,7 +180,7 @@ classes = (
         BLENDYN_OT_elements_import_all,
         BLENDYN_OT_obj_select_node,
         BLENDYN_OT_create_vertices_from_nodes,
-        BLENDYN_OT_delete_override,
+        # BLENDYN_OT_delete_override,
         BLENDYN_OT_outline_collapse,
         BLENDYN_OT_outline_expand,
         BLENDYN_PT_utilities

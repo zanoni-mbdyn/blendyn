@@ -2879,44 +2879,44 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
 # end of BLENDYN_OT_create_vertices_from_nodes class
 
 
-class BLENDYN_OT_delete_override(bpy.types.Operator):
-    """ Overrides the delete function of Blender Objects to remove
-        the related elements in MBDyn dictionaries """
-    bl_idname = "object.delete"
-    bl_label = "Delete"
-    use_global: BoolProperty()
-
-    @classmethod
-    def poll(cls, context):
-        return (context.active_object is not None)
-
-    @classmethod
-    def remove_from_dict(self, obj, context):
-        try:
-            dictitem = get_dict_item(context, obj)
-            dictitem.blender_object = 'none'
-            dictitem.is_imported = False
-        except AttributeError:
-            pass
-
-        if obj.mbdyn.type == 'element':
-            etu = context.scene.mbdyn.elems_to_update
-            for idx, ude in enumerate(etu):
-                if obj.mbdyn.dkey == ude.dkey:
-                    etu.remove(idx)
-                break
-
-    def execute(self, context):
-        for obj in context.selected_objects:
-            if len(context.scene.mbdyn.nodes):
-                try:
-                    self.remove_from_dict(obj, context)
-                except KeyError:
-                    pass
-            bpy.data.objects.remove(obj, do_unlink = True)
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_confirm(self, event)
-# -----------------------------------------------------------
+# class BLENDYN_OT_delete_override(bpy.types.Operator):
+#     """ Overrides the delete function of Blender Objects to remove
+#         the related elements in MBDyn dictionaries """
+#     bl_idname = "object.delete"
+#     bl_label = "Delete"
+#     use_global: BoolProperty()
+# 
+#     @classmethod
+#     def poll(cls, context):
+#         return (context.active_object is not None)
+# 
+#     @classmethod
+#     def remove_from_dict(self, obj, context):
+#         try:
+#             dictitem = get_dict_item(context, obj)
+#             dictitem.blender_object = 'none'
+#             dictitem.is_imported = False
+#         except AttributeError:
+#             pass
+# 
+#         if obj.mbdyn.type == 'element':
+#             etu = context.scene.mbdyn.elems_to_update
+#             for idx, ude in enumerate(etu):
+#                 if obj.mbdyn.dkey == ude.dkey:
+#                     etu.remove(idx)
+#                 break
+# 
+#     def execute(self, context):
+#         for obj in context.selected_objects:
+#             if len(context.scene.mbdyn.nodes):
+#                 try:
+#                     self.remove_from_dict(obj, context)
+#                 except KeyError:
+#                     pass
+#             bpy.data.objects.remove(obj, do_unlink = True)
+#         return {'FINISHED'}
+# 
+#     def invoke(self, context, event):
+#         return context.window_manager.invoke_confirm(self, event)
+# # -----------------------------------------------------------
 # end of BLENDYN_OT_delete_override class
