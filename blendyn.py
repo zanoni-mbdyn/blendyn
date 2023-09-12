@@ -2879,6 +2879,7 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
 # end of BLENDYN_OT_create_vertices_from_nodes class
 
 
+# NOT POSSIBLE ANYMORE IN 3.5> FIXME: Alternatives? 
 # class BLENDYN_OT_delete_override(bpy.types.Operator):
 #     """ Overrides the delete function of Blender Objects to remove
 #         the related elements in MBDyn dictionaries """
@@ -2919,4 +2920,4 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
 #     def invoke(self, context, event):
 #         return context.window_manager.invoke_confirm(self, event)
 # # -----------------------------------------------------------
-# end of BLENDYN_OT_delete_override class
+# # end of BLENDYN_OT_delete_override class
