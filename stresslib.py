@@ -26,7 +26,14 @@
 import bpy
 import os
 import math
-from netCDF4 import Dataset
+
+try: 
+    from netCDF4 import Dataset
+except (ImportError, OSError, ModuleNotFoundError) as ierr:
+    print("BLENDYN::stress.py: could not enable the stress visualization module. The reported error was:")
+    print("{0}".format(ierr))
+    HAVE_STRESS = False
+
 from mathutils import *
 import numpy as np
 import colorsys
