@@ -221,7 +221,11 @@ def spawn_gimbal_element(elem, context):
         ctx = bpy.context.copy()
         ctx['active_object'] = gimbaljOBJs[0]
         ctx['selected_editable_objects'] = gimbaljOBJs
-        bpy.ops.object.join(ctx)
+        if bpy.app.version < (4, 0, 0):
+            bpy.ops.object.join(ctx)
+        else:
+            with context.temp_override(**ctx):
+                bpy.ops.object.join()
      
         # set parenting of wireframe obj
         parenting(gimbaljOBJ, n1OBJ)

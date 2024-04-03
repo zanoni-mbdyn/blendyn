@@ -354,7 +354,11 @@ def spawn_total_joint_element(elem, context):
         ctx = context.copy()
         ctx['active_object'] = OBJs[0]
         ctx['selected_editable_objects'] = OBJs
-        bpy.ops.object.join(ctx)
+        if bpy.app.version < (4, 0, 0):
+            bpy.ops.object.join(ctx)
+        else:
+            with context.temp_override(**ctx):
+                bpy.ops.object.join()
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
@@ -506,13 +510,17 @@ def spawn_total_pin_joint_element(elem, context):
         # TODO: display also velocity contraints arrows
 
         # join objects, with context override
-        ctx = bpy.context.copy()
+        ctx = context.copy()
         ctx['active_object'] = OBJs[0]
         ctx['selected_editable_objects'] = OBJs
-        bpy.ops.object.join(ctx)
+        if bpy.app.version < (4, 0, 0):
+            bpy.ops.object.join(ctx)
+        else:
+            with context.temp_override(**ctx):
+                bpy.ops.object.join()
 
         # automatic scaling
-        s = (1./sqrt(3.))*n1OBJ.scale.magnitude
+        s = (.5/sqrt(3.))*n1OBJ.scale.magnitude
         totjOBJ.scale = Vector(( s, s, s ))
     
         # create an object representing the RF used to express the relative
