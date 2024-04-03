@@ -25,7 +25,7 @@
 import bpy
 
 from .elementlib import *
-from .matplotlib import *
+from .matplotliblib import *
 from .pygalplotlib import *
 from .bokehplotlib import *
 import os
