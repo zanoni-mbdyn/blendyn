@@ -74,8 +74,8 @@ def update_curr_eigmode(self, context):
         self.lambda_freq = 0.
         self.lambda_damp = 100
     else:
-        self.lambda_freq = lambda_imag/(2*math.pi)
-        self.lambda_damp = int(((lambda_real/lambda_imag)**2/(1 + (lambda_real/lambda_imag)**2))**.5*100)
+        self.lambda_freq = 1/2/math.pi*(lambda_real**2 + lambda_imag**2)**.5
+        self.lambda_damp = int(-lambda_real/(self.lambda_freq*2*math.pi)*100)
     return
 # -----------------------------------------------------------
 # end of update_curr_eigmode() function
