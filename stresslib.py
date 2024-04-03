@@ -35,10 +35,15 @@ except (ImportError, OSError, ModuleNotFoundError) as ierr:
     HAVE_STRESS = False
 
 from mathutils import *
-import numpy as np
-import colorsys
 import logging
-
+try:
+    from netCDF4 import Dataset
+    import numpy as np
+    import colorsys
+except ModuleNotFoundError as ierr:
+    print("BLENDYN::stresslib.py: could not import dependencies. Visualization of internal stresses and strains " \
+          + "will be disabled. The reported error was:")
+    print("{0}".format(ierr))
 
 def ColorRamp_Position(head_pos, eval_pos, tail_pos):
     size = math.sqrt((head_pos[0]-tail_pos[0])**2+(head_pos[1]-tail_pos[1])**2+(head_pos[2]-tail_pos[2])**2)
