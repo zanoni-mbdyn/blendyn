@@ -41,6 +41,7 @@ from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 from .stresslib import *
 
+
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -156,20 +157,16 @@ def setup_import(filepath, context):
         mbs.num_nodes = nc.dimensions['struct_node_labels_dim'].size
         mbs.num_timesteps = nc.dimensions['time'].size
         try:
-            eig_step = nc.variables['eig.step']
-            eig_time = nc.variables['eig.time']
-            eig_dCoef = nc.variables['eig.dCoef']
             NVecs = [dim for dim in nc.dimensions if 'iNVec_out' in dim]
-
             for ii in range(0, len(NVecs)):
                 eigsol = mbs.eigensolutions.add()
                 eigsol.index = int(NVecs[ii][4:-10])
-                eigsol.step = eig_step[eigsol.index]
-                eigsol.time = eig_time[eigsol.index]
-                eigsol.dCoef = eig_dCoef[eigsol.index]
+                eigsol.step = nc.variables['eig.' + str(ii) + '.step'][0]
+                eigsol.time = nc.variables['eig.' + str(ii) + '.time'][0]
+                eigsol.dCoef = nc.variables['eig.' + str(ii) + '.dCoef'][0]
                 eigsol.iNVec = nc.dimensions[NVecs[ii]].size
                 eigsol.curr_eigmode = 1
-        except KeyError:
+        except KeyError as err:
             message = 'BLENDYN::setup_import(): ' + \
                     'no valid eigenanalysis results found'
             print(message)
