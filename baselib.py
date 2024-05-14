@@ -826,7 +826,7 @@ def set_motion_paths_mov(context):
                     first_mov = []
                     second_mov = []
                     for ndx in range(mbs.num_nodes):
-                        rw_mov = np.array(next(reader_mov)).astype(np.float)
+                        rw_mov = np.array(next(reader_mov)).astype(float)
                         first_mov.append(rw_mov)
                         second_mov.append(rw_mov)
 
@@ -851,7 +851,7 @@ def set_motion_paths_mov(context):
 
                     for mdx in range(mbs.num_modal_modes):
                         mode_counter += 1
-                        rw_mod = np.array(next(reader_mod)).astype(np.float)
+                        rw_mod = np.array(next(reader_mod)).astype(float)
                         first_mod.append(rw_mod)
                         second_mod.append(rw_mod)
                         elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
@@ -913,19 +913,19 @@ def set_motion_paths_mov(context):
                             for ii in range(Nskip_mov):
                                 next(reader_mov)
                             for ndx in range(mbs.num_nodes):
-                                first_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                                first_mov[ndx] = np.array(next(reader_mov)).astype(float)
                         if Nskip_mod >= 0:
                             for ii in range(Nskip_mod):
                                 next(reader_mod)
                             for ndx in range(mbs.num_modal_modes):
-                                first_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+                                first_mod[ndx] = np.array(next(reader_mod)).astype(float)
 
                         if freq > 1:
                             frac = np.ceil(frame) - frame
                             for ndx in range(mbs.num_nodes):
-                                second_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                                second_mov[ndx] = np.array(next(reader_mov)).astype(float)
                             for ndx in range(mbs.num_modal_modes):
-                                second_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+                                second_mod[ndx] = np.array(next(reader_mod)).astype(float)
 
                             for ndx in range(mbs.num_nodes):
                                 try:
@@ -1060,7 +1060,7 @@ def set_motion_paths_mov(context):
                 first_mov = []
                 second_mov = []
                 for ndx in range(mbs.num_nodes):
-                    rw_mov = np.array(next(reader_mov)).astype(np.float)
+                    rw_mov = np.array(next(reader_mov)).astype(float)
                     first_mov.append(rw_mov)
                     second_mov.append(rw_mov)
                     try:
@@ -1091,12 +1091,12 @@ def set_motion_paths_mov(context):
                         for ii in range(Nskip_mov):
                             next(reader_mov)
                         for ndx in range(mbs.num_nodes):
-                            first_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                            first_mov[ndx] = np.array(next(reader_mov)).astype(float)
 
                     if freq > 1:
                         frac = np.ceil(frame) - frame
                         for ndx in range(mbs.num_nodes):
-                            second_mov[ndx] = np.array(next(reader_mov)).astype(np.float)
+                            second_mov[ndx] = np.array(next(reader_mov)).astype(float)
                         for ndx in range(mbs.num_nodes):
                             try:
                                 answer = frac * first_mov[ndx] + (1 - frac) * second_mov[ndx]
@@ -1310,7 +1310,7 @@ def set_motion_modal_nodes(context, reader_mod, first_mod, second_mod, nctime, f
         mode_counter = 0
         for mdx in range(mbs.num_modal_modes):
             mode_counter += 1
-            rw_mod = np.array(next(reader_mod)).astype(np.float)
+            rw_mod = np.array(next(reader_mod)).astype(float)
             first_mod.append(rw_mod)
             second_mod.append(rw_mod)
             elem_int_label, mode_int_label = str(rw_mod[0]).split('.')
@@ -1361,12 +1361,12 @@ def set_motion_modal_nodes(context, reader_mod, first_mod, second_mod, nctime, f
             for ii in range(Nskip_mod):
                 next(reader_mod)
             for ndx in range(mbs.num_modal_modes):
-                first_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+                first_mod[ndx] = np.array(next(reader_mod)).astype(float)
 
         if freq > 1:
             frac = np.ceil(frame) - frame
             for ndx in range(mbs.num_modal_modes):
-                second_mod[ndx] = np.array(next(reader_mod)).astype(np.float)
+                second_mod[ndx] = np.array(next(reader_mod)).astype(float)
 
             flag = False  # Whether we set up the node positions in the space
             mode_counter = 0
