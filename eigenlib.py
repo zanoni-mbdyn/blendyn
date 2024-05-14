@@ -265,7 +265,15 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         print(message)
         logging.info(message)
 
-        idx = nc.variables["eig.idx"][:]
+        if nc.variables["eig.idx"].ndim == 1:
+            idx = nc.variables["eig.idx"][:]
+            MAX_IDX = max(idx.data)
+        elif nc.variables["eig.idx"].ndim == 2:
+            # Legacy MBDyn NetCDF eigenanalysis output
+            idx = nc.variables["eig.idx"][mbs.curr_eigsol, :]
+            MAX_IDX = max(idx)
+        else:
+            raise TypeError("Blendyn::BLENDYN_OT_animate_eigenmode::execute() ERROR unsupported dimensions of eig.idx in NetCDF output")
         if all(idx < 0) or not(len(idx[~idx.mask])):
             message = "BLENDYN_OT_animate_eigenmode::execute(): eig.idx is empty."\
                     + " Activate \"output geometry\" in eigenanalysis card."
@@ -277,7 +285,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
             eigvec_re = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][0, cem - 1, :]
             eigvec_im = nc.variables["eig." + str(mbs.curr_eigsol) + ".VR"][1, cem - 1, :]
             eigvec_abs = (eigvec_re**2 + eigvec_im**2)**.5
-            eigvec_abs = eigvec_abs/max(eigvec_abs[0:(max(idx.data) + 12)])
+            eigvec_abs = eigvec_abs/max(eigvec_abs[0:(MAX_IDX + 12)])
         except KeyError:
             message = "BLENDYN_OT_mbdyn_animate_eigenmode:execute(): "\
                     + "The eigenanalysis output is incomplete. Aborting."

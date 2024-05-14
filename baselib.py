@@ -41,7 +41,6 @@ from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 from .stresslib import *
 
-
 HAVE_PSUTIL = False
 try:
     import psutil
@@ -150,6 +149,7 @@ def update_driver_variables(self, context):
 def setup_import(filepath, context):
     mbs = context.scene.mbdyn
     mbs.file_path, mbs.file_basename = path_leaf(filepath)
+
     if filepath[-2:] == 'nc':
         nc = Dataset(filepath, "r")
         mbs.use_netcdf = True
@@ -161,9 +161,15 @@ def setup_import(filepath, context):
             for ii in range(0, len(NVecs)):
                 eigsol = mbs.eigensolutions.add()
                 eigsol.index = int(NVecs[ii][4:-10])
-                eigsol.step = nc.variables['eig.' + str(ii) + '.step'][0]
-                eigsol.time = nc.variables['eig.' + str(ii) + '.time'][0]
-                eigsol.dCoef = nc.variables['eig.' + str(ii) + '.dCoef'][0]
+                try:
+                    eigsol.step = nc.variables['eig.' + str(ii) + '.step'][0]
+                    eigsol.time = nc.variables['eig.' + str(ii) + '.time'][0]
+                    eigsol.dCoef = nc.variables['eig.' + str(ii) + '.dCoef'][0]
+                except KeyError:
+                    # Maybe we are dealing with old output?
+                    eigsol.step = nc.variables['eig.step'][eigsol.index]
+                    eigsol.time = nc.variables['eig.time'][eigsol.index]
+                    eigsol.dCoef = nc.variables['eig.dCoef'][eigsol.index]
                 eigsol.iNVec = nc.dimensions[NVecs[ii]].size
                 eigsol.curr_eigmode = 1
         except KeyError as err:
