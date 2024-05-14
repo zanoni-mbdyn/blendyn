@@ -37,7 +37,6 @@ from bpy_extras.io_utils import ImportHelper
 from . dependencies import *
 import os
 import subprocess
-import imp
 import sys
 
 import csv
