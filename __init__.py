@@ -171,6 +171,7 @@ classes = (
         BLENDYN_OT_node_import_single,
         BLENDYN_OT_references_import_all,
         BLENDYN_OT_references_import_single,
+        BLENDYN_OT_references_input_write,
         BLENDYN_OT_select_all_nodes,
         BLENDYN_OT_select_elements_by_type,
         BLENDYN_OT_scale_node,
