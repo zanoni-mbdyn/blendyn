@@ -2135,13 +2135,15 @@ class BLENDYN_PT_reference_scene(bpy.types.Panel):
             col.operator(BLENDYN_OT_references_import_all.bl_idname, \
                    text = "Add all references to the scene")
             
-            # Write references using selected objects current position/orientation 
-            col.operator(BLENDYN_OT_references_input_write.bl_idname, \
-                    text = "Write references using selected objects")
         except KeyError:
             pass
         except IndexError:
             pass
+            
+        # Write references using selected objects current position/orientation
+        col = layout.column()
+        col.operator(BLENDYN_OT_references_input_write.bl_idname, \
+                    text = "Write references")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_reference_scene class
 
