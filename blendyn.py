@@ -2134,6 +2134,10 @@ class BLENDYN_PT_reference_scene(bpy.types.Panel):
                     text = "Add reference to the scene").int_label = item.int_label
             col.operator(BLENDYN_OT_references_import_all.bl_idname, \
                    text = "Add all references to the scene")
+            
+            # Write references using selected objects current position/orientation 
+            col.operator(BLENDYN_OT_references_input_write.bl_idname, \
+                    text = "Write references using selected objects")
         except KeyError:
             pass
         except IndexError:
@@ -2544,6 +2548,23 @@ class BLENDYN_OT_references_import_single(bpy.types.Operator):
                     self.report({'WARNING'}, message)
                     logging.warning(message)
                     return {'CANCELLED'}
+        return {'FINISHED'}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_references_import_single class
+
+class BLENDYN_OT_references_input_write(bpy.types.Operator):
+    """ Use the current selected objects position/orientation 
+        to write the MBDyn input syntax of references in the 
+        text editor"""
+    bl_idname = "blendyn.references_input_write"
+    bl_label = "Write selected objects references"
+
+    def execute(self, context):
+        # TODO
+        message = "BLENDYN_OT_reference_input_write::exectute() "\
+                + "Not implemented yet!"
+        self.report({'WARNING'}, message)
+        logging.warning(message)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_references_import_single class
