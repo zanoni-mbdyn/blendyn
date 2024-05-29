@@ -35,6 +35,7 @@ from bpy.props import *
 from bpy_extras.io_utils import ImportHelper
 
 from . dependencies import *
+from importlib.util import find_spec
 import os
 import subprocess
 import sys
@@ -142,11 +143,10 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
             box = layout.box()
             box.label(text = feature)
             for dep in deps[feature]:
-                try:
-                    imp.find_module(dep.module)
+                if find_spec(dep.module):
                     dep.installed(True)
                     box.label(text = dep.module + " is installed", icon = 'CHECKMARK')
-                except ImportError:
+                else:
                     dep.installed(False)
                     box.label(text = dep.module + " is missing", icon = 'SCRIPTPLUGINS') 
             if not(all([dep.installed() for dep in deps[feature]])):
