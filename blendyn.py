@@ -2548,6 +2548,96 @@ class BLENDYN_OT_references_import_single(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_references_import_single class
 
+<<<<<<< Updated upstream
+=======
+class BLENDYN_OT_references_input_write(bpy.types.Operator):
+    """ Use the current selected objects position/orientation 
+        to write the MBDyn input syntax of references in the 
+        text editor"""
+    bl_idname = "blendyn.references_input_write"
+    bl_label = "Write selected objects references"
+
+    def write_reference(self, grf, obj, idx, parent_ref):
+        p = []
+        q = []
+        s = []
+
+        if not(parent_ref):
+            parent_ref = obj.parent.name
+            p,q,s = obj.matrix_local.decompose()
+        else:
+            p,q,s = obj.matrix_world.decompose()
+
+        # label and reference declaration
+        grf.write("set: const integer {} = {};\n".format(obj.name, idx))
+        grf.write("reference: " + obj.name + ",\n\t")
+
+        # position
+        if p.magnitude < 1e-12:
+            grf.write("reference, " + parent_ref + ", null,\n\t")
+        else:
+            grf.write("reference, " + parent_ref + ", {}, {}, {},\n\t".format(p[0], p[1], p[2]))
+
+        # orientation
+        grf.write("reference, " + parent_ref + ", ")
+        if q.angle < 1e-12:
+            grf.write("eye,\n\t")
+        else:
+            grf.write("vector, {}, {}, {},\n\t".format(q.angle*q.axis[0], q.angle*q.axis[1], q.angle*q.axis[2]))
+
+        # velocity (written if a "V0" custom property is found for the object) 
+        grf.write("reference, " + parent_ref + ", ")
+        try:
+            V0 = obj["V0"].to_list()
+            grf.write("{}, {}, {},\n\t".format(V0[0], V0[1], V0[2]))
+        except KeyError:
+            grf.write("null,\n\t")
+
+        # velocity (written if a "W0" custom property is found for the object) 
+        grf.write("reference, " + parent_ref + ", ")
+        try:
+            W0 = obj["W0"].to_list()
+            grf.write("{}, {}, {};\n\n".format(W0[0], W0[1], W0[2]))
+        except KeyError:
+            grf.write("null;\n\n")
+
+    def execute(self, context):
+        # For now, we use a fixed file name
+        gref_file_name = "generated_references.ref"
+        grf = None
+        if gref_file_name not in bpy.data.texts.keys():
+            grf = bpy.data.texts.new(gref_file_name)
+            grf.write("# {}\n".format(gref_file_name))
+            grf.write("# GENERATED AUTOMATICALLY BY BLENDYN, EDIT AT YOUR OWN RISK\n")
+            grf.write("# -----------------------------------------------------------\n\n")
+        else:
+            grf = bpy.data.texts[gref_file_name]
+
+        # get selected objects and sort them by how many children they have
+        parent_objs = [(obj, len(obj.children_recursive)) for obj in bpy.context.selected_objects if obj.parent == None]
+        children_objs = [(obj, len(obj.children_recursive)) for obj in bpy.context.selected_objects if obj.parent != None]
+        children_objs.sort(key=lambda tup: tup[1], reverse=True)
+
+        pp = 0
+        for pobj in parent_objs:
+            pp = pp + 1
+            self.write_reference(grf, pobj[0], 1000 + pp, 'global')
+
+        cc = 0
+        for cobj in children_objs:
+            cc = cc + 1
+            self.write_reference(grf, cobj[0], 10000 + cc, '')
+
+        message = "BLENDYN_OT_reference_input_write::execute(): "\
+                + "Written selected objects references in file "\
+                + gref_file_name
+        self.report({'INFO'}, message)
+        logging.warning(message)
+        return {'FINISHED'}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_references_import_single class
+
+>>>>>>> Stashed changes
 
 class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
     """ Selects all the objects associated to  MBDyn nodes"""
