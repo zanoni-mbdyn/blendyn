@@ -2134,10 +2134,16 @@ class BLENDYN_PT_reference_scene(bpy.types.Panel):
                     text = "Add reference to the scene").int_label = item.int_label
             col.operator(BLENDYN_OT_references_import_all.bl_idname, \
                    text = "Add all references to the scene")
+            
         except KeyError:
             pass
         except IndexError:
             pass
+            
+        # Write references using selected objects current position/orientation
+        col = layout.column()
+        col.operator(BLENDYN_OT_references_input_write.bl_idname, \
+                    text = "Write references")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_reference_scene class
 
@@ -2548,8 +2554,6 @@ class BLENDYN_OT_references_import_single(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_references_import_single class
 
-<<<<<<< Updated upstream
-=======
 class BLENDYN_OT_references_input_write(bpy.types.Operator):
     """ Use the current selected objects position/orientation 
         to write the MBDyn input syntax of references in the 
@@ -2636,8 +2640,6 @@ class BLENDYN_OT_references_input_write(bpy.types.Operator):
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_references_import_single class
-
->>>>>>> Stashed changes
 
 class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
     """ Selects all the objects associated to  MBDyn nodes"""
