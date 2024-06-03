@@ -2587,7 +2587,7 @@ class BLENDYN_OT_references_input_write(bpy.types.Operator):
         if q.angle < 1e-12:
             grf.write("eye,\n\t")
         else:
-            grf.write("vector, {}, {}, {}\n\t".format(q.angle*q.axis[0], q.angle*q.axis[1], q.angle*q.axis[2]))
+            grf.write("vector, {}, {}, {},\n\t".format(q.angle*q.axis[0], q.angle*q.axis[1], q.angle*q.axis[2]))
 
         # velocity (written if a "V0" custom property is found for the object) 
         grf.write("reference, " + parent_ref + ", ")
