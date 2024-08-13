@@ -77,7 +77,7 @@ def set_ref_rotation(ref, rw, par):
         phi = Vector(( float(rw[idx + 1]), float(rw[idx + 2]), float(rw[idx + 3]) ))
         idx += 3;
         ref.rot = Quaternion(phi.normalized(), phi.magnitude)
-    elif (par[0:5] == 'EULER'):
+    elif (par.startswith('EULER')):
         ref.rot = Euler(Vector((radians(float(rw[idx + int(par[5])])),\
                                 radians(float(rw[idx + int(par[6])])),\
                                 radians(float(rw[idx + int(par[7])])) )),\

@@ -2245,7 +2245,7 @@ class BLENDYN_PT_components(bpy.types.Panel):
                 comp, "elements", \
                 comp, "el_index")
             col.prop(mbs, "comp_selected_elem", text = "Add")
-            if mbs.comp_selected_elem[:5] == 'modal':
+            if mbs.comp_selected_elem.startswith('modal'):
                 col = layout.column()
                 col.operator(BLENDYN_OT_select_modal_fem_file.bl_idname,
                              text = "Choose FEM file")

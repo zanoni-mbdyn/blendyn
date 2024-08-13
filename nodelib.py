@@ -63,7 +63,7 @@ def set_obj_locrot_mov(obj, rw):
     dictobj = get_dict_item(bpy.context, obj)
     par = dictobj.parametrization
 
-    if par[0:5] == 'EULER':
+    if par.startswith('EULER'):
         obj.rotation_euler = Euler(Vector((\
                              radians(float(rw[3 + int(par[5])])),\
                              radians(float(rw[3 + int(par[6])])),\
@@ -101,7 +101,7 @@ def assign_parametrization(obj, node):
     if par == 'PHI':
         obj.rotation_mode = 'AXIS_ANGLE'
         ret_val = {'FINISHED'}
-    elif par[0:5] == 'EULER':
+    elif par.startswith('EULER'):
         obj.rotation_mode = axes[par[7]] + axes[par[6]] + axes[par[5]]
         ret_val = {'FINISHED'}
     elif par == 'MATRIX':
@@ -148,7 +148,7 @@ def parse_node(context, rw):
             R[2][1] = float(rw[14])
             R[2][2] = float(rw[15])
             return R.to_quaternion(), 'MATRIX'
-        elif par[0:5] == 'euler':
+        elif par.startswith('euler'):
             try:
                 angles = Euler(Vector(( \
                         radians(float(rw[6 + int(par[5])])),\

@@ -288,7 +288,7 @@ def parse_log_file(context):
             mbs.file_basename + '.rfm')
 
     # Debug message to console
-    print("Blendyn::parse_log_file(): Trying to read nodes and elements from file: "\
+    print("BLENDYN::parse_log_file(): Trying to read nodes and elements from file: "\
             + log_file)
 
     ret_val = {''}
@@ -372,12 +372,12 @@ def parse_log_file(context):
                     entry = entry + " " + rw[ii]
 
                 if ii == min(3, (len(rw) - 1)):
-                    print("Blendyn::parse_log_file(): row does not contain an element definition. Skipping...")
+                    print("BLENDYN::parse_log_file(): row does not contain an element definition. Skipping...")
                 elif entry == "structural node:":
-                    print("Blendyn::parse_log_file(): Found a structural node.")
+                    print("BLENDYN::parse_log_file(): Found a structural node.")
                     b_nodes_consistent = b_nodes_consistent * (parse_node(context, rw))
                 else:
-                    print("Blendyn::parse_log_file(): Found " + entry[:-1] + " element.")
+                    print("BLENDYN::parse_log_file(): Found " + entry[:-1] + " element.")
                     b_elems_consistent = b_elems_consistent * parse_elements(context, entry[:-1], rw)
 
 
@@ -393,11 +393,11 @@ def parse_log_file(context):
                 ret_val = {'FINISHED'}
 
     except IOError:
-        print("Blendyn::parse_log_file(): Could not locate the file " + log_file + ".")
+        print("BLENDYN::parse_log_file(): Could not locate the file " + log_file + ".")
         ret_val = {'LOG_NOT_FOUND'}
         pass
     except StopIteration:
-        print("Blendyn::parse_log_file() Reached the end of .log file")
+        print("BLENDYN::parse_log_file() Reached the end of .log file")
         pass
     except TypeError:       
         # TypeError will be thrown if parse node exits with a {}, indicating an
@@ -464,14 +464,14 @@ def parse_log_file(context):
                       mbs.start_time = nc.variables["time"][0]
                   break
     except FileNotFoundError:
-        print("Blendyn::parse_log_file(): Could not locate the file " + out_file)
+        print("BLENDYN::parse_log_file(): Could not locate the file " + out_file)
         ret_val = {'OUT_NOT_FOUND'}
         pass
     except StopIteration:
-        print("Blendyn::parse_log_file(): Reached the end of .out file")
+        print("BLENDYN::parse_log_file(): Reached the end of .out file")
         pass
     except IOError:
-        print("Blendyn::parse_log_file(): Could not read the file " + out_file)
+        print("BLENDYN::parse_log_file(): Could not read the file " + out_file)
         pass
 
     try:
@@ -491,10 +491,10 @@ def parse_log_file(context):
     except StopIteration:
         pass
     except FileNotFoundError:
-        print("Blendyn::parse_out_file(): Could not locate the file " + rfm_file)
+        print("BLENDYN::parse_out_file(): Could not locate the file " + rfm_file)
         pass
     except IOError:
-        print("Blendyn::parse_out_file(): Could not read the file " + rfm_file)
+        print("BLENDYN::parse_out_file(): Could not read the file " + rfm_file)
         pass
 
     if not(mbs.use_netcdf):
@@ -649,7 +649,7 @@ def assign_labels(context):
                                 found = True
                                 break
     except IOError:
-        print("Blendyn::assign_labels(): can't read from file {}, \
+        print("BLENDYN::assign_labels(): can't read from file {}, \
                 sticking with default labeling...".format(log_file))
         return {'FILE_NOT_FOUND'}
 
@@ -769,7 +769,7 @@ def hide_or_delete(obj_names, missing):
 def set_motion_paths_mov(context):
     """ Parses the .mov file and .mod file then sets the nodes motion paths """
     # Debug message
-    print("Blendyn::set_motion_paths_mov(): Setting Motion Paths using .mov output...")
+    print("BLENDYN::set_motion_paths_mov(): Setting Motion Paths using .mov output...")
 
     # utility renaming
     scene = context.scene
@@ -796,9 +796,9 @@ def set_motion_paths_mov(context):
 
     # Debug message
     if have_mod_file:
-        print("Blendyn::set_motion_paths_mov(): Reading from file: {0} and {1}".format(mov_file, mod_file))
+        print("BLENDYN::set_motion_paths_mov(): Reading from file: {0} and {1}".format(mov_file, mod_file))
     else:
-        print("Blendyn::set_motion_paths_mov(): Reading from file: {0}".format(mov_file))
+        print("BLENDYN::set_motion_paths_mov(): Reading from file: {0}".format(mov_file))
 
     # total number of frames to be animated
     scene.frame_start = int(mbs.start_time/(mbs.time_step * mbs.load_frequency))
@@ -1552,7 +1552,7 @@ def set_motion_paths_netcdf(context):
                             obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                                     rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                             obj.keyframe_insert(data_path = "rotation_axis_angle")
-                    elif par[0:5] == 'EULER':
+                    elif par.startswith('EULER'):
                             loc = netcdf_helper(nc, scene, node_var + 'X')
                             obj.location = Vector((loc))
                             obj.keyframe_insert(data_path = "location")
@@ -1607,7 +1607,7 @@ def set_motion_paths_netcdf(context):
                     obj.rotation_axis_angle = Vector((rotvec.magnitude, \
                                                       rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
                     obj.keyframe_insert(data_path="rotation_axis_angle")
-                elif par[0:5] == 'EULER':
+                elif par.startswith('EULER'):
                     loc = netcdf_helper(nc, scene, node_var + 'X')
                     obj.location = Vector((loc))
                     obj.keyframe_insert(data_path="location")
@@ -1674,7 +1674,7 @@ def log_messages(mbs, baseLogger, saved_blend):
 	        if not saved_blend:
 	            bpy.data.texts.new(os.path.basename(logFile))
         except PermissionError as ex:
-            print("Blendyn::BlenderHandler::log_messages(): " +\
+            print("BLENDYN::BlenderHandler::log_messages(): " +\
                     "caught PermissionError exception {0}".format(ex))
 
 def delete_log():
@@ -1682,9 +1682,9 @@ def delete_log():
         print("BLENDYN::logging_shutdown()::INFO: deleting log files.")
         if os.path.exists(logFile):
             os.remove(logFile)
-            print("Blendyn::delete_log(): removed file" + logFile)
+            print("BLENDYN::delete_log(): removed file" + logFile)
     except NameError as ex:
-        print("Blendyn::delete_log(): NameError:" + str(e))
+        print("BLENDYN::delete_log(): NameError:" + str(e))
         pass
 
 def donot_delete_log():

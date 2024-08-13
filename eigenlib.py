@@ -208,7 +208,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
                     obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
                     obj.keyframe_insert(data_path = "rotation_axis_angle")
-                elif par[0:5] == 'EULER':
+                elif par.startswith('EULER'):
                     eu_seq = axes[par[7]] +\
                              axes[par[6]] +\
                              axes[par[5]]
