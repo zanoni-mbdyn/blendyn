@@ -51,7 +51,6 @@ from . blendyn      import *
 # from . stresslib    import *  # Disabled for now, needs fixing
 
 classes = (
-        BLENDYN_OT_install_dependencies,
         BLENDYN_OT_load_section,
         BLENDYN_OT_import_aerodynamic_body,
         BLENDYN_OT_import_aerodynamic_beam2,
@@ -93,7 +92,7 @@ classes = (
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
         BLENDYN_OT_import_total_pin,
-        BLENDYN_OT_color_boundary_autosetup,
+        # BLENDYN_OT_color_boundary_autosetup,
         BLENDYN_PT_bevel,
         BLENDYN_OT_import_reference,
         BLENDYN_OT_mplot_var_scene,
@@ -155,7 +154,7 @@ classes = (
         BLENDYN_OT_read_modal_fem_file,
         BLENDYN_OT_modal_node_import_all,
         # BLENDYN_OT_import_stress,
-        BLENDYN_preferences,
+        # BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
         BLENDYN_PT_simulation,

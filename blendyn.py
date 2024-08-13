@@ -895,7 +895,7 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
             bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
             bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
             bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
-            bpy.ops.blendyn.import_stress('EXEC_DEFAULT')
+            # bpy.ops.blendyn.import_stress('EXEC_DEFAULT')
         except RuntimeError as re:
             message = "BLENDYN_OT_standard_import::modal(): something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
