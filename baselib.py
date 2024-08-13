@@ -39,7 +39,8 @@ from .elementlib import *
 from .rfmlib import *
 from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
-from .stresslib import *
+# FIXME: disabled for now, needs fixing
+# from .stresslib import *
 
 HAVE_PSUTIL = False
 try:

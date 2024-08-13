@@ -48,7 +48,7 @@ from . pygalplotlib import *
 from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
-from . stresslib    import *
+# from . stresslib    import *  # Disabled for now, needs fixing
 
 classes = (
         BLENDYN_OT_install_dependencies,
@@ -154,7 +154,7 @@ classes = (
         BLENDYN_OT_select_modal_fem_file,
         BLENDYN_OT_read_modal_fem_file,
         BLENDYN_OT_modal_node_import_all,
-        BLENDYN_OT_import_stress,
+        # BLENDYN_OT_import_stress,
         BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
