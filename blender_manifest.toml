@@ -1,0 +1,98 @@
+schema_version = "1.0.0"
+
+id = "blendyn"
+version = "0.9.0"
+name = "Blendyn"
+tagline = "MBDyn post-processor for Blender"
+maintainer = "Andrea Zanoni <andrea.zanoni@polimi.it>"
+type = "add-on"
+
+# website = "https://extensions.blender.org/add-ons/blendyn"
+
+tags = ["Animation", "Physics", "Import-Export"]
+
+blender_version_min = "3.4.0"
+license = [
+  "SPDX:GPL-2.0-or-later"
+]
+
+platforms = ["windows-x64", "macos-x64", "macos-arm64", "linux-x64"]
+wheels = [
+  "./wheels/bokeh-3.5.1-py3-none-any.whl",
+  "./wheels/cairocffi-1.7.1-py3-none-any.whl",
+  "./wheels/CairoSVG-2.7.1-py3-none-any.whl",
+  "./wheels/certifi-2024.7.4-py3-none-any.whl",
+  "./wheels/cffi-1.17.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/cftime-1.6.4-cp311-cp311-macosx_10_9_x86_64.whl",
+  "./wheels/cftime-1.6.4-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/cftime-1.6.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/cftime-1.6.4-cp311-cp311-win_amd64.whl",
+  "./wheels/charset_normalizer-3.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/contourpy-1.2.1-cp311-cp311-macosx_10_9_x86_64.whl",
+  "./wheels/contourpy-1.2.1-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/contourpy-1.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/contourpy-1.2.1-cp311-cp311-win_amd64.whl",
+  "./wheels/contourpy-1.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/cssselect2-0.7.0-py3-none-any.whl",
+  "./wheels/cycler-0.12.1-py3-none-any.whl",
+  "./wheels/defusedxml-0.7.1-py2.py3-none-any.whl",
+  "./wheels/fonttools-4.53.1-cp311-cp311-macosx_10_9_universal2.whl",
+  "./wheels/fonttools-4.53.1-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/fonttools-4.53.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/fonttools-4.53.1-cp311-cp311-win_amd64.whl",
+  "./wheels/html2image-2.0.4.3-py3-none-any.whl",
+  "./wheels/idna-3.7-py3-none-any.whl",
+  "./wheels/importlib_metadata-8.2.0-py3-none-any.whl",
+  "./wheels/jinja2-3.1.4-py3-none-any.whl",
+  "./wheels/kiwisolver-1.4.5-cp311-cp311-macosx_10_9_x86_64.whl",
+  "./wheels/kiwisolver-1.4.5-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/kiwisolver-1.4.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/kiwisolver-1.4.5-cp311-cp311-win_amd64.whl",
+  "./wheels/MarkupSafe-2.1.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/matplotlib-3.9.2-cp311-cp311-macosx_10_12_x86_64.whl",
+  "./wheels/matplotlib-3.9.2-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/matplotlib-3.9.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/matplotlib-3.9.2-cp311-cp311-win_amd64.whl",
+  "./wheels/netCDF4-1.7.1.post2-cp311-cp311-macosx_12_0_x86_64.whl",
+  "./wheels/netCDF4-1.7.1.post2-cp311-cp311-macosx_14_0_arm64.whl",
+  "./wheels/netCDF4-1.7.1.post2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/netCDF4-1.7.1.post2-cp311-cp311-win_amd64.whl",
+  "./wheels/numpy-2.0.1-cp311-cp311-macosx_10_9_x86_64.whl",
+  "./wheels/numpy-2.0.1-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/numpy-2.0.1-cp311-cp311-macosx_14_0_arm64.whl",
+  "./wheels/numpy-2.0.1-cp311-cp311-macosx_14_0_x86_64.whl",
+  "./wheels/numpy-2.0.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/numpy-2.0.1-cp311-cp311-win_amd64.whl",
+  "./wheels/numpy-2.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/numpy-2.1.0rc1-cp311-cp311-macosx_14_0_arm64.whl",
+  "./wheels/numpy-2.1.0rc1-cp311-cp311-macosx_14_0_x86_64.whl",
+  "./wheels/numpy-2.1.0rc1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/numpy-2.1.0rc1-cp311-cp311-win_amd64.whl",
+  "./wheels/packaging-24.1-py3-none-any.whl",
+  "./wheels/pandas-2.2.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/pillow-10.4.0-cp311-cp311-macosx_10_10_x86_64.whl",
+  "./wheels/pillow-10.4.0-cp311-cp311-macosx_11_0_arm64.whl",
+  "./wheels/pillow-10.4.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/pillow-10.4.0-cp311-cp311-win_amd64.whl",
+  "./wheels/pillow-10.4.0-cp312-cp312-manylinux_2_28_x86_64.whl",
+  "./wheels/psutil-6.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/psutil-6.0.0-cp37-abi3-win_amd64.whl",
+  "./wheels/psutil-6.0.0-cp38-abi3-macosx_11_0_arm64.whl",
+  "./wheels/pycparser-2.22-py3-none-any.whl",
+  "./wheels/pygal-3.0.5-py3-none-any.whl",
+  "./wheels/pyparsing-3.1.2-py3-none-any.whl",
+  "./wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+  "./wheels/pytz-2024.1-py2.py3-none-any.whl",
+  "./wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/requests-2.32.3-py3-none-any.whl",
+  "./wheels/six-1.16.0-py2.py3-none-any.whl",
+  "./wheels/tinycss2-1.3.0-py3-none-any.whl",
+  "./wheels/tornado-6.4.1-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "./wheels/tzdata-2024.1-py2.py3-none-any.whl",
+  "./wheels/urllib3-2.2.2-py3-none-any.whl",
+  "./wheels/webencodings-0.5.1-py2.py3-none-any.whl",
+  "./wheels/websocket_client-1.8.0-py3-none-any.whl",
+  "./wheels/xyzservices-2024.6.0-py3-none-any.whl",
+  "./wheels/zipp-3.20.0-py3-none-any.whl",
+]
+
