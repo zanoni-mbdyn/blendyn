@@ -1,5 +1,5 @@
 config.json
 
 library/*.blend1
-tests/
+tests/*.{log,mov,nc,ine,frc,air,jnt,out,act,blend,bylog}
 __pycache__/
