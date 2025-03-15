@@ -30,6 +30,8 @@ from bpy.props import *
 
 from .utilslib import *
 
+import pdb
+
 ## Parses aerodynamic body element entry in .log file
 def parse_aero0(rw, ed):
     ret_val = True
@@ -432,6 +434,7 @@ def spawn_aero3_element(elem, context):
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     bpy.ops.object.select_all(action = 'DESELECT')
 
+    pdb.set_trace()
     # move vertices
     mesh.vertices[0].co = n1OBJ.matrix_world@Vector(( elem.offsets[0].value ))
     mesh.vertices[2].co = n1OBJ.matrix_world@Vector(( elem.offsets[1].value ))
