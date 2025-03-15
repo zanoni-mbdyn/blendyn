@@ -509,7 +509,8 @@ def spawn_beam3_element(elem, context):
         hook = beamOBJ.modifiers.new(name, type = 'HOOK')
         hook.object = obj
         hook.vertex_indices_set([i])
-        hook.matrix_inverse = M.Translation(-obj.location)
+        if name in ('M1', 'M2'):
+            hook.matrix_inverse = M.Translation(-obj.location)
 
     elem.is_imported = True
 
