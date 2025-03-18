@@ -2641,7 +2641,6 @@ class BLENDYN_OT_references_input_write(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_references_import_single class
 
-
 class BLENDYN_OT_select_all_nodes(bpy.types.Operator):
     """ Selects all the objects associated to  MBDyn nodes"""
     bl_idname = "blendyn.select_all_nodes"
