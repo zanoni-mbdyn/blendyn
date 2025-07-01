@@ -29,6 +29,8 @@ from math import *
 
 from .utilslib import *
 
+import pdb
+
 def parse_total(rw, ed):
     """ Parses a total joint entry in .log file """
     ret_val = True
@@ -630,7 +632,7 @@ def total_info_draw(elem, layout):
 
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./8.)
+            split = box.split(factor = 1./8.)
            
             # position
             column = split.column()
@@ -725,7 +727,7 @@ def total_pin_info_draw(elem, layout):
             
             # Display total joint active components
             box = layout.box()
-            split = box.split(1./8.)
+            split = box.split(factor = 1./8.)
            
             # position
             column = split.column()
