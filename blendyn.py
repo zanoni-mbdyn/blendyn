@@ -23,6 +23,7 @@
 # --------------------------------------------------------------------------
 
 import os, atexit
+from itertools import chain as chain_iterators
 
 import bpy
 import bmesh
@@ -736,6 +737,11 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
         name = "Max color boundary",
         description = "Upper limitation of internal force/moment visualization",
         default = 10
+    )
+
+    attach_object_suffix: StringProperty(
+        description = "Append this to name of an imported element, to have that object parented to it",
+        default = "_attach"
     )
 
 
@@ -1690,6 +1696,13 @@ class BLENDYN_PT_animate(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col = layout.column(align = True)
         col.label(text = "Current Simulation Time")
         col.prop(mbs, "time")
+
+        col = layout.column(align = True)
+        col.label(text = "Attached objects")
+        col.operator(BLENDYN_OT_attach_objects.bl_idname,
+                     text = BLENDYN_OT_attach_objects.bl_label)
+        col.label(text = "Attach object suffix")
+        col.prop(mbs, "attach_object_suffix", text = "")
 # -----------------------------------------------------------
 # end of BLENDYN_PT_animate class
 
@@ -2970,6 +2983,31 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_create_vertices_from_nodes class
 
+class BLENDYN_OT_attach_objects(bpy.types.Operator):
+    """
+    Make all objects that are named like a node or element, their children.
+    For example for "node_1", and suffix "_attach"
+    name an object "node_1_attach" and click this.
+    """
+    bl_idname = "blendyn.attach_objects"
+    bl_label = "Attach to MBDyn objects"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.alignment = 'LEFT'
+
+    def execute(self, context):
+        mbs = context.scene.mbdyn
+        for entity in chain_iterators(mbs.nodes,  mbs.elems):
+            attached_name = entity.name + mbs.attach_object_suffix
+            if attached_name in bpy.data.objects:
+                child = bpy.data.objects[attached_name]
+                mbdyn_object = bpy.data.objects[entity.name]
+                child.parent = mbdyn_object
+
+        return{'FINISHED'}
+# -----------------------------------------------------------
+# end of BLENDYN_OT_attach_objects class
 
 # NOT POSSIBLE ANYMORE IN 3.5> FIXME: Alternatives? 
 # class BLENDYN_OT_delete_override(bpy.types.Operator):
