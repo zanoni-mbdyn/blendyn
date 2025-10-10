@@ -2985,9 +2985,9 @@ class BLENDYN_OT_create_vertices_from_nodes(bpy.types.Operator):
 
 class BLENDYN_OT_attach_objects(bpy.types.Operator):
     """
-    Make all objects that are named like a node or element, their children.
-    For example for "node_1", and suffix "_attach"
-    name an object "node_1_attach" and click this.
+    Make all objects whose name starts with node or element's name and suffix below,
+    parented to these nodes/elements. For example for "node_1", and suffix "_attach"
+    name an object "node_1_attach" or "node_1_attach2" and click this.
     """
     bl_idname = "blendyn.attach_objects"
     bl_label = "Attach to MBDyn objects"
@@ -3000,10 +3000,10 @@ class BLENDYN_OT_attach_objects(bpy.types.Operator):
         mbs = context.scene.mbdyn
         for entity in chain_iterators(mbs.nodes,  mbs.elems):
             attached_name = entity.name + mbs.attach_object_suffix
-            if attached_name in bpy.data.objects:
-                child = bpy.data.objects[attached_name]
-                mbdyn_object = bpy.data.objects[entity.name]
-                child.parent = mbdyn_object
+            for name, child in bpy.data.objects.items():
+                if (name.startswith(attached_name)):
+                    mbdyn_object = bpy.data.objects[entity.name]
+                    child.parent = mbdyn_object
 
         return{'FINISHED'}
 # -----------------------------------------------------------
