@@ -42,6 +42,53 @@ import sys
 
 import csv
 
+try:
+    from netCDF4 import Dataset
+except ImportError:
+    Dataset = None
+
+# Global cache for NetCDF datasets to avoid opening the same file multiple times
+_nc_cache = {}
+
+def get_nc_dataset(ncfile, mode='r'):
+    """
+    Get a NetCDF dataset from cache or open it if not already cached.
+    
+    Args:
+        ncfile: Path to the NetCDF file
+        mode: File open mode (default 'r')
+    
+    Returns:
+        NetCDF Dataset object or None if NetCDF4 not available
+    """
+    if Dataset is None:
+        return None
+    
+    if ncfile not in _nc_cache or _nc_cache[ncfile] is None or not _nc_cache[ncfile].isopen():
+        _nc_cache[ncfile] = Dataset(ncfile, mode)
+    
+    return _nc_cache[ncfile]
+
+def close_nc_dataset(ncfile=None):
+    """
+    Close a cached NetCDF dataset.
+    
+    Args:
+        ncfile: Path to the NetCDF file to close. If None, closes all cached datasets.
+    """
+    if ncfile is None:
+        # Close all cached datasets
+        for key in list(_nc_cache.keys()):
+            if _nc_cache[key] is not None and _nc_cache[key].isopen():
+                _nc_cache[key].close()
+            del _nc_cache[key]
+    else:
+        # Close specific dataset
+        if ncfile in _nc_cache:
+            if _nc_cache[ncfile] is not None and _nc_cache[ncfile].isopen():
+                _nc_cache[ncfile].close()
+            del _nc_cache[ncfile]
+
 def install_pip():
     import subprocess
     """

@@ -536,11 +536,12 @@ def update_structural_force(elem, insert_keyframe = False):
     nd = mbs.nodes
     
     if mbs.use_netcdf:
+        from .utilslib import get_nc_dataset
 
         tdx = int(scene.frame_current * mbs.load_frequency)
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile, "r")
 
         node = nd['node_' + str(elem.nodes[0].int_label)]
         nodeOBJ = bpy.data.objects[node.blender_object]
@@ -573,11 +574,12 @@ def update_structural_couple(elem, insert_keyframe = False):
     nd = mbs.nodes
     
     if mbs.use_netcdf:
+        from .utilslib import get_nc_dataset
 
         tdx = scene.frame_current * mbs.load_frequency
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile, "r")
 
         node = nd['node_' + str(elem.nodes[0].int_label)]
         nodeOBJ = bpy.data.objects[node.blender_object]

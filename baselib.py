@@ -96,9 +96,10 @@ if HAVE_PSUTIL:
 def get_plot_vars_glob(context):
     mbs = context.scene.mbdyn
     if mbs.use_netcdf:
+        from .utilslib import get_nc_dataset
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile, 'r')
         N = len(nc.variables["time"])
 
         var_list = list()
@@ -151,7 +152,10 @@ def setup_import(filepath, context):
     mbs.file_path, mbs.file_basename = path_leaf(filepath)
 
     if filepath[-2:] == 'nc':
-        nc = Dataset(filepath, "r")
+        from .utilslib import get_nc_dataset, close_nc_dataset
+        # Close any previously cached datasets before opening a new one
+        close_nc_dataset()
+        nc = get_nc_dataset(filepath, "r")
         mbs.use_netcdf = True
         mbs.num_rows = 0
         mbs.num_nodes = nc.dimensions['struct_node_labels_dim'].size
@@ -223,9 +227,10 @@ def no_output(context):
     nd = mbs.nodes
 
     if mbs.use_netcdf:
+        from .utilslib import get_nc_dataset
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile, "r")
         log_nodes = list(map(lambda x: int(x[5:]), nd.keys()))
         for node in log_nodes:
             try:
@@ -429,9 +434,10 @@ def parse_log_file(context):
                 mbs.max_node_import = nd[ndx].int_label
 
         if mbs.use_netcdf:
+            from .utilslib import get_nc_dataset
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, "r")
+            nc = get_nc_dataset(ncfile, "r")
             mbs.num_timesteps = len(nc.variables["time"])
         else:
             mbs.num_nodes = nn
@@ -709,9 +715,10 @@ def update_end_time(self, context):
     mbs = context.scene.mbdyn
 
     if mbs.use_netcdf:
+        from .utilslib import get_nc_dataset
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile, "r")
         if (mbs.end_time - nc.variables["time"][-1]) > mbs.time_step:
             mbs.end_time = nc.variables["time"][-1]
     elif mbs.end_time > mbs.num_timesteps * mbs.time_step:
@@ -723,9 +730,10 @@ def update_start_time(self, context):
     mbs = context.scene.mbdyn
 
     if mbs.use_netcdf:
+        from .utilslib import get_nc_dataset
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile, "r")
         if mbs.start_time < nc.variables["time"][0]:
             mbs.start_time = nc.variables["time"][0]
     elif mbs.start_time >= mbs.num_timesteps * mbs.time_step:
@@ -1150,9 +1158,10 @@ def active_object_rel(bool1, bool2):
 def get_render_vars(self, context):
     mbs = context.scene.mbdyn
     ed = mbs.elems
+    from .utilslib import get_nc_dataset
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, "r")
+    nc = get_nc_dataset(ncfile, "r")
     units = ['m/s', 's', 'm', 'N', 'Nm']
     render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
     render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
@@ -1273,9 +1282,10 @@ def parse_render_string(var, components):
 
 def comp_repr(components, variable, context):
     mbs = context.scene.mbdyn
+    from .utilslib import get_nc_dataset
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, "r")
+    nc = get_nc_dataset(ncfile, "r")
     var = nc.variables[variable]
     dim = len(var.shape)
 
@@ -1490,7 +1500,8 @@ def set_motion_paths_netcdf(context):
     else:
         have_mod_file = False
 
-    nc = Dataset(ncfile, "r")
+    from .utilslib import get_nc_dataset
+    nc = get_nc_dataset(ncfile, "r")
     freq = mbs.load_frequency
     nctime = nc.variables["time"]
     mbs.time_step = nctime[1] - nctime[0]

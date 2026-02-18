@@ -800,9 +800,10 @@ def render_variables(scene):
     mbs = scene.mbdyn
     if len(mbs.render_vars):
         try:
+            from .utilslib import get_nc_dataset
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, "r")
+            nc = get_nc_dataset(ncfile, "r")
             string = [ '{0} : {1}'.format(var.variable, \
                 parse_render_string(netcdf_helper(nc, scene, var.variable), var.components)) \
                 for var in mbs.render_vars ]
@@ -821,7 +822,8 @@ def update_driver_vars(scene):
     ncfile = os.path.join(os.path.dirname(mbs.file_path), \
             mbs.file_basename + '.nc')
     if (mbs.is_loaded and mbs.use_netcdf):
-        nc = Dataset(ncfile, "r")
+        from .utilslib import get_nc_dataset
+        nc = get_nc_dataset(ncfile, "r")
         for dvar in mbs.driver_vars:
             ncvar = netcdf_helper(nc, scene, dvar.variable)
             dim = len(ncvar.shape)
