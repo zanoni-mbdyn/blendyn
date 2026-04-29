@@ -240,19 +240,6 @@ def body_info_draw(elem, layout):
     row.prop(elem.offsets[2], 'value', text = "")
     row = box.row()
     row.prop(elem.offsets[3], 'value', text = "")
-#     split = box.split(.33)
-#     column = split.column()
-#     column.row().prop(elem.offsets[1], 'value', index = 0, text = 'Jxx')
-#     column.row().prop(elem.offsets[2], 'value', index = 0, text = 'Jyx')
-#     column.row().prop(elem.offsets[3], 'value', index = 0, text = 'Jzx')
-#     column = split.column()
-#     column.row().prop(elem.offsets[1], 'value', index = 1, text = 'Jxy')
-#     column.row().prop(elem.offsets[2], 'value', index = 1, text = 'Jyy')
-#     column.row().prop(elem.offsets[3], 'value', index = 1, text = 'Jzy')
-#     column = split.column()
-#     column.row().prop(elem.offsets[1], 'value', index = 2, text = 'Jxz')
-#     column.row().prop(elem.offsets[2], 'value', index = 2, text = 'Jyz')
-#     column.row().prop(elem.offsets[3], 'value', index = 2, text = 'Jzz')
 
     pass
 # -----------------------------------------------------------
