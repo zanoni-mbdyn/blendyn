@@ -1512,15 +1512,49 @@ def set_motion_paths_netcdf(context):
         scene.frame_start = int((mbs.start_time - nctime[0])/(mbs.time_step*mbs.load_frequency))
         scene.frame_end = int((mbs.end_time - nctime[0])/(mbs.time_step*mbs.load_frequency)) + 1
 
-    anim_nodes = list()
-    for node in nd:
-        if node.blender_object != 'none':
-            anim_nodes.append(node.name)
-
-    scene.frame_current = scene.frame_start
-
     loop_start = int(scene.frame_start * mbs.load_frequency)
     loop_end = int(scene.frame_end * mbs.load_frequency)
+
+    # Pre-load all required NC variables into memory as numpy arrays.
+    # This converts O(nodes * frames) individual NC file slice reads into
+    # one bulk read per variable, giving major speedup for large models.
+    nc_data = {}
+    anim_nodes_info = []  # list of (obj, node_var_prefix, par) for animated nodes
+    for node in nd:
+        if node.blender_object == 'none' or not node.output:
+            continue
+        try:
+            obj = bpy.data.objects[node.blender_object]
+        except KeyError:
+            continue
+        node_var = 'node.struct.' + str(node.int_label) + '.'
+        par = node.parametrization
+        anim_nodes_info.append((obj, node_var, par))
+        if (node_var + 'X') not in nc_data:
+            try:
+                nc_data[node_var + 'X'] = np.array(nc.variables[node_var + 'X'][:])
+            except KeyError:
+                continue
+        if par == 'PHI':
+            if (node_var + 'Phi') not in nc_data:
+                try:
+                    nc_data[node_var + 'Phi'] = np.array(nc.variables[node_var + 'Phi'][:])
+                except KeyError:
+                    pass
+        elif par[0:5] == 'EULER':
+            if (node_var + 'E') not in nc_data:
+                try:
+                    nc_data[node_var + 'E'] = np.array(nc.variables[node_var + 'E'][:])
+                except KeyError:
+                    pass
+        elif par == 'MATRIX':
+            if (node_var + 'R') not in nc_data:
+                try:
+                    nc_data[node_var + 'R'] = np.array(nc.variables[node_var + 'R'][:])
+                except KeyError:
+                    pass
+
+    scene.frame_current = scene.frame_start
 
     if mbs.simtime:
         mbs.simtime.clear()
@@ -1531,6 +1565,45 @@ def set_motion_paths_netcdf(context):
     for ii in np.arange(loop_start, loop_end, mbs.load_frequency):
         st = mbs.simtime.add()
         st.time = mbs.time_step * ii
+
+    def _set_node_locrot(obj, node_var, par, i0, i1, frac):
+        """Apply interpolated location and rotation to obj and insert keyframes.
+
+        Uses pre-loaded nc_data numpy arrays (captured from outer scope) for
+        fast in-memory access instead of per-call NC file slice reads.
+        i0, i1: integer time-step indices; frac: weight of i0 (1-frac weights i1).
+        """
+        X0 = nc_data[node_var + 'X'][i0]
+        X1 = nc_data[node_var + 'X'][i1]
+        obj.location = Vector(X0 * frac + X1 * (1.0 - frac))
+        obj.keyframe_insert(data_path="location")
+
+        if par == 'PHI':
+            v0 = nc_data[node_var + 'Phi'][i0]
+            v1 = nc_data[node_var + 'Phi'][i1]
+            rotvec = Vector(v0 * frac + v1 * (1.0 - frac))
+            rotvec_norm = rotvec.normalized()
+            obj.rotation_axis_angle = Vector((rotvec.magnitude,
+                                             rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
+            obj.keyframe_insert(data_path="rotation_axis_angle")
+        elif par[0:5] == 'EULER':
+            e0 = nc_data[node_var + 'E'][i0]
+            e1 = nc_data[node_var + 'E'][i1]
+            angles = math.radians(1.0) * (e0 * frac + e1 * (1.0 - frac))
+            obj.rotation_euler = Euler(Vector((
+                angles[int(par[5]) - 1],
+                angles[int(par[6]) - 1],
+                angles[int(par[7]) - 1],
+            )), axes[par[7]] + axes[par[6]] + axes[par[5]])
+            obj.keyframe_insert(data_path="rotation_euler")
+        elif par == 'MATRIX':
+            q0 = Matrix(nc_data[node_var + 'R'][i0]).transposed().to_quaternion()
+            q1 = Matrix(nc_data[node_var + 'R'][i1]).transposed().to_quaternion()
+            obj.rotation_quaternion = q0.slerp(q1, 1.0 - frac)
+            obj.keyframe_insert(data_path="rotation_quaternion")
+        else:
+            return False
+        return True
 
     # set objects location and rotation
     wm.progress_begin(scene.frame_start, scene.frame_end)
@@ -1543,109 +1616,40 @@ def set_motion_paths_netcdf(context):
             second_mod = []
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
-                for ndx in anim_nodes:
-                    dictobj = nd[ndx]
-                    if not(dictobj.output):
-                        continue
-
-                    obj = bpy.data.objects[dictobj.blender_object]
-                    obj.select_set(state = True)
-                    node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-                    par = dictobj.parametrization
-                    if par == 'PHI':
-                            answer = netcdf_helper(nc, scene, node_var + 'X')
-                            obj.location = Vector((answer))
-                            obj.keyframe_insert(data_path = "location")
-
-                            answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
-                            rotvec = Vector((answer))
-                            rotvec_norm = rotvec.normalized()
-                            obj.rotation_axis_angle = Vector (( rotvec.magnitude, \
-                                    rotvec_norm[0], rotvec_norm[1], rotvec_norm[2] ))
-                            obj.keyframe_insert(data_path = "rotation_axis_angle")
-                    elif par[0:5] == 'EULER':
-                            loc = netcdf_helper(nc, scene, node_var + 'X')
-                            obj.location = Vector((loc))
-                            obj.keyframe_insert(data_path = "location")
-
-                            angles = math.radians(1.0)*netcdf_helper(nc, scene, node_var + 'E')
-                            obj.rotation_euler = Euler( Vector((\
-                                                 angles[int(par[5]) - 1],\
-                                                 angles[int(par[6]) - 1],\
-                                                 angles[int(par[7]) - 1],\
-                                                 )),\
-                                                 axes[par[7]] + axes[par[6]] + axes[par[5]] )
-                            obj.keyframe_insert(data_path = "rotation_euler")
-                    elif par == 'MATRIX':
-                            answer = netcdf_helper(nc, scene, node_var + 'X')
-                            obj.location = Vector((answer))
-                            obj.keyframe_insert(data_path = "location")
-
-                            obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
-
-                            obj.keyframe_insert(data_path = "rotation_quaternion")
-                    else:
-                        # Should not be reached
+                tdx = frame * freq
+                frac = np.ceil(tdx) - tdx
+                i0 = int(tdx)
+                i1 = int(np.ceil(tdx))
+                for obj, node_var, par in anim_nodes_info:
+                    if not _set_node_locrot(obj, node_var, par, i0, i1, frac):
                         print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+                        wm.progress_end()
                         return {'CANCELLED'}
-                    obj.select_set(state = False)
-                dg = bpy.context.evaluated_depsgraph_get()
-                dg.update()
+                # dg.update() is required here so that elem_nodeOJB.matrix_world
+                # reflects the just-inserted keyframe positions before
+                # set_motion_modal_nodes uses it to compute modal node locations.
+                bpy.context.evaluated_depsgraph_get().update()
                 first_mod, second_mod = set_motion_modal_nodes(context, reader_mod, first_mod, second_mod, nctime, frame)
                 if mbs.sim_stress:
                     update_stress(context)
-                wm.progress_update(scene.frame_current)
+                wm.progress_update(frame)
     else:
         for frame in range(scene.frame_start, scene.frame_end):
             scene.frame_current = frame
-            for ndx in anim_nodes:
-                dictobj = nd[ndx]
-                if not (dictobj.output):
-                    continue
-
-                obj = bpy.data.objects[dictobj.blender_object]
-                obj.select_set(state=True)
-                node_var = 'node.struct.' + str(dictobj.int_label) + '.'
-                par = dictobj.parametrization
-                if par == 'PHI':
-                    answer = netcdf_helper(nc, scene, node_var + 'X')
-                    obj.location = Vector((answer))
-                    obj.keyframe_insert(data_path="location")
-
-                    answer = netcdf_helper_phi(nc, scene, node_var + 'Phi')
-                    rotvec = Vector((answer))
-                    rotvec_norm = rotvec.normalized()
-                    obj.rotation_axis_angle = Vector((rotvec.magnitude, \
-                                                      rotvec_norm[0], rotvec_norm[1], rotvec_norm[2]))
-                    obj.keyframe_insert(data_path="rotation_axis_angle")
-                elif par[0:5] == 'EULER':
-                    loc = netcdf_helper(nc, scene, node_var + 'X')
-                    obj.location = Vector((loc))
-                    obj.keyframe_insert(data_path="location")
-
-                    angles = math.radians(1.0) * netcdf_helper(nc, scene, node_var + 'E')
-                    obj.rotation_euler = Euler(Vector((
-                                                angles[int(par[5]) - 1], \
-                                                angles[int(par[6]) - 1], \
-                                                angles[int(par[7]) - 1],)), \
-                                            axes[par[7]] + axes[par[6]] + axes[par[5]])
-                    obj.keyframe_insert(data_path="rotation_euler")
-                elif par == 'MATRIX':
-                    answer = netcdf_helper(nc, scene, node_var + 'X')
-                    obj.location = Vector((answer))
-                    obj.keyframe_insert(data_path="location")
-
-                    obj.rotation_quaternion = netcdf_helper_quat(nc, scene, node_var + 'R')
-
-                    obj.keyframe_insert(data_path="rotation_quaternion")
-                else:
-                    # Should not be reached
+            tdx = frame * freq
+            frac = np.ceil(tdx) - tdx
+            i0 = int(tdx)
+            i1 = int(np.ceil(tdx))
+            for obj, node_var, par in anim_nodes_info:
+                if not _set_node_locrot(obj, node_var, par, i0, i1, frac):
                     print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
+                    wm.progress_end()
                     return {'CANCELLED'}
-                obj.select_set(state=False)
             if mbs.sim_stress:
                 update_stress(context)
-            wm.progress_update(scene.frame_current)
+            wm.progress_update(frame)
+        # Single depsgraph update after all frames have been processed
+        bpy.context.evaluated_depsgraph_get().update()
     wm.progress_end()
     return {'FINISHED'}
 # -----------------------------------------------------------

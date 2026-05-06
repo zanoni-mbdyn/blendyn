@@ -158,15 +158,29 @@ def elem_info_draw(elem, layout):
 # -----------------------------------------------------------
 # end of elem_info_draw() function
 
+# Dispatch table for deformable-element update functions.
+# Avoids eval() overhead and the security risk it carries.
+_UPDATE_FUNCS = {
+    'update_beam3': update_beam3,
+    'update_structural_force': update_structural_force,
+    'update_structural_couple': update_structural_couple,
+}
+
 # App handler to update the configuration of deformable elements
 # after the location of the nodes has been updated
 @persistent
 def update_elements(scene):
     ed = scene.mbdyn.elems
     eu = scene.mbdyn.elems_to_update
+    if not eu:
+        return
     for elem in eu:
         element = ed[elem.name]
-        eval(ed[elem.name].update + "(element, True)")
+        func = _UPDATE_FUNCS.get(element.update)
+        if func is not None:
+            func(element, True)
+        else:
+            print("BLENDYN::update_elements(): unknown update function:", element.update)
 
     # Blender 2.8 way of updating the scene
     dg = bpy.context.evaluated_depsgraph_get()
