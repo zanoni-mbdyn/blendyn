@@ -23,6 +23,7 @@
 # --------------------------------------------------------------------------
 
 import bpy
+import bmesh
 from mathutils import *
 from math import *
 
@@ -234,25 +235,47 @@ def spawn_node_obj(context, node):
     mbs = context.scene.mbdyn
     if (node.string_label in bpy.data.objects) or ("node_" + str(node.int_label) in bpy.data.objects):
         return False
-    if mbs.node_object == "ARROWS":
-        bpy.ops.object.empty_add(type = 'ARROWS', location = node.initial_pos)
-        return True
-    elif mbs.node_object == "AXES":
-        bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = node.initial_pos)
-        return True
-    elif mbs.node_object == "CUBE":
-        bpy.ops.mesh.primitive_cube_add(location = node.initial_pos)
-        return True
-    elif mbs.node_object == "UVSPHERE":
-        bpy.ops.mesh.primitive_uv_sphere_add(location = node.initial_pos)
-        return True
-    elif mbs.node_object == "NSPHERE":
-        bpy.ops.surface.primitive_nurbs_surface_sphere_add(location = node.initial_pos)
-        return True
-    elif mbs.node_object == "CONE":
-        bpy.ops.mesh.primitive_cone_add(location = node.initial_pos)
+
+    obj_type = mbs.node_object
+
+    if obj_type in ('ARROWS', 'AXES'):
+        obj = bpy.data.objects.new("node_tmp", None)
+        obj.empty_display_type = 'ARROWS' if obj_type == 'ARROWS' else 'PLAIN_AXES'
+    elif obj_type == 'CUBE':
+        mesh = bpy.data.meshes.new("node_tmp")
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=2.0)
+        bm.to_mesh(mesh)
+        bm.free()
+        obj = bpy.data.objects.new("node_tmp", mesh)
+    elif obj_type == 'UVSPHERE':
+        mesh = bpy.data.meshes.new("node_tmp")
+        bm = bmesh.new()
+        bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=1.0)
+        bm.to_mesh(mesh)
+        bm.free()
+        obj = bpy.data.objects.new("node_tmp", mesh)
+    elif obj_type == 'CONE':
+        mesh = bpy.data.meshes.new("node_tmp")
+        bm = bmesh.new()
+        bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=32,
+                               radius1=1.0, radius2=0.0, depth=2.0)
+        bm.to_mesh(mesh)
+        bm.free()
+        obj = bpy.data.objects.new("node_tmp", mesh)
+    elif obj_type == 'NSPHERE':
+        # NURBS surface spheres cannot easily be created via the data API;
+        # fall back to bpy.ops for this uncommon case only.
+        bpy.ops.surface.primitive_nurbs_surface_sphere_add(location=node.initial_pos)
         return True
     else:
         return False
+
+    obj.location = node.initial_pos
+    # Link into the collection that was made active by the caller
+    context.view_layer.active_layer_collection.collection.objects.link(obj)
+    context.view_layer.objects.active = obj
+    obj.select_set(True)
+    return True
 # -----------------------------------------------------------
 # end of spawn_node_obj() function
