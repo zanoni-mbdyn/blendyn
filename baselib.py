@@ -850,7 +850,6 @@ def set_motion_paths_mov(context):
                             if obj_name != 'none' and nd['node_' + str(int(rw_mov[0]))].output:
                                 anim_objs[rw_mov[0]] = obj_name
                                 obj = bpy.data.objects[obj_name]
-                                obj.select_set(state = True)
                                 set_obj_locrot_mov(obj, rw_mov)
                         except KeyError:
                             pass
@@ -877,7 +876,6 @@ def set_motion_paths_mov(context):
                                 obj_name = node.blender_object
                                 if obj_name != 'none':
                                     obj = bpy.data.objects[obj_name]
-                                    obj.select_set(state=True)
                                     if not flag:
                                         obj.location = elem_nodeOJB.matrix_world @ Vector(
                                             (node.relative_pos[0] + rw_mod[1] * node.mode[mode_int_label].mode_shape[0],
@@ -914,9 +912,7 @@ def set_motion_paths_mov(context):
 
                     for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                         scene.frame_current += 1
-                        message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
-                        print(message)
-                        logging.info(message)
+                        logging.debug("BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current))
 
                         # skip (freq - 1)*N lines
                         if freq > 1:
@@ -945,7 +941,6 @@ def set_motion_paths_mov(context):
                                 try:
                                     answer = frac*first_mov[ndx] + (1 - frac)*second_mov[ndx]
                                     obj = bpy.data.objects[anim_objs[round(answer[0])]]
-                                    obj.select_set(state = True)
                                     set_obj_locrot_mov(obj, answer)
                                 except KeyError:
                                     pass
@@ -966,7 +961,6 @@ def set_motion_paths_mov(context):
                                         obj_name = node.blender_object
                                         if obj_name != 'none':
                                             obj = bpy.data.objects[obj_name]
-                                            obj.select_set(state=True)
                                             if not flag:
                                                 obj.location = elem_nodeOJB.matrix_world @ Vector(
                                                     (node.relative_pos[0] + answer[1] *
@@ -1005,7 +999,6 @@ def set_motion_paths_mov(context):
                             for ndx in range(mbs.num_nodes):
                                 rw_mov = first_mov[ndx]
                                 obj = bpy.data.objects[anim_objs[round(rw_mov[0])]]
-                                obj.select_set(state = True)
                                 set_obj_locrot_mov(obj, rw_mov)
                             dg = bpy.context.evaluated_depsgraph_get()
                             dg.update()
@@ -1024,7 +1017,6 @@ def set_motion_paths_mov(context):
                                         obj_name = node.blender_object
                                         if obj_name != 'none':
                                             obj = bpy.data.objects[obj_name]
-                                            obj.select_set(state=True)
                                             if not flag:
                                                 obj.location = elem_nodeOJB.matrix_world @ Vector(
                                                     (node.relative_pos[0] + rw_mod[1] *
@@ -1083,7 +1075,6 @@ def set_motion_paths_mov(context):
                         if obj_name != 'none' and nd['node_' + str(int(rw_mov[0]))].output:
                             anim_objs[rw_mov[0]] = obj_name
                             obj = bpy.data.objects[obj_name]
-                            obj.select_set(state=True)
                             set_obj_locrot_mov(obj, rw_mov)
                     except KeyError:
                         pass
@@ -1093,9 +1084,7 @@ def set_motion_paths_mov(context):
 
                 for idx, frame in enumerate(np.arange(loop_start + freq, loop_end, freq)):
                     scene.frame_current += 1
-                    message = "BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current)
-                    print(message)
-                    logging.info(message)
+                    logging.debug("BLENDYN::set_motion_paths_mov(): Animating frame {}".format(scene.frame_current))
 
                     # skip (freq - 1)*N lines
                     if freq > 1:
@@ -1115,7 +1104,6 @@ def set_motion_paths_mov(context):
                             try:
                                 answer = frac * first_mov[ndx] + (1 - frac) * second_mov[ndx]
                                 obj = bpy.data.objects[anim_objs[round(answer[0])]]
-                                obj.select_set(state=True)
                                 set_obj_locrot_mov(obj, answer)
                             except KeyError:
                                 pass
@@ -1124,7 +1112,6 @@ def set_motion_paths_mov(context):
                         for ndx in range(mbs.num_nodes):
                             rw_mov = first_mov[ndx]
                             obj = bpy.data.objects[anim_objs[round(rw_mov[0])]]
-                            obj.select_set(state=True)
                             set_obj_locrot_mov(obj, rw_mov)
                     wm.progress_update(scene.frame_current)
         except IOError:
