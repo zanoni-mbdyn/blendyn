@@ -57,7 +57,8 @@ numpy_deps = (\
         Dependency("numpy", None, None),\
         )
 
-# NetCDF
+# NetCDF — bundled as a wheel in wheels/; no pip installation needed.
+# The following is kept for reference and for the preferences panel display.
 netcdf_deps = (\
         Dependency("netCDF4", None, None),\
         )
@@ -84,10 +85,10 @@ plotting_bokeh_deps = (
         Dependency("html2image", None, None)
 )
 
-# Dictionary of dependencies
+# Dictionary of pip-installable optional dependencies.
+# Note: NetCDF4 is bundled as a wheel and is NOT listed here.
 deps = {
     "Numpy": numpy_deps,
-    "Support for NetCDF output": netcdf_deps,
     "Plotting - Pygal": plotting_pygal_deps,
     "Plotting - Matplotlib": plotting_matplotlib_deps,
     "Plotting - Bokeh": plotting_bokeh_deps,

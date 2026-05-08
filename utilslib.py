@@ -189,7 +189,12 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text = "-- Additional dependencies --")
+        box = layout.box()
+        box.label(text = "-- Bundled dependencies --")
+        box.label(text = "netCDF4: bundled (binary output support)", icon = 'CHECKMARK')
+        box.label(text = "cftime: bundled (netCDF4 dependency)", icon = 'CHECKMARK')
+
+        layout.label(text = "-- Optional dependencies (installed on demand) --")
         for feature in deps.keys():
             box = layout.box()
             box.label(text = feature)
@@ -199,7 +204,7 @@ class BLENDYN_preferences(bpy.types.AddonPreferences):
                     box.label(text = dep.module + " is installed", icon = 'CHECKMARK')
                 else:
                     dep.installed(False)
-                    box.label(text = dep.module + " is missing", icon = 'SCRIPTPLUGINS') 
+                    box.label(text = dep.module + " is missing", icon = 'SCRIPTPLUGINS')
             if not(all([dep.installed() for dep in deps[feature]])):
                 box.operator(BLENDYN_OT_install_dependencies.bl_idname, icon = "CONSOLE").feature = feature
             else:
