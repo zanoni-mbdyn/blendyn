@@ -1,0 +1,60 @@
+schema_version = "1.0.0"
+
+id = "blendyn"
+version = "1.2.0"
+name = "Blendyn"
+tagline = "Import and visualize MBDyn multibody dynamics results"
+maintainer = "Andrea Zanoni <andrea.zanoni@polimi.it>"
+# Supported types: "add-on", "theme"
+type = "add-on"
+
+# Optional: link to documentation, support, source files, etc.
+website = "https://github.com/zanoni-mbdyn/blendyn/wiki"
+
+# Optional: tag list defined by Blender and server, see:
+# https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
+tags = ["Animation", "Import-Export", "Physics"]
+
+blender_version_min = "4.2.0"
+# Optional: Blender version that the extension does not support, earlier versions are supported.
+# blender_version_max = "5.1.0"
+
+# License conforming to https://spdx.org/licenses/ (use "SPDX:" prefix)
+# https://docs.blender.org/manual/en/dev/advanced/extensions/licenses.html
+license = [
+  "SPDX:GPL-3.0-or-later",
+  "SPDX:MIT",   # logwatcher.py by Giampaolo Rodola'
+]
+
+# Required by some licenses. Copyrights must be "Year Name" or "Year-Year Name".
+copyright = [
+  "2015-2021 Andrea Zanoni",
+  "2012 Giampaolo Rodola'",
+]
+
+# Optional: list of supported platforms. If omitted, the extension will be
+# available in all operating systems.
+# platforms = ["windows-x64", "macos-arm64", "linux-x64"]
+
+# Optional: bundle 3rd party Python modules.
+# https://docs.blender.org/manual/en/dev/advanced/extensions/python_wheels.html
+# wheels = []
+
+# Add-ons can list which resources they will require.
+# For each permission it is important to also specify the reason why it is
+# required. Keep this a single short sentence without a period (.) at the end.
+[permissions]
+files = "Import MBDyn output files and optionally run the MBDyn binary"
+network = "Install optional Python dependencies via pip on user request"
+
+# Optional: advanced build settings.
+[build]
+# Patterns to exclude when building the extension package.
+# The pattern matching is compatible with gitignore.
+paths_exclude_pattern = [
+  "__pycache__/",
+  ".git/",
+  "*.zip",
+  "config.json",
+  "tests/",
+]

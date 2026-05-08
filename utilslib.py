@@ -159,7 +159,11 @@ class BLENDYN_OT_install_dependencies(bpy.types.Operator):
     # Which set of features we want to enable?
     feature: StringProperty()
 
-    def execute(self, context): 
+    def execute(self, context):
+        if not bpy.app.online_access:
+            self.report({"ERROR"}, "Internet access is disabled in Blender preferences. "
+                        "Enable 'Allow Online Access' to install dependencies.")
+            return {"CANCELLED"}
         try:
             install_pip()
             # deps is a global defines in dependencies.py
