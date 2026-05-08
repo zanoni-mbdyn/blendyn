@@ -51,7 +51,7 @@ from . blendyn      import *
 from . stresslib    import *
 
 classes = (
-        BLENDYN_OT_install_dependencies,
+        BLENDYN_OT_copy_pip_command,
         BLENDYN_OT_load_section,
         BLENDYN_OT_import_aerodynamic_body,
         BLENDYN_OT_import_aerodynamic_beam2,

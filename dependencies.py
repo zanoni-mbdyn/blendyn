@@ -31,16 +31,20 @@ class Dependency:
     # :module: name of the module
     # :package: name of the python package (if None, package = module)
     # :name: name to be given to module during import (if None, name = module)
+    # :system_note: optional string warning about required system-level software
+    #               beyond what pip can provide (e.g. shared libraries, browsers)
     # :installed: boolean flag indicating if the dependency is found in the system
     module = None
     package = None
     name = None
+    system_note = None
     is_installed = False
 
-    def __init__(self, module, package, name):
+    def __init__(self, module, package, name, system_note=None):
         self.module = module
         self.package = package
         self.name = name
+        self.system_note = system_note
 
     def installed(self, flag = None):
         if not flag:
@@ -66,7 +70,10 @@ netcdf_deps = (\
 # Plotting with Pygal/Cairosvg
 plotting_pygal_deps = (\
         Dependency("pygal", None, None),\
-        Dependency("cairosvg", None, None)\
+        Dependency("cairosvg", None, None,
+                   system_note="cairosvg also needs the Cairo graphics library (libcairo). "
+                               "Install it via your package manager before pip "
+                               "(e.g. libcairo2-dev on Debian/Ubuntu, cairo on Arch Linux).")\
         )
 
 # Control of MBDyn simulation from Blender
@@ -82,7 +89,9 @@ plotting_matplotlib_deps = (\
 # Plotting with Bokeh and html2image
 plotting_bokeh_deps = (
         Dependency("bokeh", None, None),
-        Dependency("html2image", None, None)
+        Dependency("html2image", None, None,
+                   system_note="html2image requires a Chromium-based browser installed "
+                               "on your system (chromium, google-chrome, etc.).")
 )
 
 # Dictionary of pip-installable optional dependencies.
