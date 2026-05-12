@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Blendyn",
     "category": "Physics",
-    "blender": (2, 80, 0),
+    "blender": (4, 2, 0),
     "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
     "location": "View3D -> Properties -> Physics",
     "description": "Imports simulation results of MBDyn (Open Source MultiBody\

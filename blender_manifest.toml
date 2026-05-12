@@ -28,7 +28,7 @@ license = [
 
 # Required by some licenses. Copyrights must be "Year Name" or "Year-Year Name".
 copyright = [
-  "2015-2021 Andrea Zanoni",
+  "2015-2026 Andrea Zanoni",
   "2012 Giampaolo Rodola'",
 ]
 
@@ -60,17 +60,13 @@ wheels = [
 # required. Keep this a single short sentence without a period (.) at the end.
 [permissions]
 files = "Import MBDyn output files and optionally run the MBDyn binary"
-network = "Install optional Python dependencies via pip on user request"
 
 # Optional: advanced build settings.
 [build]
-# Patterns to exclude when building the extension package.
-# The pattern matching is compatible with gitignore.
 paths_exclude_pattern = [
-  "__pycache__/",
-  ".git/",
-  "*.zip",
-  "config.json",
-  "tests/",
-]
-
+   "__pycache__/",   # no leading / → matches at any depth
+   ".*",             # all hidden dot-files/dirs (covers .git, .github/, etc.)
+   "/*.zip",         # root-level zip artifacts
+   "/config.json",
+   "/tests/",
+ ]
