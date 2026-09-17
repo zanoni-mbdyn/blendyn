@@ -89,6 +89,12 @@ def close_nc_dataset(ncfile=None):
             del _nc_cache[ncfile]
 
 
+def get_user_config_path():
+    """Writable per-user directory for Blendyn's own config.json,
+    since the extension's install directory cannot be assumed writable"""
+    return bpy.utils.extension_path_user(__package__, path="", create=True)
+
+
 class BLENDYN_OT_copy_pip_command(bpy.types.Operator):
     """Copy the pip install command for the missing packages to the clipboard"""
     bl_idname = "blendyn.copy_pip_command"

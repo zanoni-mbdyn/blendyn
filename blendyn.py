@@ -66,7 +66,7 @@ from . components import *
 from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
-from . utilslib import set_active_collection
+from . utilslib import set_active_collection, get_user_config_path
 
 HAVE_PLOT = True
 
@@ -853,7 +853,7 @@ bpy.app.handlers.save_pre.append(close_log)
 def set_mbdyn_path_startup(scene):
     mbs = bpy.context.scene.mbdyn
     try:
-        with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+        with open(os.path.join(get_user_config_path(), 'config.json'), 'r') as f:
             mbs.install_path = json.load(f)['mbdyn_path']
     except FileNotFoundError:
         if shutil.which('mbdyn'):
@@ -1179,7 +1179,7 @@ class BLENDYN_OT_set_mbdyn_install_path(bpy.types.Operator):
         self.report({'INFO'}, message)
         baseLogger.info(selftag + message)
 
-        with open(os.path.join(mbs.addon_path, 'config.json'), 'w') as f:
+        with open(os.path.join(get_user_config_path(), 'config.json'), 'w') as f:
             json.dump(config, f)
 
         return {'FINISHED'}
@@ -1230,7 +1230,7 @@ class BLENDYN_OT_config_mbdyn_install_path(bpy.types.Operator):
         selftag = "BLENDYN_OT_config_mbdyn_install_path::execute(): "
 
         try:
-            with open(os.path.join(mbs.addon_path, 'config.json'), 'r') as f:
+            with open(os.path.join(get_user_config_path(), 'config.json'), 'r') as f:
                 mbs.install_path = json.load(f)['mbdyn_path']
                 message = "Loaded MBDyn installation path "\
                         + mbs.install_path + " from config.json file"
