@@ -60,6 +60,7 @@ wheels = [
 # required. Keep this a single short sentence without a period (.) at the end.
 [permissions]
 files = "Import MBDyn output files and optionally run the MBDyn binary"
+clipboard = "Copy pip install command for optional dependencies"
 
 # Optional: advanced build settings.
 [build]
