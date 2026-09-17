@@ -1,15 +1,3 @@
-bl_info = {
-    "name": "Blendyn",
-    "category": "Physics",
-    "blender": (4, 2, 0),
-    "author": "Andrea Zanoni - <andrea.zanoni@polimi.it>",
-    "location": "View3D -> Properties -> Physics",
-    "description": "Imports simulation results of MBDyn (Open Source MultiBody\
-    Dynamics solver -- https://www.mbdyn.org/).",
-    "wiki_url": "https://github.com/zanoni-mbdyn/blendyn/wiki",
-    "bugtracker": "https://github.com/zanoni-mbdyn/blendyn/issues"
-}
-
 import bpy
 from . utilslib     import *
 from . aerolib      import *
