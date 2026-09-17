@@ -43,16 +43,23 @@ platforms = ["linux-x64", "windows-x64", "macos-x64", "macos-arm64"]
 wheels = [
   # certifi — pure Python, works on all platforms
   "./wheels/certifi-2026.4.22-py3-none-any.whl",
-  # cftime — compiled, platform-specific
+  # cftime — compiled, no stable-ABI wheels upstream, so both CPython
+  # versions used by our supported Blender range (4.2 LTS: 3.11, 5.2 LTS: 3.14)
+  # are bundled explicitly, per platform.
   "./wheels/cftime-1.6.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
   "./wheels/cftime-1.6.5-cp311-cp311-win_amd64.whl",
   "./wheels/cftime-1.6.5-cp311-cp311-macosx_10_9_x86_64.whl",
   "./wheels/cftime-1.6.5-cp311-cp311-macosx_11_0_arm64.whl",
-  # netCDF4 — compiled, platform-specific (bundles HDF5 and netCDF4 C libraries)
-  "./wheels/netCDF4-1.7.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-  "./wheels/netCDF4-1.7.2-cp311-cp311-win_amd64.whl",
-  "./wheels/netCDF4-1.7.2-cp311-cp311-macosx_12_0_x86_64.whl",
-  "./wheels/netCDF4-1.7.2-cp311-cp311-macosx_14_0_arm64.whl",
+  "./wheels/cftime-1.6.5-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+  "./wheels/cftime-1.6.5-cp314-cp314-win_amd64.whl",
+  "./wheels/cftime-1.6.5-cp314-cp314-macosx_10_15_x86_64.whl",
+  "./wheels/cftime-1.6.5-cp314-cp314-macosx_11_0_arm64.whl",
+  # netCDF4 — compiled, but published as cp311-abi3 (stable ABI), so a
+  # single build per platform covers CPython 3.11 through 3.14+.
+  "./wheels/netcdf4-1.7.2-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+  "./wheels/netcdf4-1.7.2-cp311-abi3-win_amd64.whl",
+  "./wheels/netcdf4-1.7.2-cp311-abi3-macosx_13_0_x86_64.whl",
+  "./wheels/netcdf4-1.7.2-cp311-abi3-macosx_14_0_arm64.whl",
 ]
 
 # Add-ons can list which resources they will require.
