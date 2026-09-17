@@ -42,6 +42,7 @@ import shutil
 import numpy as np
 
 import subprocess
+import shlex
 import json
 
 try:
@@ -1377,7 +1378,7 @@ class BLENDYN_OT_run_mbdyn_simulation(bpy.types.Operator):
         if mbs.file_path:
             command += (' -o {}').format(os.path.join(mbs.file_path, mbs.file_basename))
 
-        mbdyn_retcode = subprocess.call(command + ' &', shell = True, env = mbdyn_env)
+        subprocess.Popen(shlex.split(command), env = mbdyn_env)
 
         self.timer = context.window_manager.event_timer_add(0.5, window=context.window)
         context.window_manager.modal_handler_add(self)
