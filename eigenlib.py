@@ -23,7 +23,7 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
-from mathutils import Euler, Vector, Matrix
+from mathutils import Euler, Vector, Matrix, Quaternion
 import math
 import numpy as np
 from bpy.props import IntProperty, FloatProperty
@@ -318,7 +318,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         for ndx in anim_nodes:
             obj = bpy.data.objects[nd[ndx].blender_object]
             obj.select_set(state = True)
-            obj.rotation_mode = 'AXIS_ANGLE'
+            obj.rotation_mode = 'QUATERNION'
 
             node_var = 'node.struct.' + str(nd[ndx].int_label) + '.'
             node_idx = idx[np.where(nodes == nd[ndx].int_label)[0][0]]
@@ -336,12 +336,8 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
                 print(message)
 
                 ref_pos = obj.location.copy()
-                phi_tmp = Vector(( obj.rotation_axis_angle[0], \
-                                obj.rotation_axis_angle[1], \
-                                obj.rotation_axis_angle[2], \
-                                obj.rotation_axis_angle[3] ))
-
-                ref_phi = Vector(( phi_tmp[1:4] ))*phi_tmp[0]
+                ref_q = obj.rotation_quaternion.copy()
+                prev_q = ref_q.copy()
 
                 for frame in range(eigsol.anim_frames):
                     context.scene.frame_current = init_frame + frame
@@ -359,8 +355,12 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
 
                     obj.keyframe_insert(data_path = "location")
 
-                    new_phi = ref_phi + \
-                            Vector((
+                    # The rotation perturbation is expressed in the global
+                    # frame, so it has to be composed with the reference
+                    # orientation (R = exp(delta_phi) * R_ref), not summed
+                    # to its rotation vector (wrong for large reference
+                    # rotations, see issue #63)
+                    delta_phi = Vector((
                                 scale*eigvec_abs[node_idx + 3]*math.cos(2*math.pi*t + \
                                         eigvec_phase[node_idx + 3]),
                                 scale*eigvec_abs[node_idx + 4]*math.cos(2*math.pi*t + \
@@ -369,17 +369,16 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
                                         eigvec_phase[node_idx + 5])
                                 ))
 
+                    new_q = Quaternion(delta_phi.normalized(), delta_phi.magnitude) @ ref_q
+                    # keep the quaternion on the same hemisphere as the
+                    # previous keyframe, to avoid spurious flips while
+                    # interpolating
+                    if new_q.dot(prev_q) < 0.:
+                        new_q.negate()
+                    prev_q = new_q
+                    obj.rotation_quaternion = new_q
 
-                    new_phi_axis = new_phi.normalized()
-                    obj.rotation_axis_angle = \
-                        Vector(( 
-                            new_phi.magnitude, \
-                            new_phi_axis[0],
-                            new_phi_axis[1],
-                            new_phi_axis[2]
-                            ))
-
-                    obj.keyframe_insert(data_path = "rotation_axis_angle")
+                    obj.keyframe_insert(data_path = "rotation_quaternion")
            
                 obj.select_set(state = False)
                 kk = kk + 1
