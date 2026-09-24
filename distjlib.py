@@ -186,15 +186,22 @@ def spawn_distance_element(elem, context):
     f1 = Vector(( elem.offsets[0].value[0:] ))
     f2 = Vector(( elem.offsets[1].value[0:] ))
 
-    # assign coordinates of knots in global frame
-    R1 = n1OBJ.rotation_quaternion.to_matrix()
-    R2 = n2OBJ.rotation_quaternion.to_matrix()
-    p1 = n1OBJ.location + R1@f1
-    p2 = n2OBJ.location + R2@f2
+    # nodes' poses, without scale: the offsets must not be
+    # affected by the scaling of the objects representing the nodes
+    M1 = Matrix.Translation(n1OBJ.location) @ \
+            n1OBJ.rotation_quaternion.to_matrix().to_4x4()
+    M2 = Matrix.Translation(n2OBJ.location) @ \
+            n2OBJ.rotation_quaternion.to_matrix().to_4x4()
 
-    polydata.points[0].co = p1.to_4d()
-    polydata.points[1].co = p2.to_4d()
+    # attachment points in global frame
+    p1 = M1 @ f1
+    p2 = M2 @ f2
 
+    # The knots are placed at the origin of the curve object and moved to
+    # the attachment points by the hooks only: applying a scale to the
+    # curve object then leaves them in place.
+    polydata.points[0].co = (0., 0., 0., 1.)
+    polydata.points[1].co = (0., 0., 0., 1.)
 
     distOBJ = bpy.data.objects.new(distobj_id, cvdata)
     distOBJ.mbdyn.type = 'element'
@@ -209,68 +216,49 @@ def spawn_distance_element(elem, context):
     cvdata.bevel_depth = R
     cvdata.bevel_resolution = 10
 
-    bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = p1)
-    bpy.context.active_object.name = distOBJ.name + '_child1'
-    parenting(bpy.data.objects[distOBJ.name + '_child1'], distOBJ)
+    # set parenting, keeping the current world transform
+    parenting(distOBJ, n1OBJ)
+    co = distOBJ.constraints[-1]
+    co.set_inverse_pending = False
+    co.inverse_matrix = M1.inverted()
 
-    bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = p2)
-    bpy.context.active_object.name = distOBJ.name + '_child2'
-    parenting(bpy.data.objects[distOBJ.name + '_child2'], distOBJ)
+    # The line ends are hooked to empties placed at the attachment points
+    # and parented to the nodes' objects without inheriting their scale.
+    # A hook follows the full transform of its target (scale included), so
+    # hooking the line ends directly to the nodes' objects would scale the
+    # offsets together with them.
+    for ii, (nOBJ, M, p) in enumerate(zip([n1OBJ, n2OBJ], [M1, M2], [p1, p2])):
+        anchorOBJ = bpy.data.objects.new(distOBJ.name + '_anchor' + str(ii + 1), None)
+        anchorOBJ.empty_display_type = 'PLAIN_AXES'
+        anchorOBJ.empty_display_size = R
+        anchorOBJ.location = p
+        elcol.objects.link(anchorOBJ)
+        parenting(anchorOBJ, nOBJ)
+        co = anchorOBJ.constraints[-1]
+        co.set_inverse_pending = False
+        co.inverse_matrix = M.inverted()
 
-    #hooking of the line ends to the Blender objects
+        # the hook moves the knot to the origin of the anchor
+        hook = distOBJ.modifiers.new('P' + str(ii + 1), type = 'HOOK')
+        hook.object = anchorOBJ
+        hook.vertex_indices_set([ii])
+        hook.matrix_inverse = Matrix()
 
-    # P1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select_set(state = True)
-    distOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = distOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[0].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+        # sphere representing the attachment point
+        bpy.ops.mesh.primitive_uv_sphere_add(radius = R, location = (0., 0., 0.))
+        sphOBJ = bpy.context.active_object
+        sphOBJ.name = distOBJ.name + '_child' + str(ii + 1)
+        sphOBJ.display_type = 'WIRE'
+        parenting(sphOBJ, anchorOBJ)
+        co = sphOBJ.constraints[-1]
+        co.set_inverse_pending = False
+        co.inverse_matrix = Matrix()
 
-    # P2 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select_set(state = True)
-    distOBJ.select_set(state = True)
-    bpy.context.view_layer.objects.active = distOBJ
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action = 'DESELECT')
-    distOBJ.data.splines[0].points[1].select = True
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    bpy.ops.object.select_all(action = 'DESELECT')
-
-    # P1 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n1OBJ.select_set(state = True)
-    bpy.data.objects[distOBJ.name + '_child1'].select_set(state = True)
-    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child1']
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    # P2 hook
-    bpy.ops.object.select_all(action = 'DESELECT')
-    n2OBJ.select_set(state = True)
-    bpy.data.objects[distOBJ.name + '_child2'].select_set(state = True)
-    bpy.context.view_layer.objects.active = bpy.data.objects[distOBJ.name + '_child2']
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.object.hook_add_selob(use_bone = False)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+        anchorOBJ.hide_set(state = True)
 
     distOBJ.display_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child1'].display_type = 'WIRE'
-    bpy.data.objects[distOBJ.name + '_child2'].display_type = 'WIRE'
-
-    # set parenting
-    parenting(distOBJ, n1OBJ)
 
     # put them all in the element collection
-    dist_child1 = bpy.data.objects[distOBJ.name + '_child1']
-    dist_child2 = bpy.data.objects[distOBJ.name + '_child2'] 
     elcol.objects.link(n1OBJ)
     elcol.objects.link(n2OBJ)
 
