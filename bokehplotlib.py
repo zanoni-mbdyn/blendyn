@@ -42,6 +42,7 @@ import logging
 from .nodelib import *
 from .elementlib import *
 import os
+from .utilslib import get_nc_dataset
 from pathlib import Path
 colors = ["blue", "red", "gray", "yellow", "purple", "black", "orange", "green", "pink"]
 
@@ -61,7 +62,7 @@ class BLENDYN_OT_bplot_var_scene(bpy.types.Operator):
         # get requested netCDF variable
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                               mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
 
         # get its dimensions
         pvar = mbs.plot_vars[mbs.plot_var_index]
@@ -186,7 +187,7 @@ class BLENDYN_OT_bplot_var_sxx_scene(bpy.types.Operator):
         # get requested netCDF variable
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                               mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
 
         # get its dimensions
         pvar = mbs.plot_vars[mbs.plot_var_index]
@@ -338,7 +339,7 @@ class BLENDYN_OT_bplot_var_sxx_object(bpy.types.Operator):
         # get requested netCDF variable
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                               mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
 
         # get its dimensions
         pvar = mbs.plot_vars[mbo.plot_var_index]
@@ -489,7 +490,7 @@ class BLENDYN_OT_bplot_var_object(bpy.types.Operator):
         pvar = mbs.plot_vars[mbo.plot_var_index]
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                               mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
         ncvar = nc.variables[pvar.name]
         dim = len(ncvar.shape)
         units = '[{}]'.format(ncvar.units) if 'units' in dir(ncvar) else ''
@@ -623,7 +624,7 @@ class BLENDYN_OT_bplot_variables_list(bpy.types.Operator):
             # get requested netCDF variable
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                                   mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r')
+            nc = get_nc_dataset(ncfile)
             ncvar = nc.variables[pvar.name]
 
             # get its dimensions
@@ -728,7 +729,7 @@ class BLENDYN_OT_bplot_trajectory_object(bpy.types.Operator):
         pvar = mbs.plot_vars[mbo.plot_var_index]
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                               mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
         ncvar = nc.variables[pvar.name]
         dim = len(ncvar.shape)
         units = '[{}]'.format(ncvar.units) if 'units' in dir(ncvar) else ''
@@ -816,7 +817,7 @@ class BLENDYN_OT_bplot_trajectory_scene(bpy.types.Operator):
         pvar = mbs.plot_vars[mbs.plot_var_index]
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                               mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
         ncvar = nc.variables[pvar.name]
         dim = len(ncvar.shape)
         units = '[{}]'.format(ncvar.units) if 'units' in dir(ncvar) else ''

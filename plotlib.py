@@ -29,6 +29,7 @@ from .matplotliblib import *
 from .pygalplotlib import *
 from .bokehplotlib import *
 import os
+from .utilslib import get_nc_dataset
 
 class BLENDYN_UL_plot_var_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -257,7 +258,7 @@ class BLENDYN_PT_object_plot(bpy.types.Panel):
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r')
+            nc = get_nc_dataset(ncfile)
             row.template_list('BLENDYN_UL_object_plot_var_list', \
                     "MBDyn variable to plot", \
                     mbs, "plot_vars", \
@@ -406,7 +407,7 @@ class BLENDYN_PT_plot_scene(bpy.types.Panel):
         if mbs.use_netcdf:
             ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                     mbs.file_basename + '.nc')
-            nc = Dataset(ncfile, 'r')
+            nc = get_nc_dataset(ncfile)
             row.template_list('BLENDYN_UL_plot_var_list', \
                     "MBDyn variable to plot", \
                     mbs, "plot_vars",

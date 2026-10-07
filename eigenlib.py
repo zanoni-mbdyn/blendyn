@@ -31,6 +31,7 @@ from bpy.props import IntProperty, FloatProperty
 import logging
 
 from .nodelib import axes
+from .utilslib import get_nc_dataset
 
 import os
 from sys import float_info
@@ -44,8 +45,8 @@ except ImportError as ierr:
 
 def update_curr_eigmode(self, context):
     mbs = context.scene.mbdyn
-    nc = Dataset(os.path.join(os.path.dirname(mbs.file_path), \
-            mbs.file_basename + '.nc'), 'r')
+    nc = get_nc_dataset(os.path.join(os.path.dirname(mbs.file_path), \
+            mbs.file_basename + '.nc'))
     eigsol_idx = context.scene.mbdyn.curr_eigsol
     if self.curr_eigmode < 1:
         self.curr_eigmode = 1
@@ -166,7 +167,7 @@ class BLENDYN_OT_eigen_geometry(bpy.types.Operator):
         
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile)
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
 
@@ -255,7 +256,7 @@ class BLENDYN_OT_animate_eigenmode(bpy.types.Operator):
         
         ncfile = os.path.join(os.path.dirname(mbs.file_path), \
                 mbs.file_basename + '.nc')
-        nc = Dataset(ncfile, "r")
+        nc = get_nc_dataset(ncfile)
         nctime = nc.variables["time"]
         eigsol = mbs.eigensolutions[mbs.curr_eigsol]
         cem = mbs.eigensolutions[mbs.curr_eigsol].curr_eigmode

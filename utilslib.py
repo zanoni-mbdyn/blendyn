@@ -43,6 +43,7 @@ import csv
 
 try:
     from netCDF4 import Dataset
+    from .ncpacked import is_packed, PackedNcDataset
 except ImportError:
     Dataset = None
 
@@ -58,13 +59,18 @@ def get_nc_dataset(ncfile, mode='r'):
         mode: File open mode (default 'r')
     
     Returns:
-        NetCDF Dataset object or None if NetCDF4 not available
+        NetCDF Dataset object or None if NetCDF4 not available.
+        Files with MBDyn packed output are wrapped so that their
+        time-dependent variables are accessible as in classic files.
     """
     if Dataset is None:
         return None
-    
+
     if ncfile not in _nc_cache or _nc_cache[ncfile] is None or not _nc_cache[ncfile].isopen():
-        _nc_cache[ncfile] = Dataset(ncfile, mode)
+        ds = Dataset(ncfile, mode)
+        if is_packed(ds):
+            ds = PackedNcDataset(ds)
+        _nc_cache[ncfile] = ds
     
     return _nc_cache[ncfile]
 

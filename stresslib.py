@@ -25,6 +25,7 @@
 
 import bpy
 import os
+from .utilslib import get_nc_dataset
 import math
 
 try: 
@@ -104,7 +105,7 @@ def beam2_import_stress(context, elem):
 
     # Set up color value
     ncfile = os.path.join(os.path.dirname(mbs.file_path), mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     if mbs.internal_visualize == 'Internal Force':
         variable_name = 'elem.beam.' + str(elem.int_label) + '.F'
     else:
@@ -186,7 +187,7 @@ def beam3_import_stress(context, elem):
 
     # Color for three ColorRamp nodes
     ncfile = os.path.join(os.path.dirname(mbs.file_path), mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     if mbs.internal_visualize == 'Internal Force':
         variable_name_1 = 'elem.beam.'+str(elem.int_label)+'.F_I'
         variable_name_2 = 'elem.beam.'+str(elem.int_label)+'.F_II'
@@ -283,7 +284,7 @@ def shell4_import_stress(context, elem):
     # Extract data from netCDF file
     # Should be modified if there is change in future variables name
     ncfile = os.path.join(mbs.file_path, mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     try:
         if mbs.internal_visualize == 'Internal Force':
             var_name_1 = 'elem.shell4.'+str(elem.int_label)+'.F_I'
@@ -403,7 +404,7 @@ def membrane4_import_stress(context, elem):
     # Extract data from netCDF file
     # Should be modified if there is change in future variables name
     ncfile = os.path.join(mbs.file_path, mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     try:
         if mbs.internal_visualize == 'Internal Force':
             var_name_1 = 'elem.membrane4.' + str(elem.int_label) + '.F_I'
@@ -547,7 +548,7 @@ def beam3_update_stress(context, elem):
 
     # Color for three ColorRamp nodes
     ncfile = os.path.join(os.path.dirname(mbs.file_path), mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     if mbs.internal_visualize == 'Internal Force':
         variable_name_1 = 'elem.beam.' + str(elem.int_label) + '.F_I'
         variable_name_2 = 'elem.beam.' + str(elem.int_label) + '.F_II'
@@ -614,7 +615,7 @@ def beam2_update_stress(context, elem):
     except IOError:
         return {'FILE NOT FOUND'}
 
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     if mbs.internal_visualize == 'Internal Force':
         variable_name = 'elem.beam.' + str(elem.int_label) + '.F'
     else:
@@ -680,7 +681,7 @@ def shell4_update_stress(context, elem):
     # Extract data from netCDF file
     # Should be modified if there is change in future variables name
     ncfile = os.path.join(mbs.file_path, mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     ## Fixme: change the below variables name according to future netCDF internal variable's name
     try:
         if mbs.internal_visualize == 'Internal Force':
@@ -779,7 +780,7 @@ def membrane4_update_stress(context, elem):
     # Extract data from netCDF file
     # Should be modified if there is change in future variables name
     ncfile = os.path.join(mbs.file_path, mbs.file_basename + '.nc')
-    nc = Dataset(ncfile, 'r')
+    nc = get_nc_dataset(ncfile)
     ## Fixme: change the below variables name according to future netCDF internal variable's name
     try:
         if mbs.internal_visualize == 'Internal Force':
@@ -878,7 +879,7 @@ class BLENDYN_OT_color_boundary_autosetup(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         ncfile = os.path.join(mbs.file_path, mbs.file_basename+".nc")
-        nc = Dataset(ncfile, 'r')
+        nc = get_nc_dataset(ncfile)
         min = mbs.color_min_boundary
         max = mbs.color_max_boundary
 
