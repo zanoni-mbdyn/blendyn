@@ -1181,9 +1181,15 @@ def _draw_legend():
             return
         region = bpy.context.region
         ui_scale = bpy.context.preferences.system.ui_scale
+        # bottom-right corner, left of the sidebar when it overlaps the viewport
+        right = region.width
+        if bpy.context.preferences.system.use_region_overlap:
+            for r in bpy.context.area.regions:
+                if r.type == 'UI' and r.alignment == 'RIGHT' and r.width > 1:
+                    right -= r.width
         w, h = 20*ui_scale, min(250*ui_scale, region.height*0.5)
-        x0 = region.width - 120*ui_scale
-        y0 = region.height - h - 60*ui_scale
+        x0 = right - 120*ui_scale
+        y0 = 40*ui_scale
 
         n = 32
         lut = _linear_to_srgb(colormap_lut(_legend['colormap'], n))
@@ -1212,7 +1218,7 @@ def _draw_legend():
             blf.draw(font, '{:.4g}'.format(v))
         title = _legend['label'] + (' [' + _legend['units'] + ']' if _legend['units'] else '')
         tw, _ = blf.dimensions(font, title)
-        blf.position(font, min(x0, region.width - tw - 10*ui_scale), y0 + h + 12*ui_scale, 0)
+        blf.position(font, min(x0, right - tw - 10*ui_scale), y0 + h + 12*ui_scale, 0)
         blf.draw(font, title)
         blf.position(font, x0, y0 - 18*ui_scale, 0)
         blf.draw(font, 't = {:.4g}'.format(_legend['time']))
