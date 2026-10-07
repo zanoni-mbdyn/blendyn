@@ -997,8 +997,21 @@ def _set_element_collections_hidden(families, hidden):
             col.hide_render = hidden
 
 
+def _nodes_animated(mbs):
+    """ Whether the objects of all the nodes animated by
+        blendyn.set_motion_paths have keyframes """
+    for node in mbs.nodes:
+        if node.blender_object == 'none' or not node.output:
+            continue
+        obj = bpy.data.objects.get(node.blender_object)
+        if obj is not None and (obj.animation_data is None or obj.animation_data.action is None):
+            return False
+    return True
+
+
 class BLENDYN_OT_field_build(bpy.types.Operator):
-    """ Builds the meshes showing the fields of the flexible elements """
+    """ Builds the meshes showing the fields of the flexible elements,
+        animating the nodes first if they have no keyframes """
     bl_idname = "blendyn.field_build"
     bl_label = "Build field meshes"
 
@@ -1018,6 +1031,14 @@ class BLENDYN_OT_field_build(bpy.types.Operator):
         if not families:
             self.report({'WARNING'}, "No flexible elements found")
             return {'CANCELLED'}
+        # the field meshes show the results at every frame: the node
+        # objects must be animated as well, or they would stay still
+        animated = False
+        if not _nodes_animated(mbs):
+            if bpy.ops.blendyn.set_motion_paths('EXEC_DEFAULT') != {'FINISHED'}:
+                self.report({'ERROR'}, "Could not animate the nodes")
+                return {'CANCELLED'}
+            animated = True
         invalidate_cache()
         fs = mbs.field
         for family in families:
@@ -1035,8 +1056,8 @@ class BLENDYN_OT_field_build(bpy.types.Operator):
         if fs.get('family', 0) not in [list(FAMILIES).index(f) for f in families]:
             fs.family = families[0]
         update_fields(scene)
-        self.report({'INFO'}, "Built field meshes for: " \
-                + ", ".join(FAMILIES[f]['label'] for f in families))
+        self.report({'INFO'}, ("Animated the nodes and built" if animated else "Built") \
+                + " field meshes for: " + ", ".join(FAMILIES[f]['label'] for f in families))
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_field_build class
