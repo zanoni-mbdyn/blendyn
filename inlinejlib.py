@@ -177,11 +177,8 @@ def spawn_inline_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe inline joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        inlinejOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'inline')
-
-        # the append operator leaves just the imported object selected
-        inlinejOBJ = bpy.context.selected_objects[0]
         inlinejOBJ.name = elem.name
 
         # automatic scaling

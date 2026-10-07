@@ -144,11 +144,8 @@ def spawn_beam_slider_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe beam slider joint object from the library
-        bpy.ops.wm.append(directory=os.path.join(mbs.addon_path, \
+        beamsliderjOBJa = append_library_object(directory=os.path.join(mbs.addon_path, \
                                                  'library', 'joints.blend', 'Object'), filename='beamslider.arrow')
-
-        # the append operator leaves just the imported object selected
-        beamsliderjOBJa = bpy.context.selected_objects[0]
         beamsliderjOBJ = beamsliderjOBJa.constraints[0].target
         beamsliderjOBJ.name = elem.name
         beamsliderjOBJa.name = elem.name + '.arrow'

@@ -300,10 +300,7 @@ def spawn_total_joint_element(elem, context):
 
         # load the wireframe total joint object from the library
         lib_path = os.path.join(mbs.addon_path, 'library', 'joints.blend', 'Object')
-        bpy.ops.wm.append(directory = lib_path, filename = 'total')
-
-        # the append operator leaves just the imported object selected
-        totjOBJ = bpy.context.selected_objects[0]
+        totjOBJ = append_library_object(directory = lib_path, filename = 'total')
         totjOBJ.name = elem.name
 
         # place the joint object in the position defined relative to node 1
@@ -318,11 +315,7 @@ def spawn_total_joint_element(elem, context):
         pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
         for kk in range(3):
             if not(elem.offsets[2].value[kk]):
-                app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
-                if app_retval != {'FINISHED'}:
-                    return {'LIBRARY_ERROR'}
-            
-                obj = bpy.context.selected_objects[0]
+                obj = append_library_object(directory = lib_path, filename = pos[kk])
                 OBJs.append(obj)
 
                 # position it correctly, in global frame
@@ -336,11 +329,7 @@ def spawn_total_joint_element(elem, context):
         rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
         for kk in range(3):
             if not(elem.offsets[4].value[kk]):
-                app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
-                if app_retval != {'FINISHED'}:
-                    return {'LIBRARY_ERROR'}
-    
-                obj = bpy.context.selected_objects[0]
+                obj = append_library_object(directory = lib_path, filename = rot[kk])
                 OBJs.append(obj)
                 
                 # position it correctly
@@ -352,15 +341,8 @@ def spawn_total_joint_element(elem, context):
      
         # TODO: display also velocity contraints arrows
     
-        # join objects, with context override
-        ctx = context.copy()
-        ctx['active_object'] = OBJs[0]
-        ctx['selected_editable_objects'] = OBJs
-        if bpy.app.version < (4, 0, 0):
-            bpy.ops.object.join(ctx)
-        else:
-            with context.temp_override(**ctx):
-                bpy.ops.object.join()
+        # join objects
+        join_objects(OBJs[0], OBJs)
 
         # automatic scaling
         s = (.5/sqrt(3.))*(n1OBJ.scale.magnitude + n2OBJ.scale.magnitude)
@@ -460,10 +442,7 @@ def spawn_total_pin_joint_element(elem, context):
         # load the wireframe total joint object from the library
         lib_path = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object')
-        bpy.ops.wm.append(directory = lib_path, filename = 'total.pin')
-
-        # the append operator leaves just the imported object selected
-        totjOBJ = bpy.context.selected_objects[0]
+        totjOBJ = append_library_object(directory = lib_path, filename = 'total.pin')
         totjOBJ.name = elem.name
         # place the joint object in the position defined relative to node 1
         totjOBJ.location = elem.offsets[0].value
@@ -477,11 +456,7 @@ def spawn_total_pin_joint_element(elem, context):
         pos = ['total.disp.x', 'total.disp.y', 'total.disp.z']
         for kk in range(3):
             if not(elem.offsets[1].value[kk]):
-                app_retval = bpy.ops.wm.append(directory = lib_path, filename = pos[kk])
-                if app_retval != {'FINISHED'}:
-                    return {'LIBRARY_ERROR'}
-                
-                obj = bpy.context.selected_objects[0]
+                obj = append_library_object(directory = lib_path, filename = pos[kk])
                 OBJs.append(obj)
     
                 # position it correctly
@@ -495,11 +470,7 @@ def spawn_total_pin_joint_element(elem, context):
         rot = ['total.rot.x', 'total.rot.y', 'total.rot.z']
         for kk in range(3):
             if not(elem.offsets[3].value[kk]):
-                app_retval = bpy.ops.wm.append(directory = lib_path, filename = rot[kk])
-                if app_retval != {'FINISHED'}:
-                    return {'LIBRARY_ERROR'}
-    
-                obj = bpy.context.selected_objects[0]
+                obj = append_library_object(directory = lib_path, filename = rot[kk])
                 OBJs.append(obj)
                
                 # position it correctly
@@ -511,15 +482,8 @@ def spawn_total_pin_joint_element(elem, context):
     
         # TODO: display also velocity contraints arrows
 
-        # join objects, with context override
-        ctx = context.copy()
-        ctx['active_object'] = OBJs[0]
-        ctx['selected_editable_objects'] = OBJs
-        if bpy.app.version < (4, 0, 0):
-            bpy.ops.object.join(ctx)
-        else:
-            with context.temp_override(**ctx):
-                bpy.ops.object.join()
+        # join objects
+        join_objects(OBJs[0], OBJs)
 
         # automatic scaling
         s = (.5/sqrt(3.))*n1OBJ.scale.magnitude

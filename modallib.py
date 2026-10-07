@@ -126,11 +126,8 @@ def spawn_modal_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe beam slider joint object from the library
-        bpy.ops.wm.append(directory=os.path.join(mbs.addon_path, \
+        modaljOBJ = append_library_object(directory=os.path.join(mbs.addon_path, \
                                                  'library', 'joints.blend', 'Object'), filename='modal')
-
-        # the append operator leaves just the imported object selected
-        modaljOBJ = bpy.context.selected_objects[0]
         modaljOBJ.name = elem.name
 
         # automatic scaling

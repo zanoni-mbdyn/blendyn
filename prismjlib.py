@@ -168,10 +168,8 @@ def spawn_prismatic_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe prismatic joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        prismjOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'prismatic')
-        # the append operator leaves just the imported object selected
-        prismjOBJ = bpy.context.selected_objects[0]
         prismjOBJ.name = elem.name
 
         # automatic scaling
@@ -198,8 +196,7 @@ def spawn_prismatic_element(elem, context):
 
         # create an object representing the second RF used by the joint
         # for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
-        RF2 = bpy.context.selected_objects[0]
+        RF2 = add_empty('ARROWS', p2)
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = q2@n2OBJ.rotation_quaternion
         RF2.scale = .33*prismjOBJ.scale

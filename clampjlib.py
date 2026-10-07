@@ -126,10 +126,8 @@ def spawn_clamp_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        clampjOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'clamp')
-        # the append operator leaves just the imported object selected
-        clampjOBJ = bpy.context.selected_objects[0]
         clampjOBJ.name = elem.name
 
         # automatic scaling

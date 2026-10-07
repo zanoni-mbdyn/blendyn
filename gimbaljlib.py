@@ -176,10 +176,8 @@ def spawn_gimbal_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe gimbal joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        gimbaljOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'gimbal')
-        # the append operator leaves just the imported object selected
-        gimbaljOBJ = bpy.context.selected_objects[0]
         gimbaljOBJ.name = elem.name
        
         # automatic scaling
@@ -204,10 +202,8 @@ def spawn_gimbal_element(elem, context):
         gimbaljOBJ.rotation_mode = 'QUATERNION'
         gimbaljOBJ.rotation_quaternion = q1@n1OBJ.rotation_quaternion 
 
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        gimbal_childobj = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'gimbal_child')
-
-        gimbal_childobj = bpy.context.selected_objects[0]
     
         # position it correctly
         gimbal_childobj.location = gimbaljOBJ.location
@@ -216,16 +212,9 @@ def spawn_gimbal_element(elem, context):
         gimbal_childobj.rotation_mode = 'QUATERNION'
         gimbal_childobj.rotation_quaternion = q2@n2OBJ.rotation_quaternion
    
-        # join objects, with context override
+        # join objects
         gimbaljOBJs = [gimbaljOBJ, gimbal_childobj]
-        ctx = bpy.context.copy()
-        ctx['active_object'] = gimbaljOBJs[0]
-        ctx['selected_editable_objects'] = gimbaljOBJs
-        if bpy.app.version < (4, 0, 0):
-            bpy.ops.object.join(ctx)
-        else:
-            with context.temp_override(**ctx):
-                bpy.ops.object.join()
+        join_objects(gimbaljOBJs[0], gimbaljOBJs)
      
         # set parenting of wireframe obj
         parenting(gimbaljOBJ, n1OBJ)

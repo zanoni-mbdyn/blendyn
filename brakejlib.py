@@ -189,10 +189,8 @@ def spawn_brake_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe brake joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        brakejOBJd = append_library_object(directory = os.path.join(mbs.addon_path,\
                 'library', 'joints.blend', 'Object'), filename = 'brake_disc')
-        # the append operator leaves just the imported object selected
-        brakejOBJd = bpy.context.selected_objects[0]
         brakejOBJd.name = elem.name
      
         # place the joint object in the position defined relative to node 2
@@ -205,10 +203,8 @@ def spawn_brake_element(elem, context):
     
         elem.blender_object = brakejOBJd.name
  
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        brakejOBJc = append_library_object(directory = os.path.join(mbs.addon_path,\
                         'library', 'joints.blend', 'Object'), filename = 'brake_caliper')
-        # the append operator leaves just the imported object selected
-        brakejOBJc = bpy.context.selected_objects[0]
         brakejOBJc.name = elem.name + '_caliper'
 
         # place the joint object in the position defined relative to node 1

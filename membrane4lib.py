@@ -125,29 +125,27 @@ def spawn_membrane4_element(elem, context):
 
     try:
         # put it all in the 'plates' collection
-        set_active_collection('plates')
         elcol = bpy.data.collections.new(name = elem.name)
         bpy.data.collections['plates'].children.link(elcol)
-        set_active_collection(elcol.name)
     except KeyError:
         return {'COLLECTION_ERROR'}
 
-    # create the mesh plane
-    bpy.ops.mesh.primitive_plane_add(location = avg_location)
-    shellOBJ = bpy.context.view_layer.objects.active
-    shellOBJ.name = elem.name
+    # create the mesh plane directly, with the same vertex ordering of
+    # bpy.ops.mesh.primitive_plane_add(): calling the operator for each
+    # element makes the import time grow quadratically with their number
+    objs = [n1OBJ, n2OBJ, n4OBJ, n3OBJ]
+    mesh = bpy.data.meshes.new(elem.name)
+    mesh.from_pydata([obj.location - avg_location for obj in objs], [], [(0, 1, 3, 2)])
+    mesh.update()
+    shellOBJ = bpy.data.objects.new(elem.name, mesh)
+    # hooks are set up relative to the current world matrix, which is
+    # not updated by setting the location until the depsgraph is evaluated
+    shellOBJ.matrix_world = Matrix.Translation(avg_location)
+    elcol.objects.link(shellOBJ)
     shellOBJ.mbdyn.type = 'element'
     shellOBJ.mbdyn.dkey = elem.name
-    mesh = shellOBJ.data
 
-    # move vertices to nodes locations
-    mesh.vertices[0].co = shellOBJ.matrix_world.inverted()@n1OBJ.location
-    mesh.vertices[1].co = shellOBJ.matrix_world.inverted()@n2OBJ.location
-    mesh.vertices[3].co = shellOBJ.matrix_world.inverted()@n3OBJ.location
-    mesh.vertices[2].co = shellOBJ.matrix_world.inverted()@n4OBJ.location
-
-    # create hooks 
-    objs = [n1OBJ, n2OBJ, n4OBJ, n3OBJ]
+    # create hooks
     names = ['P1', 'P2', 'P4', 'P3']
     for i, (obj, name) in enumerate(zip(objs, names)):
         hook = shellOBJ.modifiers.new(name, type = 'HOOK')
@@ -164,7 +162,6 @@ def spawn_membrane4_element(elem, context):
     elcol.objects.link(n2OBJ)
     elcol.objects.link(n3OBJ)
     elcol.objects.link(n4OBJ)
-    set_active_collection('Master Collection')
 
     elem.blender_object = shellOBJ.name
     return {'FINISHED'}

@@ -23,6 +23,7 @@
 # -------------------------------------------------------------------------- 
 
 import bpy
+import bmesh
 
 import logging
 baseLogger = logging.getLogger()
@@ -427,6 +428,204 @@ def set_active_collection(coll_name):
         pass
 # -----------------------------------------------------------
 # end of set_active_collection function
+
+# The following functions replace operators (bpy.ops.wm.append(),
+# bpy.ops.object.join(), bpy.ops.object.empty_add()) in the creation of
+# the objects representing the MBDyn elements: every operator call forces
+# an update of the whole view layer, so that calling them for each
+# element makes the import time grow quadratically with the number of
+# elements.
+
+def _select_only(objs):
+    """ Leaves just objs selected, as the operators adding objects do """
+    for obj in bpy.context.selected_objects:
+        obj.select_set(False)
+    for obj in objs:
+        obj.select_set(True)
+
+# Also loading objects from a library takes a time that grows with the
+# number of objects in the scene: when importing many elements, each
+# library object is loaded only once, and then copied for each element.
+# For the same reason, the objects removed when joining meshes are
+# removed all at once at the end of the import.
+_batch_import = None
+
+class batch_element_import:
+    """ Context manager to be used while importing many elements """
+    def __enter__(self):
+        global _batch_import
+        self.nested = _batch_import is not None
+        if not self.nested:
+            _batch_import = {'library': dict(), 'removed': list()}
+        return self
+
+    def __exit__(self, *args):
+        global _batch_import
+        if self.nested:
+            return False
+        ids = list(_batch_import['removed'])
+        for objs, names in _batch_import['library'].values():
+            for obj in objs:
+                ids.append(obj)
+                if obj.data is not None:
+                    ids.append(obj.data)
+                    ids.extend(mat for mat in obj.data.materials if mat is not None)
+                ids.extend(slot.material for slot in obj.material_slots \
+                        if slot.link == 'OBJECT' and slot.material is not None)
+        _batch_import = None
+        bpy.data.batch_remove(set(ids))
+        return False
+# -----------------------------------------------------------
+# end of batch_element_import class
+
+def _load_library_object(blendfile, filename):
+    """ Loads the object filename from blendfile, with the objects it
+        depends on, without linking them to any collection """
+    if not os.path.isfile(blendfile):
+        raise FileNotFoundError(blendfile)
+    with bpy.data.libraries.load(blendfile, link = False) as (data_from, data_to):
+        if filename not in data_from.objects:
+            raise FileNotFoundError(blendfile + ': object ' + filename + ' not found')
+        data_to.objects = [filename]
+    obj = data_to.objects[0]
+
+    # the objects appended as dependencies (parents, constraints targets,
+    # objects used by modifiers) are not in any collection either
+    objs = [obj]
+    for dep in objs:
+        refs = [dep.parent] \
+                + [getattr(con, 'target', None) for con in dep.constraints] \
+                + [getattr(mod, 'object', None) for mod in dep.modifiers]
+        for ref in refs:
+            if ref is not None and not ref.users_collection and ref not in objs:
+                objs.append(ref)
+    return objs
+
+def _copy_library_objects(objs, names):
+    """ Copies the objects loaded by _load_library_object(), with their
+        data and materials, as if they were loaded again """
+    copies = dict()
+    for obj, name in zip(objs, names):
+        cpy = obj.copy()
+        cpy.name = name
+        if obj.data is not None:
+            cpy.data = obj.data.copy()
+            for idx, mat in enumerate(cpy.data.materials):
+                if mat is not None:
+                    cpy.data.materials[idx] = mat.copy()
+        for slot in cpy.material_slots:
+            if slot.link == 'OBJECT' and slot.material is not None:
+                slot.material = slot.material.copy()
+        copies[obj] = cpy
+
+    # make the copies refer to each other
+    for obj, cpy in copies.items():
+        if obj.parent in copies:
+            # setting the parent resets the parent inverse matrix
+            matrix_parent_inverse = cpy.matrix_parent_inverse.copy()
+            cpy.parent = copies[obj.parent]
+            cpy.matrix_parent_inverse = matrix_parent_inverse
+        for con in cpy.constraints:
+            if getattr(con, 'target', None) in copies:
+                con.target = copies[con.target]
+        for mod in cpy.modifiers:
+            if getattr(mod, 'object', None) in copies:
+                # setting the object resets the hook transformation
+                matrix_inverse = mod.matrix_inverse.copy()
+                center = mod.center.copy()
+                mod.object = copies[mod.object]
+                mod.matrix_inverse = matrix_inverse
+                mod.center = center
+    return [copies[obj] for obj in objs]
+
+def append_library_object(directory, filename):
+    """ Appends the object filename from directory (e.g.
+        '<library>.blend/Object'), with the objects it depends on, to
+        the active collection, as bpy.ops.wm.append() does, and returns it.
+        The appended objects are left selected. """
+    blendfile = os.path.dirname(directory) \
+            if os.path.basename(directory) == 'Object' else directory
+    if _batch_import is None:
+        objs = _load_library_object(blendfile, filename)
+    else:
+        key = (os.path.abspath(blendfile), filename)
+        if key not in _batch_import['library']:
+            templates = _load_library_object(blendfile, filename)
+            names = [obj.name for obj in templates]
+            for obj in templates:
+                obj.name = '.blendyn_library.' + obj.name
+            _batch_import['library'][key] = (templates, names)
+        objs = _copy_library_objects(*_batch_import['library'][key])
+    obj = objs[0]
+
+    collection = bpy.context.view_layer.active_layer_collection.collection
+    for dep in objs:
+        collection.objects.link(dep)
+    _select_only(objs)
+    return obj
+# -----------------------------------------------------------
+# end of append_library_object() function
+
+def join_objects(target, objs):
+    """ Joins the meshes of objs to the one of target, removing them,
+        as bpy.ops.object.join() does with target as the active object.
+        The objects must not be parented, since their transformation
+        is taken from their location, rotation and scale """
+    others = [obj for obj in objs if obj != target]
+    if not others:
+        return target
+    tmesh = target.data
+    bm = bmesh.new()
+    bm.from_mesh(tmesh)
+    to_target = target.matrix_basis.inverted()
+    for obj in others:
+        mesh = obj.data
+        nverts = len(bm.verts)
+        nfaces = len(bm.faces)
+        bm.from_mesh(mesh)
+        bm.verts.ensure_lookup_table()
+        bmesh.ops.transform(bm, matrix = to_target@obj.matrix_basis, \
+                verts = bm.verts[nverts:])
+        # merge material slots
+        if mesh.materials:
+            mat_idx = list()
+            for mat in mesh.materials:
+                if mat not in tmesh.materials[:]:
+                    tmesh.materials.append(mat)
+                mat_idx.append(tmesh.materials[:].index(mat))
+            bm.faces.ensure_lookup_table()
+            for face in bm.faces[nfaces:]:
+                face.material_index = mat_idx[min(face.material_index, len(mat_idx) - 1)]
+        if _batch_import is None:
+            bpy.data.objects.remove(obj)
+            if not mesh.users:
+                bpy.data.meshes.remove(mesh)
+        else:
+            for collection in obj.users_collection:
+                collection.objects.unlink(obj)
+            _batch_import['removed'].extend((obj, mesh))
+    bm.to_mesh(tmesh)
+    bm.free()
+    tmesh.update()
+    return target
+# -----------------------------------------------------------
+# end of join_objects() function
+
+def add_empty(empty_type, location):
+    """ Adds an empty object to the active collection and makes it the
+        only selected and the active object, as bpy.ops.object.empty_add()
+        does, and returns it. """
+    obj = bpy.data.objects.new('Empty', None)
+    obj.empty_display_type = empty_type
+    # the world matrix of an object hidden in viewport is not updated
+    # by the depsgraph, and is initialized by the operator
+    obj.matrix_world = Matrix.Translation(location)
+    bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)
+    _select_only([obj])
+    bpy.context.view_layer.objects.active = obj
+    return obj
+# -----------------------------------------------------------
+# end of add_empty() function
 
 def outline_toggle(context, action):
     area = next(a for a in context.screen.areas if a.type == 'OUTLINER')

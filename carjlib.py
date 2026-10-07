@@ -189,10 +189,8 @@ def spawn_cardano_hinge_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        carjOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'cardano')
-        # the append operator leaves just the imported object selected
-        carjOBJ = bpy.context.selected_objects[0]
         carjOBJ.name = elem.name
 
         # automatic scaling
@@ -219,8 +217,7 @@ def spawn_cardano_hinge_element(elem, context):
 
         # create an object representing the second RF used by the joint
         # for model debugging
-        bpy.ops.object.empty_add(type = 'ARROWS', location = p2)
-        RF2 = bpy.context.selected_objects[0]
+        RF2 = add_empty('ARROWS', p2)
         RF2.rotation_mode = 'QUATERNION'
         RF2.rotation_quaternion = q2@n2OBJ.rotation_quaternion 
         RF2.scale = .33*carjOBJ.scale
@@ -275,11 +272,8 @@ def spawn_cardano_pin_elem(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe revolute joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        carjOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'cardano.pin')
-        
-        # the append operator leaves just the imported object selected
-        carjOBJ = bpy.context.selected_objects[0]
         carjOBJ.name = elem.name
 
         # automatic scaling

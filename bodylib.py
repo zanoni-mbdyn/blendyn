@@ -121,10 +121,8 @@ def spawn_body_element(elem, context):
         set_active_collection(elcol.name)
         
         # load the wireframe body object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        bodyOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'other.blend', 'Object'), filename = 'cg')
-        # the append operator leaves just the imported object selected
-        bodyOBJ = bpy.context.selected_objects[0]
         bodyOBJ.name = elem.name
 
         # automatic scaling

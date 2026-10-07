@@ -132,17 +132,15 @@ def spawn_deformable_displacement_joint_element(elem, context):
         # load the wireframe total joint object from the library
         lib_path = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object')
-        bpy.ops.wm.append(directory = lib_path, filename = 'deformable displacement')
-        
-        ddOBJ = bpy.context.selected_objects[0]
+        ddOBJ = append_library_object(directory = lib_path, filename = 'deformable displacement')
         ddOBJ.name = elem.name
         ddOBJ = bpy.data.objects[elem.name]
 
-        RF1 = bpy.context.selected_objects[1]
+        RF1 = ddOBJ.modifiers[0].object
         RF1.name = elem.name + '_RF1'
         RF1 = bpy.data.objects[elem.name + '_RF1']
 
-        RF2 = bpy.context.selected_objects[2]
+        RF2 = ddOBJ.modifiers[1].object
         RF2.name = elem.name + '_RF2'
         RF2 = bpy.data.objects[elem.name + '_RF2']
 

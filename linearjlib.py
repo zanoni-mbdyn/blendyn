@@ -30,6 +30,7 @@ from math import *
 
 from .utilslib import parse_rotmat
 from .utilslib import parenting
+from .utilslib import append_library_object
 from .utilslib import eldbmsg
 from .utilslib import set_active_collection
 
@@ -195,12 +196,9 @@ def spawn_linearvelocity_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe linearvelocity joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        linearvelocityjOBJv = append_library_object(directory = os.path.join(mbs.addon_path,\
            'library', 'joints.blend', 'Object'), filename = 'linvel.v')
-
-        # the append operator leaves just the imported object selected
-        linearvelocityjOBJv = bpy.context.selected_objects[0]
-        linearvelocityjOBJ = bpy.context.selected_objects[1]
+        linearvelocityjOBJ = linearvelocityjOBJv.constraints[0].target
 
         linearvelocityjOBJ.name = elem.name
         linearvelocityjOBJv.name = elem.name + '.v'
@@ -266,12 +264,9 @@ def spawn_linearacceleration_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe linearacceleration joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        linearaccelerationjOBJa = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'linacc.a')
-
-        # the append operator leaves just the imported object selected
-        linearaccelerationjOBJa = bpy.context.selected_objects[0]
-        linearaccelerationjOBJ = bpy.context.selected_objects[1]
+        linearaccelerationjOBJ = linearaccelerationjOBJa.constraints[0].target
 
         linearaccelerationjOBJ.name = elem.name
         linearaccelerationjOBJa.name = elem.name + '.a'

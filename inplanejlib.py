@@ -189,10 +189,8 @@ def spawn_inplane_element(elem, context):
         set_active_collection(elcol.name)
         
         # load the wireframe inplane joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        inplanejOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'inplane')
-        # the append operator leaves just the imported object selected
-        inplanejOBJ = bpy.context.selected_objects[0]
         inplanejOBJ.name = elem.name
 
         # automatic scaling

@@ -179,10 +179,8 @@ def spawn_axialrot_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe axialrot joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        axialrotjOBJ = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'axialrot')
-        # the append operator leaves just the imported object selected
-        axialrotjOBJ = bpy.context.selected_objects[0]
         axialrotjOBJ.name = elem.name
 
         # automatic scaling

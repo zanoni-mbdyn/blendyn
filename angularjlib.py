@@ -195,10 +195,8 @@ def spawn_angularvelocity_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe angularvelocity joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        angularvelocityjOBJw = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'angvel.w')
-        # the append operator leaves just the imported object selected
-        angularvelocityjOBJw = bpy.context.selected_objects[0]
         angularvelocityjOBJ = angularvelocityjOBJw.constraints[0].target
 
         angularvelocityjOBJ.name = elem.name
@@ -263,11 +261,8 @@ def spawn_angularacceleration_element(elem, context):
         set_active_collection(elcol.name)
 
         # load the wireframe angularacceleration joint object from the library
-        bpy.ops.wm.append(directory = os.path.join(mbs.addon_path,\
+        angularaccelerationjOBJa = append_library_object(directory = os.path.join(mbs.addon_path,\
             'library', 'joints.blend', 'Object'), filename = 'angacc.a')
-        
-        # the append operator leaves just the imported object selected
-        angularaccelerationjOBJa = bpy.context.selected_objects[0]
         angularaccelerationjOBJ = angularaccelerationjOBJa.constraints[0].target
 
         angularaccelerationjOBJ.name = elem.name

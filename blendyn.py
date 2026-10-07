@@ -67,7 +67,7 @@ from . components import *
 from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
-from . utilslib import set_active_collection, get_user_config_path
+from . utilslib import set_active_collection, get_user_config_path, batch_element_import
 
 HAVE_PLOT = True
 
@@ -2770,6 +2770,38 @@ class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
 # -----------------------------------------------------------
 # end of BLENDYN_OT_scale_elements_by_type class
 
+class _ElementImportCall:
+    """ Stand-in for an instance of an element import operator, used
+        to run its execute() method directly """
+    def __init__(self, caller, int_label):
+        self.int_label = int_label
+        self._caller = caller
+
+    def report(self, type, message):
+        self._caller.report(type, message)
+
+_element_import_calls = dict()
+
+def import_element(elem, caller, context):
+    """ Imports an element running the execute() method of its import
+        operator directly: calling the operator through bpy.ops forces
+        an update of the whole view layer for each element, making the
+        import time grow quadratically with the number of elements.
+        Raises NameError if the import operator is not found and
+        RuntimeError if the import fails """
+    try:
+        module, name = elem.import_function.split('.')
+        op_class = getattr(bpy.types, module.upper() + '_OT_' + name)
+    except (ValueError, AttributeError):
+        raise NameError(elem.import_function)
+    if op_class not in _element_import_calls:
+        # named as the operator, which appears in the log messages
+        _element_import_calls[op_class] = type(op_class.__name__, (_ElementImportCall,), {})
+    try:
+        return op_class.execute(_element_import_calls[op_class](caller, elem.int_label), context)
+    except Exception as err:
+        raise RuntimeError("Error importing element " + elem.name + ": " + repr(err)) from err
+
 class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
     """ Imports the MBDyn elements of the selected type in the blender scene """
     bl_idname = "blendyn.import_elements_by_type"
@@ -2778,21 +2810,20 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         ed = mbs.elems
-        for elem in ed:
-            if (elem.type == mbs.elem_type_import) \
-                    and (elem.int_label >= mbs.min_elem_import) \
-                    and (elem.int_label <= mbs.max_elem_import):
-                try:
-                    # eval("spawn_" + elem.type + "_element(elem, context)")
-                    eval("bpy.ops." + elem.import_function + "(int_label = " + \
-                            str(elem.int_label) + ")")
-                except NameError:
-                        message = "BLENDYN_OT_import_elements_by_type::execute(): " \
-                                  + "Could not find the import function for element of type " \
-                                  + elem.type + ". Element " + elem.name + " not imported."
-                        self.report({'ERROR'}, message)
-                        baseLogger.error(message)
-                        return {'CANCELLED'}
+        with batch_element_import():
+            for elem in ed:
+                if (elem.type == mbs.elem_type_import) \
+                        and (elem.int_label >= mbs.min_elem_import) \
+                        and (elem.int_label <= mbs.max_elem_import):
+                    try:
+                        import_element(elem, self, context)
+                    except NameError:
+                            message = "BLENDYN_OT_import_elements_by_type::execute(): " \
+                                      + "Could not find the import function for element of type " \
+                                      + elem.type + ". Element " + elem.name + " not imported."
+                            self.report({'ERROR'}, message)
+                            baseLogger.error(message)
+                            return {'CANCELLED'}
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -2816,21 +2847,21 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
         wm.progress_begin(0, Nelems)
         added_elems = 0
         missing_elems = 0
-        for elem in ed:
-            if (elem.int_label >= mbs.min_elem_import) \
-                    and (elem.int_label <= mbs.max_elem_import):
-                try:
-                    eval("bpy.ops." + elem.import_function \
-                            + "(int_label = " + str(elem.int_label) + ")")
-                    added_elems += 1
-                except NameError:
-                        message = "BLENDYN_OT_elements_import_all::execute(): " \
-                                  + "Could not find the import function for element of type " \
-                                  + elem.type + ". Element " + elem.name + " not imported."
-                        baseLogger.warning(message)
-                        missing_elems += 1
-                        pass
-                wm.progress_update(added_elems + missing_elems)
+        with batch_element_import():
+            for elem in ed:
+                if (elem.int_label >= mbs.min_elem_import) \
+                        and (elem.int_label <= mbs.max_elem_import):
+                    try:
+                        import_element(elem, self, context)
+                        added_elems += 1
+                    except NameError:
+                            message = "BLENDYN_OT_elements_import_all::execute(): " \
+                                      + "Could not find the import function for element of type " \
+                                      + elem.type + ". Element " + elem.name + " not imported."
+                            baseLogger.warning(message)
+                            missing_elems += 1
+                            pass
+                    wm.progress_update(added_elems + missing_elems)
         if missing_elems:
             message = "BLENDYN_OT_elements_import_all::execute(): " \
                       + "Some elements were not imported. See log file for details"

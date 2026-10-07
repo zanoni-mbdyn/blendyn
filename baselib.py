@@ -102,12 +102,14 @@ def get_plot_vars_glob(context):
         nc = get_nc_dataset(ncfile, 'r')
         N = len(nc.variables["time"])
 
-        var_list = list()
-        for var in nc.variables:
-            m = nc.variables[var].shape
-            if (m[0] == N) and (var not in mbs.plot_vars.keys()):
+        # plot_vars.keys() builds a new list at every call
+        plot_vars = set(mbs.plot_vars.keys())
+        for var, ncvar in nc.variables.items():
+            m = ncvar.shape
+            if m and (m[0] == N) and (var not in plot_vars):
                 plotvar = mbs.plot_vars.add()
                 plotvar.name = var
+                plot_vars.add(var)
 
 def get_plot_engine():
     HAVE_MATPLOTLIB = True
