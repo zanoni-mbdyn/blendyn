@@ -169,6 +169,16 @@ def nc_file_path(mbs):
     return os.path.join(os.path.dirname(mbs.file_path), mbs.file_basename + '.nc')
 
 
+def _file_stamp(ncfile):
+    """ Identifies a version of the results file, so that the caches
+        are rebuilt when MBDyn writes it again """
+    try:
+        st = os.stat(ncfile)
+        return (ncfile, st.st_mtime_ns, st.st_size)
+    except OSError:
+        return (ncfile,)
+
+
 def _num_steps(nc):
     return len(nc.variables['time'])
 
@@ -505,7 +515,7 @@ def invalidate_cache():
 
 def _settings_key(mbs, obj):
     fs = mbs.field
-    return (nc_file_path(mbs), obj.name, obj.data.name, len(obj.data.vertices),
+    return (_file_stamp(nc_file_path(mbs)), obj.name, obj.data.name, len(obj.data.vertices),
             fs.quantity, fs.component, fs.ref_node, fs.sampling)
 
 
@@ -644,7 +654,7 @@ def available_quantities(mbs, family):
     """ Quantities of the family that are in the output, judging from
         the first element (the output of beam strains is optional) """
     ncfile = nc_file_path(mbs)
-    key = (ncfile, family)
+    key = (_file_stamp(ncfile), family)
     if key not in _available_cache:
         try:
             nc = get_nc_dataset(ncfile)
@@ -1124,6 +1134,12 @@ class BLENDYN_PT_fields(bpy.types.Panel):
         col.prop(fs, "enable")
         col.prop(fs, "family")
         col.prop(fs, "quantity")
+        if fs.family in QUANTITIES and not available_quantities(mbs, fs.family):
+            # e.g. results of an MBDyn version without NetCDF plate output
+            box = col.box()
+            box.label(text = "No internal forces or strains", icon = 'INFO')
+            box.label(text = "in the results file: " + FAMILIES[fs.family]['prefix']
+                    + "<label>." + ", .".join(q[0] for q in QUANTITIES[fs.family]))
         col.prop(fs, "component")
         if fs.quantity == 'DISP':
             col.prop_search(fs, "ref_node", mbs, "nodes")
