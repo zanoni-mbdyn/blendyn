@@ -30,6 +30,8 @@ from math import *
 
 from .utilslib import parse_rotmat
 from .utilslib import parenting
+from .utilslib import eldbmsg
+from .utilslib import set_active_collection
 
 # helper function to parse linearvelocity joints
 def parse_linearvelocity(rw, ed):
