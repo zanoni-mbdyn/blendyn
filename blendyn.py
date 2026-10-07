@@ -68,6 +68,7 @@ from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
 from . utilslib import set_active_collection, get_user_config_path, batch_element_import
+from . fieldlib import BLENDYN_PG_field_settings, register_legend, unregister_legend
 
 HAVE_PLOT = True
 
@@ -708,36 +709,10 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
         default = False
     )
 
-    sim_stress: BoolProperty(
-        description =  "Should we visualize stresses/strains or not?",
-        default = False
-    )
-
-    internal_visualize: EnumProperty(
-        items=[("Internal Force", "Internal Force", "Internal Force", '', 1), \
-               ("Internal Moment", "Internal Moment", "Internal Moment", '', 2)],
-        name="Internal Visualization Mode",
-        default="Internal Force"
-    )
-
-    internal_visualize_dimension: EnumProperty(
-        items = [("X","X","X",'',1),
-                 ("Y","Y","Y",'',2),
-                 ("Z","Z","Z",'',3)],
-        name = "Internal Visualization dimension",
-        default = 'X'
-    )
-
-    color_min_boundary: FloatProperty(
-        name = "Min color boundary",
-        description = "Lower limitation of internal force/moment visualization",
-        default = -10
-    )
-
-    color_max_boundary: FloatProperty(
-        name = "Max color boundary",
-        description = "Upper limitation of internal force/moment visualization",
-        default = 10
+    field: PointerProperty(
+        type = BLENDYN_PG_field_settings,
+        name = "Fields",
+        description = "Visualization of the fields of flexible elements"
     )
 
     attach_object_suffix: StringProperty(
@@ -904,7 +879,6 @@ class BLENDYN_OT_standard_import(bpy.types.Operator):
             bpy.ops.blendyn.read_mbdyn_log_file('EXEC_DEFAULT') 
             bpy.ops.blendyn.node_import_all('EXEC_DEFAULT')
             bpy.ops.blendyn.elements_import_all('EXEC_DEFAULT')
-            bpy.ops.blendyn.import_stress('EXEC_DEFAULT')
         except RuntimeError as re:
             message = "BLENDYN_OT_standard_import::modal(): something went wrong during the automatic import. "\
                 + " See the .bylog file for details"
@@ -1578,31 +1552,6 @@ class BLENDYN_PT_import(BLENDYN_PT_tool_bar, bpy.types.Panel):
         col.label(text = "MBDyn simulation results")
         col.operator(BLENDYN_OT_select_output_file.bl_idname, \
                 text = "Select results file")
-        if mbs.use_netcdf:
-            row = layout.row()
-            col = layout.column(align = True)
-            col.prop(mbs, "sim_stress", text = "Import internal properties")
-            if mbs.sim_stress:
-                col = layout.column(align = True)
-                col.prop(mbs, "internal_visualize", text = "Type ")
-                col.prop(mbs, "internal_visualize_dimension", text="Dim ")
-                row = col.row()
-                split = row.split(factor=0.5)
-                col = split.column()
-                col.label(text="Min")
-                col = split.column()
-                col.label(text="Max")
-
-                col = layout.column(align = True)
-                row = col.row()
-                split = row.split(factor = 0.5)
-                col = split.column()
-                col.prop(mbs, 'color_min_boundary', text = "")
-                col = split.column()
-                col.prop(mbs, 'color_max_boundary', text = "")
-
-                col = layout.column(align=True)
-                col.operator(BLENDYN_OT_color_boundary_autosetup.bl_idname, text = "Autosetup Boundary")
         col = layout.column(align = True)
         col.operator(BLENDYN_OT_standard_import.bl_idname,\
                 text = "Standard Import")

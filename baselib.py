@@ -39,7 +39,7 @@ from .elementlib import *
 from .rfmlib import *
 from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
-from .stresslib import *
+from .utilslib import frame_steps
 
 HAVE_PSUTIL = False
 try:
@@ -1605,10 +1605,7 @@ def set_motion_paths_netcdf(context):
             second_mod = []
             for frame in range(scene.frame_start, scene.frame_end):
                 scene.frame_current = frame
-                tdx = frame * freq
-                frac = np.ceil(tdx) - tdx
-                i0 = int(tdx)
-                i1 = int(np.ceil(tdx))
+                i0, i1, frac = frame_steps(frame, freq)
                 for obj, node_var, par in anim_nodes_info:
                     if not _set_node_locrot(obj, node_var, par, i0, i1, frac):
                         print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
@@ -1619,23 +1616,16 @@ def set_motion_paths_netcdf(context):
                 # set_motion_modal_nodes uses it to compute modal node locations.
                 bpy.context.evaluated_depsgraph_get().update()
                 first_mod, second_mod = set_motion_modal_nodes(context, reader_mod, first_mod, second_mod, nctime, frame)
-                if mbs.sim_stress:
-                    update_stress(context)
                 wm.progress_update(frame)
     else:
         for frame in range(scene.frame_start, scene.frame_end):
             scene.frame_current = frame
-            tdx = frame * freq
-            frac = np.ceil(tdx) - tdx
-            i0 = int(tdx)
-            i1 = int(np.ceil(tdx))
+            i0, i1, frac = frame_steps(frame, freq)
             for obj, node_var, par in anim_nodes_info:
                 if not _set_node_locrot(obj, node_var, par, i0, i1, frac):
                     print("BLENDYN::set_motion_paths_netcdf() Error: unrecognised rotation parametrization")
                     wm.progress_end()
                     return {'CANCELLED'}
-            if mbs.sim_stress:
-                update_stress(context)
             wm.progress_update(frame)
         # Single depsgraph update after all frames have been processed
         bpy.context.evaluated_depsgraph_get().update()

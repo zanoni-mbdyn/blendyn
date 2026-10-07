@@ -60,29 +60,49 @@ def _strings(ncvar):
     return [str(s).strip() for s in chartostring(ncvar[:], encoding='utf-8')]
 
 
+def _component_shape(shape, width):
+    """ Shape of the components of a variable with the given width.
+        shape is the entry of packed.signal_shape ('' for scalars,
+        '3,3' for Mat3x3, ...), or None for files written before
+        MBDyn recorded it: then the shape is guessed from the width """
+    if shape is not None:
+        try:
+            dims = tuple(int(n) for n in shape.split(',')) if shape else ()
+        except ValueError:
+            dims = None
+        if dims is not None and int(np.prod(dims)) == width:
+            return dims
+    if width == 1:
+        return ()
+    elif width == 9:
+        return (3, 3)
+    return (width,)
+
+
 class PackedNcVariable:
     """ Virtual time-dependent variable, mapped to a contiguous block
         of columns of packed.data """
 
-    def __init__(self, owner, name, c0, width, units, description):
+    def __init__(self, owner, name, c0, width, units, description, shape=None):
         self._owner = owner
         self._c0 = c0
         self._width = width
         self.name = name
-        if width == 1:
-            self._comp_shape = ()
+        self._comp_shape = _component_shape(shape, width)
+        if self._comp_shape == ():
             self.dimensions = ('time',)
-        elif width == 3:
-            self._comp_shape = (3,)
+        elif self._comp_shape == (3,):
             self.dimensions = ('time', 'Vec3')
-        elif width == 9:
+        elif self._comp_shape == (3, 3):
             # Mat3x3: stored in the same order as in the classic
             # (time, Vec3, Vec3) variable
-            self._comp_shape = (3, 3)
             self.dimensions = ('time', 'Vec3', 'Vec3')
+        elif len(self._comp_shape) == 2:
+            # matrices are stored by rows, as in the classic variable
+            self.dimensions = ('time', 'matrix rows ' + str(self._comp_shape[0]),
+                    'matrix columns ' + str(self._comp_shape[1]))
         else:
-            self._comp_shape = (width,)
-            self.dimensions = ('time', 'packed_dim_' + str(width))
+            self.dimensions = ('time',) + tuple('packed_dim_' + str(n) for n in self._comp_shape)
         self.dtype = np.dtype('float64')
         self._attrs = {}
         if units:
@@ -118,6 +138,13 @@ class PackedNcVariable:
 
     def __repr__(self):
         return "<packed MBDyn NetCDF variable {}, shape {}>".format(self.name, self.shape)
+
+    def column(self, index):
+        """ Column of packed.data holding the component at the given
+            flat (row-major) index """
+        if index < 0 or index >= self._width:
+            raise IndexError("component {} out of range for {}".format(index, self.name))
+        return self._c0 + index
 
     def __getitem__(self, key):
         if not isinstance(key, tuple):
@@ -160,6 +187,8 @@ class PackedNcDataset:
                 if 'packed.signal_units' in ds.variables else [''] * len(names)
         descs = _strings(ds.variables['packed.signal_description']) \
                 if 'packed.signal_description' in ds.variables else [''] * len(names)
+        shapes = _strings(ds.variables['packed.signal_shape']) \
+                if 'packed.signal_shape' in ds.variables else [None] * len(names)
 
         variables = {name: var for name, var in ds.variables.items()
                      if not name.startswith('packed.')}
@@ -176,10 +205,10 @@ class PackedNcDataset:
                 width += 1
                 continue
             if base is not None:
-                variables[base] = PackedNcVariable(self, base, c0, width, units[c0], descs[c0])
+                variables[base] = PackedNcVariable(self, base, c0, width, units[c0], descs[c0], shapes[c0])
             base, c0, width = bname, col, 1
         if base is not None:
-            variables[base] = PackedNcVariable(self, base, c0, width, units[c0], descs[c0])
+            variables[base] = PackedNcVariable(self, base, c0, width, units[c0], descs[c0], shapes[c0])
 
         object.__setattr__(self, 'variables', variables)
 
@@ -200,6 +229,24 @@ class PackedNcDataset:
             data = self._data[:]
             object.__setattr__(self, '_cache', np.ma.filled(data, np.nan))
         return self._cache
+
+    def read_columns(self, columns):
+        """ Read the given columns of packed.data over all time steps.
+            The file is read in blocks of time steps, which is how
+            packed.data is chunked """
+        columns = np.asarray(columns, dtype=int)
+        nt = self.num_times()
+        if self._cache is None and \
+                self._data.size * self._data.dtype.itemsize <= _PACKED_MEMORY_LIMIT:
+            self._load_cache()
+        if self._cache is not None:
+            return self._cache[:, columns]
+        res = np.empty((nt, columns.size))
+        block = 128
+        for t0 in range(0, nt, block):
+            data = np.ma.filled(self._data[t0:t0 + block, :], np.nan)
+            res[t0:t0 + block] = data[:, columns]
+        return res
 
     def read(self, tkey, c0, width):
         """ Read columns c0 to c0 + width of packed.data at

@@ -75,6 +75,18 @@ def get_nc_dataset(ncfile, mode='r'):
     
     return _nc_cache[ncfile]
 
+def frame_steps(frame, freq, num_steps=None):
+    """ Output steps around a frame and interpolation weight:
+        the value at the frame is v[i0]*frac + v[i1]*(1 - frac) """
+    tdx = max(frame*freq, 0.)
+    i0 = int(tdx)
+    i1 = int(ceil(tdx))
+    frac = ceil(tdx) - tdx
+    if num_steps is not None:
+        i0 = min(i0, num_steps - 1)
+        i1 = min(i1, num_steps - 1)
+    return i0, i1, frac
+
 def close_nc_dataset(ncfile=None):
     """
     Close a cached NetCDF dataset.

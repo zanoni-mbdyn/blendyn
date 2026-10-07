@@ -36,7 +36,7 @@ from . pygalplotlib import *
 from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
-from . stresslib    import *
+from . fieldlib     import *
 
 classes = (
         BLENDYN_OT_copy_pip_command,
@@ -81,7 +81,6 @@ classes = (
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
         BLENDYN_OT_import_total_pin,
-        BLENDYN_OT_color_boundary_autosetup,
         BLENDYN_PT_bevel,
         BLENDYN_OT_import_reference,
         BLENDYN_OT_mplot_var_scene,
@@ -142,10 +141,14 @@ classes = (
         BLENDYN_OT_select_modal_fem_file,
         BLENDYN_OT_read_modal_fem_file,
         BLENDYN_OT_modal_node_import_all,
-        BLENDYN_OT_import_stress,
+        BLENDYN_OT_field_build,
+        BLENDYN_OT_field_remove,
+        BLENDYN_OT_field_autorange,
+        BLENDYN_OT_field_solid_view,
         BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
+        BLENDYN_PT_fields,
         BLENDYN_PT_simulation,
         BLENDYN_PT_eigenanalysis,
         BLENDYN_PT_components,
@@ -176,9 +179,14 @@ classes = (
         BLENDYN_PT_utilities
 )
 
-register, unregister_fact = bpy.utils.register_classes_factory(classes)
+register_fact, unregister_fact = bpy.utils.register_classes_factory(classes)
+
+def register():
+    register_fact()
+    register_legend()
 
 def unregister():
+    unregister_legend()
     bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elem_to_be_updated)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_collection)
@@ -188,6 +196,7 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_PG_render_vars_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_settings_object)
     bpy.utils.unregister_class(BLENDYN_PG_settings_scene)
+    bpy.utils.unregister_class(BLENDYN_PG_field_settings)
     bpy.utils.unregister_class(BLENDYN_PG_plot_vars)
     bpy.utils.unregister_class(BLENDYN_PG_environment_vars_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_display_vars_dictionary)
