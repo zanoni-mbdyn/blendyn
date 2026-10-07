@@ -106,7 +106,7 @@ def parse_beam3(rw, ed):
 
         el.offsets[0].value = Vector(( float(rw[3]), float(rw[4]), float(rw[5]) ))
         el.offsets[1].value = Vector(( float(rw[7]), float(rw[8]), float(rw[9]) ))
-        el.offsets[1].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
+        el.offsets[2].value = Vector(( float(rw[11]), float(rw[12]), float(rw[13]) ))
 
         # FIXME: this is here to enhance backwards compatibility.
         # Should disappear in future versions
