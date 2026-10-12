@@ -94,6 +94,11 @@ plotting_bokeh_deps = (
                                "on your system (chromium, google-chrome, etc.).")
 )
 
+# Model editor: MBDynLib checks the type of every argument with pydantic
+model_editor_deps = (
+        Dependency("pydantic", None, None),
+)
+
 # Dictionary of pip-installable optional dependencies.
 # Note: NetCDF4 is bundled as a wheel and is NOT listed here.
 deps = {
@@ -101,5 +106,6 @@ deps = {
     "Plotting - Pygal": plotting_pygal_deps,
     "Plotting - Matplotlib": plotting_matplotlib_deps,
     "Plotting - Bokeh": plotting_bokeh_deps,
+    "Model editor": model_editor_deps,
     "Running MBDyn from Blender UI -- WARNING: Needs Python headers! ---": psutil_deps
 }

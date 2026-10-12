@@ -132,11 +132,31 @@ class BLENDYN_OT_copy_pip_command(bpy.types.Operator):
 # end of BLENDYN_OT_copy_pip_command class
 
 
+def _source_path_update(self, context):
+    from .prepro import ops, tree, ui
+    ops.reset_caches()
+    tree.reset_caches()
+    ui.register_menus()
+
+
 class BLENDYN_preferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
+    mbdyn_source_path: StringProperty(
+        name="MBDyn source checkout", subtype="DIR_PATH", update=_source_path_update,
+        description="The MBDyn source tree whose contrib/PythonModelBuilder and "
+                    "contrib/PythonPreprocessor the model editor uses "
+                    "(default: the MBDYN_SRC environment variable)")
+
     def draw(self, context):
         layout = self.layout
+
+        box = layout.box()
+        box.label(text="Model editor")
+        box.prop(self, "mbdyn_source_path")
+        from .prepro import library
+        ok, message = library.status()
+        box.label(text=message, icon="CHECKMARK" if ok else "ERROR")
 
         # --- Bundled dependencies ---
         box = layout.box()

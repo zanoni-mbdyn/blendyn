@@ -37,6 +37,7 @@ from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
 from . fieldlib     import *
+from . import prepro
 
 classes = (
         BLENDYN_OT_copy_pip_command,
@@ -184,8 +185,10 @@ register_fact, unregister_fact = bpy.utils.register_classes_factory(classes)
 def register():
     register_fact()
     register_legend()
+    prepro.register()
 
 def unregister():
+    prepro.unregister()
     unregister_legend()
     bpy.utils.unregister_class(BLENDYN_PG_elems_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_elem_to_be_updated)

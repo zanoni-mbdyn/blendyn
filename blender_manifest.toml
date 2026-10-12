@@ -77,4 +77,5 @@ paths_exclude_pattern = [
    "/*.zip",         # root-level zip artifacts
    "/config.json",
    "/tests/",
+   "/prepro/test/",
  ]
