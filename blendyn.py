@@ -63,12 +63,12 @@ except ImportError as ierr:
 
 from . baselib import *
 from . elements import *
-from . components import *
 from . eigenlib import *
 from . rfmlib import *
 from . logwatcher import *
 from . utilslib import set_active_collection, get_user_config_path, batch_element_import
-from . fieldlib import BLENDYN_PG_field_settings, register_legend, unregister_legend
+from . fieldlib import BLENDYN_PG_field_settings, register_legend, unregister_legend, FLEXIBLE_TYPES
+from . flexlib import BLENDYN_PG_flex_component
 
 HAVE_PLOT = True
 
@@ -529,13 +529,6 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Handling of missing nodes/elements",
             default = "HIDE"
     )
-    # Behavior for importing shells and beams: get a single mesh or separate mesh objects?
-    mesh_import_mode: EnumProperty(
-            items = [("SEPARATED_OBJECTS", "Separated mesh objects", "", 'UNLINKED', 1),\
-                     ("SINGLE_MESH", "Joined in single mesh", "", 'LINKED', 2)],
-            name = "Mesh objects",
-            default = "SEPARATED_OBJECTS"
-    )
     # Elements dictionary -- holds the collection of the elements found in the .log file
     elems: CollectionProperty(
             name = "MBDyn elements collection",
@@ -639,31 +632,21 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             description = "Higher limit of integer labels for range import for elements",
             default = 2**31 - 1
     )
-    components: CollectionProperty(
-            name = "Components",
-            description = "Components structural and geometrical data",
-            type = BLENDYN_PG_components_dictionary
+    # Flexible components: groups of beams or plates drawn by one mesh
+    flex_components: CollectionProperty(
+            name = "Flexible components",
+            description = "Groups of flexible elements, each drawn by a mesh",
+            type = BLENDYN_PG_flex_component
     )
-    adding_component: BoolProperty(
-            description = "Are we adding a new component?",
-            default = False
-    )
-    editing_component: BoolProperty(
-            description = "Are we editing an existing component?",
-            default = False
-    )
-    # Components dictionary index -- holds the index for displaying the 
-    # Components Dictionary in a UI List
-    cd_index: IntProperty(
-            name = "MBDyn components collection index",
+    fc_index: IntProperty(
+            name = "Active flexible component",
             default = 0,
-            min = 0,
-            update = update_cd_index,
+            min = 0
     )
-    comp_selected_elem: EnumProperty(
-            items = get_deformable_elems,
-            name = "Selected element",
-            description = "Selected element in deformable elements list"
+    modal_selected_elem: EnumProperty(
+            items = get_modal_elems,
+            name = "Modal element",
+            description = "Modal element whose FEM data is loaded"
     )
     eigensolutions: CollectionProperty(
             name = "Eigensolutions",
@@ -906,7 +889,7 @@ class BLENDYN_OT_read_modal_fem_file(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         ed = mbs.elems
-        modal_elem = ed[mbs.comp_selected_elem]
+        modal_elem = ed[mbs.modal_selected_elem]
         number_modal_modes(context)
         ret_val = parse_modal_fem_file(modal_elem, context)
 
@@ -1065,7 +1048,7 @@ class BLENDYN_OT_select_modal_fem_file(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        elem = mbs.elems[mbs.comp_selected_elem]
+        elem = mbs.elems[mbs.modal_selected_elem]
         elem.fem_path = self.filepath
         baseLogger.handlers = []
         log_messages(mbs, baseLogger, False)
@@ -1839,6 +1822,16 @@ class BLENDYN_PT_active_object(BLENDYN_PT_tool_bar, bpy.types.Panel):
                     return
 
                 elem = [elem for elem in ed if elem.blender_object == obj.name]
+                if obj.mbdyn.type == 'component':
+                    # mesh of a flexible component: the element of its
+                    # active face
+                    row = layout.row()
+                    row.label(text = "Flexible component " + obj.mbdyn.dkey)
+                    active = component_active_elem(context, obj)
+                    elem = [active] if active is not None else []
+                    if not elem:
+                        row = layout.row()
+                        row.label(text = "Select a face to see its element", icon = 'INFO')
                 if elem:
                     # Display MBDyn elements info
                     row = layout.row()
@@ -2029,8 +2022,11 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
             col.enabled = False
 
             row = layout.row()
-            row.operator(item.import_function, \
-                    text="Add element to the scene").int_label = item.int_label
+            if item.type in FLEXIBLE_TYPES:
+                row.label(text = "Drawn by the flexible components", icon = 'INFO')
+            else:
+                row.operator(item.import_function, \
+                        text="Add element to the scene").int_label = item.int_label
 
 
             box = layout.box()
@@ -2042,14 +2038,8 @@ class BLENDYN_PT_elems_scene(bpy.types.Panel):
             col = box.column()
             col.prop(mbs, "min_elem_import")
             col.prop(mbs, "max_elem_import")
-            if mbs.elem_type_import in ('shell4', 'membrane4'):
-                col.prop(mbs, "mesh_import_mode")
-            if mbs.mesh_import_mode == 'SEPARATED_OBJECTS':
-                col.operator(BLENDYN_OT_import_elements_by_type.bl_idname, \
-                        text="Import elements by type")
-            elif mbs.mesh_import_mode == 'SINGLE_MESH':
-                col.operator(BLENDYN_OT_import_elements_as_mesh.bl_idname, \
-                        text="Import elements by type")
+            col.operator(BLENDYN_OT_import_elements_by_type.bl_idname, \
+                    text="Import elements by type")
             col.operator(BLENDYN_OT_elements_import_all.bl_idname)
 
             box = layout.box()
@@ -2154,106 +2144,39 @@ class BLENDYN_PT_obj_select(bpy.types.Panel):
 # -----------------------------------------------------------
 # end of BLENDYN_PT_obj_select class
 
-class BLENDYN_PT_components(bpy.types.Panel):
-    """ List of Blendyn components: add/modify them,
-        generate armatures and geometry """
-    bl_label = "MBDyn components"
+class BLENDYN_PT_modal_fem(bpy.types.Panel):
+    """ FEM data of the modal elements """
+    bl_label = "MBDyn modal elements"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "scene"
     bl_options = {'DEFAULT_CLOSED'}
 
+    @classmethod
+    def poll(cls, context):
+        return any(elem.type == 'modal' for elem in context.scene.mbdyn.elems)
+
     def draw(self, context):
         mbs = context.scene.mbdyn
-        comps = mbs.components
         layout = self.layout
-        layout.alignment = 'LEFT'
         col = layout.column()
-        col.label(text = "Components:")
+        col.prop(mbs, "modal_selected_elem", text = "Element")
+        if mbs.modal_selected_elem not in mbs.elems:
+            return
+        col.operator(BLENDYN_OT_select_modal_fem_file.bl_idname,
+                     text = "Choose FEM file")
+        col.label(text = "FEM file path:")
+        col.prop(mbs.elems[mbs.modal_selected_elem], "fem_path", text = "")
         row = col.row()
-        row.template_list("BLENDYN_UL_components_list", \
-                "MBDyn components", \
-                mbs, "components", \
-                mbs, "cd_index")
-        row = col.row()
-        if not mbs.adding_component:
-            row.operator(BLENDYN_OT_component_add.bl_idname, \
-                    text = "Add New Component")
-            row = col.row()
-            row.operator(BLENDYN_OT_component_edit.bl_idname, \
-                    text = "Edit Selected Component")
-            row = col.row()
-            row.operator(BLENDYN_OT_component_remove.bl_idname, \
-                    text = "Remove Component")
-            if len(comps):
-                comp = comps[mbs.cd_index]
-        else:
-            comp = comps[-1]
-
-        if len(comps) and (mbs.adding_component or mbs.editing_component) :
-            col = layout.column()
-            col.label(text = "Component Elements:")
-            row = col.row()
-            split = row.split(factor = 0.2)
-            col = split.column()
-            col.label(text = "#")
-            col = split.column()
-            split = col.split(factor = .67)
-            col = split.column()
-            col.label(text = "element")
-            col = split.column()
-            col.label(text = "subs")
-            col = layout.column()
-            row = col.row()
-            row.template_list("BLENDYN_UL_component_elements_list", \
-                "Component elements", \
-                comp, "elements", \
-                comp, "el_index")
-            col.prop(mbs, "comp_selected_elem", text = "Add")
-            if mbs.comp_selected_elem[:5] == 'modal':
-                col = layout.column()
-                col.operator(BLENDYN_OT_select_modal_fem_file.bl_idname,
-                             text = "Choose FEM file")
-                col.label(text = "FEM file path:")
-                col.prop(mbs.elems[mbs.comp_selected_elem], "fem_path", text = "")
-                row = col.row()
-                split = row.split(factor = 0.5)
-                col = split.column()
-                col.operator(BLENDYN_OT_read_modal_fem_file.bl_idname,
-                             text = "Load FEM file")
-                col = split.column()
-                col.operator(BLENDYN_OT_modal_node_import_all.bl_idname,
-                             text = "Import all modal nodes")
-            col = layout.column()
-            col.operator(BLENDYN_OT_component_add_elem.bl_idname, \
-                    text = "Add Element")
-            col.operator(BLENDYN_OT_component_remove_elem.bl_idname, \
-                    text = "Remove Element")
-    
-            col = layout.column()
-            col.operator(BLENDYN_OT_component_remove_all_elems.bl_idname, \
-                    text = "Remove All Elements")
-            col.operator(BLENDYN_OT_component_add_selected_elems.bl_idname, \
-                    text = "Add Selected Elements")
-            if mbs.adding_component:
-                col.prop(comp, "remove_from_etu", text = "Disable elements update")
-
-            col = layout.column()
-            col.alignment = 'LEFT' 
-            col.prop(comp, "object")
-            
-            if mbs.adding_component:
-                col.operator(BLENDYN_OT_component_add_confirm.bl_idname, \
-                    text = "Confirm")
-                col.operator(BLENDYN_OT_component_add_cancel.bl_idname, \
-                    text = "Cancel")
-            elif mbs.editing_component:
-                col.operator(BLENDYN_OT_component_edit_confirm.bl_idname, \
-                    text = "Confirm")
-                col.operator(BLENDYN_OT_component_edit_cancel.bl_idname, \
-                    text = "Cancel")
+        split = row.split(factor = 0.5)
+        col = split.column()
+        col.operator(BLENDYN_OT_read_modal_fem_file.bl_idname,
+                     text = "Load FEM file")
+        col = split.column()
+        col.operator(BLENDYN_OT_modal_node_import_all.bl_idname,
+                     text = "Import all modal nodes")
 # -----------------------------------------------------------
-# end of BLENDYN_PT_components_scene
+# end of BLENDYN_PT_modal_fem class
 
 class BLENDYN_OT_node_import_all(bpy.types.Operator):
     """ Imports all the MBDyn nodes into the Blender scene """
@@ -2354,7 +2277,7 @@ class BLENDYN_OT_modal_node_import_all(bpy.types.Operator):
             return {'CANCELLED'}
 
         wm = bpy.context.window_manager
-        elem = ed[mbs.comp_selected_elem]
+        elem = ed[mbs.modal_selected_elem]
         Nnodes = len(elem.modal_node)
         wm.progress_begin(0, Nnodes)
         added_nodes = 0
@@ -2640,6 +2563,14 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
         mbs = context.scene.mbdyn
         ed = mbs.elems
         bpy.ops.object.select_all(action = 'DESELECT')
+        if mbs.elem_type_import in FLEXIBLE_TYPES:
+            # the meshes of the flexible components holding such elements
+            for comp in mbs.flex_components:
+                if comp.object is not None and comp.object.name in context.view_layer.objects \
+                        and any(ed[ce.elem].type == mbs.elem_type_import \
+                                for ce in comp.elements if ce.elem in ed):
+                    comp.object.select_set(state = True)
+            return {'FINISHED'}
         for var in ed.keys():
             if mbs.elem_type_import in var:
                 try:
@@ -2710,7 +2641,10 @@ class BLENDYN_OT_scale_elements_by_type(bpy.types.Operator):
         s = mbs.elem_scale_slider
         for elem in ed:
             if elem.type == mbs.elem_type_import:
-                scaleOBJ = bpy.data.objects[elem.blender_object]
+                # flexible elements have no object of their own
+                scaleOBJ = bpy.data.objects.get(elem.blender_object)
+                if scaleOBJ is None:
+                    continue
                 bpy.context.view_layer.objects.active = scaleOBJ
                 scaleOBJ.scale = Vector((s, s, s))
              #   bpy.ops.object.transform_apply(location = False, \
@@ -2759,6 +2693,9 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
     def execute(self, context):
         mbs = context.scene.mbdyn
         ed = mbs.elems
+        if mbs.elem_type_import in FLEXIBLE_TYPES:
+            # drawn by the default flexible components
+            return bpy.ops.blendyn.flex_default_components('EXEC_DEFAULT')
         with batch_element_import():
             for elem in ed:
                 if (elem.type == mbs.elem_type_import) \
@@ -2798,7 +2735,11 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
         missing_elems = 0
         with batch_element_import():
             for elem in ed:
-                if (elem.int_label >= mbs.min_elem_import) \
+                if elem.type in FLEXIBLE_TYPES:
+                    # drawn by the flexible components, see below
+                    added_elems += 1
+                    wm.progress_update(added_elems + missing_elems)
+                elif (elem.int_label >= mbs.min_elem_import) \
                         and (elem.int_label <= mbs.max_elem_import):
                     try:
                         import_element(elem, self, context)
@@ -2811,11 +2752,16 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
                             missing_elems += 1
                             pass
                     wm.progress_update(added_elems + missing_elems)
+        wm.progress_end()
         if missing_elems:
             message = "BLENDYN_OT_elements_import_all::execute(): " \
                       + "Some elements were not imported. See log file for details"
             baseLogger.warning(message)
             self.report({'WARNING'}, message)
+        # beams and plates that are not in a user-defined flexible
+        # component are drawn by the default components
+        if any(elem.type in FLEXIBLE_TYPES for elem in ed):
+            bpy.ops.blendyn.flex_default_components('EXEC_DEFAULT')
 
         return {'FINISHED'}
 
@@ -2985,8 +2931,10 @@ class BLENDYN_OT_attach_objects(bpy.types.Operator):
             attached_name = entity.name + mbs.attach_object_suffix
             for name, child in bpy.data.objects.items():
                 if (name.startswith(attached_name)):
-                    mbdyn_object = bpy.data.objects[entity.name]
-                    child.parent = mbdyn_object
+                    # flexible elements have no object of their own
+                    mbdyn_object = bpy.data.objects.get(entity.name)
+                    if mbdyn_object is not None and mbdyn_object != child:
+                        child.parent = mbdyn_object
 
         return{'FINISHED'}
 # -----------------------------------------------------------

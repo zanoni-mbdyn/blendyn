@@ -38,10 +38,39 @@ def get_dict_item(context, obj):
         return context.scene.mbdyn.elems[obj.mbdyn.dkey]
     elif obj.mbdyn.type == 'reference':
         return context.scene.mbdyn.refs[obj.mbdyn.dkey]
+    elif obj.mbdyn.type == 'component':
+        return component_active_elem(context, obj)
     else:
         return None
 # ------------------------------------------------------------
 # end of get_dict_item() function
+
+def component_active_elem(context, obj):
+    """ Element drawn by the active face of the mesh of a flexible
+        component (see flexlib.py), or None """
+    mesh = obj.data
+    label = None
+    if obj.mode == 'EDIT':
+        bm = bmesh.from_edit_mesh(mesh)
+        layer = bm.faces.layers.int.get('blendyn_elem')
+        face = bm.faces.active
+        if layer is not None and face is not None:
+            label = face[layer]
+    else:
+        attr = mesh.attributes.get('blendyn_elem')
+        idx = mesh.polygons.active
+        if attr is not None and attr.domain == 'FACE' and 0 <= idx < len(attr.data):
+            label = attr.data[idx].value
+    if label is None:
+        return None
+    ed = context.scene.mbdyn.elems
+    for etype in obj.get('blendyn_types', ()):
+        key = etype + '_' + str(label)
+        if key in ed:
+            return ed[key]
+    return None
+# ------------------------------------------------------------
+# end of component_active_elem() function
 
 class RotKeyError(Exception):
     def __init__(self, value):

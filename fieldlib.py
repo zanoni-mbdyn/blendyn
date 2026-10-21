@@ -25,10 +25,13 @@
 # Visualization of the fields of flexible elements (displacement relative
 # to a floating reference node, internal forces and strains).
 #
-# Each family of flexible elements (shell4, membrane4, beams) is drawn by
-# a single "field mesh", whose vertices are moved and colored by a frame
-# change handler. The data of the selected quantity is read from the
-# NetCDF output once, for all the time steps, and kept in memory.
+# The flexible elements are drawn by the meshes of the flexible components
+# (flexlib.py), which color them by calling update_fields() whenever they
+# are moved. The data of the selected quantity is read from the NetCDF
+# output once, for all the time steps, and kept in memory. The field
+# settings are separate for each family of elements (beams, shell4,
+# membrane4), so that components of different families can be colored at
+# the same time.
 
 import os
 import math
@@ -51,8 +54,6 @@ try:
 except ImportError:
     HAVE_GPU = False
 
-FIELDS_COLLECTION = 'fields'
-FIELD_MATERIAL = 'Blendyn Field'
 VALUE_ATTR = 'blendyn_field'
 COLOR_ATTR = 'blendyn_field_color'
 
@@ -307,17 +308,34 @@ def _reduce_components(data, comps):
     return np.linalg.norm(data[..., list(comps)], axis=-1)
 
 # -----------------------------------------------------------
-# Field mesh construction
+# Field meshes: the meshes of the confirmed flexible components
+# (flexlib.py). Their custom properties tell what they draw:
+#   'blendyn_field_family': 'BEAM', 'SHELL4' or 'MEMBRANE4';
+#   plates: 'blendyn_nodes', the node labels, one per vertex, and
+#           'blendyn_elems', the element labels, one per face;
+#   beams: 'blendyn_beam3' and 'blendyn_beam2', the element labels in
+#          mesh order (beam3 first), 'blendyn_rings' and 'blendyn_sides':
+#          each beam has rings x sides vertices, ring after ring, with
+#          the rings equally spaced in the natural coordinate.
 
-def _field_objects():
-    return [obj for obj in bpy.data.objects if 'blendyn_field_family' in obj]
+FLEXIBLE_TYPES = {etype for desc in FAMILIES.values() for etype in desc['types']}
+
+# property of BLENDYN_PG_field_settings holding the settings of each family
+FAMILY_PROP = {'BEAM': 'beam', 'SHELL4': 'shell4', 'MEMBRANE4': 'membrane4'}
+_PROP_FAMILY = {prop: family for family, prop in FAMILY_PROP.items()}
+
+PLAIN_MATERIAL = 'Blendyn Component'
 
 
-def _field_object(family):
-    for obj in _field_objects():
-        if obj['blendyn_field_family'] == family:
-            return obj
-    return None
+def family_settings(mbs, family):
+    return getattr(mbs.field, FAMILY_PROP[family])
+
+
+def field_objects(mbs, family=None):
+    """ Meshes of the confirmed flexible components (of a family) """
+    return [comp.object for comp in mbs.flex_components
+            if comp.state == 'CONFIRMED' and comp.object is not None
+            and (family is None or comp.family == family)]
 
 
 def available_families(mbs):
@@ -329,22 +347,18 @@ def _family_elems(mbs, family):
     return [elem for elem in mbs.elems if elem.type in FAMILIES[family]['types']]
 
 
-def _get_fields_collection(context):
-    try:
-        col = bpy.data.collections[FIELDS_COLLECTION]
-    except KeyError:
-        col = bpy.data.collections.new(FIELDS_COLLECTION)
-    if col.name not in context.scene.collection.children:
-        context.scene.collection.children.link(col)
-    return col
+def field_material_name(family):
+    return 'Blendyn Field ' + FAMILIES[family]['label']
 
 
-def get_field_material():
-    try:
-        return bpy.data.materials[FIELD_MATERIAL]
-    except KeyError:
-        pass
-    mat = bpy.data.materials.new(FIELD_MATERIAL)
+def get_field_material(family):
+    """ Material coloring the meshes of a family by the field value
+        (one per family, since the material holds the color range) """
+    name = field_material_name(family)
+    mat = bpy.data.materials.get(name)
+    if mat is not None:
+        return mat
+    mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
@@ -367,7 +381,25 @@ def get_field_material():
     return mat
 
 
+def get_plain_material():
+    """ Material of the meshes of flexible components without fields """
+    mat = bpy.data.materials.get(PLAIN_MATERIAL)
+    if mat is None:
+        mat = bpy.data.materials.new(PLAIN_MATERIAL)
+        mat.diffuse_color = (0.6, 0.6, 0.6, 1.)
+    return mat
+
+
+def set_mesh_material(mesh, mat):
+    if not mesh.materials:
+        mesh.materials.append(mat)
+    elif mesh.materials[0] != mat:
+        mesh.materials[0] = mat
+
+
 def set_material_colormap(mat, name):
+    if mat.get('blendyn_colormap') == name:
+        return
     ramp = mat.node_tree.nodes['Colormap'].color_ramp
     ramp.interpolation = 'LINEAR'
     pos, stops = colormap_stops(name)
@@ -378,6 +410,7 @@ def set_material_colormap(mat, name):
     for p, c in zip(pos[1:], stops[1:]):
         el = ramp.elements.new(float(p))
         el.color = tuple(c) + (1.,)
+    mat['blendyn_colormap'] = name
 
 
 def set_material_range(mat, vmin, vmax):
@@ -386,54 +419,6 @@ def set_material_range(mat, vmin, vmax):
         maprange.inputs['From Min'].default_value = vmin
     if maprange.inputs['From Max'].default_value != vmax:
         maprange.inputs['From Max'].default_value = vmax
-
-
-def _new_field_object(context, family, verts, faces):
-    name = 'field.' + family.lower()
-    old = bpy.data.objects.get(name)
-    if old is not None:
-        mesh = old.data
-        bpy.data.objects.remove(old)
-        if mesh.users == 0:
-            bpy.data.meshes.remove(mesh)
-    mesh = bpy.data.meshes.new(name)
-    mesh.from_pydata(verts, [], faces)
-    mesh.update()
-    obj = bpy.data.objects.new(name, mesh)
-    _get_fields_collection(context).objects.link(obj)
-    mesh.materials.append(get_field_material())
-    obj['blendyn_field_family'] = family
-    return obj
-
-
-def build_plate_field(context, family):
-    """ Mesh with one vertex per node and one quad per element """
-    mbs = context.scene.mbdyn
-    elems = _family_elems(mbs, family)
-    node_idx = {}
-    faces = []
-    for elem in elems:
-        face = []
-        for k in range(4):
-            label = elem.nodes[k].int_label
-            face.append(node_idx.setdefault(label, len(node_idx)))
-        faces.append(face)
-    labels = list(node_idx.keys())
-    verts = []
-    for label in labels:
-        try:
-            verts.append(tuple(mbs.nodes['node_' + str(label)].initial_pos))
-        except KeyError:
-            verts.append((0., 0., 0.))
-    obj = _new_field_object(context, family, verts, faces)
-    obj['blendyn_nodes'] = labels
-    obj['blendyn_elems'] = [elem.int_label for elem in elems]
-    mesh = obj.data
-    attr = mesh.attributes.new('blendyn_node', 'INT', 'POINT')
-    attr.data.foreach_set('value', labels)
-    attr = mesh.attributes.new('blendyn_elem', 'INT', 'FACE')
-    attr.data.foreach_set('value', obj['blendyn_elems'])
-    return obj
 
 
 def _beam_groups(mbs, obj):
@@ -447,7 +432,7 @@ def _beam_groups(mbs, obj):
     return groups
 
 
-def _beam_shape(nn, xi):
+def beam_shape(nn, xi):
     """ Shape functions and derivatives of the beam nodes at xi """
     xi = np.asarray(xi, dtype=float)
     if nn == 3:
@@ -458,48 +443,8 @@ def _beam_shape(nn, xi):
         dN = np.stack((-.5*np.ones_like(xi), .5*np.ones_like(xi)), axis=-1)
     return N, dN
 
-
-def build_beam_field(context, rings, sides):
-    """ Tube mesh with rings x sides vertices per beam """
-    mbs = context.scene.mbdyn
-    elems = _family_elems(mbs, 'BEAM')
-    beam3 = [elem for elem in elems if elem.type == 'beam3']
-    beam2 = [elem for elem in elems if elem.type == 'beam2']
-    nbeams = len(beam3) + len(beam2)
-    nv = rings*sides
-    # vertices placed on the chord, so that the mesh is not degenerate
-    # before the first update
-    verts = []
-    xis = np.linspace(-1., 1., rings)
-    for elem in beam3 + beam2:
-        try:
-            p0 = np.array(mbs.nodes['node_' + str(elem.nodes[0].int_label)].initial_pos)
-            p1 = np.array(mbs.nodes['node_' + str(elem.nodes[len(elem.nodes) - 1].int_label)].initial_pos)
-        except KeyError:
-            p0, p1 = np.zeros(3), np.zeros(3)
-        for xi in xis:
-            p = p0 + (xi + 1.)/2.*(p1 - p0)
-            verts.extend([tuple(p)]*sides)
-    s = np.arange(rings - 1)[:, None]
-    m = np.arange(sides)[None, :]
-    quads = np.stack((s*sides + m, s*sides + (m + 1) % sides,
-                      (s + 1)*sides + (m + 1) % sides, (s + 1)*sides + m), axis=-1).reshape((-1, 4))
-    faces = (np.arange(nbeams)[:, None, None]*nv + quads[None]).reshape((-1, 4)).tolist()
-    obj = _new_field_object(context, 'BEAM', verts, faces)
-    obj['blendyn_beam3'] = [elem.int_label for elem in beam3]
-    obj['blendyn_beam2'] = [elem.int_label for elem in beam2]
-    obj['blendyn_rings'] = rings
-    obj['blendyn_sides'] = sides
-    mesh = obj.data
-    labels = np.repeat([elem.int_label for elem in beam3 + beam2], nv)
-    attr = mesh.attributes.new('blendyn_elem', 'INT', 'POINT')
-    attr.data.foreach_set('value', labels.tolist())
-    attr = mesh.attributes.new('blendyn_xi', 'FLOAT', 'POINT')
-    attr.data.foreach_set('value', np.tile(np.repeat(xis, sides), nbeams).tolist())
-    return obj
-
 # -----------------------------------------------------------
-# Field data: everything that is needed to update the mesh at any time,
+# Field data: everything that is needed to color a mesh at any time,
 # for the selected quantity. Values are already reduced to the mesh
 # domain (corners or vertices) for all the time steps.
 
@@ -513,10 +458,16 @@ def invalidate_cache():
     _available_cache.clear()
 
 
-def _settings_key(mbs, obj):
-    fs = mbs.field
-    return (_file_stamp(nc_file_path(mbs)), obj.name, obj.data.name, len(obj.data.vertices),
-            fs.quantity, fs.component, fs.ref_node, fs.sampling)
+def invalidate_object(name):
+    """ To be called when the mesh of a component is built again """
+    _field_cache.pop(name, None)
+
+
+def _settings_key(mbs, obj, family):
+    ff = family_settings(mbs, family)
+    mesh = obj.data
+    return (_file_stamp(nc_file_path(mbs)), mesh.name, len(mesh.vertices), len(mesh.loops),
+            ff.quantity, ff.component, ff.ref_node, ff.sampling)
 
 
 def _quantity(family, quantity):
@@ -528,9 +479,9 @@ def _quantity(family, quantity):
     raise KeyError(quantity)
 
 
-def _ref_node(mbs):
+def _ref_node(mbs, ff):
     try:
-        return mbs.nodes[mbs.field.ref_node] if mbs.field.ref_node else None
+        return mbs.nodes[ff.ref_node] if ff.ref_node else None
     except KeyError:
         return None
 
@@ -543,17 +494,17 @@ def _units(nc, name):
 
 
 def _plate_data(nc, mbs, obj, family):
-    fs = mbs.field
+    ff = family_settings(mbs, family)
     labels = list(obj['blendyn_nodes'])
     elems = list(obj['blendyn_elems'])
     mesh = obj.data
     corners = np.empty(len(mesh.loops), dtype=int)
     mesh.loops.foreach_get('vertex_index', corners)
-    data = {'positions': node_positions(nc, labels)}
-    qid, qlabel, qdesc, comps = _quantity(family, fs.quantity)
-    comp_label, comp = comps[int(fs.component)] if fs.component.isdigit() else comps[0]
+    data = {}
+    qid, qlabel, qdesc, comps = _quantity(family, ff.quantity)
+    comp_label, comp = comps[int(ff.component)] if ff.component.isdigit() else comps[0]
     if qid == 'DISP':
-        u = displacements(nc, mbs, labels, _ref_node(mbs))
+        u = displacements(nc, mbs, labels, _ref_node(mbs, ff))
         data['values'] = _reduce_components(u, comp).astype(np.float32)
         data['domain'] = 'POINT'
         data['units'] = _units(nc, _node_var(labels[0], 'X')) if labels else ''
@@ -564,9 +515,9 @@ def _plate_data(nc, mbs, obj, family):
         items = [(name, ip*ncomp + c) for name in names for ip in range(4) for c in comp]
         ip = read_components(nc, items).reshape((-1, len(elems), 4, len(comp)))
         ip = _reduce_components(ip, tuple(range(len(comp))))
-        weights = _IP_NEAREST if fs.sampling == 'IP' else _IP_EXTRAP
+        weights = _IP_NEAREST if ff.sampling == 'IP' else _IP_EXTRAP
         corner = (ip @ weights.T).reshape((ip.shape[0], -1))
-        if fs.sampling == 'NODAL_AVG':
+        if ff.sampling == 'NODAL_AVG':
             counts = np.bincount(corners, minlength=len(labels))
             values = np.zeros((corner.shape[0], len(labels)), dtype=np.float32)
             np.add.at(values, (slice(None), corners), corner)
@@ -581,43 +532,24 @@ def _plate_data(nc, mbs, obj, family):
 
 
 def _beam_data(nc, mbs, obj):
-    fs = mbs.field
-    nd = mbs.nodes
+    ff = family_settings(mbs, 'BEAM')
     rings = obj['blendyn_rings']
     xis = np.linspace(-1., 1., rings)
     groups = _beam_groups(mbs, obj)
-    qid, qlabel, qdesc, comps = _quantity('BEAM', fs.quantity)
-    comp_label, comp = comps[int(fs.component)] if fs.component.isdigit() else comps[0]
-    data = {'groups': [], 'domain': 'POINT', 'label': qlabel + ' ' + comp_label, 'units': ''}
+    qid, qlabel, qdesc, comps = _quantity('BEAM', ff.quantity)
+    comp_label, comp = comps[int(ff.component)] if ff.component.isdigit() else comps[0]
+    data = {'domain': 'POINT', 'label': qlabel + ' ' + comp_label, 'units': ''}
     values = []
-    ref_node = _ref_node(mbs)
+    ref_node = _ref_node(mbs, ff)
     for etype, nn, elems in groups:
-        node_labels = [[elem.nodes[k].int_label for k in range(nn)] for elem in elems]
-        flat = [label for labels in node_labels for label in labels]
-        position = {label: i for i, label in enumerate(dict.fromkeys(flat))}
-        uniq = list(position.keys())
-        uidx = np.array([position[label] for label in flat])
-        X = node_positions(nc, uniq)
-        R = node_rotations(nc, [nd['node_' + str(label)] for label in uniq])
-        offsets = np.array([[tuple(elem.offsets[k].value) for k in range(nn)] for elem in elems])
-        # points on the beam reference line, (time steps, beams, nodes, 3)
-        Xb = X[:, uidx].reshape((-1, len(elems), nn, 3))
-        Rb = R[:, uidx].reshape((-1, len(elems), nn, 3, 3))
-        P = Xb + np.einsum('tbkij,bkj->tbki', Rb, offsets)
-        # reference vectors of the section, normal to the initial chord
-        # and carried along by the rotation of the nodes
-        chord = P[0, :, -1] - P[0, :, 0]
-        chord /= np.maximum(np.linalg.norm(chord, axis=-1, keepdims=True), 1e-12)
-        e = np.eye(3)[np.argmin(np.abs(chord), axis=-1)]
-        n0 = np.cross(chord, e)
-        n0 /= np.maximum(np.linalg.norm(n0, axis=-1, keepdims=True), 1e-12)
-        n0k = np.einsum('bkji,bj->bki', Rb[0], n0)
-        W = np.einsum('tbkij,bkj->tbki', Rb, n0k)
-        N, dN = _beam_shape(nn, xis)
-        data['groups'].append({'P': P.astype(np.float32), 'W': W.astype(np.float32), 'N': N, 'dN': dN})
-
         # values at the rings, (time steps, beams, rings)
         if qid == 'DISP':
+            node_labels = [[elem.nodes[k].int_label for k in range(nn)] for elem in elems]
+            flat = [label for labels in node_labels for label in labels]
+            position = {label: i for i, label in enumerate(dict.fromkeys(flat))}
+            uniq = list(position.keys())
+            uidx = np.array([position[label] for label in flat])
+            N, dN = beam_shape(nn, xis)
             u = displacements(nc, mbs, uniq, ref_node)[:, uidx].reshape((-1, len(elems), nn, 3))
             u = np.einsum('rk,tbkc->tbrc', N, u)
             values.append(_reduce_components(u, comp))
@@ -630,7 +562,7 @@ def _beam_data(nc, mbs, obj):
             names = [prefix + str(elem.int_label) + '.' + qid + sez for elem in elems for sez in ('_I', '_II')]
             ep = read_components(nc, [(name, c) for name in names for c in comp])
             ep = ep.reshape((-1, len(elems), 2, len(comp)))
-            if fs.sampling == 'IP':
+            if ff.sampling == 'IP':
                 ring = np.where(xis < 0., 0, 1)
                 ep = ep[:, :, ring]
             else:
@@ -671,12 +603,12 @@ def available_quantities(mbs, family):
 
 def get_field_data(scene, obj):
     mbs = scene.mbdyn
-    key = _settings_key(mbs, obj)
+    family = obj['blendyn_field_family']
+    key = _settings_key(mbs, obj, family)
     cached = _field_cache.get(obj.name)
     if cached is not None and cached[0] == key:
         return cached[1]
     nc = get_nc_dataset(nc_file_path(mbs))
-    family = obj['blendyn_field_family']
     if family == 'BEAM':
         data = _beam_data(nc, mbs, obj)
     else:
@@ -691,27 +623,7 @@ def get_field_data(scene, obj):
     return data
 
 # -----------------------------------------------------------
-# Field mesh update
-
-def _beam_positions(data, i0, i1, frac, radius, sides):
-    theta = 2.*np.pi*np.arange(sides)/sides
-    ct, st = np.cos(theta), np.sin(theta)
-    res = []
-    for g in data['groups']:
-        P = g['P'][i0]*frac + g['P'][i1]*(1. - frac)
-        W = g['W'][i0]*frac + g['W'][i1]*(1. - frac)
-        p = np.einsum('rk,bki->bri', g['N'], P)
-        t = np.einsum('rk,bki->bri', g['dN'], P)
-        n = np.einsum('rk,bki->bri', g['N'], W)
-        t /= np.maximum(np.linalg.norm(t, axis=-1, keepdims=True), 1e-12)
-        n -= np.sum(n*t, axis=-1, keepdims=True)*t
-        n /= np.maximum(np.linalg.norm(n, axis=-1, keepdims=True), 1e-12)
-        b = np.cross(t, n)
-        v = p[:, :, None, :] + radius*(ct[None, None, :, None]*n[:, :, None, :] \
-                + st[None, None, :, None]*b[:, :, None, :])
-        res.append(v.reshape((-1, 3)))
-    return np.concatenate(res) if res else np.zeros((0, 3))
-
+# Coloring of the meshes
 
 def _set_attribute(mesh, name, atype, domain, prop, values):
     attr = mesh.attributes.get(name)
@@ -724,80 +636,118 @@ def _set_attribute(mesh, name, atype, domain, prop, values):
     return attr
 
 
-def effective_range(mbs, data, values):
-    fs = mbs.field
-    if fs.range_mode == 'MANUAL':
-        vmin, vmax = fs.vmin, fs.vmax
-    elif fs.range_mode == 'PER_FRAME' and values.size and not np.all(np.isnan(values)):
-        vmin, vmax = float(np.nanmin(values)), float(np.nanmax(values))
+def effective_range(ff, entries):
+    """ Color range of a family: entries are (data, values at the frame)
+        of all its meshes """
+    if ff.range_mode == 'MANUAL':
+        vmin, vmax = ff.vmin, ff.vmax
     else:
-        vmin, vmax = data['vmin'], data['vmax']
-    if fs.symmetric:
+        if ff.range_mode == 'PER_FRAME':
+            values = np.concatenate([np.ravel(values) for _, values in entries])
+            ranges = [(float(np.nanmin(values)), float(np.nanmax(values)))] \
+                    if values.size and not np.all(np.isnan(values)) else []
+        else:
+            ranges = [(data['vmin'], data['vmax']) for data, _ in entries]
+        vmin = min((r[0] for r in ranges), default=0.)
+        vmax = max((r[1] for r in ranges), default=0.)
+    if ff.symmetric:
         m = max(abs(vmin), abs(vmax))
         vmin, vmax = -m, m
     return vmin, vmax
 
 
-# state of the last update, for the legend
+# state of the last update of each family, for the legends
 _legend = {}
 
 
-def update_field_object(scene, obj):
-    mbs = scene.mbdyn
-    fs = mbs.field
-    data = get_field_data(scene, obj)
-    i0, i1, frac = frame_steps(scene.frame_current, mbs.load_frequency, data['num_steps'])
-    mesh = obj.data
-    if obj['blendyn_field_family'] == 'BEAM':
-        pos = _beam_positions(data, i0, i1, frac, fs.beam_radius, obj['blendyn_sides'])
-    else:
-        P = data['positions']
-        pos = P[i0]*frac + P[i1]*(1. - frac)
-    if len(pos) == len(mesh.vertices):
-        mesh.vertices.foreach_set('co', np.asarray(pos, dtype=np.float32).ravel())
-    values = data['values'][i0]*frac + data['values'][i1]*(1. - frac)
-    vmin, vmax = effective_range(mbs, data, values)
-    _set_attribute(mesh, VALUE_ATTR, 'FLOAT', data['domain'], 'value',
-            np.nan_to_num(values, nan=0.).astype(np.float32))
-    colors = map_colors(values, vmin, vmax, colormap_lut(fs.colormap))
-    col = _set_attribute(mesh, COLOR_ATTR, 'FLOAT_COLOR', data['domain'], 'color', colors.ravel())
-    if mesh.color_attributes.active_color_name != COLOR_ATTR:
-        mesh.color_attributes.active_color = col
-    try:
-        if mesh.color_attributes.render_color_index != mesh.color_attributes.active_color_index:
-            mesh.color_attributes.render_color_index = mesh.color_attributes.active_color_index
-    except AttributeError:
-        pass
-    mesh.update()
-    set_material_range(get_field_material(), vmin, vmax)
-    time = data['time'][i0]*frac + data['time'][i1]*(1. - frac)
-    _legend.update({'label': data['label'], 'units': data['units'], 'vmin': vmin, 'vmax': vmax,
-                    'colormap': fs.colormap, 'time': float(time)})
+def fields_active(mbs):
+    return mbs.field.enable and mbs.use_netcdf
 
 
-def update_fields(scene):
-    """ Updates the field mesh of the active family, and hides the others """
+def update_family_fields(scene, family, objs):
+    """ Colors the meshes objs of a family by the selected quantity, at
+        the current frame """
     mbs = scene.mbdyn
-    if not (mbs.field.enable and mbs.use_netcdf):
-        return
-    for obj in _field_objects():
-        active = obj['blendyn_field_family'] == mbs.field.family
-        if obj.hide_viewport == active:
-            obj.hide_viewport = not active
-            obj.hide_render = not active
-        if not active:
-            continue
+    ff = family_settings(mbs, family)
+    entries = []
+    for obj in objs:
         try:
-            update_field_object(scene, obj)
+            data = get_field_data(scene, obj)
         except (KeyError, IndexError, ValueError, OSError, RuntimeError) as err:
-            message = "BLENDYN::update_fields(): could not update {}: {}".format(obj.name, err)
+            message = "BLENDYN::update_family_fields(): could not color {}: {}".format(obj.name, err)
             print(message)
             logging.error(message)
+            set_mesh_material(obj.data, get_plain_material())
+            continue
+        i0, i1, frac = frame_steps(scene.frame_current, mbs.load_frequency, data['num_steps'])
+        values = data['values'][i0]*frac + data['values'][i1]*(1. - frac)
+        if values.size != (len(obj.data.loops) if data['domain'] == 'CORNER' else len(obj.data.vertices)):
+            # the mesh was changed after the data was cached
+            invalidate_object(obj.name)
+            continue
+        time = data['time'][i0]*frac + data['time'][i1]*(1. - frac)
+        entries.append((obj, data, values, time))
+    if not entries:
+        _legend.pop(family, None)
+        return
+    vmin, vmax = effective_range(ff, [(data, values) for _, data, values, _ in entries])
+    mat = get_field_material(family)
+    set_material_colormap(mat, ff.colormap)
+    set_material_range(mat, vmin, vmax)
+    lut = colormap_lut(ff.colormap)
+    for obj, data, values, time in entries:
+        mesh = obj.data
+        _set_attribute(mesh, VALUE_ATTR, 'FLOAT', data['domain'], 'value',
+                np.nan_to_num(values, nan=0.).astype(np.float32))
+        colors = map_colors(values, vmin, vmax, lut)
+        col = _set_attribute(mesh, COLOR_ATTR, 'FLOAT_COLOR', data['domain'], 'color', colors.ravel())
+        if mesh.color_attributes.active_color_name != COLOR_ATTR:
+            mesh.color_attributes.active_color = col
+        try:
+            if mesh.color_attributes.render_color_index != mesh.color_attributes.active_color_index:
+                mesh.color_attributes.render_color_index = mesh.color_attributes.active_color_index
+        except AttributeError:
+            pass
+        set_mesh_material(mesh, mat)
+        mesh.update()
+    data, time = entries[0][1], entries[0][3]
+    _legend[family] = {'label': data['label'], 'units': data['units'], 'vmin': vmin, 'vmax': vmax,
+                       'colormap': ff.colormap, 'time': float(time)}
 
 
-@persistent
-def update_fields_handler(scene, depsgraph=None):
-    update_fields(scene)
+def clear_family_fields(family, objs):
+    """ Shows the meshes of a family without colors """
+    for obj in objs:
+        set_mesh_material(obj.data, get_plain_material())
+    _legend.pop(family, None)
+
+
+def update_fields(scene, families=None):
+    """ Colors the meshes of the confirmed flexible components, of the
+        given families only when families is not None (e.g. those whose
+        nodes are animated: otherwise the colors would change on meshes
+        that stand still) """
+    mbs = scene.mbdyn
+    for family in FAMILIES:
+        objs = field_objects(mbs, family)
+        if not objs:
+            _legend.pop(family, None)
+        elif fields_active(mbs) and (families is None or family in families):
+            update_family_fields(scene, family, objs)
+        else:
+            clear_family_fields(family, objs)
+
+
+# Called when the field settings change: set by flexlib.py to the update
+# of the flexible components, which colors them as well
+refresh_hook = None
+
+
+def _refresh(self, context):
+    if refresh_hook is not None:
+        refresh_hook(context.scene)
+    else:
+        update_fields(context.scene)
 
 
 @persistent
@@ -811,8 +761,9 @@ def _remove_handler(handlers, name):
         handlers.remove(h)
 
 
-_remove_handler(bpy.app.handlers.frame_change_pre, update_fields_handler.__name__)
-bpy.app.handlers.frame_change_pre.append(update_fields_handler)
+# the field meshes used to be updated on frame_change_pre, before the
+# flexible components: remove the handler when reloading the add-on
+_remove_handler(bpy.app.handlers.frame_change_pre, 'update_fields_handler')
 _remove_handler(bpy.app.handlers.load_post, clear_fields_cache.__name__)
 bpy.app.handlers.load_post.append(clear_fields_cache)
 
@@ -823,73 +774,53 @@ bpy.app.handlers.load_post.append(clear_fields_cache)
 _enum_items = {}
 
 
-def _family_items(self, context):
-    mbs = context.scene.mbdyn
-    items = [(fam, FAMILIES[fam]['label'], '', i)
-             for i, fam in enumerate(FAMILIES) if fam in available_families(mbs)]
-    if not items:
-        items = [('NONE', 'None', 'No flexible elements', 0)]
-    _enum_items['family'] = items
-    return items
+def _pg_family(pg):
+    """ Family of a BLENDYN_PG_field_family. pg.path_from_id() would
+        search through all the scene data, which takes seconds with many
+        nodes and elements """
+    try:
+        fs = pg.id_data.mbdyn.field
+    except AttributeError:
+        return None
+    ptr = pg.as_pointer()
+    for family, prop in FAMILY_PROP.items():
+        if getattr(fs, prop).as_pointer() == ptr:
+            return family
+    return None
 
 
 def _quantity_items(self, context):
-    family = self.family if self.family in QUANTITIES else None
+    family = _pg_family(self)
     items = [('DISP', DISPLACEMENT[1], DISPLACEMENT[2], 0)]
     if family is not None:
         available = available_quantities(context.scene.mbdyn, family)
         items += [(q[0], q[1], q[2], i + 1) for i, q in enumerate(QUANTITIES[family])
                   if q[0] in available]
-    _enum_items['quantity'] = items
+    _enum_items[(family, 'quantity')] = items
     return items
 
 
 def _component_items(self, context):
+    family = _pg_family(self)
     try:
-        comps = _quantity(self.family, self.quantity)[3]
+        comps = _quantity(family, self.quantity)[3]
     except KeyError:
         comps = DISPLACEMENT[3]
     items = [(str(i), label, '', i) for i, (label, _) in enumerate(comps)]
-    _enum_items['component'] = items
+    _enum_items[(family, 'component')] = items
     return items
 
 
-def _refresh(self, context):
-    update_fields(context.scene)
-
-
-def _update_family(self, context):
+def _update_quantity(self, context):
     # the values of the dynamic enums are stored as numbers, that may
     # not be valid any more: check them without reading the enums
-    if self.get('quantity', 0) not in [it[3] for it in _quantity_items(self, context)]:
-        self['quantity'] = 0
-    _update_quantity(self, context)
-
-
-def _update_quantity(self, context):
     if self.get('component', 0) not in [it[3] for it in _component_items(self, context)]:
         self['component'] = 0
-    update_fields(context.scene)
+    _refresh(self, context)
 
 
-def _update_colormap(self, context):
-    set_material_colormap(get_field_material(), self.colormap)
-    update_fields(context.scene)
-
-
-class BLENDYN_PG_field_settings(bpy.types.PropertyGroup):
-    enable: BoolProperty(
-            name = "Show fields",
-            description = "Update the field meshes when the frame changes",
-            default = True,
-            update = _refresh
-    )
-    family: EnumProperty(
-            items = _family_items,
-            name = "Elements",
-            description = "Flexible elements whose field is shown",
-            update = _update_family
-    )
+class BLENDYN_PG_field_family(bpy.types.PropertyGroup):
+    """ Field shown on the flexible components of a family """
     quantity: EnumProperty(
             items = _quantity_items,
             name = "Quantity",
@@ -922,7 +853,8 @@ class BLENDYN_PG_field_settings(bpy.types.PropertyGroup):
             update = _refresh
     )
     range_mode: EnumProperty(
-            items = [('GLOBAL', "Global", "Minimum and maximum over all time steps", 0),
+            items = [('GLOBAL', "Global", "Minimum and maximum over all time steps "\
+                            + "and all the components of the family", 0),
                      ('PER_FRAME', "Per frame", "Minimum and maximum at the current frame", 1),
                      ('MANUAL', "Manual", "User-defined range", 2)],
             name = "Range",
@@ -954,33 +886,36 @@ class BLENDYN_PG_field_settings(bpy.types.PropertyGroup):
                      ('JET', "Jet", "Rainbow colormap", 2)],
             name = "Colormap",
             default = 'VIRIDIS',
-            update = _update_colormap
-    )
-    beam_radius: FloatProperty(
-            name = "Beam radius",
-            description = "Radius of the tubes drawing the beams",
-            default = 0.05,
-            min = 0.,
             update = _refresh
     )
-    beam_rings: IntProperty(
-            name = "Rings",
-            description = "Sections of each beam tube (applied when the fields are built)",
-            default = 8,
-            min = 2
-    )
-    beam_sides: IntProperty(
-            name = "Sides",
-            description = "Sides of the beam tubes (applied when the fields are built)",
-            default = 8,
-            min = 3
-    )
-    show_legend: BoolProperty(
-            name = "Legend",
-            description = "Show the color legend in the 3D viewport",
+# -----------------------------------------------------------
+# end of BLENDYN_PG_field_family class
+
+bpy.utils.register_class(BLENDYN_PG_field_family)
+
+
+class BLENDYN_PG_field_settings(bpy.types.PropertyGroup):
+    enable: BoolProperty(
+            name = "Show fields",
+            description = "Color the flexible components by the selected fields",
             default = True,
             update = _refresh
     )
+    show_legend: BoolProperty(
+            name = "Legend",
+            description = "Show the color legends in the 3D viewport",
+            default = True,
+            update = _refresh
+    )
+    edit_family: EnumProperty(
+            items = [(fam, desc['label'], "Field shown on the " + desc['label'].lower(), i)
+                     for i, (fam, desc) in enumerate(FAMILIES.items())],
+            name = "Elements",
+            description = "Family of flexible elements whose field settings are shown"
+    )
+    beam: PointerProperty(type = BLENDYN_PG_field_family)
+    shell4: PointerProperty(type = BLENDYN_PG_field_family)
+    membrane4: PointerProperty(type = BLENDYN_PG_field_family)
 # -----------------------------------------------------------
 # end of BLENDYN_PG_field_settings class
 
@@ -989,120 +924,24 @@ bpy.utils.register_class(BLENDYN_PG_field_settings)
 # -----------------------------------------------------------
 # Operators
 
-def _set_element_collections_hidden(families, hidden):
-    for family in families:
-        col = bpy.data.collections.get(FAMILIES[family]['collection'])
-        if col is not None:
-            col.hide_viewport = hidden
-            col.hide_render = hidden
-
-
-def _nodes_animated(mbs):
-    """ Whether the objects of all the nodes animated by
-        blendyn.set_motion_paths have keyframes """
-    for node in mbs.nodes:
-        if node.blender_object == 'none' or not node.output:
-            continue
-        obj = bpy.data.objects.get(node.blender_object)
-        if obj is not None and (obj.animation_data is None or obj.animation_data.action is None):
-            return False
-    return True
-
-
-class BLENDYN_OT_field_build(bpy.types.Operator):
-    """ Builds the meshes showing the fields of the flexible elements,
-        animating the nodes first if they have no keyframes """
-    bl_idname = "blendyn.field_build"
-    bl_label = "Build field meshes"
-
-    hide_elements: BoolProperty(
-            name = "Hide elements",
-            description = "Hide the objects of the elements shown by the field meshes",
-            default = True
-    )
-
-    def execute(self, context):
-        scene = context.scene
-        mbs = scene.mbdyn
-        if not mbs.use_netcdf:
-            self.report({'ERROR'}, "Field visualization needs NetCDF output")
-            return {'CANCELLED'}
-        families = available_families(mbs)
-        if not families:
-            self.report({'WARNING'}, "No flexible elements found")
-            return {'CANCELLED'}
-        # the field meshes show the results at every frame: the node
-        # objects must be animated as well, or they would stay still
-        animated = False
-        if not _nodes_animated(mbs):
-            if bpy.ops.blendyn.set_motion_paths('EXEC_DEFAULT') != {'FINISHED'}:
-                self.report({'ERROR'}, "Could not animate the nodes")
-                return {'CANCELLED'}
-            animated = True
-        invalidate_cache()
-        fs = mbs.field
-        for family in families:
-            if family == 'BEAM':
-                build_beam_field(context, fs.beam_rings, fs.beam_sides)
-            else:
-                build_plate_field(context, family)
-        set_material_colormap(get_field_material(), fs.colormap)
-        if self.hide_elements:
-            _set_element_collections_hidden(families, True)
-        # writing mesh data from a frame change handler while rendering
-        # is safe only with a locked interface
-        scene.render.use_lock_interface = True
-        # the stored family may not be among the available ones
-        if fs.get('family', 0) not in [list(FAMILIES).index(f) for f in families]:
-            fs.family = families[0]
-        update_fields(scene)
-        self.report({'INFO'}, ("Animated the nodes and built" if animated else "Built") \
-                + " field meshes for: " + ", ".join(FAMILIES[f]['label'] for f in families))
-        return {'FINISHED'}
-# -----------------------------------------------------------
-# end of BLENDYN_OT_field_build class
-
-
-class BLENDYN_OT_field_remove(bpy.types.Operator):
-    """ Removes the field meshes """
-    bl_idname = "blendyn.field_remove"
-    bl_label = "Remove field meshes"
-
-    def execute(self, context):
-        families = set()
-        for obj in _field_objects():
-            families.add(obj['blendyn_field_family'])
-            mesh = obj.data
-            bpy.data.objects.remove(obj)
-            if mesh.users == 0:
-                bpy.data.meshes.remove(mesh)
-        col = bpy.data.collections.get(FIELDS_COLLECTION)
-        if col is not None and not col.objects:
-            bpy.data.collections.remove(col)
-        _set_element_collections_hidden(families, False)
-        invalidate_cache()
-        _legend.clear()
-        return {'FINISHED'}
-# -----------------------------------------------------------
-# end of BLENDYN_OT_field_remove class
-
-
 class BLENDYN_OT_field_autorange(bpy.types.Operator):
-    """ Sets the manual range to the minimum and maximum over all time steps """
+    """ Sets the manual range to the minimum and maximum over all time
+        steps and all the components of the family """
     bl_idname = "blendyn.field_autorange"
     bl_label = "Set range from data"
 
     def execute(self, context):
         mbs = context.scene.mbdyn
-        obj = _field_object(mbs.field.family)
-        if obj is None:
-            self.report({'ERROR'}, "Build the field meshes first")
+        family = mbs.field.edit_family
+        objs = field_objects(mbs, family)
+        if not objs:
+            self.report({'ERROR'}, "No confirmed flexible components of this family")
             return {'CANCELLED'}
-        data = get_field_data(context.scene, obj)
-        fs = mbs.field
-        fs.range_mode = 'MANUAL'
-        fs.vmin = data['vmin']
-        fs.vmax = data['vmax']
+        data = [get_field_data(context.scene, obj) for obj in objs]
+        ff = family_settings(mbs, family)
+        ff.range_mode = 'MANUAL'
+        ff.vmin = min(d['vmin'] for d in data)
+        ff.vmax = max(d['vmax'] for d in data)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_field_autorange class
@@ -1143,46 +982,39 @@ class BLENDYN_PT_fields(bpy.types.Panel):
         mbs = context.scene.mbdyn
         fs = mbs.field
 
-        col = layout.column(align = True)
-        row = col.row(align = True)
-        row.operator(BLENDYN_OT_field_build.bl_idname, text = "Build")
-        row.operator(BLENDYN_OT_field_remove.bl_idname, text = "Remove")
-        built = bool(_field_objects())
-        if not built:
-            return
-
         col = layout.column()
         col.prop(fs, "enable")
-        col.prop(fs, "family")
-        col.prop(fs, "quantity")
-        if fs.family in QUANTITIES and not available_quantities(mbs, fs.family):
+        col.prop(fs, "edit_family")
+        family = fs.edit_family
+        ff = family_settings(mbs, family)
+        if not field_objects(mbs, family):
+            box = col.box()
+            box.label(text = "No confirmed components", icon = 'INFO')
+            box.label(text = "of this family: see Flexible components")
+            return
+
+        col.prop(ff, "quantity")
+        if not available_quantities(mbs, family):
             # e.g. results of an MBDyn version without NetCDF plate output
             box = col.box()
             box.label(text = "No internal forces or strains", icon = 'INFO')
-            box.label(text = "in the results file: " + FAMILIES[fs.family]['prefix']
-                    + "<label>." + ", .".join(q[0] for q in QUANTITIES[fs.family]))
-        col.prop(fs, "component")
-        if fs.quantity == 'DISP':
-            col.prop_search(fs, "ref_node", mbs, "nodes")
+            box.label(text = "in the results file: " + FAMILIES[family]['prefix']
+                    + "<label>." + ", .".join(q[0] for q in QUANTITIES[family]))
+        col.prop(ff, "component")
+        if ff.quantity == 'DISP':
+            col.prop_search(ff, "ref_node", mbs, "nodes")
         else:
-            col.prop(fs, "sampling")
+            col.prop(ff, "sampling")
 
         col = layout.column()
-        col.prop(fs, "colormap")
-        col.prop(fs, "range_mode")
-        if fs.range_mode == 'MANUAL':
+        col.prop(ff, "colormap")
+        col.prop(ff, "range_mode")
+        if ff.range_mode == 'MANUAL':
             row = col.row(align = True)
-            row.prop(fs, "vmin")
-            row.prop(fs, "vmax")
-        col.prop(fs, "symmetric")
+            row.prop(ff, "vmin")
+            row.prop(ff, "vmax")
+        col.prop(ff, "symmetric")
         col.operator(BLENDYN_OT_field_autorange.bl_idname)
-
-        if fs.family == 'BEAM':
-            col = layout.column(align = True)
-            col.prop(fs, "beam_radius")
-            row = col.row(align = True)
-            row.prop(fs, "beam_rings")
-            row.prop(fs, "beam_sides")
 
         col = layout.column()
         col.prop(fs, "show_legend")
@@ -1191,58 +1023,69 @@ class BLENDYN_PT_fields(bpy.types.Panel):
 # end of BLENDYN_PT_fields class
 
 # -----------------------------------------------------------
-# Viewport legend
+# Viewport legends, one for each family with colored components,
+# side by side from the bottom-right corner
 
 def _draw_legend():
     try:
-        scene = bpy.context.scene
-        mbs = scene.mbdyn
+        mbs = bpy.context.scene.mbdyn
         fs = mbs.field
-        if not (fs.show_legend and fs.enable and _legend) or _field_object(fs.family) is None:
+        if not (fs.show_legend and fs.enable and _legend):
+            return
+        families = [f for f in FAMILIES if f in _legend and field_objects(mbs, f)]
+        if not families:
             return
         region = bpy.context.region
         ui_scale = bpy.context.preferences.system.ui_scale
-        # bottom-right corner, left of the sidebar when it overlaps the viewport
+        # left of the sidebar when it overlaps the viewport
         right = region.width
         if bpy.context.preferences.system.use_region_overlap:
             for r in bpy.context.area.regions:
                 if r.type == 'UI' and r.alignment == 'RIGHT' and r.width > 1:
                     right -= r.width
         w, h = 20*ui_scale, min(250*ui_scale, region.height*0.5)
-        x0 = right - 120*ui_scale
         y0 = 40*ui_scale
-
-        n = 32
-        lut = _linear_to_srgb(colormap_lut(_legend['colormap'], n))
-        coords, colors, indices = [], [], []
-        for i in range(n):
-            y = y0 + h*i/(n - 1)
-            coords += [(x0, y, 0.), (x0 + w, y, 0.)]
-            colors += [tuple(lut[i]) + (1.,)]*2
-            if i:
-                k = 2*i
-                indices += [(k - 2, k - 1, k + 1), (k - 2, k + 1, k)]
-        shader = gpu.shader.from_builtin('SMOOTH_COLOR')
-        batch = batch_for_shader(shader, 'TRIS', {"pos": coords, "color": colors}, indices = indices)
-        gpu.state.blend_set('ALPHA')
-        shader.bind()
-        batch.draw(shader)
-        gpu.state.blend_set('NONE')
-
         font = 0
         blf.size(font, 11*ui_scale)
         blf.color(font, 1., 1., 1., 1.)
-        vmin, vmax = _legend['vmin'], _legend['vmax']
-        for i in range(5):
-            v = vmin + (vmax - vmin)*i/4.
-            blf.position(font, x0 + w + 6*ui_scale, y0 + h*i/4. - 4*ui_scale, 0)
-            blf.draw(font, '{:.4g}'.format(v))
-        title = _legend['label'] + (' [' + _legend['units'] + ']' if _legend['units'] else '')
-        tw, _ = blf.dimensions(font, title)
-        blf.position(font, min(x0, right - tw - 10*ui_scale), y0 + h + 12*ui_scale, 0)
-        blf.draw(font, title)
-        blf.position(font, x0, y0 - 18*ui_scale, 0)
-        blf.draw(font, 't = {:.4g}'.format(_legend['time']))
+        shader = gpu.shader.from_builtin('SMOOTH_COLOR')
+        x_right = right - 10*ui_scale
+        for k, family in enumerate(reversed(families)):
+            leg = _legend[family]
+            vmin, vmax = leg['vmin'], leg['vmax']
+            ticks = ['{:.4g}'.format(vmin + (vmax - vmin)*i/4.) for i in range(5)]
+            title = FAMILIES[family]['label'] + ': ' + leg['label'] \
+                    + (' [' + leg['units'] + ']' if leg['units'] else '')
+            tick_w = max(blf.dimensions(font, tick)[0] for tick in ticks)
+            title_w = blf.dimensions(font, title)[0]
+            block_w = max(w + 6*ui_scale + tick_w, title_w)
+            x0 = x_right - block_w
+
+            n = 32
+            lut = _linear_to_srgb(colormap_lut(leg['colormap'], n))
+            coords, colors, indices = [], [], []
+            for i in range(n):
+                y = y0 + h*i/(n - 1)
+                coords += [(x0, y, 0.), (x0 + w, y, 0.)]
+                colors += [tuple(lut[i]) + (1.,)]*2
+                if i:
+                    j = 2*i
+                    indices += [(j - 2, j - 1, j + 1), (j - 2, j + 1, j)]
+            batch = batch_for_shader(shader, 'TRIS', {"pos": coords, "color": colors}, indices = indices)
+            gpu.state.blend_set('ALPHA')
+            shader.bind()
+            batch.draw(shader)
+            gpu.state.blend_set('NONE')
+
+            for i, tick in enumerate(ticks):
+                blf.position(font, x0 + w + 6*ui_scale, y0 + h*i/4. - 4*ui_scale, 0)
+                blf.draw(font, tick)
+            blf.position(font, x0, y0 + h + 12*ui_scale, 0)
+            blf.draw(font, title)
+            if k == 0:
+                blf.position(font, x0, y0 - 18*ui_scale, 0)
+                blf.draw(font, 't = {:.4g}'.format(leg['time']))
+            x_right = x0 - 30*ui_scale
     except (AttributeError, KeyError, ReferenceError):
         pass
 

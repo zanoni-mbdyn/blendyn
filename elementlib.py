@@ -27,6 +27,7 @@ from mathutils import *
 from math import *
 from bpy.types import Operator, Panel
 from bpy.props import *
+from bpy.app.handlers import persistent
 
 import ntpath, os, csv, math
 from collections import namedtuple
@@ -161,7 +162,6 @@ def elem_info_draw(elem, layout):
 # Dispatch table for deformable-element update functions.
 # Avoids eval() overhead and the security risk it carries.
 _UPDATE_FUNCS = {
-    'update_beam3': update_beam3,
     'update_structural_force': update_structural_force,
     'update_structural_couple': update_structural_couple,
 }
@@ -179,6 +179,10 @@ def update_elements(scene):
         func = _UPDATE_FUNCS.get(element.update)
         if func is not None:
             func(element, True)
+        elif element.update == 'update_beam3':
+            # files saved by older versions: beams are now drawn by the
+            # flexible components, updated by their own handler
+            pass
         else:
             print("BLENDYN::update_elements(): unknown update function:", element.update)
 
@@ -226,30 +230,3 @@ def fmax(x):
 # -----------------------------------------------------------
 # end of fmax function
 
-## Bevel object panel, for curves
-class BLENDYN_PT_bevel(bpy.types.Panel):
-    """ Bevel section panel in data properties """
-    bl_label = "Curve section"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'data'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        ed = context.scene.mbdyn.elems
-        curve = context.curve
-        layout = self.layout
-        col = layout.column()
-
-        # Types of elements for which the panel is useful
-        eltypes = {'beam2', 'beam3', 'rodj'}
-
-        try:
-            if ed[context.object.name].type in eltypes:
-                col.operator(BLENDYN_OT_load_section.bl_idname, text="Load profile (Selig)")
-                if ed[context.object.name].type == 'beam3':
-                    col.operator(BLENDYN_OT_update_beam3.bl_idname, text="Update configuration")
-        except KeyError:
-            pass
-# -----------------------------------------------------------
-# end of BLENDYN_PT_bevel class

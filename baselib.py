@@ -37,7 +37,6 @@ import os, csv, atexit, re
 from .nodelib import *
 from .elementlib import *
 from .rfmlib import *
-from .componentlib import DEFORMABLE_ELEMENTS
 from .logwatcher import *
 from .utilslib import frame_steps
 
@@ -762,11 +761,10 @@ def remove_oldframes(context):
 
 def hide_or_delete(obj_names, missing):
     obj_names = list(filter(lambda v: v != 'none', obj_names))
-    obj_list = [bpy.data.objects[var] for var in obj_names]
+    # flexible elements have no object of their own
+    obj_list = [bpy.data.objects[var] for var in obj_names if var in bpy.data.objects]
 
     if missing == "HIDE":
-        obj_list = [bpy.data.objects[var] for var in obj_names]
-
         for obj in obj_list:
             obj.hide_set(state = True)
 
@@ -1155,19 +1153,24 @@ def get_render_vars(self, context):
     render_vars = list(filter( lambda x: hasattr(nc.variables[x], 'units'), nc.variables.keys() ))
     render_vars = list(filter( lambda x: nc.variables[x].units in units, render_vars ))
 
-    scene_objs = [ str(var.int_label) for var in ed if bpy.data.objects[var.blender_object].select ]
+    # flexible elements have no object of their own
+    scene_objs = [ str(var.int_label) for var in ed \
+            if bpy.data.objects.get(var.blender_object) is not None \
+            and bpy.data.objects[var.blender_object].select_get() ]
     render_vars = list(filter( lambda x: active_object_rel('elem' in x, \
                    any(i in scene_objs for i in x.split('.'))), render_vars))
     return [(var, var, "") for var in render_vars]
 # -----------------------------------------------------------
 # end of get_render_vars() function
 
-def get_deformable_elems(self, context):
-    mbs = context.scene.mbdyn
-    elems = mbs.elems
-    def_elems = [elem for elem in elems \
-            if (elem.type in DEFORMABLE_ELEMENTS) and (elem.blender_object != 'none')]
-    return [(elem.name, elem.name, "") for elem in def_elems]
+# the items of dynamic enums must be kept alive
+_modal_elems_items = []
+
+def get_modal_elems(self, context):
+    """ Modal elements, for the import of their FEM data """
+    _modal_elems_items[:] = [(elem.name, elem.name, "") for elem in context.scene.mbdyn.elems \
+            if elem.type == 'modal']
+    return _modal_elems_items
 
 def get_display_group(self, context):
     mbs = context.scene.mbdyn

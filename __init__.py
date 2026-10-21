@@ -29,7 +29,6 @@ from . logwatcher   import *
 from . nodelib      import *
 from . eigenlib     import *
 from . elements     import *
-from . components   import *
 from . baselib      import *
 from . matplotliblib   import *
 from . pygalplotlib import *
@@ -37,19 +36,16 @@ from . bokehplotlib import *
 from . plotlib      import *
 from . blendyn      import *
 from . fieldlib     import *
+from . flexlib      import *
 
 classes = (
         BLENDYN_OT_copy_pip_command,
-        BLENDYN_OT_load_section,
         BLENDYN_OT_import_aerodynamic_body,
         BLENDYN_OT_import_aerodynamic_beam2,
         BLENDYN_OT_import_aerodynamic_beam3,
         BLENDYN_OT_import_angularvelocity,
         BLENDYN_OT_import_angularacceleration,
         BLENDYN_OT_import_axialrot,
-        BLENDYN_OT_import_beam2,
-        BLENDYN_OT_import_beam3,
-        BLENDYN_OT_update_beam3,
         BLENDYN_OT_import_beam_slider,
         BLENDYN_OT_import_modal,
         BLENDYN_OT_import_body,
@@ -75,13 +71,10 @@ classes = (
         BLENDYN_OT_import_revolute_rotation,
         BLENDYN_OT_import_rod,
         BLENDYN_OT_write_rod_input,
-        BLENDYN_OT_import_shell4,
-        BLENDYN_OT_import_membrane4,
         BLENDYN_OT_import_spherical_hinge,
         BLENDYN_OT_import_spherical_pin,
         BLENDYN_OT_import_total,
         BLENDYN_OT_import_total_pin,
-        BLENDYN_PT_bevel,
         BLENDYN_OT_import_reference,
         BLENDYN_OT_mplot_var_scene,
         BLENDYN_OT_mplot_var_object,
@@ -111,7 +104,6 @@ classes = (
         BLENDYN_PT_object_plot,
         BLENDYN_OT_eigen_geometry,
         BLENDYN_OT_animate_eigenmode,
-        BLENDYN_OT_import_elements_as_mesh,
         BLENDYN_OT_standard_import,
         BLENDYN_OT_read_mbdyn_log_file,
         BLENDYN_OT_select_output_file,
@@ -127,31 +119,36 @@ classes = (
         BLENDYN_OT_stop_mbdyn_simulation,
         BLENDYN_OT_set_motion_paths,
         BLENDYN_OT_set_import_freq_auto,
-        BLENDYN_OT_component_add,
-        BLENDYN_OT_component_edit,
-        BLENDYN_OT_component_remove,
-        BLENDYN_OT_component_add_confirm,
-        BLENDYN_OT_component_edit_confirm,
-        BLENDYN_OT_component_add_cancel,
-        BLENDYN_OT_component_edit_cancel,
-        BLENDYN_OT_component_add_elem,
-        BLENDYN_OT_component_remove_elem,
-        BLENDYN_OT_component_remove_all_elems,
-        BLENDYN_OT_component_add_selected_elems,
         BLENDYN_OT_select_modal_fem_file,
         BLENDYN_OT_read_modal_fem_file,
         BLENDYN_OT_modal_node_import_all,
-        BLENDYN_OT_field_build,
-        BLENDYN_OT_field_remove,
+        BLENDYN_OT_flex_component_add,
+        BLENDYN_OT_flex_component_remove,
+        BLENDYN_OT_flex_component_from_selection,
+        BLENDYN_OT_flex_elems_add_selected,
+        BLENDYN_OT_flex_elems_add_range,
+        BLENDYN_OT_flex_elem_remove,
+        BLENDYN_OT_flex_section_add,
+        BLENDYN_OT_flex_section_remove,
+        BLENDYN_OT_flex_section_circle,
+        BLENDYN_OT_flex_section_selig,
+        BLENDYN_OT_flex_component_build,
+        BLENDYN_OT_flex_component_confirm,
+        BLENDYN_OT_flex_component_edit,
+        BLENDYN_OT_flex_default_components,
+        BLENDYN_UL_flex_components,
+        BLENDYN_UL_flex_elems,
+        BLENDYN_UL_flex_sections,
         BLENDYN_OT_field_autorange,
         BLENDYN_OT_field_solid_view,
         BLENDYN_preferences,
         BLENDYN_PT_import,
         BLENDYN_PT_animate,
+        BLENDYN_PT_flex_components,
         BLENDYN_PT_fields,
         BLENDYN_PT_simulation,
         BLENDYN_PT_eigenanalysis,
-        BLENDYN_PT_components,
+        BLENDYN_PT_modal_fem,
         BLENDYN_PT_active_object,
         BLENDYN_PT_nodes_scene,
         BLENDYN_PT_elems_scene,
@@ -197,6 +194,10 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_PG_settings_object)
     bpy.utils.unregister_class(BLENDYN_PG_settings_scene)
     bpy.utils.unregister_class(BLENDYN_PG_field_settings)
+    bpy.utils.unregister_class(BLENDYN_PG_field_family)
+    bpy.utils.unregister_class(BLENDYN_PG_flex_component)
+    bpy.utils.unregister_class(BLENDYN_PG_flex_section)
+    bpy.utils.unregister_class(BLENDYN_PG_flex_elem)
     bpy.utils.unregister_class(BLENDYN_PG_plot_vars)
     bpy.utils.unregister_class(BLENDYN_PG_environment_vars_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_display_vars_dictionary)
@@ -204,8 +205,6 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_PG_mbtime)
     bpy.utils.unregister_class(BLENDYN_PG_reference_dictionary)
     bpy.utils.unregister_class(BLENDYN_PG_nodes_dictionary)
-    bpy.utils.unregister_class(BLENDYN_PG_components_dictionary)
-    bpy.utils.unregister_class(BLENDYN_PG_component_element)
     bpy.utils.unregister_class(BLENDYN_UL_env_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_mbdyn_nodes_list)
     bpy.utils.unregister_class(BLENDYN_UL_elements_list)
@@ -213,7 +212,4 @@ def unregister():
     bpy.utils.unregister_class(BLENDYN_UL_render_vars_list)
     bpy.utils.unregister_class(BLENDYN_UL_object_plot_var_list)
     bpy.utils.unregister_class(BLENDYN_UL_plot_var_list)
-    bpy.utils.unregister_class(BLENDYN_UL_component_object_list)
-    bpy.utils.unregister_class(BLENDYN_UL_components_list)
-    bpy.utils.unregister_class(BLENDYN_UL_component_elements_list) 
     unregister_fact()
