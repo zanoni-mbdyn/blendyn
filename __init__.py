@@ -135,7 +135,7 @@ classes = (
         BLENDYN_OT_flex_component_build,
         BLENDYN_OT_flex_component_confirm,
         BLENDYN_OT_flex_component_edit,
-        BLENDYN_OT_flex_default_components,
+        BLENDYN_OT_flex_skeletons,
         BLENDYN_UL_flex_components,
         BLENDYN_UL_flex_elems,
         BLENDYN_UL_flex_sections,

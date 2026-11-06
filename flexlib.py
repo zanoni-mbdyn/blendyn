@@ -26,11 +26,15 @@
 # (beams, shell4 or membrane4) drawn by a single mesh, e.g. the beams of a
 # rotor blade.
 #
-# A component is defined by the user (or built by default, with the
-# elements of a family that are not in other components), built in the
-# reference configuration as a preview, and then confirmed: from then on,
-# a frame change handler moves its mesh with the node objects, and colors
-# it by the fields of fieldlib.py.
+# A component is defined by the user, built in the reference configuration
+# as a preview, and then confirmed: from then on, a frame change handler
+# moves its mesh with the node objects, and colors it by the fields of
+# fieldlib.py.
+#
+# The elements of a family that are in no component are drawn by its
+# skeleton: the reference lines of the beams, or the wireframe of the
+# plates, following the nodes too. It is where the elements are picked
+# from to make components, and disappears when they are all in components.
 #
 # Plates are drawn by a mesh with a vertex for each node and a face for
 # each element. Beams are drawn by tubes with rings x sides vertices for
@@ -60,9 +64,16 @@ from .fieldlib import FAMILIES, FLEXIBLE_TYPES, beam_shape, _rotvec_to_matrix
 
 SECTIONS_COLLECTION = 'sections'
 OBJECT_PREFIX = 'flex.'
+SKELETON_PREFIX = 'skeleton.'
+
+# points of the reference line of a beam drawn by the skeletons
+SKELETON_XIS = {'beam3': np.linspace(-1., 1., 5), 'beam2': np.array((-1., 1.))}
+
+ELEM_NODES = {'beam2': 2, 'beam3': 3, 'shell4': 4, 'membrane4': 4}
 
 FAMILY_ITEMS = [(fam, desc['label'], desc['label'] + ' (' + ', '.join(desc['types']) + ' elements)', i)
                 for i, (fam, desc) in enumerate(FAMILIES.items())]
+FAMILY_OF_TYPE = {etype: fam for fam, desc in FAMILIES.items() for etype in desc['types']}
 
 # -----------------------------------------------------------
 # Rotations
@@ -240,7 +251,7 @@ def component_elems(mbs, comp):
 
 def in_scene(obj):
     """ The object, if it is still in a scene: an object deleted by the
-        user stays in the data while a component points to it """
+        user stays in the data while a component or skeleton points to it """
     return obj if obj is not None and len(obj.users_scene) else None
 
 
@@ -251,15 +262,8 @@ def component_of_object(mbs, obj):
     return None
 
 
-def default_component(mbs, family):
-    for comp in mbs.flex_components:
-        if comp.is_default and comp.family == family:
-            return comp
-    return None
-
-
-def _user_assigned(mbs):
-    return {ce.elem for comp in mbs.flex_components if not comp.is_default for ce in comp.elements}
+def _assigned(mbs):
+    return {ce.elem for comp in mbs.flex_components for ce in comp.elements}
 
 
 def _set_elements(comp, keys):
@@ -281,17 +285,15 @@ def _unique_name(mbs, base):
     return base + '.' + str(k).zfill(3)
 
 
-def new_component(mbs, family, name=None, is_default=False):
+def new_component(mbs, family, name=None):
     comp = mbs.flex_components.add()
     comp.name = _unique_name(mbs, name or FAMILIES[family]['label'][:-1])
     comp.family = family
-    comp.is_default = is_default
     mbs.fc_index = len(mbs.flex_components) - 1
     return comp
 
 
-def _delete_object(comp):
-    obj = comp.object
+def _remove_object(obj):
     if obj is not None:
         fieldlib.invalidate_object(obj.name)
         _runtime.pop(obj.name, None)
@@ -299,6 +301,10 @@ def _delete_object(comp):
         bpy.data.objects.remove(obj)
         if mesh is not None and mesh.users == 0:
             bpy.data.meshes.remove(mesh)
+
+
+def _delete_object(comp):
+    _remove_object(comp.object)
     comp.object = None
 
 
@@ -313,13 +319,12 @@ def drop_deleted(comp):
 def remove_component(context, idx):
     mbs = context.scene.mbdyn
     comp = mbs.flex_components[idx]
-    family, is_default = comp.family, comp.is_default
+    family = comp.family
     _delete_object(comp)
     mbs.flex_components.remove(idx)
     mbs.fc_index = min(mbs.fc_index, max(len(mbs.flex_components) - 1, 0))
-    if not is_default:
-        # its elements go back to the default component
-        refresh_default(context, family)
+    # its elements go back to the skeleton
+    refresh_skeleton(context, family)
 
 
 def _show_fields_of(mbs, family):
@@ -327,30 +332,6 @@ def _show_fields_of(mbs, family):
         it already shows a family with confirmed components """
     if not fieldlib.field_objects(mbs, mbs.field.edit_family):
         mbs.field.edit_family = family
-
-
-def refresh_default(context, family):
-    """ Updates the default component of the family, holding the elements
-        that are not in other components: built and confirmed """
-    mbs = context.scene.mbdyn
-    assigned = _user_assigned(mbs)
-    keys = [elem.name for elem in mbs.elems
-            if elem.type in FAMILIES[family]['types'] and elem.name not in assigned]
-    comp = default_component(mbs, family)
-    if not keys:
-        if comp is not None:
-            remove_component(context, list(mbs.flex_components).index(comp))
-        return None
-    active = mbs.fc_index
-    if comp is None:
-        comp = new_component(mbs, family, FAMILIES[family]['label'], is_default=True)
-        mbs.fc_index = active if active < len(mbs.flex_components) - 1 else mbs.fc_index
-    if [ce.elem for ce in comp.elements] != keys or in_scene(comp.object) is None:
-        _set_elements(comp, keys)
-        build_component(context, comp)
-    comp.state = 'CONFIRMED'
-    _show_fields_of(mbs, family)
-    return comp
 
 
 def assign_elements(context, comp, keys):
@@ -366,7 +347,7 @@ def assign_elements(context, comp, keys):
         return 0
     newset = set(new)
     for other in mbs.flex_components:
-        if other == comp or other.is_default:
+        if other == comp:
             continue
         kept = [ce.elem for ce in other.elements if ce.elem not in newset]
         if len(kept) != len(other.elements):
@@ -379,47 +360,110 @@ def assign_elements(context, comp, keys):
         ce.name = key
     if in_scene(comp.object) is not None:
         build_component(context, comp)
-    if not comp.is_default:
-        refresh_default(context, comp.family)
+    refresh_skeleton(context, comp.family)
     return len(new)
+
+# -----------------------------------------------------------
+# Picking elements
+
+def _elem_nodes(elem):
+    return [elem.nodes[k].int_label for k in range(ELEM_NODES[elem.type])]
+
+
+def _family_of_object(mbs, obj):
+    """ Family drawn by a mesh of a component or of a skeleton """
+    if obj.type != 'MESH':
+        return None
+    if 'blendyn_skeleton' in obj:
+        return obj['blendyn_skeleton']
+    comp = component_of_object(mbs, obj)
+    return comp.family if comp is not None else None
+
+
+def _mesh_selected_labels(obj):
+    """ Labels of the elements drawn by the selected faces (or vertices,
+        for the reference lines of beams) of a mesh in Edit Mode """
+    bm = bmesh.from_edit_mesh(obj.data)
+    layer = bm.faces.layers.int.get('blendyn_elem')
+    if layer is not None:
+        return [face[layer] for face in bm.faces if face.select]
+    layer = bm.verts.layers.int.get('blendyn_elem')
+    if layer is not None:
+        return [vert[layer] for vert in bm.verts if vert.select]
+    return []
 
 
 def selected_elem_keys(context):
-    """ Keys of the elements drawn by the selected faces of the meshes of
-        the flexible components, and their families """
+    """ Keys of the selected elements and their families: in Edit Mode, the
+        elements drawn by the selected faces (or vertices) of the meshes of
+        the components and of the skeletons; otherwise, the beams and plates
+        whose nodes are all selected node objects """
     mbs = context.scene.mbdyn
     ed = elem_map(mbs)
-    if context.mode == 'EDIT_MESH':
-        objs = list(context.objects_in_mode)
-    else:
-        objs = list(context.selected_objects)
     keys, families = [], set()
-    for obj in objs:
-        comp = component_of_object(mbs, obj) if obj.type == 'MESH' else None
-        if comp is None:
-            continue
-        if obj.mode == 'EDIT':
-            bm = bmesh.from_edit_mesh(obj.data)
-            layer = bm.faces.layers.int.get('blendyn_elem')
-            labels = [face[layer] for face in bm.faces if face.select] if layer is not None else []
-        else:
-            mesh = obj.data
-            attr = mesh.attributes.get('blendyn_elem')
-            if attr is None or attr.domain != 'FACE':
+    if context.mode == 'EDIT_MESH':
+        for obj in context.objects_in_mode:
+            family = _family_of_object(mbs, obj)
+            if family is None:
                 continue
-            sel = np.zeros(len(mesh.polygons), dtype=bool)
-            mesh.polygons.foreach_get('select', sel)
-            values = np.zeros(len(mesh.polygons), dtype=np.int32)
-            attr.data.foreach_get('value', values)
-            labels = values[sel].tolist()
-        for label in dict.fromkeys(labels):
-            for etype in FAMILIES[comp.family]['types']:
-                key = etype + '_' + str(label)
-                if key in ed:
-                    keys.append(key)
-                    families.add(comp.family)
-                    break
+            for label in dict.fromkeys(_mesh_selected_labels(obj)):
+                for etype in FAMILIES[family]['types']:
+                    key = etype + '_' + str(label)
+                    if key in ed:
+                        keys.append(key)
+                        families.add(family)
+                        break
+        return keys, families
+    selected = {obj.name for obj in context.selected_objects}
+    nodes = {node.int_label for node in mbs.nodes if node.blender_object in selected}
+    if not nodes:
+        return keys, families
+    for elem in ed.values():
+        if elem.type in ELEM_NODES and all(label in nodes for label in _elem_nodes(elem)):
+            keys.append(elem.name)
+            families.add(FAMILY_OF_TYPE[elem.type])
     return keys, families
+
+
+def connected_elems(mbs, seeds, family, comp=None):
+    """ The seeds and the elements of the family linked to them through
+        shared nodes, not going through elements of other components than
+        comp: these bound the search """
+    ed = elem_map(mbs)
+    types = FAMILIES[family]['types']
+    blocked = {ce.elem for other in mbs.flex_components if other != comp for ce in other.elements}
+    node_elems = {}
+    for elem in ed.values():
+        if elem.type in types and elem.name not in blocked:
+            for label in _elem_nodes(elem):
+                node_elems.setdefault(label, []).append(elem.name)
+    found = [key for key in dict.fromkeys(seeds) if key in ed and ed[key].type in types]
+    seen = set(found)
+    queue = deque(found)
+    while queue:
+        key = queue.popleft()
+        for label in _elem_nodes(ed[key]):
+            for other in node_elems.get(label, ()):
+                if other not in seen:
+                    seen.add(other)
+                    found.append(other)
+                    queue.append(other)
+    return found
+
+
+def picked_elems(context, family=None, comp=None):
+    """ Selected elements (see selected_elem_keys) by family, and the ones
+        connected to them if mbs.flex_connected """
+    mbs = context.scene.mbdyn
+    keys, families = selected_elem_keys(context)
+    ed = elem_map(mbs)
+    res = {}
+    for fam in families:
+        if family is not None and fam != family:
+            continue
+        seeds = [key for key in keys if ed[key].type in FAMILIES[fam]['types']]
+        res[fam] = connected_elems(mbs, seeds, fam, comp) if mbs.flex_connected else seeds
+    return res
 
 # -----------------------------------------------------------
 # Sections
@@ -775,16 +819,15 @@ _BUILD_PROPS = ('blendyn_nodes', 'blendyn_elems', 'blendyn_beam3', 'blendyn_beam
                 'blendyn_rings', 'blendyn_sides')
 
 
-def _replace_mesh(context, comp, verts, faces):
-    drop_deleted(comp)
-    mesh = bpy.data.meshes.new(OBJECT_PREFIX + comp.name)
-    mesh.from_pydata(verts, [], faces)
+def _mesh_object(context, obj, name, family, verts, edges, faces):
+    """ obj with a new mesh, or a new object in the collection of the
+        family if obj is None """
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts, edges, faces)
     mesh.update()
-    obj = comp.object
     if obj is None:
-        obj = bpy.data.objects.new(OBJECT_PREFIX + comp.name, mesh)
-        _elements_collection(context, comp.family).objects.link(obj)
-        comp.object = obj
+        obj = bpy.data.objects.new(name, mesh)
+        _elements_collection(context, family).objects.link(obj)
     else:
         old = obj.data
         obj.data = mesh
@@ -793,13 +836,20 @@ def _replace_mesh(context, comp, verts, faces):
         for prop in _BUILD_PROPS:
             if prop in obj:
                 del obj[prop]
-    fieldlib.set_mesh_material(mesh, fieldlib.get_plain_material())
+    obj['blendyn_types'] = list(FAMILIES[family]['types'])
+    fieldlib.invalidate_object(obj.name)
+    _runtime.pop(obj.name, None)
+    return obj
+
+
+def _replace_mesh(context, comp, verts, faces):
+    drop_deleted(comp)
+    obj = _mesh_object(context, comp.object, OBJECT_PREFIX + comp.name, comp.family, verts, [], faces)
+    comp.object = obj
+    fieldlib.set_mesh_material(obj.data, fieldlib.get_plain_material())
     obj.mbdyn.type = 'component'
     obj.mbdyn.dkey = comp.name
     obj['blendyn_field_family'] = comp.family
-    obj['blendyn_types'] = list(FAMILIES[comp.family]['types'])
-    fieldlib.invalidate_object(obj.name)
-    _runtime.pop(obj.name, None)
     return obj
 
 
@@ -819,27 +869,40 @@ def _set_thickness(comp):
     mod.thickness = comp.thickness
 
 
-def _build_plates(context, comp, elems):
-    mbs = context.scene.mbdyn
+def _plate_mesh(mbs, elems):
+    """ Node labels, their reference positions and the faces of the plates """
     node_idx = {}
     faces = []
     for elem in elems:
-        faces.append([node_idx.setdefault(elem.nodes[k].int_label, len(node_idx)) for k in range(4)])
+        faces.append([node_idx.setdefault(label, len(node_idx)) for label in _elem_nodes(elem)])
     labels = list(node_idx.keys())
     x0, _ = _reference_nodes(mbs, labels)
-    obj = _replace_mesh(context, comp, x0.tolist(), faces)
+    return labels, x0, faces
+
+
+def _set_plate_attributes(obj, labels, elems):
     obj['blendyn_nodes'] = labels
     obj['blendyn_elems'] = [elem.int_label for elem in elems]
     mesh = obj.data
     mesh.attributes.new('blendyn_node', 'INT', 'POINT').data.foreach_set('value', labels)
     mesh.attributes.new('blendyn_elem', 'INT', 'FACE').data.foreach_set('value', obj['blendyn_elems'])
+
+
+def _build_plates(context, comp, elems):
+    labels, x0, faces = _plate_mesh(context.scene.mbdyn, elems)
+    obj = _replace_mesh(context, comp, x0.tolist(), faces)
+    _set_plate_attributes(obj, labels, elems)
     _set_thickness(comp)
     return obj
 
 
-def _build_beams(context, comp, elems, warnings):
+def _beams_in_order(elems):
     # beam3 first, as fieldlib expects
-    elems = [elem for elem in elems if elem.type == 'beam3'] + [elem for elem in elems if elem.type == 'beam2']
+    return [elem for elem in elems if elem.type == 'beam3'] + [elem for elem in elems if elem.type == 'beam2']
+
+
+def _build_beams(context, comp, elems, warnings):
+    elems = _beams_in_order(elems)
     rings, sides = comp.rings, comp.sides
     P0, A, sigma = beam_reference_geometry(context, comp, elems, rings, sides, warnings)
     E = len(elems)
@@ -889,6 +952,106 @@ def build_component(context, comp):
     return warnings
 
 # -----------------------------------------------------------
+# Skeletons: the elements of a family that are in no component
+
+def get_skeleton(mbs, family, create=False):
+    for sk in mbs.flex_skeletons:
+        if sk.family == family:
+            return sk
+    if not create:
+        return None
+    sk = mbs.flex_skeletons.add()
+    sk.family = family
+    sk.name = family
+    return sk
+
+
+def unassigned_elems(mbs, family):
+    assigned = _assigned(mbs)
+    types = FAMILIES[family]['types']
+    return [elem for elem in mbs.elems if elem.type in types and elem.name not in assigned]
+
+
+def _skeleton_object(context, sk, verts, edges, faces):
+    name = SKELETON_PREFIX + FAMILIES[sk.family]['label'].lower()
+    obj = _mesh_object(context, sk.object, name, sk.family, verts, edges, faces)
+    sk.object = obj
+    obj.mbdyn.type = 'skeleton'
+    obj.mbdyn.dkey = sk.family
+    obj['blendyn_skeleton'] = sk.family
+    # a guide for the viewport, the components are what is rendered
+    obj.hide_render = True
+    if faces:
+        obj.display_type = 'WIRE'
+    return obj
+
+
+def _build_beam_skeleton(context, sk, elems):
+    mbs = context.scene.mbdyn
+    elems = _beams_in_order(elems)
+    labels, offsets = _beam_layout(mbs, elems)
+    uniq = list(dict.fromkeys(label for lab in labels for label in lab))
+    node_index = {label: i for i, label in enumerate(uniq)}
+    x0, R0 = _reference_nodes(mbs, uniq)
+    verts, edges, elem_labels = [], [], []
+    for elem, lab, f in zip(elems, labels, offsets):
+        idx = [node_index[label] for label in lab]
+        p = x0[idx] + np.einsum('kij,kj->ki', R0[idx], f)
+        N, _ = beam_shape(len(lab), SKELETON_XIS[elem.type])
+        start = len(verts)
+        verts.extend((N @ p).tolist())
+        edges.extend((start + i, start + i + 1) for i in range(len(N) - 1))
+        elem_labels.extend([elem.int_label]*len(N))
+    obj = _skeleton_object(context, sk, verts, edges, [])
+    obj['blendyn_beam3'] = [elem.int_label for elem in elems if elem.type == 'beam3']
+    obj['blendyn_beam2'] = [elem.int_label for elem in elems if elem.type == 'beam2']
+    obj.data.attributes.new('blendyn_elem', 'INT', 'POINT').data.foreach_set('value', elem_labels)
+
+
+def _build_plate_skeleton(context, sk, elems):
+    labels, x0, faces = _plate_mesh(context.scene.mbdyn, elems)
+    obj = _skeleton_object(context, sk, x0.tolist(), [], faces)
+    _set_plate_attributes(obj, labels, elems)
+
+
+def refresh_skeleton(context, family, show=False):
+    """ Builds the skeleton of the family again, with the elements that are
+        in no component, if it is shown. Once the user deletes it, it is
+        shown again only by show = True. Returns the number of elements """
+    mbs = context.scene.mbdyn
+    sk = get_skeleton(mbs, family, create=show)
+    if sk is None:
+        return 0
+    if sk.object is not None and in_scene(sk.object) is None:
+        # deleted by the user
+        _remove_object(sk.object)
+        sk.object = None
+        sk.shown = False
+    if show:
+        sk.shown = True
+    elems = unassigned_elems(mbs, family) if sk.shown else []
+    if not elems:
+        _remove_object(sk.object)
+        sk.object = None
+        return 0
+    if family == 'BEAM':
+        _build_beam_skeleton(context, sk, elems)
+    else:
+        _build_plate_skeleton(context, sk, elems)
+    return len(elems)
+
+
+def show_skeletons(context):
+    """ Shows the skeletons of all the families. Returns their labels """
+    shown = [FAMILIES[family]['label'] for family in fieldlib.available_families(context.scene.mbdyn)
+             if refresh_skeleton(context, family, show=True)]
+    # writing mesh data from a frame change handler while rendering
+    # is safe only with a locked interface
+    context.scene.render.use_lock_interface = True
+    update_components(context.scene)
+    return shown
+
+# -----------------------------------------------------------
 # Update at each frame
 
 # per mesh: what is needed to move it, rebuilt from the mesh and the
@@ -896,19 +1059,20 @@ def build_component(context, comp):
 _runtime = {}
 
 
-def _get_runtime(mbs, comp):
-    obj = comp.object
+def _get_runtime(mbs, obj, family):
     mesh = obj.data
     key = (mesh.name, len(mesh.vertices))
     rt = _runtime.get(obj.name)
     if rt is not None and rt['key'] == key:
         return rt
-    if comp.family == 'BEAM':
-        rings, sides = obj['blendyn_rings'], obj['blendyn_sides']
-        xis = np.linspace(-1., 1., rings)
-        A = np.zeros(len(mesh.vertices)*3, dtype=np.float32)
-        mesh.attributes['blendyn_section'].data.foreach_get('vector', A)
-        A = A.reshape((-1, rings, sides, 3)).astype(float)
+    if family == 'BEAM':
+        # skeletons draw the reference lines only
+        line = 'blendyn_skeleton' in obj
+        if not line:
+            rings, sides = obj['blendyn_rings'], obj['blendyn_sides']
+            A = np.zeros(len(mesh.vertices)*3, dtype=np.float32)
+            mesh.attributes['blendyn_section'].data.foreach_get('vector', A)
+            A = A.reshape((-1, rings, sides, 3)).astype(float)
         groups, uniq, start = [], {}, 0
         ed = elem_map(mbs)
         for etype, nn in (('beam3', 3), ('beam2', 2)):
@@ -917,9 +1081,9 @@ def _get_runtime(mbs, comp):
                 continue
             labels, offsets = _beam_layout(mbs, elems)
             idx = np.array([[uniq.setdefault(label, len(uniq)) for label in lab] for lab in labels])
-            N, _ = beam_shape(nn, xis)
+            N, _ = beam_shape(nn, SKELETON_XIS[etype] if line else np.linspace(-1., 1., rings))
             groups.append({'idx': idx, 'f': np.array(offsets), 'N': N, 'ref': 1 if nn == 3 else 0,
-                           'A': A[start:start + len(elems)]})
+                           'A': None if line else A[start:start + len(elems)]})
             start += len(elems)
         labels = list(uniq.keys())
         rt = {'groups': groups}
@@ -953,41 +1117,46 @@ def _beam_vertices(rt, X, R):
         idx = g['idx']
         p = X[idx] + np.einsum('ekij,ekj->eki', R[idx], g['f'])
         P = np.einsum('rk,eki->eri', g['N'], p)
+        if g['A'] is None:
+            res.append(P.reshape((-1, 3)))
+            continue
         Q = section_rotations(g, R, g['N'])
         V = P[:, :, None, :] + np.einsum('erij,ersj->ersi', Q, g['A'])
         res.append(V.reshape((-1, 3)))
     return np.concatenate(res) if res else np.zeros((0, 3))
 
 
-def move_component(comp, rt, depsgraph, frame):
+def move_object(obj, family, rt, depsgraph, frame):
     X, R = node_frames(rt['objs'], rt['x0'], rt['R0'], depsgraph, frame)
-    verts = _beam_vertices(rt, X, R) if comp.family == 'BEAM' else X
-    mesh = comp.object.data
+    verts = _beam_vertices(rt, X, R) if family == 'BEAM' else X
+    mesh = obj.data
     if len(verts) == len(mesh.vertices):
         mesh.vertices.foreach_set('co', np.asarray(verts, dtype=np.float32).ravel())
         mesh.update()
 
 
 def update_components(scene, depsgraph=None):
-    """ Moves the meshes of the confirmed components with the nodes, and
-        colors them """
+    """ Moves the meshes of the confirmed components and of the skeletons
+        with the nodes, and colors the components """
     mbs = scene.mbdyn
-    comps = [comp for comp in mbs.flex_components if comp.state == 'CONFIRMED' and in_scene(comp.object) is not None]
-    if not comps:
+    comps = [(comp.object, comp.family, comp) for comp in mbs.flex_components
+             if comp.state == 'CONFIRMED' and in_scene(comp.object) is not None]
+    skeletons = [(sk.object, sk.family, None) for sk in mbs.flex_skeletons if in_scene(sk.object) is not None]
+    if not comps and not skeletons:
         fieldlib.update_fields(scene)
         return
     if depsgraph is None:
         depsgraph = bpy.context.evaluated_depsgraph_get()
     frame = scene.frame_current + scene.frame_subframe
     still = set()
-    for comp in comps:
+    for obj, family, comp in comps + skeletons:
         try:
-            rt = _get_runtime(mbs, comp)
-            move_component(comp, rt, depsgraph, frame)
-            if not nodes_animated(rt['objs']):
-                still.add(comp.family)
+            rt = _get_runtime(mbs, obj, family)
+            move_object(obj, family, rt, depsgraph, frame)
+            if comp is not None and not nodes_animated(rt['objs']):
+                still.add(family)
         except (KeyError, IndexError, ValueError, ReferenceError) as err:
-            message = "BLENDYN::update_components(): could not update {}: {}".format(comp.name, err)
+            message = "BLENDYN::update_components(): could not update {}: {}".format(obj.name, err)
             print(message)
             logging.error(message)
     # the fields are shown only on components whose nodes move, otherwise
@@ -1126,12 +1295,6 @@ class BLENDYN_PG_flex_component(bpy.types.PropertyGroup):
             name = "Mesh",
             description = "Object drawing the component"
     )
-    is_default: BoolProperty(
-            name = "Default",
-            description = "Default component, holding the elements of its family "\
-                    + "that are not in other components",
-            default = False
-    )
     rings: IntProperty(
             name = "Rings",
             description = "Sections drawn along each beam",
@@ -1195,6 +1358,28 @@ class BLENDYN_PG_flex_component(bpy.types.PropertyGroup):
 
 bpy.utils.register_class(BLENDYN_PG_flex_component)
 
+
+class BLENDYN_PG_flex_skeleton(bpy.types.PropertyGroup):
+    """ Mesh drawing the elements of a family that are in no component """
+    family: EnumProperty(
+            items = FAMILY_ITEMS,
+            name = "Family"
+    )
+    object: PointerProperty(
+            type = bpy.types.Object,
+            name = "Mesh",
+            description = "Object drawing the skeleton"
+    )
+    shown: BoolProperty(
+            name = "Shown",
+            description = "False once the user deletes the skeleton",
+            default = True
+    )
+# -----------------------------------------------------------
+# end of BLENDYN_PG_flex_skeleton class
+
+bpy.utils.register_class(BLENDYN_PG_flex_skeleton)
+
 # -----------------------------------------------------------
 # Operators
 
@@ -1236,7 +1421,7 @@ class BLENDYN_OT_flex_component_add(bpy.types.Operator):
 
 class BLENDYN_OT_flex_component_remove(bpy.types.Operator):
     """ Removes the active flexible component and its mesh; its elements
-        go back to the default component """
+        go back to the skeleton """
     bl_idname = "blendyn.flex_component_remove"
     bl_label = "Remove flexible component"
     bl_options = {'UNDO'}
@@ -1253,52 +1438,58 @@ class BLENDYN_OT_flex_component_remove(bpy.types.Operator):
 # end of BLENDYN_OT_flex_component_remove class
 
 
+_PICK_HELP = "In Edit Mode, the elements of the selected faces (or vertices) of the skeletons and "\
+        + "of the component meshes; otherwise the elements whose nodes are all selected node "\
+        + "objects. With Connected, also the elements linked to them through shared nodes, "\
+        + "up to the elements of other components"
+
+
 class BLENDYN_OT_flex_component_from_selection(bpy.types.Operator):
-    """ Creates a flexible component with the elements of the selected faces
-        of the meshes of the flexible components """
+    """ Creates a flexible component with the selected elements, one for
+        each family """
     bl_idname = "blendyn.flex_component_from_selection"
-    bl_label = "New component from selected faces"
+    bl_label = "New component from selection"
+    bl_description = "Creates a flexible component with the selected elements (one for each family). "\
+            + _PICK_HELP
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        keys, families = selected_elem_keys(context)
-        if not keys:
-            self.report({'ERROR'}, "Select faces of the meshes of the flexible components first")
-            return {'CANCELLED'}
-        if len(families) > 1:
-            self.report({'ERROR'}, "The selected faces draw elements of different families")
+        picked = picked_elems(context)
+        if not picked:
+            self.report({'ERROR'}, "Select faces of the skeletons or components in Edit Mode, "\
+                        + "or node objects, first")
             return {'CANCELLED'}
         _to_object_mode(context)
         mbs = context.scene.mbdyn
-        comp = new_component(mbs, families.pop())
-        n = assign_elements(context, comp, keys)
-        warnings = build_component(context, comp)
-        _report_warnings(self, warnings)
-        mbs.fc_index = list(mbs.flex_components).index(comp)
-        self.report({'INFO'}, "Component " + comp.name + " with " + str(n) + " elements")
+        made = []
+        for family, keys in picked.items():
+            comp = new_component(mbs, family)
+            n = assign_elements(context, comp, keys)
+            _report_warnings(self, build_component(context, comp))
+            made.append(comp.name + " (" + str(n) + " elements)")
+        mbs.fc_index = len(mbs.flex_components) - 1
+        self.report({'INFO'}, "New components: " + ", ".join(made))
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_flex_component_from_selection class
 
 
 class BLENDYN_OT_flex_elems_add_selected(bpy.types.Operator):
-    """ Adds the elements of the selected faces of the meshes of the
-        flexible components to the active component """
+    """ Adds the selected elements to the active component """
     bl_idname = "blendyn.flex_elems_add_selected"
-    bl_label = "Add selected faces"
+    bl_label = "Add selection"
+    bl_description = "Adds the selected elements to the active component. " + _PICK_HELP
     bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        comp = _active_component(context)
-        return comp is not None and not comp.is_default
+        return _active_component(context) is not None
 
     def execute(self, context):
         comp = _active_component(context)
-        keys, families = selected_elem_keys(context)
-        keys = [key for key in keys if context.scene.mbdyn.elems[key].type in FAMILIES[comp.family]['types']]
+        keys = picked_elems(context, comp.family, comp).get(comp.family)
         if not keys:
-            self.report({'ERROR'}, "No selected faces draw " + FAMILIES[comp.family]['label'].lower())
+            self.report({'ERROR'}, "No " + FAMILIES[comp.family]['label'].lower() + " selected")
             return {'CANCELLED'}
         _to_object_mode(context)
         n = assign_elements(context, comp, keys)
@@ -1317,8 +1508,7 @@ class BLENDYN_OT_flex_elems_add_range(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        comp = _active_component(context)
-        return comp is not None and not comp.is_default
+        return _active_component(context) is not None
 
     def execute(self, context):
         comp = _active_component(context)
@@ -1338,7 +1528,7 @@ class BLENDYN_OT_flex_elems_add_range(bpy.types.Operator):
 
 class BLENDYN_OT_flex_elem_remove(bpy.types.Operator):
     """ Removes the active element from the component: it goes back to the
-        default component """
+        skeleton """
     bl_idname = "blendyn.flex_elem_remove"
     bl_label = "Remove element"
     bl_options = {'UNDO'}
@@ -1352,7 +1542,7 @@ class BLENDYN_OT_flex_elem_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         comp = _active_component(context)
-        return comp is not None and not comp.is_default and len(comp.elements)
+        return comp is not None and len(comp.elements)
 
     def execute(self, context):
         comp = _active_component(context)
@@ -1364,7 +1554,7 @@ class BLENDYN_OT_flex_elem_remove(bpy.types.Operator):
             comp.el_index = max(min(comp.el_index, len(comp.elements) - 1), 0)
         if in_scene(comp.object) is not None:
             build_component(context, comp)
-        refresh_default(context, comp.family)
+        refresh_skeleton(context, comp.family)
         return {'FINISHED'}
 # -----------------------------------------------------------
 # end of BLENDYN_OT_flex_elem_remove class
@@ -1551,7 +1741,7 @@ class BLENDYN_OT_flex_component_confirm(bpy.types.Operator):
         mbs = scene.mbdyn
         comp = _active_component(context)
         _to_object_mode(context)
-        rt = _get_runtime(mbs, comp)
+        rt = _get_runtime(mbs, comp.object, comp.family)
         if mbs.file_basename and not nodes_animated(rt['objs']):
             if bpy.ops.blendyn.set_motion_paths('EXEC_DEFAULT') != {'FINISHED'}:
                 self.report({'WARNING'}, "Could not animate the nodes")
@@ -1589,31 +1779,24 @@ class BLENDYN_OT_flex_component_edit(bpy.types.Operator):
 # end of BLENDYN_OT_flex_component_edit class
 
 
-class BLENDYN_OT_flex_default_components(bpy.types.Operator):
-    """ Builds the default flexible components, with the beams and plates
-        that are not in other components """
-    bl_idname = "blendyn.flex_default_components"
-    bl_label = "Build default components"
+class BLENDYN_OT_flex_skeletons(bpy.types.Operator):
+    """ Shows the skeletons: the reference lines of the beams and the
+        wireframe of the plates that are in no component, following the
+        nodes """
+    bl_idname = "blendyn.flex_skeletons"
+    bl_label = "Show skeletons"
     bl_options = {'UNDO'}
 
     def execute(self, context):
         _to_object_mode(context)
-        mbs = context.scene.mbdyn
-        built = []
-        for family in FAMILIES:
-            comp = default_component(mbs, family)
-            if comp is not None:
-                # rebuild it in any case
-                _delete_object(comp)
-            if refresh_default(context, family) is not None:
-                built.append(FAMILIES[family]['label'])
-        context.scene.render.use_lock_interface = True
-        update_components(context.scene)
-        if built:
-            self.report({'INFO'}, "Default components: " + ", ".join(built))
+        shown = show_skeletons(context)
+        if shown:
+            self.report({'INFO'}, "Skeletons: " + ", ".join(shown))
+        else:
+            self.report({'INFO'}, "All the beams and plates are in components")
         return {'FINISHED'}
 # -----------------------------------------------------------
-# end of BLENDYN_OT_flex_default_components class
+# end of BLENDYN_OT_flex_skeletons class
 
 # -----------------------------------------------------------
 # Panel
@@ -1625,7 +1808,7 @@ class BLENDYN_UL_flex_components(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         row = layout.row(align = True)
         row.prop(item, "name", text = "", emboss = False, icon = _STATE_ICONS[item.state])
-        row.label(text = FAMILIES[item.family]['label'] + (", default" if item.is_default else ""))
+        row.label(text = FAMILIES[item.family]['label'])
 
 
 class BLENDYN_UL_flex_elems(bpy.types.UIList):
@@ -1664,8 +1847,10 @@ class BLENDYN_PT_flex_components(bpy.types.Panel):
         col.operator_menu_enum(BLENDYN_OT_flex_component_add.bl_idname, "family", text = "", icon = 'ADD')
         col.operator(BLENDYN_OT_flex_component_remove.bl_idname, text = "", icon = 'REMOVE')
         col = layout.column(align = True)
-        col.operator(BLENDYN_OT_flex_component_from_selection.bl_idname, icon = 'FACESEL')
-        col.operator(BLENDYN_OT_flex_default_components.bl_idname, icon = 'FILE_REFRESH')
+        row = col.row(align = True)
+        row.operator(BLENDYN_OT_flex_component_from_selection.bl_idname, icon = 'FACESEL')
+        row.prop(mbs, "flex_connected", toggle = True, icon = 'LINKED')
+        col.operator(BLENDYN_OT_flex_skeletons.bl_idname, icon = 'MOD_WIREFRAME')
 
         comp = _active_component(context)
         if comp is None:
@@ -1676,8 +1861,6 @@ class BLENDYN_PT_flex_components(bpy.types.Panel):
         col.label(text = FAMILIES[comp.family]['label'] + ": "
                   + comp.bl_rna.properties['state'].enum_items[comp.state].name.lower(),
                   icon = _STATE_ICONS[comp.state])
-        if comp.is_default:
-            col.label(text = "Holds the elements not in other components", icon = 'INFO')
         deleted = comp.object is not None and in_scene(comp.object) is None
         if deleted:
             col.label(text = "Its mesh was deleted: build it again", icon = 'ERROR')
@@ -1687,18 +1870,18 @@ class BLENDYN_PT_flex_components(bpy.types.Panel):
         col.label(text = "Elements: " + str(len(comp.elements)))
         row = col.row()
         row.template_list("BLENDYN_UL_flex_elems", "", comp, "elements", comp, "el_index", rows = 3)
-        if not comp.is_default:
-            sub = row.column(align = True)
-            sub.operator(BLENDYN_OT_flex_elem_remove.bl_idname, text = "", icon = 'REMOVE').clear = False
-            sub.operator(BLENDYN_OT_flex_elem_remove.bl_idname, text = "", icon = 'X').clear = True
-            sub = col.column(align = True)
-            row = sub.row(align = True)
-            row.prop(comp, "add_type", text = "")
-            row.prop(comp, "add_min")
-            row.prop(comp, "add_max")
-            row = sub.row(align = True)
-            row.operator(BLENDYN_OT_flex_elems_add_range.bl_idname, icon = 'ADD')
-            row.operator(BLENDYN_OT_flex_elems_add_selected.bl_idname, icon = 'FACESEL')
+        sub = row.column(align = True)
+        sub.operator(BLENDYN_OT_flex_elem_remove.bl_idname, text = "", icon = 'REMOVE').clear = False
+        sub.operator(BLENDYN_OT_flex_elem_remove.bl_idname, text = "", icon = 'X').clear = True
+        sub = col.column(align = True)
+        row = sub.row(align = True)
+        row.prop(comp, "add_type", text = "")
+        row.prop(comp, "add_min")
+        row.prop(comp, "add_max")
+        row = sub.row(align = True)
+        row.operator(BLENDYN_OT_flex_elems_add_range.bl_idname, icon = 'ADD')
+        row.operator(BLENDYN_OT_flex_elems_add_selected.bl_idname, icon = 'FACESEL')
+        row.prop(mbs, "flex_connected", text = "", toggle = True, icon = 'LINKED')
 
         # geometry
         if comp.family == 'BEAM':

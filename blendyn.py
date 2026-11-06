@@ -68,7 +68,7 @@ from . rfmlib import *
 from . logwatcher import *
 from . utilslib import set_active_collection, get_user_config_path, batch_element_import
 from . fieldlib import BLENDYN_PG_field_settings, register_legend, unregister_legend, FLEXIBLE_TYPES
-from . flexlib import BLENDYN_PG_flex_component
+from . flexlib import BLENDYN_PG_flex_component, BLENDYN_PG_flex_skeleton
 
 HAVE_PLOT = True
 
@@ -642,6 +642,18 @@ class BLENDYN_PG_settings_scene(bpy.types.PropertyGroup):
             name = "Active flexible component",
             default = 0,
             min = 0
+    )
+    # Beams and plates that are in no flexible component
+    flex_skeletons: CollectionProperty(
+            name = "Skeletons",
+            description = "Meshes drawing the flexible elements that are in no component",
+            type = BLENDYN_PG_flex_skeleton
+    )
+    flex_connected: BoolProperty(
+            name = "Connected",
+            description = "Pick also the elements linked to the selected ones through shared nodes, "\
+                    + "up to the elements of other components",
+            default = False
     )
     modal_selected_elem: EnumProperty(
             items = get_modal_elems,
@@ -1822,16 +1834,20 @@ class BLENDYN_PT_active_object(BLENDYN_PT_tool_bar, bpy.types.Panel):
                     return
 
                 elem = [elem for elem in ed if elem.blender_object == obj.name]
-                if obj.mbdyn.type == 'component':
-                    # mesh of a flexible component: the element of its
-                    # active face
+                if obj.mbdyn.type in ('component', 'skeleton'):
+                    # mesh of a flexible component or of a skeleton: the
+                    # element of its active face (or vertex)
                     row = layout.row()
-                    row.label(text = "Flexible component " + obj.mbdyn.dkey)
+                    if obj.mbdyn.type == 'component':
+                        row.label(text = "Flexible component " + obj.mbdyn.dkey)
+                    else:
+                        row.label(text = "Skeleton: elements in no component")
                     active = component_active_elem(context, obj)
                     elem = [active] if active is not None else []
                     if not elem:
                         row = layout.row()
-                        row.label(text = "Select a face to see its element", icon = 'INFO')
+                        row.label(text = "Select a face to see its element" if len(obj.data.polygons) \
+                                  else "Select a vertex to see its element", icon = 'INFO')
                 if elem:
                     # Display MBDyn elements info
                     row = layout.row()
@@ -2564,12 +2580,17 @@ class BLENDYN_OT_select_elements_by_type(bpy.types.Operator):
         ed = mbs.elems
         bpy.ops.object.select_all(action = 'DESELECT')
         if mbs.elem_type_import in FLEXIBLE_TYPES:
-            # the meshes of the flexible components holding such elements
+            # the meshes of the flexible components and of the skeletons
+            # holding such elements
             for comp in mbs.flex_components:
                 if comp.object is not None and comp.object.name in context.view_layer.objects \
                         and any(ed[ce.elem].type == mbs.elem_type_import \
                                 for ce in comp.elements if ce.elem in ed):
                     comp.object.select_set(state = True)
+            for sk in mbs.flex_skeletons:
+                if sk.object is not None and sk.object.name in context.view_layer.objects \
+                        and mbs.elem_type_import in sk.object.get('blendyn_types', ()):
+                    sk.object.select_set(state = True)
             return {'FINISHED'}
         for var in ed.keys():
             if mbs.elem_type_import in var:
@@ -2694,8 +2715,8 @@ class BLENDYN_OT_import_elements_by_type(bpy.types.Operator):
         mbs = context.scene.mbdyn
         ed = mbs.elems
         if mbs.elem_type_import in FLEXIBLE_TYPES:
-            # drawn by the default flexible components
-            return bpy.ops.blendyn.flex_default_components('EXEC_DEFAULT')
+            # drawn by the skeletons until put in flexible components
+            return bpy.ops.blendyn.flex_skeletons('EXEC_DEFAULT')
         with batch_element_import():
             for elem in ed:
                 if (elem.type == mbs.elem_type_import) \
@@ -2758,10 +2779,10 @@ class BLENDYN_OT_elements_import_all(bpy.types.Operator):
                       + "Some elements were not imported. See log file for details"
             baseLogger.warning(message)
             self.report({'WARNING'}, message)
-        # beams and plates that are not in a user-defined flexible
-        # component are drawn by the default components
+        # beams and plates that are in no flexible component are drawn
+        # by the skeletons
         if any(elem.type in FLEXIBLE_TYPES for elem in ed):
-            bpy.ops.blendyn.flex_default_components('EXEC_DEFAULT')
+            bpy.ops.blendyn.flex_skeletons('EXEC_DEFAULT')
 
         return {'FINISHED'}
 
