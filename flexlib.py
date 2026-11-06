@@ -123,13 +123,24 @@ def _transport(u, a, b):
 # -----------------------------------------------------------
 # Nodes
 
+# looking up a key in mbs.nodes or mbs.elems searches the whole collection:
+# with many lookups, map the keys first
+def node_map(mbs):
+    return {node.name: node for node in mbs.nodes}
+
+
+def elem_map(mbs):
+    return {elem.name: elem for elem in mbs.elems}
+
+
 def _reference_nodes(mbs, labels):
     """ Positions (N, 3) and orientations (N, 3, 3) of the nodes in the
         reference configuration (from the .log file) """
     x0 = np.zeros((len(labels), 3))
     q0 = np.tile((1., 0., 0., 0.), (len(labels), 1))
+    nodes = node_map(mbs)
     for i, label in enumerate(labels):
-        node = mbs.nodes.get('node_' + str(label))
+        node = nodes.get('node_' + str(label))
         if node is not None:
             x0[i] = node.initial_pos
             q0[i] = node.initial_rot
@@ -138,8 +149,9 @@ def _reference_nodes(mbs, labels):
 
 def _node_objects(mbs, labels):
     objs = []
+    nodes = node_map(mbs)
     for label in labels:
-        node = mbs.nodes.get('node_' + str(label))
+        node = nodes.get('node_' + str(label))
         objs.append(bpy.data.objects.get(node.blender_object) if node is not None else None)
     return objs
 
@@ -221,9 +233,15 @@ def _owner_component(pg):
 
 def component_elems(mbs, comp):
     """ Elements of the component that exist and belong to its family """
-    ed = mbs.elems
+    ed = elem_map(mbs)
     types = FAMILIES[comp.family]['types']
     return [ed[ce.elem] for ce in comp.elements if ce.elem in ed and ed[ce.elem].type in types]
+
+
+def in_scene(obj):
+    """ The object, if it is still in a scene: an object deleted by the
+        user stays in the data while a component points to it """
+    return obj if obj is not None and len(obj.users_scene) else None
 
 
 def component_of_object(mbs, obj):
@@ -284,6 +302,14 @@ def _delete_object(comp):
     comp.object = None
 
 
+def drop_deleted(comp):
+    """ Forgets the mesh of the component if the user deleted it """
+    if comp.object is not None and in_scene(comp.object) is None:
+        _delete_object(comp)
+        if comp.state != 'DEFINED':
+            comp.state = 'DEFINED'
+
+
 def remove_component(context, idx):
     mbs = context.scene.mbdyn
     comp = mbs.flex_components[idx]
@@ -319,7 +345,7 @@ def refresh_default(context, family):
     if comp is None:
         comp = new_component(mbs, family, FAMILIES[family]['label'], is_default=True)
         mbs.fc_index = active if active < len(mbs.flex_components) - 1 else mbs.fc_index
-    if [ce.elem for ce in comp.elements] != keys or comp.object is None:
+    if [ce.elem for ce in comp.elements] != keys or in_scene(comp.object) is None:
         _set_elements(comp, keys)
         build_component(context, comp)
     comp.state = 'CONFIRMED'
@@ -331,7 +357,7 @@ def assign_elements(context, comp, keys):
     """ Adds the elements to the component, removing them from the
         others; the components that change are built again """
     mbs = context.scene.mbdyn
-    ed = mbs.elems
+    ed = elem_map(mbs)
     types = FAMILIES[comp.family]['types']
     keys = [key for key in dict.fromkeys(keys) if key in ed and ed[key].type in types]
     present = {ce.elem for ce in comp.elements}
@@ -345,13 +371,13 @@ def assign_elements(context, comp, keys):
         kept = [ce.elem for ce in other.elements if ce.elem not in newset]
         if len(kept) != len(other.elements):
             _set_elements(other, kept)
-            if other.object is not None:
+            if in_scene(other.object) is not None:
                 build_component(context, other)
     for key in new:
         ce = comp.elements.add()
         ce.elem = key
         ce.name = key
-    if comp.object is not None:
+    if in_scene(comp.object) is not None:
         build_component(context, comp)
     if not comp.is_default:
         refresh_default(context, comp.family)
@@ -362,7 +388,7 @@ def selected_elem_keys(context):
     """ Keys of the elements drawn by the selected faces of the meshes of
         the flexible components, and their families """
     mbs = context.scene.mbdyn
-    ed = mbs.elems
+    ed = elem_map(mbs)
     if context.mode == 'EDIT_MESH':
         objs = list(context.objects_in_mode)
     else:
@@ -750,6 +776,7 @@ _BUILD_PROPS = ('blendyn_nodes', 'blendyn_elems', 'blendyn_beam3', 'blendyn_beam
 
 
 def _replace_mesh(context, comp, verts, faces):
+    drop_deleted(comp)
     mesh = bpy.data.meshes.new(OBJECT_PREFIX + comp.name)
     mesh.from_pydata(verts, [], faces)
     mesh.update()
@@ -883,8 +910,9 @@ def _get_runtime(mbs, comp):
         mesh.attributes['blendyn_section'].data.foreach_get('vector', A)
         A = A.reshape((-1, rings, sides, 3)).astype(float)
         groups, uniq, start = [], {}, 0
+        ed = elem_map(mbs)
         for etype, nn in (('beam3', 3), ('beam2', 2)):
-            elems = [mbs.elems[etype + '_' + str(label)] for label in obj.get('blendyn_' + etype, [])]
+            elems = [ed[etype + '_' + str(label)] for label in obj.get('blendyn_' + etype, [])]
             if not elems:
                 continue
             labels, offsets = _beam_layout(mbs, elems)
@@ -944,7 +972,7 @@ def update_components(scene, depsgraph=None):
     """ Moves the meshes of the confirmed components with the nodes, and
         colors them """
     mbs = scene.mbdyn
-    comps = [comp for comp in mbs.flex_components if comp.state == 'CONFIRMED' and comp.object is not None]
+    comps = [comp for comp in mbs.flex_components if comp.state == 'CONFIRMED' and in_scene(comp.object) is not None]
     if not comps:
         fieldlib.update_fields(scene)
         return
@@ -997,7 +1025,7 @@ fieldlib.refresh_hook = update_components
 # Settings
 
 def _rebuild(comp, context):
-    if comp.object is not None and comp.state != 'DEFINED':
+    if in_scene(comp.object) is not None and comp.state != 'DEFINED':
         build_component(context, comp)
         if comp.state == 'CONFIRMED':
             update_components(context.scene)
@@ -1334,7 +1362,7 @@ class BLENDYN_OT_flex_elem_remove(bpy.types.Operator):
         else:
             comp.elements.remove(min(comp.el_index, len(comp.elements) - 1))
             comp.el_index = max(min(comp.el_index, len(comp.elements) - 1), 0)
-        if comp.object is not None:
+        if in_scene(comp.object) is not None:
             build_component(context, comp)
         refresh_default(context, comp.family)
         return {'FINISHED'}
@@ -1516,7 +1544,7 @@ class BLENDYN_OT_flex_component_confirm(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         comp = _active_component(context)
-        return comp is not None and comp.state == 'PREVIEW' and comp.object is not None
+        return comp is not None and comp.state == 'PREVIEW' and in_scene(comp.object) is not None
 
     def execute(self, context):
         scene = context.scene
@@ -1650,6 +1678,9 @@ class BLENDYN_PT_flex_components(bpy.types.Panel):
                   icon = _STATE_ICONS[comp.state])
         if comp.is_default:
             col.label(text = "Holds the elements not in other components", icon = 'INFO')
+        deleted = comp.object is not None and in_scene(comp.object) is None
+        if deleted:
+            col.label(text = "Its mesh was deleted: build it again", icon = 'ERROR')
 
         # elements
         col = box.column()
@@ -1691,8 +1722,10 @@ class BLENDYN_PT_flex_components(bpy.types.Panel):
 
         row = box.row(align = True)
         row.operator(BLENDYN_OT_flex_component_build.bl_idname,
-                     text = "Build" if comp.object is None else "Rebuild", icon = 'MOD_BUILD')
-        if comp.state == 'PREVIEW':
+                     text = "Build" if comp.object is None or deleted else "Rebuild", icon = 'MOD_BUILD')
+        if deleted:
+            pass
+        elif comp.state == 'PREVIEW':
             row.operator(BLENDYN_OT_flex_component_confirm.bl_idname, icon = 'CHECKMARK')
         elif comp.state == 'CONFIRMED':
             row.operator(BLENDYN_OT_flex_component_edit.bl_idname, icon = 'GREASEPENCIL')
